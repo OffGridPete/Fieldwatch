@@ -1,0 +1,27 @@
+# Build
+.gradle/
+.kotlin/
+build/
+app/build/
+*.apk
+!dist/*.apk
+*.aab
+*.ap_
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Captures and working files (not for the repo)
+docs/screenshots/
+docs/mockups/
+docs/lookup_candidates.md
+docs/ble-signature-decode.md
+docs/ble-signature-decode.schema.json
+docs/GROK_BUILD_PROMPT.md
+research/
+scripts/.lookup-cache/
+
+# Machine JDK path belongs in JAVA_HOME, not the tree

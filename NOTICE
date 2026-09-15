@@ -1,0 +1,36 @@
+Fieldwatch
+Copyright (c) 2026 Off Grid Pete LLC
+
+This product includes software developed by third parties, licensed
+under Apache License 2.0 (see LICENSE and the Apache license text
+those projects ship):
+
+  AndroidX (Jetpack Compose, Core, Lifecycle, Navigation, Activity, and
+  related Android Open Source Project libraries)
+  Kotlin standard library, kotlinx-coroutines, kotlinx-serialization
+  JetBrains annotations
+  Guava listenablefuture (empty stub)
+  androidx.graphics:graphics-path (libandroidx.graphics.path.so)
+
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+Offline assigned-number tables in app/src/main/assets/lookups/radiodb.bin
+(and MA-L prefixes in ApVendorOuis.kt) are packed from:
+
+  IEEE Registration Authority MA-L / MA-M / MA-S / CID
+  https://standards-oui.ieee.org/
+
+  Bluetooth SIG Assigned Numbers (company identifiers, GAP Appearance,
+  16-bit service UUIDs)
+  https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/
+
+Those lists are not licensed as MIT by Off Grid Pete LLC. Use of the
+packed tables is subject to IEEE and Bluetooth SIG terms.
+
+Fast Pair 24-bit model names in FastPairModels.kt are compiled from
+public partner / community listings of Google Fast Pair model IDs.
+They are not a Google product and are not covered by the MIT grant
+as original Fieldwatch source.
+
+Fieldwatch continues the Spectre 1.2.14 field build under a new name,
+application id (app.fieldwatch), and license.

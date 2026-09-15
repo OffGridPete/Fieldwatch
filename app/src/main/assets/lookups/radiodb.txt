@@ -1,0 +1,10 @@
+built 2026-08-24T21:30:47Z
+bytes 1311124
+names 34781
+ieee-mal 39998 https://standards-oui.ieee.org/oui/oui.csv
+ieee-mam 6560 https://standards-oui.ieee.org/oui28/mam.csv
+ieee-mas 7153 https://standards-oui.ieee.org/oui36/oui36.csv
+ieee-cid 218 https://standards-oui.ieee.org/cid/cid.csv
+bt-company 4013 https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/company_identifiers/
+bt-appearance 342
+bt-service-uuid 76
