@@ -1,12 +1,16 @@
 # Fieldwatch
 
-Fieldwatch is a receive-only Wi-Fi access-point and Bluetooth LE watcher for Android. It listens. It does not associate, inject, or talk to a Fieldwatch server. No account, no ads, no dongle.
+I built Fieldwatch as a personal tool to look at what Wi-Fi access points and Bluetooth LE ads my phone was able to pick up, so that I could better understand what devices were being used around me. It’s passive, it only listens, there’s no dongle, no account, and no backend server. I wanted something that would work offline in the field.
 
-It was Spectre through 1.2.14. This tree is the same field tool under a new name, a new application id (`app.fieldwatch`), and the MIT License. Installing Fieldwatch does not replace Spectre on a phone; it is a separate app.
+My goals were to have a modern interface that was easy to use, flexible in how information was displayed so I could customize a view based on what I was trying to do, a filtering engine so I do not have to look at everything, an extensible signature library so I can identify as many radio sources as possible and add new ones on the fly, as well as create reports of what was seen.
 
-This is a hobby. Sideload files live in `dist/` once a build is made. The public home for source and sideload will be this repository.
+I have been using it and iterating on it for a while now, and it has been useful enough that I thought I would share it.
 
-If you spot an error, something stupid, or have a feature idea — in the app or the documentation — please open a GitHub issue on [OffGridPete/Fieldwatch](https://github.com/OffGridPete/Fieldwatch/issues) once that repository is public.
+This is a hobby — something I do for fun in my spare time. There is no Fieldwatch backend. There are no ads. Everything lives on the phone. Source and sideload files are in this repository (`dist/` for the APK, instruction card, and manual).
+
+It was Spectre through 1.2.14. Same field tool, new name, new application id (`app.fieldwatch`), MIT License. Installing Fieldwatch does not replace Spectre on a phone; it is a separate app.
+
+If you spot an error, something stupid, or have a feature idea — in the app or the documentation — please [open an issue on this repository](https://github.com/OffGridPete/Fieldwatch/issues). This is how we make it better. I hope you find it as useful as I have. I look forward to hearing how it goes.
 
 ## Safety & disclaimer
 
