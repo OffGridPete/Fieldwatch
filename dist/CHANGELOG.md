@@ -2,7 +2,11 @@
 
 Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Settings shows as the version.
 
-Fieldwatch 1.0.0 continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
+Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
+
+## 1.0.1 — 15 September 2026
+
+- Moving with you is BLE only. Wi-Fi access points stay off (a loud AP you drive past paints your path). Filters shows BLE only while that switch is on.
 
 ## 1.0.0 — 15 September 2026
 

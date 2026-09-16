@@ -71,7 +71,11 @@ class FilterEngine {
             FilterPreset("wifi", "Wi-Fi only", FilterState(showBle = false)),
             FilterPreset("ble", "BLE only", FilterState(showWifi = false)),
             FilterPreset("strong", "Strong signal", FilterState(rssiMin = -70)),
-            FilterPreset("with-you", "Moving with you", FilterState(movingWithYou = true)),
+            FilterPreset(
+                "with-you",
+                "Moving with you",
+                FilterState(movingWithYou = true, showWifi = false),
+            ),
             FilterPreset("trackers", "Trackers", only(SignatureClass.FINDER, bleOnly = true)),
             FilterPreset(
                 "hide-trackers",

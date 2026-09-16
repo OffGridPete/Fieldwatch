@@ -197,10 +197,10 @@ private fun arrivalsEmpty(state: FieldwatchUi): String? {
                     "If this stays 0, Location is not updating (use high accuracy)."
             state.filter.customNamesOnly || state.filter.watchedOnly ||
                 state.filter.namedOnly || state.filter.namedOnlyImplied() ->
-                "No loud radio has stayed with you among the radios still allowed. " +
-                    "Tap the Moving with you preset to test all radios, or turn off Signatures only / Show only / Named radios only / Watched only."
+                "No loud BLE has stayed with you among the radios still allowed. " +
+                    "Tap the Moving with you preset to test BLE, or turn off Signatures only / Show only / Named radios only / Watched only."
             else ->
-                "No loud radio has stayed with you along this path. House APs you just arrived at stay hidden. A tag in your bag or car should show. Find My MAC rotation will not stitch."
+                "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. A tag in your bag or car should show. Find My MAC rotation will not stitch."
         }
     }
     if (state.filter.arrivalsOnly) {

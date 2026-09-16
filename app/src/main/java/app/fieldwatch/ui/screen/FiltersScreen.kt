@@ -128,23 +128,29 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
 
             SectionCard("Radios") {
             Text(
-                "These are include switches. Turn both on to see Wi-Fi and BLE together. A single device is never both.",
+                if (filter.movingWithYou) {
+                    "Moving with you is BLE only. Both and Wi-Fi only stay off until you turn that switch off."
+                } else {
+                    "These are include switches. Turn both on to see Wi-Fi and BLE together. A single device is never both."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FieldwatchFilterChip(
-                    selected = filter.showWifi && filter.showBle,
+                    selected = !filter.movingWithYou && filter.showWifi && filter.showBle,
                     onClick = { vm.updateFilter { it.copy(showWifi = true, showBle = true) } },
+                    enabled = !filter.movingWithYou,
                     label = { Text("Both") },
                 )
                 FieldwatchFilterChip(
-                    selected = filter.showWifi && !filter.showBle,
+                    selected = !filter.movingWithYou && filter.showWifi && !filter.showBle,
                     onClick = { vm.updateFilter { it.copy(showWifi = true, showBle = false) } },
+                    enabled = !filter.movingWithYou,
                     label = { Text("Wi-Fi only") },
                 )
                 FieldwatchFilterChip(
-                    selected = filter.showBle && !filter.showWifi,
+                    selected = filter.movingWithYou || (filter.showBle && !filter.showWifi),
                     onClick = { vm.updateFilter { it.copy(showWifi = false, showBle = true) } },
                     label = { Text("BLE only") },
                 )
@@ -160,11 +166,13 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         vm.updateFilter { current ->
                             if (!on) current.copy(movingWithYou = false)
                             else {
-                                // Follow test is all radios. Leftover Trackers / Show only hides
+                                // Follow test is BLE. Leftover Trackers / Show only hides
                                 // unmatched rows; AirTags rotate, so Live looks empty.
                                 val hiding = current.useClassFilter && current.excludeClasses
                                 current.copy(
                                     movingWithYou = true,
+                                    showWifi = false,
+                                    showBle = true,
                                     namedOnly = false,
                                     customNamesOnly = false,
                                     watchedOnly = false,
@@ -182,8 +190,9 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 when {
                     !state.settings.tagLocation ->
                         "Turn on Settings → Tag detections with GPS, then walk or drive. " +
-                            "Only loud radios that stay with you along the path. " +
-                            "The switch starts a follow test on all radios (clears Signatures only / Show only / Named radios only / Watched only). " +
+                            "Only loud BLE advertisers that stay with you along the path. " +
+                            "Wi-Fi access points stay off — a loud AP you drive past paints your path. " +
+                            "The switch starts a BLE follow test (clears Signatures only / Show only / Named radios only / Watched only). " +
                             "Or tap the Moving with you preset at the top."
                     state.operatorSpanM < 45.0 ->
                         "GPS path so far ${state.operatorSpanM.toInt()} m. Keep moving (~50 m). " +
@@ -202,12 +211,12 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     filter.customNamesOnly || filter.watchedOnly || filter.namedOnly || filter.namedOnlyImplied() ->
                         "GPS path ${state.operatorSpanM.toInt()} m. Signatures only, class Show only, " +
                             "Named radios only, or Watched only is also on, so only those radios can co-travel. " +
-                            "Tap the Moving with you preset to test all radios. A tag in your bag or car should match; house APs should not."
+                            "Tap the Moving with you preset to test BLE. A tag in your bag or car should match. Wi-Fi access points stay hidden."
                     else ->
-                        "GPS path ${state.operatorSpanM.toInt()} m. Loud radios heard along that " +
+                        "GPS path ${state.operatorSpanM.toInt()} m. Loud BLE heard along that " +
                             "path at a fairly steady level — not ones that only appear when you " +
-                            "arrive. A tag in your bag or car will match. House APs should not. " +
-                            "A phone’s rotating BLE address will not stitch as one follower. " +
+                            "arrive. A tag in your bag or car will match. Wi-Fi access points stay hidden " +
+                            "(range looks like co-travel). A phone’s rotating BLE address will not stitch as one follower. " +
                             "Live → Start over clears the path and trails so you can test again."
                 },
                 style = MaterialTheme.typography.bodySmall,

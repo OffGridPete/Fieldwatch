@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.0.0 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.0.1 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  0f7a1474ae5ff97eaed08fb32bd21c3d03b96b31908decf176f329ef46a75088
+  2e57218ce92f68e2b92cd0be4d60f3ba71ee8b4f4d7dd23742db539f0d5fbfd4
 
 Fieldwatch is experimental software. Use at your own risk. It does not guarantee
 that trackers or other devices will be found. Each phone has radio limits
@@ -191,7 +191,8 @@ Max collection (battery is the cost) — full walk-through:
                only, and Named radios only sit just above the class chips.
                Watched only keeps bookmarked signature matches and Named
                radios with Alert on (Hide these still applies). The Moving
-               with you switch starts a follow test on all radios. It
+               with you switch starts a BLE follow test (Wi-Fi APs stay
+               off — range looks like co-travel). It
                clears Signatures only, Watched only, Named radios only, and
                class Show only so those filters do not empty the list.
                Class chips sit two across with the same glyphs as Live.

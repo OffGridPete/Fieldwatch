@@ -167,9 +167,10 @@ object Geo {
 }
 
 /**
- * Live co-travel. Phone GPS is stamped at hear-time. A bag/car tag stays loud
- * along the path; a house AP only appears when you arrive. Cheap loud-RSSI
- * reject first so the list is not O(n²) GPS on every radio.
+ * Live co-travel, BLE only. Phone GPS is stamped at hear-time. A bag/car tag
+ * stays loud along the path. Wi-Fi APs are excluded: a loud AP you drive past
+ * paints hundreds of meters of your path and looks like it moved with you.
+ * Cheap loud-RSSI reject first so the list is not O(n²) GPS on every radio.
  */
 object CoTravel {
     const val MOVE_M = 45.0
@@ -208,6 +209,7 @@ object CoTravel {
     private val trailGeom = java.util.concurrent.ConcurrentHashMap<String, TrailGeom>(64)
 
     fun withYou(device: Sighting, ctx: Ctx, now: Long = System.currentTimeMillis()): Boolean {
+        if (device.kind == RadioKind.WIFI) return false
         if (!ctx.ready || ctx.here == null) return false
         if (now - device.lastSeen > HEARD_MS) return false
         // Last packet can dip on a highway; the cheap reject is the trail floor, not −70 instant.
@@ -225,8 +227,7 @@ object CoTravel {
         // Last GPS stamp is the phone at hear-time. 50 m of driving is ~2 s on an interstate,
         // so a bag tag that advertises every few seconds would flash without a speed-aware slack.
         val speed = (ctx.pathLengthM / (ctx.durationMs / 1000.0).coerceAtLeast(1.0)).coerceIn(0.0, 40.0)
-        val minHoldS = if (device.kind == RadioKind.WIFI) 50.0 else 15.0
-        val allowM = max(NEAR_M, speed * minHoldS) + 25.0
+        val allowM = max(NEAR_M, speed * 15.0) + 25.0
         return moved <= allowM
     }
 

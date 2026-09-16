@@ -459,7 +459,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.0")
+    c.drawString(48, 108, "Version 1.0.1")
     c.drawString(48, 94, "15 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.0  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.1  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -2286,7 +2286,7 @@ def story():
         P("On the tab, in the same order as Figs. 14–15:", "body_left"),
         bullets([
             "<b>Radios to show</b> — Both, Wi-Fi only, or BLE only. A device is never both.",
-            "<b>Moving with you</b> — GPS co-travel, loud radios only (most GPS-stamped samples at about −75 dBm or stronger). Needs Tag detections with GPS (live updates, not a stale last-known) and ~45 m of path. A house AP you meet at the door does not count; a bag or car tag does. “Still here” grows with your recent speed and is longer for Wi-Fi than for BLE (§8.5). A second phone usually will not: BLE MAC rotation starts a new radio with an empty trail. The switch starts a follow test on all radios (clears Signatures only / Show only / Named radios only / Watched only; Hide these stays). Always AND. Live display → Start over clears the path and trails, not the log. Debrief still writes the last-15-minute tracking section even if this is off.",
+            "<b>Moving with you</b> — GPS co-travel on <b>BLE only</b> (most GPS-stamped samples at about −75 dBm or stronger). Wi-Fi access points stay off: a loud AP you drive past paints hundreds of meters of your hear-time path and looks like it moved with you. Needs Tag detections with GPS (live updates, not a stale last-known) and ~45 m of path. A bag or car tag counts. “Still here” grows with your recent speed (§8.5). A second phone usually will not: BLE MAC rotation starts a new radio with an empty trail. The switch starts a BLE follow test (clears Signatures only / Show only / Named radios only / Watched only; Hide these stays). Always AND. Live display → Start over clears the path and trails, not the log. Debrief still writes the last-15-minute tracking section even if this is off.",
             "<b>New detections only</b> — hide radios already here. Always AND. Mark seen / Reset seen sit on the Live display (§5.3.2). First turn-on snapshots what is on the air. Randomized BLE addresses still look new. All traffic or Reset filter turns this off and clears already-seen.",
             "<b>Signatures only</b> — hide radios that match no signature. While class Show only or Show only selected signatures is narrowing the Live display, this is already true: the switch stays on and disabled until you turn those off.",
             "<b>Watched only</b> — hide radios that are not a bookmarked signature match and not a Named radio with Alert on. Always AND. Hide these still applies (Watched only + Hide Surveillance drops bookmarked cameras). Label-only names stay on Named radios only. The Live display shows a Watched only strip while this is on.",
@@ -2392,7 +2392,7 @@ def story():
                 ["Wi-Fi only", "BLE off.", "APs, hotspots, mesh, soft-AP. No LE rows."],
                 ["BLE only", "Wi-Fi off.", "Advertisers only."],
                 ["Strong signal", "RSSI floor −70 dBm. Both radios.", "Drops the quiet crowd. Not a Hunt. Pair with Display → Subtitle None if the list is still busy."],
-                ["Moving with you", "Moving with you on. Both radios. No Signatures only, no Watched only, no Named radios only, no class Show only.", "Still needs Settings → Tag detections with GPS and ~50 m of path. Bag/car tag yes; house AP on arrival no. “Still here” grows with speed (§8.5). The switch starts a follow test on all radios (it clears Show only, Signatures only, Named radios only, and Watched only). Debrief tracking is separate (§12.2)."],
+                ["Moving with you", "Moving with you on. BLE follow test (Wi-Fi APs excluded). No Signatures only, no Watched only, no Named radios only, no class Show only.", "Still needs Settings → Tag detections with GPS and ~50 m of path. Bag/car tag yes. Access points stay off — range looks like co-travel. “Still here” grows with speed (§8.5). The switch starts a BLE follow test (it clears Show only, Signatures only, Named radios only, and Watched only). Debrief tracking is separate (§12.2)."],
                 ["Trackers", "BLE only + Show only Finder tags.", "AirTag / SmartTag / Tile / Chipolo / Pebblebee. Not iBeacon / Minew (Retail beacons class chip). Bag tag will dominate. Matching stays on. Signatures only is implied (switch dimmed)."],
                 ["Hide trackers", "Hide class Finder tags. The rest of the field stays.", "Unmatched radios still show. Watchlist will not beep for a hidden class. Signatures only stays a real switch."],
                 ["Hide phones", "Hide class Phones / PCs.", "Apple Device, Fast Pair, Google, Microsoft Device, Phone hotspot. Unmatched radios still show. Hide Fast Pair account-key is a narrower switch (plaza chips only)."],
@@ -2415,12 +2415,12 @@ def story():
             "rows are still not identity."
         ),
         P(
-            "Two very different radios can both be loud. A tag in the bag or a hotspot in the "
-            "car is heard again and again while the phone’s GPS path lengthens. A house access "
-            "point is silent for the whole drive and then suddenly strong at the driveway. The "
-            "filter is built to keep the first and drop the second. Passing phones on an "
-            "interstate sit in between: they are loud for a few seconds and then gone. Those "
-            "should flash through and leave. A radio that is actually with you should stay."
+            "Wi-Fi access points are excluded. GPS is the phone at hear-time, not the other radio. "
+            "A loud AP you drive past is still in earshot for hundreds of meters, so its trail "
+            "is your path and looks like co-travel. Moving with you is therefore BLE only: a tag "
+            "in the bag or a speaker in the car is heard again and again while the phone’s GPS "
+            "path lengthens. Passing phones on an interstate are loud for a few seconds and then "
+            "gone. Those should flash through and leave. A BLE radio that is actually with you should stay."
         ),
         P("8.5.1 What has to be true before anyone qualifies", "h3"),
         P(
@@ -2466,31 +2466,28 @@ def story():
             "jumpy fix cannot grant kilometers of slack."
         ),
         P(
-            "Android delivers Bluetooth advertisements more often than it scans for Wi-Fi access "
-            "points. A hotspot in the car can go tens of seconds between scans; a BLE tag in the "
-            "bag usually speaks every few seconds. The hold time is therefore 15 seconds for BLE "
-            "and 50 seconds for Wi-Fi, then multiplied by your recent speed. A 50 m floor still "
-            "wins when you are slow, so a sidewalk tag is not given a city-block of slack. For "
-            "BLE that floor hands off around a fast walk or slow bicycle (about 7.5 mph). Wi-Fi "
-            "leaves the floor sooner, because 50 seconds of walking is already more than 50 m. "
-            "On top of that product, 25 m of GPS slack is added at every speed — enough to cover "
-            "ordinary fix jitter without pretending RSSI is a tape measure."
+            "A BLE tag in the bag usually speaks every few seconds. The hold time is 15 seconds, "
+            "then multiplied by your recent speed. A 50 m floor still wins when you are slow, so a "
+            "sidewalk tag is not given a city-block of slack. That floor hands off around a fast "
+            "walk or slow bicycle (about 7.5 mph). On top of that product, 25 m of GPS slack is "
+            "added at every speed — enough to cover ordinary fix jitter without pretending RSSI "
+            "is a tape measure."
         ),
         P(
-            "In short: <b>allowed distance = the larger of 50 m or (speed × hold time), plus 25 m</b>. "
-            "Hold time is 15 s on BLE and 50 s on Wi-Fi."
+            "In short: <b>allowed distance = the larger of 50 m or (speed × 15 s), plus 25 m</b>. "
+            "Wi-Fi access points never get this window — they are excluded before the gates."
         ),
         table(
-            ["Your recent speed", "BLE still-here", "Wi-Fi still-here", "What that feels like"],
+            ["Your recent speed", "BLE still-here", "What that feels like"],
             [
-                ["Walking (~3 mph)", "about 75 m", "about 90 m", "A house-length. The 50 m floor is still doing the work for BLE."],
-                ["Fast walk / bicycle (~7.5 mph)", "about 75 m", "about 190 m", "BLE is just leaving the floor. Wi-Fi already uses the 50 s hold."],
-                ["Neighborhood (~15 mph)", "about 125 m", "about 360 m", "A tag that skipped a couple of advertisements still counts as with you."],
-                ["City street (~30 mph)", "about 225 m", "about 700 m", "A few seconds of silence is a couple of blocks, not a miss."],
-                ["Interstate (~55 mph)", "about 400 m", "about 1.3 km", "Two seconds of driving is already ~50 m. The hold is now a handful of advertisements, or about one Wi-Fi scan."],
-                ["Fast highway (~70 mph)", "about 500 m", "about 1.6 km", "A car tag should stay. A roadside AP you passed still fails the trail-moved gates."],
+                ["Walking (~3 mph)", "about 75 m", "A house-length. The 50 m floor is still doing the work."],
+                ["Fast walk / bicycle (~7.5 mph)", "about 75 m", "Just leaving the floor."],
+                ["Neighborhood (~15 mph)", "about 125 m", "A tag that skipped a couple of advertisements still counts as with you."],
+                ["City street (~30 mph)", "about 225 m", "A few seconds of silence is a couple of blocks, not a miss."],
+                ["Interstate (~55 mph)", "about 400 m", "Two seconds of driving is already ~50 m. The hold is now a handful of advertisements."],
+                ["Fast highway (~70 mph)", "about 500 m", "A car tag should stay. Roadside BLE still fails the trail-moved gates."],
             ],
-            [1.45 * inch, 1.15 * inch, 1.25 * inch, 2.65 * inch],
+            [1.8 * inch, 1.5 * inch, 3.2 * inch],
         ),
         Spacer(1, 6),
         P(
@@ -2510,10 +2507,10 @@ def story():
             "stamped all the way down the interstate, so it survives the same gates."
         ),
         P(
-            "House access points fail the same way when you pull in: they have no long loud "
-            "trail behind you. If they do show after you get home, the path was too short, GPS "
-            "only started stamping at the destination, or you have not walked/driven the ~45 m "
-            "the test needs. Live display → Start over, then move again."
+            "Wi-Fi access points never qualify. If an AP still shows under this filter, that is a bug. "
+            "House BLE you meet at the door fails the trail-moved gates. If a bag tag does not show, "
+            "the path was too short, GPS only started stamping at the destination, or you have not "
+            "walked/driven the ~45 m the test needs. Live display → Start over, then move again."
         ),
         P(
             "Start over (on the Live display, above the tabs) clears the operator path and every radio’s GPS "
@@ -3806,7 +3803,7 @@ def story():
                 ["Sitting a room — who just arrived", "§12.3 New detections only. Mark seen after the room is the baseline. Reset seen when you change rooms."],
                 ["ATAK overlay (Remote ID / Extra attention)", "§5.8 configure, §12.15 sit. Settings → TAK / CoT feed. Extra attention + Payload location. Same Wi-Fi LAN. Privacy mode off."],
                 ["Long sit / parked vehicle", "Balanced or Saver. Timeline. RSSI floor −80 if unreadable. Logging on. Watchlist, not a stare."],
-                ["Drive, then arrive home", "Moving with you should drop house APs you only meet at the door. If they still show, the path was too short or GPS only stamped at the destination."],
+                ["Drive, then arrive home", "Moving with you is BLE only — house APs stay off. If a bag tag still does not show, the path was too short or GPS only stamped at the destination."],
                 ["Long drive (several km)", "Do not wait for one Debrief at the end. Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). City RF can fill the ~400 live-set cap in a few kilometers. Radios moving with you stay in each report; roadside unnamed BLE will not. Share log is the hour-long file."],
                 ["List too fast to tap", "Pause. Then detail. Resume. Or Display → Subtitle None so more of the list fits without Pause."],
                 ["Fit the row to the job", "§5.3. Display is look (Title/Subtitle, extras). Filters are who. Plaza: Subtitle None. Copy MAC: Title → MAC. Channel sit: Frequency on."],
@@ -4166,7 +4163,7 @@ def story():
             ["Pwnagotchi", "Catalog signature (on). Classic BSSID de:ad:be:ef:de:ad. Extra attention."],
             ["Marauder / Deauther", "Catalog signature (on). MarauderAP / Deauther default names. Extra attention. DIY boards match too."],
             ["Porkchop", "Catalog signature (on). SSID/name PORKCHOP; BACON fake-AP vendor IE 50:52:4B. Extra attention. Cardputer / CYD firmware, not every ESP32."],
-            ["Moving with you", "Filter: loud radios (about −75 dBm or stronger on the trail) with a GPS trail along your path, still being heard. “Still here” is not a fixed radius: allowed distance = the larger of 50 m or (recent speed × 15 s BLE / 50 s Wi-Fi), plus 25 m of GPS slack. Walking holds a house-length; highway hold is a handful of advertisements so a car tag does not blink off between packets. Passing radios still fail the trail-moved gates. Needs live tagging (not stale last-known) and ~45 m of path. Bag/car tag yes; house AP on arrival no; a second iPhone usually no (BLE MAC rotation). The switch starts a follow test on all radios (clears Signatures only / Show only / Named radios only / Watched only; Hide these stays). The preset replaces the whole filter. Live display → Start over clears path and trails. Debrief still writes the same co-travel assessment for the last 15 minutes even if this filter is off and even if the Live display is not on the list. §8.5."],
+            ["Moving with you", "Filter: loud BLE (about −75 dBm or stronger on the trail) with a GPS trail along your path, still being heard. Wi-Fi access points are excluded — hear-time GPS on a loud AP looks like co-travel. “Still here” is not a fixed radius: allowed distance = the larger of 50 m or (recent speed × 15 s), plus 25 m of GPS slack. Walking holds a house-length; highway hold is a handful of advertisements so a car tag does not blink off between packets. Passing BLE still fails the trail-moved gates. Needs live tagging (not stale last-known) and ~45 m of path. Bag/car tag yes; a second iPhone usually no (BLE MAC rotation). The switch starts a BLE follow test (clears Signatures only / Show only / Named radios only / Watched only; Hide these stays). The preset replaces the whole filter. Live display → Start over clears path and trails. Debrief still writes the same co-travel assessment for the last 15 minutes even if this filter is off and even if the Live display is not on the list. §8.5."],
             ["Start over", "Live display button while Moving with you is on. Clears the operator GPS path and radio GPS trails. List and log stay. Path meter returns to 0 m."],
             ["Live display", "The first bottom tab (labeled Live on the phone). The on-screen picture of radios: radar, list, timeline, hybrid, or By class. Filters change who appears here; Display (tune) changes how each row looks. Not “live vs recorded” — Debrief, the log, and the TAK feed are separate. §5.1–5.3."],
             ["By class", "Live display view (Display → By class). Outline of the filtered set: every class A–Z by name → signatures A–Z → radios → detail. Unmatched last. Show all (default) keeps empty classes; Collapse empty hides zeros. Those chips scroll with the list. Class headers use the same glyphs as Live display rows (unmatched = ?). Counts are radios, not packets. Radio rows follow Display (bars, chips, Frequency, first/last). Dual-chip radios sit in each class they matched. A watchlist hit opens that class and signature so the row can flash, and the jump keeps those headers on screen when the radio is close enough. Not a Report. §6.5."],
@@ -4567,8 +4564,8 @@ def story():
             ["TAK marker vanished", "CoT stale (~120 s) after the radio left or scanning stopped.", "Expected. Fieldwatch does not send delete events. Keep scanning to refresh. A rotated BLE MAC is a new uid."],
             ["GPS path stays 0 m while I drive / Moving with you says keep moving", "The phone is not giving a live fix.", "Turn on Tag detections with GPS and high-accuracy Location. Scanning must be running. Wait until the path meter is not 0, then walk or drive."],
             ["Second iPhone in the car did not show under Moving with you", "iOS rotates the BLE address, so Fieldwatch sees a new radio with an empty GPS trail.", "Expected. Use a tag with a stable MAC (AirTag/Tile in the bag) as the confidence check. Phones will not stitch as one follower."],
-            ["Moving with you lists house APs after I get home", "The radio did not actually co-travel; it was only heard at the door.", "A match must stay loud on the trail (about −75 dBm or stronger) with a GPS path that moved, and still be heard. House APs you meet on arrival should stay off. Bag and car tags should stay on."],
-            ["Moving with you flashes on the highway", "Passing radios only overlap for a few seconds, so they fail the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel for BLE at 55 mph, longer for Wi-Fi) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones and roadside APs will still appear and leave — that is the filter working. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
+            ["Moving with you lists house APs after I get home", "Wi-Fi access points are excluded from this filter.", "Expected. A loud AP you drive past paints your hear-time path and would look like co-travel, so APs never qualify. Bag and car BLE tags should stay on."],
+            ["Moving with you flashes on the highway", "Passing BLE only overlaps for a few seconds, so it fails the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel at 55 mph) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones will still appear and leave — that is the filter working. Roadside APs stay off. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
             ["LE color / “What this looks like” flips on and off", "BLE advertisements rotate payloads (for example iBeacon, then Nearby).", "Fieldwatch keeps manufacturer records per company and type for that radio, so a hit should stay labeled when the payload rotates."],
             ["Debrief PDF will not open in the other app", "The other app did not get read permission, or it rejects application/pdf.", "Share to Files, Drive, or a PDF viewer."],
             ["Restore defaults wiped custom signatures", "Restore rewrites config.json from the catalog.", "Expected. Export signatures from Settings before Restore if you want a backup. Import that JSON to get customs back (stock ids merge extra rules; they are not cloned)."],
@@ -4591,8 +4588,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.0 (versionCode 1), field build of 15 September 2026"],
-                ["Document version", "1.0.0"],
+                ["Software version", "1.0.1 (versionCode 2), field build of 15 September 2026"],
+                ["Document version", "1.0.1"],
                 ["Document date", "15 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
