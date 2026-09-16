@@ -12,7 +12,7 @@ It was Spectre through 1.2.14. I later learned that name was already in use by a
 
 If you spot an error, something stupid, or have a feature idea — in the app or the documentation — please [open an issue on this repository](https://github.com/OffGridPete/Fieldwatch/issues). This is how we make it better. I hope you find it as useful as I have. I look forward to hearing how it goes.
 
-**Just want to install it?** The [Latest release](https://github.com/OffGridPete/Fieldwatch/releases/latest) has the APK, or download [Fieldwatch.apk](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch.apk) from `dist/`. Instruction card and manual: [instruction.txt](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/instruction.txt), [Fieldwatch_User_Manual.pdf](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch_User_Manual.pdf). Leave the APK named `Fieldwatch.apk`. GitHub may say the file is too big to preview — that is their viewer; use Download.
+**Just want to install it?** The [Latest release](https://github.com/OffGridPete/Fieldwatch/releases/latest) has the APK, or download [Fieldwatch.apk](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch.apk) from `dist/`. Instruction card and manual: [instruction.txt](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/instruction.txt), [Fieldwatch_User_Manual.pdf](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch_User_Manual.pdf). [What’s new](CHANGELOG.md) is the changelog for each build. Leave the APK named `Fieldwatch.apk`. GitHub may say the file is too big to preview — that is their viewer; use Download.
 
 ## Safety & disclaimer
 
@@ -38,7 +38,7 @@ Do not rename the APK. Open `Fieldwatch.apk` from Files (or My Files). Allow ins
 | `dist/Fieldwatch.apk` | Sideload APK |
 | `dist/instruction.txt` | Permissions, first launch |
 | `dist/Fieldwatch_User_Manual.pdf` | User manual |
-| `CHANGELOG.md` | What changed in each build |
+| [`CHANGELOG.md`](CHANGELOG.md) | What’s new in each build |
 | `LICENSE` | MIT License |
 | `NOTICE` | Third-party attribution |
 
