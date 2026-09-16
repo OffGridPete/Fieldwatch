@@ -4,6 +4,8 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -283,7 +285,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     if (export.error != null) {
         AlertDialog(
             onDismissRequest = vm::consumeExportNotice,
-            title = { Text("Could not export") },
+            title = { Text(export.errorTitle ?: "Could not export") },
             text = { Text(export.error ?: "") },
             confirmButton = {
                 TextButton(onClick = vm::consumeExportNotice) { Text("OK") }
@@ -479,7 +481,15 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             }
         },
     ) { pad ->
-        NavHost(nav, startDestination = "live", modifier = Modifier.padding(pad)) {
+        NavHost(
+            nav,
+            startDestination = "live",
+            modifier = Modifier.padding(pad),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+        ) {
             composable("live") {
                 Column(Modifier.fillMaxSize()) {
                     AnimatedVisibility(

@@ -47,6 +47,7 @@ import app.fieldwatch.domain.CandidateReport
 import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
+import app.fieldwatch.domain.SettingsExchange
 import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
@@ -87,6 +88,7 @@ data class ExportUi(
     val share: Intent? = null,
     val shareTitle: String = "Export Fieldwatch logs",
     val error: String? = null,
+    val errorTitle: String? = null,
     val cleared: Boolean = false,
     val saved: Boolean = false,
     val noticeTitle: String? = null,
@@ -894,7 +896,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             }.onSuccess { intent ->
                 _export.value = ExportUi(share = intent, shareTitle = "Fieldwatch signatures")
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not export signatures")
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not export signatures",
+                    errorTitle = "Could not export signatures",
+                )
             }
         }
     }
@@ -914,7 +919,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     noticeMessage = "The pack was written to the folder you picked. Share it with another Fieldwatch or keep it as a backup before Restore defaults.",
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not save signatures")
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not save signatures",
+                    errorTitle = "Could not save signatures",
+                )
             }
         }
     }
@@ -943,7 +951,120 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     noticeMessage = summary,
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not import signatures")
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not import signatures",
+                    errorTitle = "Could not import signatures",
+                )
+            }
+        }
+    }
+
+    fun suggestedSettingsName(): String {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
+            .format(java.util.Date())
+        return "fieldwatch-settings-$stamp.json"
+    }
+
+    private fun settingsPackJson(): String {
+        val cfg = app.config.config.value
+        return SettingsExchange.encode(
+            SettingsExchange.pack(
+                settings = cfg.settings,
+                filter = cfg.filter,
+                presets = cfg.presets,
+                watchlist = cfg.watchlist,
+                hiddenPresetIds = cfg.hiddenPresetIds,
+                appVersion = BuildConfig.VERSION_NAME,
+                exportedAt = java.time.Instant.now().toString(),
+            ),
+        )
+    }
+
+    fun startSettingsShare() {
+        viewModelScope.launch {
+            runCatching {
+                val json = withContext(Dispatchers.Default) { settingsPackJson() }
+                val dir = File(app.cacheDir, "settings").apply { mkdirs() }
+                val file = File(dir, suggestedSettingsName())
+                withContext(Dispatchers.IO) { file.writeText(json) }
+                val uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    clipData = ClipData.newRawUri("settings", uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch settings")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(share = intent, shareTitle = "Fieldwatch settings")
+            }.onFailure { err ->
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not export settings",
+                    errorTitle = "Could not export settings",
+                )
+            }
+        }
+    }
+
+    fun saveSettingsToUri(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                val json = withContext(Dispatchers.Default) { settingsPackJson() }
+                withContext(Dispatchers.IO) {
+                    app.contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(json.toByteArray(Charsets.UTF_8))
+                    } ?: error("Could not write to the location you picked.")
+                }
+            }.onSuccess {
+                _export.value = ExportUi(
+                    noticeTitle = "Settings saved",
+                    noticeMessage = "The pack was written to the folder you picked. Keep it for a factory reset or a new phone. Import settings on the new install. Signatures are a separate pack.",
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not save settings",
+                    errorTitle = "Could not save settings",
+                )
+            }
+        }
+    }
+
+    fun importSettingsFromUri(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                val text = withContext(Dispatchers.IO) {
+                    app.contentResolver.openInputStream(uri)?.use {
+                        it.readBytes().toString(Charsets.UTF_8)
+                    } ?: error("Could not read that file.")
+                }
+                val pack = SettingsExchange.parse(text)
+                val prev = app.config.settings
+                val result = app.config.importSettings(pack)
+                if (result.error != null) error(result.error)
+                val next = app.config.settings
+                app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
+                if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
+                if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
+                    app.startScanning()
+                }
+                app.devices.refresh(
+                    app.config.fleets,
+                    next.staleSec,
+                    policy = next.detectionPolicy(),
+                    decaySec = next.decaySec,
+                )
+                if (next.alertVoice) app.alerter.prepareVoice()
+                result.summary()
+            }.onSuccess { summary ->
+                _export.value = ExportUi(
+                    noticeTitle = "Settings imported",
+                    noticeMessage = summary,
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not import settings",
+                    errorTitle = "Could not import settings",
+                )
             }
         }
     }

@@ -91,6 +91,12 @@ fun SettingsScreen(
     val importSignatures = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri -> uri?.let(vm::importSignaturesFromUri) }
+    val saveSettings = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> uri?.let(vm::saveSettingsToUri) }
+    val importSettings = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> uri?.let(vm::importSettingsFromUri) }
     var confirmRestore by remember { mutableStateOf(false) }
     Scaffold(
         contentWindowInsets = NestedTabInsets,
@@ -580,6 +586,31 @@ fun SettingsScreen(
             }
             }
 
+            SectionCard("Settings backup") {
+            Text(
+                "Settings switches, the current filter, filter presets, named radios, and signature watches. " +
+                    "Not the catalog — that is Export signatures. Not logs or GPS. " +
+                    "Import replaces those on this phone; the catalog stays. " +
+                    "Use this after a factory reset or on a new phone.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FieldwatchActionButton(
+                onClick = vm::startSettingsShare,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Export settings") }
+            FieldwatchActionButton(
+                onClick = { saveSettings.launch(vm.suggestedSettingsName()) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Save settings to SD card / storage…") }
+            FieldwatchActionButton(
+                onClick = {
+                    importSettings.launch(arrayOf("application/json", "text/plain", "*/*"))
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Import settings…") }
+            }
+
             Text(
                 "Fieldwatch ${app.fieldwatch.BuildConfig.VERSION_NAME}  ·  passive Wi-Fi + BLE only. " +
                     "Stock Android cannot promiscuously capture Wi-Fi stations; access points and BLE advertisers are what the radios expose.",
@@ -617,7 +648,8 @@ fun SettingsScreen(
                 Text(
                     "Rewrites the catalog (stock rows, class colors, Decode fields), stock bookmarks, " +
                         "stock filter chips, and default Settings switches. Custom signatures and chips you " +
-                        "saved are wiped. Export signatures first if you want a backup. This cannot be undone.",
+                        "saved are wiped. Export signatures and Export settings first if you want a backup. " +
+                        "This cannot be undone.",
                 )
             },
             confirmButton = {

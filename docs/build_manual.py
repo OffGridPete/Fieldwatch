@@ -459,8 +459,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.1")
-    c.drawString(48, 94, "15 September 2026")
+    c.drawString(48, 108, "Version 1.0.2")
+    c.drawString(48, 94, "16 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.1  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.2  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -998,7 +998,7 @@ def story():
             "A <b>Disclaimer and license</b> page appears once. Read it. Check <b>I have read this and I agree</b>, then Continue. Scanning does not start until you do. It does not show again unless you clear app data.",
             "Grant the permission screen. Fieldwatch will not start radios until the required set is complete.",
             "A foreground notification <b>Fieldwatch scanning</b> appears. Leave it; dismissing via Stop ends collection.",
-            "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock signature catalog, presets, bookmarks, and Settings listed in the Appendix. Later launches reload that file. Restore default signatures &amp; presets writes it from the stock catalog again. Settings → Export signatures shares the catalog as JSON, without logs, GPS, or filters (§5.7, §9.3).",
+            "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock signature catalog, presets, bookmarks, and Settings listed in the Appendix. Later launches reload that file. Restore default signatures &amp; presets writes it from the stock catalog again. Settings → Export signatures shares the catalog as JSON. Settings → Export settings shares switches, the current filter, presets, and named radios. Neither pack has logs or GPS (§5.7, §9.3).",
             "The Live display opens on the last view mode (default: Strength list). The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
             "Turn on system Location and Bluetooth if either is off. The Live display header and Settings show radio hints (Wi-Fi next Ns, waiting on OS, BLE cycling). Keep screen on is enabled by default. If you will leave the app: Settings → Allow background usage, then Unrestricted battery. Some phones (Samsung among them) do not open onto Unrestricted — tap Allow background usage to click through and select it.",
         ]),
@@ -1173,7 +1173,7 @@ def story():
                 ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 14–16."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). Each row shows the class glyph, and a hexagon when that row has a Decode fields map (§9.6). Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). Bookmark = watch (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Debrief (text / PDF), AI Export, Signature candidates, Share log, Save log, Reset / clear log. Debrief is the last 15 minutes in memory (cap ~400), not the log. Signature candidates mines the rotating log for unmatched families. On a long drive tap Debrief more than once (§11.4.1). GPS / place names / logging on-off stay on Settings."],
-                ["Settings", "Theme, Keep screen on, Privacy mode (MAC tails on screen and sit reports; pauses TAK), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, restore defaults. Row layout is Live display → Display, not here. TAK: §5.8."],
+                ["Settings", "Theme, Keep screen on, Privacy mode (MAC tails on screen and sit reports; pauses TAK), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Settings backup (export / import settings), restore defaults. Row layout is Live display → Display, not here. TAK: §5.8."],
             ],
             [1.2 * inch, 5.3 * inch],
         ),
@@ -1598,8 +1598,9 @@ def story():
             "<b>Logging</b> — Write to disk, CSV vs JSONL, rotate size, Stale after slider (when a radio is marked gone). Line/disk counts. Share, Save, and Reset / clear log are on Reports.",
             "<b>Allow background usage</b> — Switch. Opens Fieldwatch’s Battery page; turn on Allow background usage so the OS may run the scan when Fieldwatch is not in front. Follows that Android setting. Not Keep screen on.",
             "<b>Unrestricted battery</b> — Switch. Opens the Battery page. Select Unrestricted (not Optimized). Some phones (Samsung among them) do not open onto that choice — tap Allow background usage (the words, not the switch) to click through and select Unrestricted. Fieldwatch follows that grant when you return.",
-            "<b>Signatures — export / import</b> — Export signatures shares a JSON pack of the whole catalog (stock plus any you added or edited, including Decode fields). Save signatures to SD card / storage… writes the same file through the system picker. Import signatures… reads a pack from another Fieldwatch. Same id or the same match rules are skipped, so importing twice does not clone the catalog. Extra rules on a stock row (for example a glob you added to Govee) merge onto the local row; a missing Decode fields map on that stock id is filled from the pack. A new name that already exists is imported as “Name (imported)”. Watchlist, filters, settings, logs, and GPS are not in the pack. The file is <font face='Courier'>fieldwatch-signatures-YYYYMMDD.json</font>.",
-            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks, the full stock filter-chip set (including chips you long-press deleted), and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters.",
+            "<b>Signatures — export / import</b> — Export signatures shares a JSON pack of the whole catalog (stock plus any you added or edited, including Decode fields). Save signatures to SD card / storage… writes the same file through the system picker. Import signatures… reads a pack from another Fieldwatch. Same id or the same match rules are skipped, so importing twice does not clone the catalog. Extra rules on a stock row (for example a glob you added to Govee) merge onto the local row; a missing Decode fields map on that stock id is filled from the pack. A new name that already exists is imported as “Name (imported)”. Watchlist, filters, settings, logs, and GPS are not in the pack. A settings pack is a different file — use Import settings. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-signatures-YYYYMMDD.json</font>.",
+            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks, the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
+            "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
         ]),
         P(
             "How the Live display row looks — View, Sort, Title line, Subtitle line, RSSI bars, "
@@ -2635,8 +2636,8 @@ def story():
             "Settings → Export signatures writes the whole catalog to a JSON pack you can share "
             "or keep as a backup. Import signatures adds new rows and extra rules; it does not "
             "delete anything. Same id or the same match rules are skipped. A colliding name is "
-            "imported as “Name (imported)”. Restore defaults still wipes customs — export first "
-            "if you want them back."
+            "imported as “Name (imported)”. Restore defaults still wipes customs — export "
+            "signatures (and Export settings for named radios / switches) first if you want them back."
         ),
         P("9.4 Practices that hold up in the field", "h2"),
         bullets([
@@ -2887,7 +2888,7 @@ def story():
             "in the editor (for example a neighborhood of Espressif gadgets tripping Flock OUI 3C:71:BF). "
             "Restore default signatures &amp; presets rebuilds the catalog (including stock Decode fields), stock bookmarks, and the "
             "default Settings switches (Keep screen on, Tag detections with GPS, Online place names, TAK / CoT off). "
-            "It also wipes custom signatures and presets. Export first if you want a backup. "
+            "It also wipes custom signatures, presets, and named radios. Export signatures and Export settings first if you want a backup. "
             "Do not use Restore as an undo for a single rule."
         ),
         P(
@@ -3555,7 +3556,7 @@ def story():
         P(
             "Twelve rotated files at 1 MB is about 12 MB worst case, plus config.json. "
             "Uninstalling the app deletes logs. Copy out before a Restore defaults or a "
-            "reinstall. The clock is the phone clock; set it correctly before a timed sit. "
+            "reinstall. Export signatures and Export settings if you want the catalog and named radios back after a factory reset. The clock is the phone clock; set it correctly before a timed sit. "
             "Tag detections with GPS requests live GPS and network updates while scanning "
             "(stale last-known older than 30 s is ignored) and writes that fix onto the in-memory "
             "sighting (detail, Moving with you, Debrief) and onto each new log row (lat/lon). "
@@ -4171,7 +4172,8 @@ def story():
             ["Sort (Display)", "Order of the list, hybrid, and timeline. Strongest signal; Strongest averaged over 30 s (the default); Newest heard; Newest alert; Newest arrival; New at bottom; Name A–Z (Title line); Signatures first. Does not hide radios. Radar still plots by RSSI radius. §5.3."],
             ["Preset (Filters)", "Chip at the top of Filters. A tap replaces the whole filter, not Display. Short stock set: All traffic, Wi-Fi only, BLE only, Strong signal, Moving with you, Trackers, Hide trackers, Hide phones — plus chips you saved. Class Show only (Cameras, Drones, …) is the chips further down; Save current as… if you want that sit as a preset. Show-only presets imply Signatures only (switch dimmed). Long-press any chip to delete it. Stock chips you remove stay gone until Restore default signatures &amp; presets. Reset filter clears this tab; it is not undo. §8.4."],
             ["Signature class", "Bucket on every signature: Finder tags, Retail beacons, Signage, Wearables, Surveillance, Drones, Pentest, Public safety, Vehicle, Glasses, Audio, Cameras, Thermostats, Locks, Health, Home IoT, ISP / routers, Mesh, Phones / PCs, Other. Public safety is Axon / WatchGuard Video and public-safety vehicle APs (Cradlepoint, AirLink, Compex, Novatel, Utility Inc). Those radios are used in law enforcement; they are not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit. Health is clinic / home-medical BLE (Honeywell Xenon HC scanners, Omron cuffs, Withings scales, Dexcom). Cameras is consumer / action cameras, not poles (Surveillance) and not Axon. Glasses is Meta / Snap. Audio is AirPods / Sony / Bose / JBL / Sonos. Color is the Live display chip; class is the filter. Custom rows default to Other. An old Body-worn class folded into Wearables. §8.3, §9.5."],
-            ["Signature pack", "JSON file from Settings → Export signatures (fieldwatch-signatures-YYYYMMDD.json). Stock plus your edits. No logs, GPS, filters, or watchlist. Import skips the same id or the same match rules, merges extra rules onto a stock row, and renames a colliding name to “Name (imported)”. Restore defaults still wipes customs. §5.7, §9.3."],
+            ["Signature pack", "JSON file from Settings → Export signatures (fieldwatch-signatures-YYYYMMDD.json). Stock plus your edits. No logs, GPS, filters, or watchlist. Import skips the same id or the same match rules, merges extra rules onto a stock row, and renames a colliding name to “Name (imported)”. Restore defaults still wipes customs. A settings pack is a different file. §5.7, §9.3."],
+            ["Settings pack", "JSON file from Settings → Export settings (fieldwatch-settings-YYYYMMDD.json). Settings switches, the current filter, filter presets, named radios, and signature watches. Not the catalog, logs, or GPS. Import replaces those setup fields; the catalog stays. First-run disclaimer is not overwritten. Factory-reset / new-phone backup. §5.7."],
             ["Show only / Hide these", "Filters → signature classes. Show only keeps radios matching the class chips you pick (unmatched stay hidden; Signatures only is implied and the switch is dimmed). Hide these drops those classes and leaves unmatched. Live display only — matching, log, and Debrief still see them. Show only with no class picked leaves the Live display unchanged. §8.1–8.4."],
             ["Title line", "Display → first line of each list, hybrid, or timeline row. Advertised name, Name + type, or MAC (default). Stays bold even when it is a MAC. Name A–Z sorts by this line (so the default is MAC order). Radar labels ignore it."],
             ["Subtitle line", "Display → second line. Always starts with a small Wi-Fi icon (access point) or Bluetooth icon (BLE advertiser). Then Advertised name, Name + type (default), or MAC, plus rand/pair/gone. pair is Fast Pair pairing-mode seen this session. None hides the line so more rows fit; crumbs move onto the title. The kind icon does not move onto the title. Unnamed BLE on this line is unnamed (the icon already marks LE). Vendor is not on this line."],
@@ -4568,8 +4570,10 @@ def story():
             ["Moving with you flashes on the highway", "Passing BLE only overlaps for a few seconds, so it fails the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel at 55 mph) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones will still appear and leave — that is the filter working. Roadside APs stay off. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
             ["LE color / “What this looks like” flips on and off", "BLE advertisements rotate payloads (for example iBeacon, then Nearby).", "Fieldwatch keeps manufacturer records per company and type for that radio, so a hit should stay labeled when the payload rotates."],
             ["Debrief PDF will not open in the other app", "The other app did not get read permission, or it rejects application/pdf.", "Share to Files, Drive, or a PDF viewer."],
-            ["Restore defaults wiped custom signatures", "Restore rewrites config.json from the catalog.", "Expected. Export signatures from Settings before Restore if you want a backup. Import that JSON to get customs back (stock ids merge extra rules; they are not cloned)."],
-            ["Import signatures says not a Fieldwatch pack", "The file is a log, a photo, or config.json, not an exported pack.", "Export from Settings → Export signatures. The file starts with format fieldwatch-signatures. Logs stay on Reports."],
+            ["Restore defaults wiped custom signatures", "Restore rewrites config.json from the catalog.", "Expected. Export signatures from Settings before Restore if you want a backup. Import that JSON to get customs back (stock ids merge extra rules; they are not cloned). Named radios and Settings switches go with Export settings."],
+            ["Import signatures says not a Fieldwatch pack", "The file is a log, a photo, a settings pack, or config.json, not an exported catalog pack.", "Export from Settings → Export signatures. The file starts with format fieldwatch-signatures. Settings packs start with fieldwatch-settings — use Import settings. Logs stay on Reports."],
+            ["Import settings says that is a signature pack", "You picked fieldwatch-signatures JSON.", "Use Import signatures for the catalog. Settings backup is Export settings / Import settings (fieldwatch-settings)."],
+            ["Import settings did not bring my custom signatures", "Settings pack does not include the catalog.", "Expected. Import signatures for rows you added or edited. Import settings for switches, presets, and named radios."],
             ["Import added nothing", "Every row in the pack already matches an id or the same rules on this phone.", "Expected for a second import of the same pack, or two phones on the same stock catalog. Only new customs and extra rules on stock rows are added."],
             ["Counts freeze", "Process still up but scans failing, or you are looking at a stale filter.", "Swipe the scan notification. If it is gone, relaunch. Reset filter. Reboot radios (Airplane 5 s)."],
         ],
@@ -4588,9 +4592,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.1 (versionCode 2), field build of 15 September 2026"],
-                ["Document version", "1.0.1"],
-                ["Document date", "15 September 2026"],
+                ["Software version", "1.0.2 (versionCode 3), field build of 16 September 2026"],
+                ["Document version", "1.0.2"],
+                ["Document date", "16 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

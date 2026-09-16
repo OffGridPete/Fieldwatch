@@ -12,6 +12,9 @@ import app.fieldwatch.domain.PersistedConfig
 import app.fieldwatch.domain.RuleKind
 import app.fieldwatch.domain.SignatureCandidates
 import app.fieldwatch.domain.SignatureClass
+import app.fieldwatch.domain.SettingsExchange
+import app.fieldwatch.domain.SettingsImportResult
+import app.fieldwatch.domain.SettingsPack
 import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.SignatureImportResult
 import app.fieldwatch.domain.WatchTarget
@@ -116,6 +119,16 @@ class ConfigStore(context: Context) {
             }
         }
         result
+    }
+
+    suspend fun importSettings(pack: SettingsPack): SettingsImportResult {
+        var result = SettingsImportResult()
+        update { local ->
+            val (next, applied) = SettingsExchange.apply(local, pack)
+            result = applied
+            if (applied.error != null) local else next
+        }
+        return result
     }
 
     private fun patchBuiltIn(cfg: PersistedConfig): PersistedConfig {

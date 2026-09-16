@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.0.1 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.0.2 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  2e57218ce92f68e2b92cd0be4d60f3ba71ee8b4f4d7dd23742db539f0d5fbfd4
+  4b706f8511e8690466278169c4843452c1b78d28a9d5dd0be862dc5604e6b494
 
 Fieldwatch is experimental software. Use at your own risk. It does not guarantee
 that trackers or other devices will be found. Each phone has radio limits
