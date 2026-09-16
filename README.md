@@ -12,6 +12,8 @@ It was Spectre through 1.2.14. I later learned that name was already in use by a
 
 If you spot an error, something stupid, or have a feature idea — in the app or the documentation — please [open an issue on this repository](https://github.com/OffGridPete/Fieldwatch/issues). This is how we make it better. I hope you find it as useful as I have. I look forward to hearing how it goes.
 
+**Just want to install it?** Download the [latest APK](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch.apk). Instruction card and manual are in the same folder: [instruction.txt](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/instruction.txt), [Fieldwatch_User_Manual.pdf](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch_User_Manual.pdf). Leave the APK named `Fieldwatch.apk`. GitHub may say the file is too big to preview — that is their viewer; use Download.
+
 ## Safety & disclaimer
 
 This is a hobby project, provided as-is under the MIT License. A few things to know before you do:
@@ -23,7 +25,13 @@ This is a hobby project, provided as-is under the MIT License. A few things to k
 
 ## Put it on a phone
 
-Copy the `dist/` folder onto the phone (USB, Drive, or Files) and open `Fieldwatch.apk`.
+On a phone, the install files are in [`dist/`](https://github.com/OffGridPete/Fieldwatch/tree/main/dist), not the root of the repo:
+
+- [Fieldwatch.apk](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch.apk)
+- [instruction.txt](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/instruction.txt)
+- [Fieldwatch_User_Manual.pdf](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch_User_Manual.pdf)
+
+Do not rename the APK. Open `Fieldwatch.apk` from Files (or My Files). Allow install from that app if Android asks.
 
 | File | What it is |
 |---|---|
