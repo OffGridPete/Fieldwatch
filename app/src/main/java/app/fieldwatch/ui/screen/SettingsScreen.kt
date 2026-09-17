@@ -64,6 +64,9 @@ import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.LogFormat
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.TakDefaults
+import app.fieldwatch.domain.TakFeedStatus
+import app.fieldwatch.domain.TakPublish
+import app.fieldwatch.domain.TakUdpPreset
 import app.fieldwatch.radio.WifiRadio
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
@@ -357,7 +360,7 @@ fun SettingsScreen(
                 )
             }
             Text(
-                "Off by default. Speaks on the same media volume as the pip. Independent of Beep: with Beep on, voice follows the pip; with Beep off, voice only. Not Hunt. If a phrase is already being spoken, a second hit is skipped. Phones with no text-to-speech still beep if Beep is on.",
+                "On by default. Speaks on the same media volume as the pip. Independent of Beep: with Beep on, voice follows the pip; with Beep off, voice only. Not Hunt. If a phrase is already being spoken, a second hit is skipped. Phones with no text-to-speech still beep if Beep is on.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -373,7 +376,7 @@ fun SettingsScreen(
                 }
             }
             Text(
-                "For signature watches: Class is the Live glyph bucket (finder tags, audio, …). Signature is the catalog row (Apple AirTags, Axon, …). Class + signature says both. A named radio with Alert on always says its custom name, even if it has no class. Test alert plays the signature mix you have on.",
+                "For signature watches: Class is the Live glyph bucket (finder tags, audio, …). Signature is the catalog row (Apple AirTags, Axon, …). Class + signature (default) says both. A named radio with Alert on always says its custom name, even if it has no class. Test alert plays the signature mix you have on.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -446,14 +449,14 @@ fun SettingsScreen(
             }
             Text(
                 "Off by default. Sends Cursor-on-Target UDP markers to ATAK, WinTAK, or iTAK. " +
-                    "Default port ${TakDefaults.PORT} is ATAK CIV’s usual CoT input. " +
-                    "Host defaults to ${TakDefaults.HOST} (SA multicast). " +
-                    "For ATAK CIV on this phone, set Host to the phone’s Wi-Fi IPv4 and leave port ${TakDefaults.PORT}. " +
-                    "Other common ports: 6969 (SA multicast with ${TakDefaults.HOST}), 8087 (many TAK servers). " +
-                    "Pins sit at this phone’s GPS (heard here) unless the " +
-                    "advertisement itself decoded latitude/longitude — stock Remote ID Location does, " +
-                    "and any custom map using those field ids does too. Not direction-finding. " +
-                    "Not a Remote ID plugin. Privacy mode pauses the feed.",
+                    "This phone (${TakDefaults.LOOPBACK}:${TakDefaults.PORT}) is ATAK CIV on this handset. " +
+                    "LAN multicast is ${TakDefaults.SA_HOST}:${TakDefaults.SA_PORT}. " +
+                    "Custom is a unicast IPv4 or hostname. UDP only — a TAK server’s TCP 8087 is not this feed. " +
+                    "Heard-here pins sit at this phone’s GPS and are labeled (here). " +
+                    "Advertised lat/lon (stock Remote ID) sit on the aircraft; the same Remote ID " +
+                    "keeps one marker that moves (UAS ID, not the rotating BLE MAC). " +
+                    "A decoded pilot location is a second pin. Gone radios are dropped on ATAK instead of sitting 120 s. " +
+                    "Not direction-finding. Not a Remote ID plugin. Privacy mode pauses the feed.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -465,7 +468,7 @@ fun SettingsScreen(
                 )
             }
             if (settings.takEnabled) {
-                TakFeedSettings(settings, vm)
+                TakFeedSettings(settings, vm, state.takStatus)
             }
             }
 
@@ -733,12 +736,53 @@ private fun SocialChip(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel) {
+private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel, status: TakFeedStatus) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     var hostText by remember { mutableStateOf(settings.takHost) }
     var portText by remember { mutableStateOf(settings.takPort.toString()) }
     LaunchedEffect(settings.takHost) { hostText = settings.takHost }
     LaunchedEffect(settings.takPort) { portText = settings.takPort.toString() }
+    val preset = TakPublish.udpPreset(settings.takHost, settings.takPort)
+    Text("Destination", style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FieldwatchFilterChip(
+            selected = preset == TakUdpPreset.THIS_PHONE,
+            onClick = {
+                val (host, port) = TakPublish.applyPreset(TakUdpPreset.THIS_PHONE)
+                vm.updateSettings { it.copy(takHost = host, takPort = port) }
+            },
+            enabled = !settings.demoMode,
+            label = { Text("This phone") },
+        )
+        FieldwatchFilterChip(
+            selected = preset == TakUdpPreset.LAN_MULTICAST,
+            onClick = {
+                val (host, port) = TakPublish.applyPreset(TakUdpPreset.LAN_MULTICAST)
+                vm.updateSettings { it.copy(takHost = host, takPort = port) }
+            },
+            enabled = !settings.demoMode,
+            label = { Text("LAN multicast") },
+        )
+        FieldwatchFilterChip(
+            selected = preset == TakUdpPreset.CUSTOM,
+            onClick = {
+                if (preset != TakUdpPreset.CUSTOM) {
+                    val (host, port) = TakPublish.applyPreset(TakUdpPreset.CUSTOM)
+                    vm.updateSettings { it.copy(takHost = host, takPort = port) }
+                }
+            },
+            enabled = !settings.demoMode,
+            label = { Text("Custom") },
+        )
+    }
+    Text(
+        "This phone: ${TakDefaults.LOOPBACK}:${TakDefaults.PORT} (ATAK CIV on this handset). " +
+            "LAN multicast: ${TakDefaults.SA_HOST}:${TakDefaults.SA_PORT} (other ATAKs on this Wi-Fi). " +
+            "Custom: type a unicast IPv4 or hostname. UDP only. A TAK server’s TCP 8087 is not this feed. " +
+            "If This phone does not plot, use Custom with this phone’s Wi-Fi IPv4 from the footer and port ${TakDefaults.PORT}.",
+        style = MaterialTheme.typography.bodySmall,
+        color = muted,
+    )
     OutlinedTextField(
         value = hostText,
         onValueChange = { value ->
@@ -767,13 +811,14 @@ private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel) {
         label = { Text("Port") },
         placeholder = { Text(TakDefaults.PORT.toString()) },
         supportingText = {
-            Text("ATAK CIV ${TakDefaults.PORT} (default). SA multicast 6969. TAK servers often 8087.")
+            Text("UDP. ATAK CIV ${TakDefaults.PORT}. SA multicast ${TakDefaults.SA_PORT}. Not TCP 8087.")
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth(),
         enabled = !settings.demoMode,
     )
+    Text(takStatusLine(status), style = MaterialTheme.typography.bodySmall, color = muted)
     Text("What to send", style = MaterialTheme.typography.labelLarge)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FieldwatchFilterChip(
@@ -806,10 +851,44 @@ private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel) {
             "Payload location (on): advertised lat/lon from a decode map — required for stock Remote ID, which has no Extra attention mark. " +
             "Watchlist (off): bookmarked signatures and named radios with Alert on. " +
             "All signatures (off): every labeled radio — noisy in a plaza. Unmatched radios never go. " +
-            "A pin still needs coordinates: advertised payload, or GPS tagging with a live fix.",
+            "A pin still needs coordinates: advertised payload, or GPS tagging with a live fix. " +
+            "Heard-here callsigns end in (here). Remote ID keeps one aircraft marker (UAS ID) plus a pilot pin when that location decoded.",
         style = MaterialTheme.typography.bodySmall,
         color = muted,
     )
+}
+
+private fun takStatusLine(status: TakFeedStatus): String {
+    if (status.paused) return "Feed status  ·  paused (Privacy mode)"
+    if (status.error != null) {
+        val whenAt = takStatusWhen(status.at)
+        return "Feed status  ·  error: ${status.error}" + if (whenAt.isNotEmpty()) "  ·  $whenAt" else ""
+    }
+    if (status.at <= 0L) {
+        return "Feed status  ·  no send yet this session"
+    }
+    val bits = ArrayList<String>(5)
+    bits += "on the feed ${status.onFeed}"
+    bits += "sent ${status.sent}"
+    if (status.gone > 0) {
+        bits += if (status.gone == 1) "1 gone" else "${status.gone} gone"
+    }
+    if (status.dest.isNotBlank()) bits += status.dest
+    val whenAt = takStatusWhen(status.at)
+    if (whenAt.isNotEmpty()) bits += whenAt
+    val head = "Feed status  ·  ${bits.joinToString("  ·  ")}"
+    return if (status.detail.isNotBlank() && status.sent == 0 && status.gone == 0) {
+        "$head  ·  ${status.detail}"
+    } else {
+        head
+    }
+}
+
+private fun takStatusWhen(at: Long): String {
+    if (at <= 0L) return ""
+    return java.time.Instant.ofEpochMilli(at)
+        .atZone(java.time.ZoneId.systemDefault())
+        .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"))
 }
 
 private fun localIpv4Addresses(): List<String> {

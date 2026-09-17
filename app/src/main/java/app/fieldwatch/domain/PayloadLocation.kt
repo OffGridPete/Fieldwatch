@@ -13,6 +13,8 @@ data class PayloadLocation(
     val alt: Double? = null,
     val opLat: Double? = null,
     val opLon: Double? = null,
+    val uasId: String? = null,
+    val selfId: String? = null,
 ) {
     fun pin(): Pair<Double, Double>? =
         if (validCoord(lat, lon)) lat!! to lon!! else null
@@ -20,6 +22,8 @@ data class PayloadLocation(
     /**
      * ASTM Remote ID rotates message types. A Basic ID packet has no lat/lon;
      * keep the last valid Location (and System operator) pair this session.
+     * Basic ID `uas_id` / Self ID stick the same way so TAK can key one aircraft
+     * across BLE MAC rotation.
      */
     fun mergeSticky(prev: PayloadLocation?): PayloadLocation {
         val p = prev ?: PayloadLocation()
@@ -32,6 +36,8 @@ data class PayloadLocation(
             alt = nextAlt,
             opLat = nextOp.first,
             opLon = nextOp.second,
+            uasId = uasId?.takeIf { it.isNotBlank() } ?: p.uasId,
+            selfId = selfId?.takeIf { it.isNotBlank() } ?: p.selfId,
         )
     }
 
@@ -46,6 +52,8 @@ data class PayloadLocation(
         private val ALT_IDS = setOf("alt_geo", "altitude", "alt", "hae")
         private val OP_LAT_IDS = setOf("op_lat", "operator_lat")
         private val OP_LON_IDS = setOf("op_lon", "operator_lon")
+        private val UAS_IDS = setOf("uas_id", "uasid", "serial")
+        private val SELF_IDS = setOf("self_id", "selfid")
 
         fun fromDecoded(fields: List<DecodedFieldValue>): PayloadLocation {
             if (fields.isEmpty()) return PayloadLocation()
@@ -55,6 +63,8 @@ data class PayloadLocation(
                 alt = num(fields, ALT_IDS),
                 opLat = num(fields, OP_LAT_IDS),
                 opLon = num(fields, OP_LON_IDS),
+                uasId = text(fields, UAS_IDS),
+                selfId = text(fields, SELF_IDS),
             )
         }
 
@@ -64,6 +74,8 @@ data class PayloadLocation(
             alt = device.payloadAlt,
             opLat = device.payloadOpLat,
             opLon = device.payloadOpLon,
+            uasId = device.payloadUasId,
+            selfId = device.payloadSelfId,
         )
 
         fun applySticky(device: Sighting, fleets: List<Fleet>): Sighting {
@@ -73,7 +85,11 @@ data class PayloadLocation(
             } else {
                 SignatureFieldDecoder.decodeSighting(device, fleets)
             }
-            if (decoded.isEmpty() && device.payloadLat == null && device.payloadOpLat == null) {
+            if (decoded.isEmpty() &&
+                device.payloadLat == null &&
+                device.payloadOpLat == null &&
+                device.payloadUasId == null
+            ) {
                 return device
             }
             val next = fromDecoded(decoded).mergeSticky(fromSighting(device))
@@ -81,7 +97,9 @@ data class PayloadLocation(
                 next.lon == device.payloadLon &&
                 next.alt == device.payloadAlt &&
                 next.opLat == device.payloadOpLat &&
-                next.opLon == device.payloadOpLon
+                next.opLon == device.payloadOpLon &&
+                next.uasId == device.payloadUasId &&
+                next.selfId == device.payloadSelfId
             ) {
                 return device
             }
@@ -91,6 +109,8 @@ data class PayloadLocation(
                 payloadAlt = next.alt,
                 payloadOpLat = next.opLat,
                 payloadOpLon = next.opLon,
+                payloadUasId = next.uasId,
+                payloadSelfId = next.selfId,
             )
         }
 
@@ -106,6 +126,11 @@ data class PayloadLocation(
         private fun num(fields: List<DecodedFieldValue>, ids: Set<String>): Double? {
             val hit = fields.firstOrNull { it.id.lowercase() in ids } ?: return null
             return hit.number?.takeIf { it.isFinite() }
+        }
+
+        private fun text(fields: List<DecodedFieldValue>, ids: Set<String>): String? {
+            val hit = fields.firstOrNull { it.id.lowercase() in ids } ?: return null
+            return hit.display.trim().trimEnd('\u0000').takeIf { it.isNotEmpty() }
         }
     }
 }

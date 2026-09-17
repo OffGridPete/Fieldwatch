@@ -497,10 +497,10 @@ data class AppSettings(
     val staleSec: Int = 45,
     val alertsEnabled: Boolean = true,
     val alertBeep: Boolean = true,
-    /** Speak after a watchlist alert. Off by default. Not Hunt. What to say is [alertVoiceWhat]. */
-    val alertVoice: Boolean = false,
+    /** Speak after a watchlist alert. On by default. Not Hunt. What to say is [alertVoiceWhat]. */
+    val alertVoice: Boolean = true,
     /** Class (Live glyph), signature name, or both. Only used while [alertVoice] is on. */
-    val alertVoiceWhat: AlertVoiceWhat = AlertVoiceWhat.CLASS,
+    val alertVoiceWhat: AlertVoiceWhat = AlertVoiceWhat.BOTH,
     val snapToBeep: Boolean = true,
     val alertShade: Boolean = false,
     val tagLocation: Boolean = true,
@@ -658,6 +658,9 @@ data class Sighting(
     /** Remote ID System operator (pilot) location. Not the aircraft pin. */
     val payloadOpLat: Double? = null,
     val payloadOpLon: Double? = null,
+    /** Sticky Remote ID Basic ID / Self ID. TAK keys the aircraft on uas_id when present. */
+    val payloadUasId: String? = null,
+    val payloadSelfId: String? = null,
 ) {
     val displayName: String
         get() = name.ifBlank { if (hiddenSsid) "<hidden>" else mac }

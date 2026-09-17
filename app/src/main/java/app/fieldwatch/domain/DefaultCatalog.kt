@@ -56,15 +56,15 @@ object DefaultCatalog {
     }
 
     /**
-     * Bookmark these on first launch / Restore so they beep.
-     * Same stock rows as Extra attention: body-cam / public-safety APs,
-     * camera glasses, recording wearables, pentest kit, and roadside /
-     * public camera + ALPR. Not Tesla, not headphones, not UniFi Protect,
-     * not access-control locks.
+     * Bookmark these on first launch / Restore so they beep (and speak, with Voice on).
+     * Extra attention rows: body-cam / public-safety APs, camera glasses,
+     * recording wearables, pentest kit, and roadside / public camera + ALPR.
+     * Plus every built-in Drone-class row. Not Tesla, not headphones, not
+     * UniFi Protect, not access-control locks.
      */
     fun defaultWatchlist(): List<WatchTarget> =
         fleets()
-            .filter { it.builtIn && it.attentionNote.isNotBlank() }
+            .filter { it.builtIn && (it.attentionNote.isNotBlank() || it.kind == SignatureClass.DRONE) }
             .sortedBy { it.name.lowercase() }
             .map { fleet ->
                 WatchTarget(id = "watch-${fleet.id}", fleetId = fleet.id, label = fleet.name)

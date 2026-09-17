@@ -224,15 +224,13 @@ class ScanService : LifecycleService() {
                     demoMode = settings.demoMode,
                 )
             }
-            if (settings.takEnabled) {
-                app.tak.publish(
-                    live,
-                    fleets,
-                    settings,
-                    app.config.watchlist,
-                    selfFix = app.lastFix,
-                )
-            }
+            app.tak.publish(
+                live,
+                fleets,
+                settings,
+                app.config.watchlist,
+                selfFix = app.lastFix,
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

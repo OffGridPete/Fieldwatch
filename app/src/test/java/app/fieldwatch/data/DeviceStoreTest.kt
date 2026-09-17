@@ -131,6 +131,31 @@ class DeviceStoreTest {
         assertEquals("Basic ID packet keeps last Location pin", 40.0, again.payloadLat!!, 1e-6)
         assertEquals(-74.0, again.payloadLon!!, 1e-6)
         assertEquals(100.0, again.payloadAlt!!, 1e-6)
+        assertEquals("TESTSERIAL1234567890", again.payloadUasId)
+    }
+
+    @Test
+    fun remoteIdUasIdSticksAfterLocationPacket() {
+        val store = DeviceStore()
+        val mac = "AA:BB:CC:DD:EE:03"
+        val location = "0D0012200000000084D717007FE4D3000098083408000000000000"
+        val basic = "0D000212" + "5445535453455249414C31323334353637383930" + "000000"
+        store.ingestBatch(
+            listOf(ble(mac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", basic))))),
+            fleets,
+            30,
+        )
+        val first = store.find("BLE:$mac")!!
+        assertEquals("TESTSERIAL1234567890", first.payloadUasId)
+        store.ingestBatch(
+            listOf(ble(mac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", location))))),
+            fleets,
+            30,
+        )
+        val again = store.find("BLE:$mac")!!
+        assertEquals("Location packet keeps Basic ID", "TESTSERIAL1234567890", again.payloadUasId)
+        assertEquals(40.0, again.payloadLat!!, 1e-6)
+        assertEquals(-74.0, again.payloadLon!!, 1e-6)
     }
 
     @Test

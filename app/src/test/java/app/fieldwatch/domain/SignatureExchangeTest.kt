@@ -288,6 +288,26 @@ class SignatureExchangeTest {
             assertTrue(id, id in watched)
         }
         assertFalse("fleet-unifi-protect" in watched)
+        val extraSurveillance = ids.values.filter {
+            it.builtIn && it.kind == SignatureClass.SURVEILLANCE && it.attentionNote.isNotBlank()
+        }.map { it.id }
+        assertTrue(extraSurveillance.isNotEmpty())
+        for (id in extraSurveillance) {
+            assertTrue(id, id in watched)
+        }
+        assertFalse("fleet-raven" in watched)
+        val drones = ids.values.filter { it.builtIn && it.kind == SignatureClass.DRONE }.map { it.id }
+        assertTrue(drones.isNotEmpty())
+        for (id in drones) {
+            assertTrue(id, id in watched)
+        }
+        assertTrue("fleet-dji" in watched)
+        assertTrue("fleet-remote-id" in watched)
+        assertTrue("fleet-skydio" in watched)
+        assertTrue("fleet-autel" in watched)
+        assertTrue("fleet-parrot" in watched)
+        assertTrue("fleet-hoverair" in watched)
+        assertFalse("fleet-osmo" in watched)
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-axon").kind)
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-watchguard").kind)
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-cradlepoint").kind)

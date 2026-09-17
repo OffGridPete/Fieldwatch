@@ -6,6 +6,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsExchangeTest {
+    @Test
+    fun factorySettingsVoiceAndJump() {
+        val stock = AppSettings()
+        assertTrue(stock.alertVoice)
+        assertEquals(AlertVoiceWhat.BOTH, stock.alertVoiceWhat)
+        assertTrue(stock.snapToBeep)
+        assertTrue(stock.darkTheme)
+        assertTrue(stock.keepScreenOn)
+        assertTrue(stock.alertBeep)
+    }
+
     private val stockFleets = DefaultCatalog.fleets()
     private val stockPresets = FilterEngine().defaultPresets(stockFleets)
 

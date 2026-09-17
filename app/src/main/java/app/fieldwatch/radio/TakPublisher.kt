@@ -6,8 +6,13 @@ import app.fieldwatch.domain.CotEvent
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.TakDefaults
+import app.fieldwatch.domain.TakFeedStatus
 import app.fieldwatch.domain.TakPublish
+import app.fieldwatch.domain.TakSent
 import app.fieldwatch.domain.WatchTarget
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -20,10 +25,12 @@ import java.util.concurrent.ConcurrentHashMap
  * 127.0.0.1 on the same port. Privacy mode skips the feed.
  */
 class TakPublisher {
-    private val last = ConcurrentHashMap<String, Sent>()
+    private val last = ConcurrentHashMap<String, TakSent>()
     private val gate = Any()
     @Volatile private var multicast: MulticastSocket? = null
     @Volatile private var unicast: DatagramSocket? = null
+    private val _status = MutableStateFlow(TakFeedStatus())
+    val status: StateFlow<TakFeedStatus> = _status.asStateFlow()
 
     fun publish(
         devices: List<Sighting>,
@@ -33,8 +40,14 @@ class TakPublisher {
         now: Long = System.currentTimeMillis(),
         selfFix: Pair<Double, Double>? = null,
     ) {
-        if (!settings.takEnabled || settings.demoMode) {
+        if (!settings.takEnabled) {
             last.clear()
+            _status.value = TakFeedStatus(detail = "Off")
+            return
+        }
+        if (settings.demoMode) {
+            last.clear()
+            _status.value = TakFeedStatus(paused = true, detail = "Privacy mode — feed paused")
             return
         }
         val host = settings.takHost.trim().ifBlank { TakDefaults.HOST }
@@ -42,51 +55,111 @@ class TakPublisher {
         val dests = destinations(host, port)
         if (dests.isEmpty()) {
             Log.w(TAG, "TAK host $host did not resolve")
+            _status.value = TakFeedStatus(
+                at = now,
+                dest = "$host:$port",
+                error = "Host $host did not resolve",
+            )
             return
         }
+        val destLabel = dests.joinToString { "${it.first.hostAddress}:${it.second}" }
+        val selfOk = selfFix != null && PayloadOk(selfFix)
         var sent = 0
-        if (selfFix != null && PayloadOk(selfFix)) {
+        var gone = 0
+        var lastErr: String? = null
+
+        if (selfOk) {
             val prev = last[SELF_UID]
-            if (TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, selfFix.first, selfFix.second)) {
-                val xml = selfXml(selfFix.first, selfFix.second, now)
+            if (TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, selfFix!!.first, selfFix.second)) {
+                val xml = CotEvent.selfXml(selfFix.first, selfFix.second, now)
                 if (sendAll(dests, xml.toByteArray(Charsets.UTF_8))) {
-                    last[SELF_UID] = Sent(now, selfFix.first, selfFix.second)
+                    last[SELF_UID] = TakSent(SELF_UID, SELF_UID, now, selfFix.first, selfFix.second)
                     sent++
+                } else {
+                    lastErr = "send failed"
                 }
             }
         }
+
         val chosen = devices.asSequence()
             .filter { TakPublish.eligible(it, settings, fleets, watchlist) }
             .sortedWith(
                 compareByDescending<Sighting> { TakPublish.rank(it, fleets, watchlist) }
                     .thenByDescending { it.rssi },
             )
-            .take(TakDefaults.MAX_PER_TICK)
             .toList()
-        if (chosen.isEmpty() && sent == 0) {
+        var emitted = sent
+        for (device in chosen) {
+            if (emitted >= TakDefaults.MAX_PER_TICK) break
+            val marks = TakPublish.markers(device, settings, fleets, watchlist)
+            for (mark in marks) {
+                if (emitted >= TakDefaults.MAX_PER_TICK) break
+                val prev = last[mark.uid]
+                if (!TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, mark.lat, mark.lon)) {
+                    continue
+                }
+                val xml = CotEvent.xml(
+                    device = mark.device,
+                    fleets = fleets,
+                    watchlist = watchlist,
+                    lat = mark.lat,
+                    lon = mark.lon,
+                    advertised = mark.advertised,
+                    now = now,
+                    pilot = mark.pilot,
+                )
+                if (!sendAll(dests, xml.toByteArray(Charsets.UTF_8))) {
+                    lastErr = "send failed"
+                    continue
+                }
+                last[mark.uid] = TakSent(mark.uid, mark.deviceKey, now, mark.lat, mark.lon)
+                sent++
+                emitted++
+            }
+        }
+
+        val keep = TakPublish.keepUids(
+            devices = devices,
+            settings = settings,
+            fleets = fleets,
+            watchlist = watchlist,
+            previous = last.values,
+            selfUid = SELF_UID,
+            selfOk = selfOk,
+        )
+        val dead = last.keys.filter { it !in keep }.take(TakDefaults.MAX_PER_TICK)
+        for (uid in dead) {
+            val prev = last[uid] ?: continue
+            val xml = CotEvent.tombstoneXml(uid, prev.lat, prev.lon, now)
+            if (sendAll(dests, xml.toByteArray(Charsets.UTF_8))) {
+                last.remove(uid)
+                gone++
+            } else {
+                lastErr = "send failed"
+            }
+        }
+
+        if (sent == 0 && gone == 0 && lastErr == null && chosen.isEmpty() && !selfOk) {
             Log.i(TAG, "TAK on, 0 eligible radios (need Extra attention / payload latlon / GPS stamp)")
         }
-        for (device in chosen) {
-            val pin = TakPublish.pin(device, settings) ?: continue
-            val prev = last[device.key]
-            if (!TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, pin.first, pin.second)) {
-                continue
-            }
-            val advertised = TakPublish.advertisedPin(device)
-            val xml = CotEvent.xml(
-                device = device,
-                fleets = fleets,
-                watchlist = watchlist,
-                lat = pin.first,
-                lon = pin.second,
-                advertised = advertised,
-                now = now,
-            )
-            if (!sendAll(dests, xml.toByteArray(Charsets.UTF_8))) continue
-            last[device.key] = Sent(now, pin.first, pin.second)
-            sent++
+        if (sent > 0 || gone > 0) {
+            Log.i(TAG, "TAK sent $sent marker(s), $gone gone to $destLabel")
         }
-        if (sent > 0) Log.i(TAG, "TAK sent $sent marker(s) to ${dests.joinToString { "${it.first.hostAddress}:${it.second}" }}")
+        val detail = when {
+            lastErr != null -> lastErr
+            sent == 0 && gone == 0 && chosen.isEmpty() && !selfOk ->
+                "0 eligible radios (need Extra attention / payload latlon / GPS stamp)"
+            else -> ""
+        }
+        _status.value = TakFeedStatus(
+            at = now,
+            sent = sent,
+            gone = gone,
+            onFeed = last.size,
+            dest = destLabel,
+            error = lastErr,
+            detail = detail,
+        )
     }
 
     fun close() {
@@ -97,6 +170,7 @@ class TakPublisher {
             unicast = null
         }
         last.clear()
+        _status.value = TakFeedStatus(detail = "Off")
     }
 
     private fun destinations(host: String, port: Int): List<Pair<InetAddress, Int>> {
@@ -157,27 +231,6 @@ class TakPublisher {
             unicast = it
         }
     }
-
-    private fun selfXml(lat: Double, lon: Double, now: Long): String {
-        val t = java.time.Instant.ofEpochMilli(now).atOffset(java.time.ZoneOffset.UTC)
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-        val stale = java.time.Instant.ofEpochMilli(now + TakDefaults.STALE_MS).atOffset(java.time.ZoneOffset.UTC)
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-        return buildString {
-            append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>")
-            append("<event version=\"2.0\" uid=\"$SELF_UID\" type=\"a-f-G-U-C\" ")
-            append("time=\"$t\" start=\"$t\" stale=\"$stale\" how=\"m-g\">")
-            append("<point lat=\"$lat\" lon=\"$lon\" hae=\"9999999\" ce=\"9999999\" le=\"9999999\"/>")
-            append("<detail>")
-            append("<contact callsign=\"Fieldwatch\"/>")
-            append("<__group name=\"Cyan\" role=\"Team Member\"/>")
-            append("<remarks>Fieldwatch TAK heartbeat (this phone)</remarks>")
-            append("</detail>")
-            append("</event>")
-        }
-    }
-
-    private data class Sent(val at: Long, val lat: Double, val lon: Double)
 
     companion object {
         private const val TAG = "FieldwatchTak"

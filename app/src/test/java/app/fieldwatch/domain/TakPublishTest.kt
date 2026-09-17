@@ -200,8 +200,9 @@ class TakPublishTest {
         assertTrue(xml.contains("hae=\"100\""))
         assertTrue(xml.contains("callsign=\"Remote ID\""))
         assertTrue(xml.contains("advertised position"))
-        assertTrue(xml.contains("__group name=\"Cyan\""))
+        assertTrue(xml.contains("__group name=\"Yellow\""))
         assertTrue(xml.contains("stale="))
+        assertFalse(xml.contains(" (here)"))
     }
 
     @Test
@@ -223,8 +224,166 @@ class TakPublishTest {
         )
         assertTrue(xml.contains("type=\"a-u-G\""))
         assertTrue(xml.contains("heard here (operator GPS)"))
-        assertTrue(xml.contains("callsign=\"Axon\""))
+        assertTrue(xml.contains("callsign=\"Axon (here)\""))
+        assertTrue(xml.contains("__group name=\"Maroon\""))
         assertTrue(xml.contains("Extra attention"))
+    }
+
+    @Test
+    fun uidUsesStickyUasIdNotMac() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadUasId = "TESTSERIAL1234567890",
+        )
+        assertEquals("FIELDWATCH-RID-TESTSERIAL1234567890", CotEvent.uid(drone))
+        assertEquals("FIELDWATCH-PILOT-TESTSERIAL1234567890", CotEvent.pilotUid(drone))
+        val xml = CotEvent.xml(
+            device = drone,
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 40.0,
+            lon = -74.0,
+            advertised = true,
+            now = 0L,
+        )
+        assertTrue(xml.contains("uid=\"FIELDWATCH-RID-TESTSERIAL1234567890\""))
+        assertTrue(xml.contains("callsign=\"TESTSERIAL1234567890\""))
+        assertFalse(xml.contains("FIELDWATCH-BLE-"))
+    }
+
+    @Test
+    fun uidFallsBackToMacWithoutUasId() {
+        val drone = radio(fleetIds = setOf("fleet-remote-id"), payloadLat = 40.0, payloadLon = -74.0)
+        assertEquals("FIELDWATCH-BLE-AABBCCDDEE01", CotEvent.uid(drone))
+    }
+
+    @Test
+    fun selfIdBeatsUasIdForCallsign() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadUasId = "TESTSERIAL1234567890",
+            payloadSelfId = "N12345",
+        )
+        assertEquals("N12345", TakPublish.callsign(drone, fleets, emptyList()))
+    }
+
+    @Test
+    fun pilotMarkerAndLink() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadOpLat = 40.1,
+            payloadOpLon = -74.1,
+            payloadUasId = "TESTSERIAL1234567890",
+        )
+        val marks = TakPublish.markers(drone, on, fleets, emptyList())
+        assertEquals(2, marks.size)
+        assertEquals("FIELDWATCH-RID-TESTSERIAL1234567890", marks[0].uid)
+        assertEquals("FIELDWATCH-PILOT-TESTSERIAL1234567890", marks[1].uid)
+        assertEquals(40.1, marks[1].lat, 0.0)
+        val air = CotEvent.xml(
+            device = drone,
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 40.0,
+            lon = -74.0,
+            advertised = true,
+            now = 0L,
+        )
+        assertTrue(air.contains("link uid=\"FIELDWATCH-PILOT-TESTSERIAL1234567890\""))
+        val pilot = CotEvent.xml(
+            device = drone,
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 40.1,
+            lon = -74.1,
+            advertised = true,
+            now = 0L,
+            pilot = true,
+        )
+        assertTrue(pilot.contains("uid=\"FIELDWATCH-PILOT-TESTSERIAL1234567890\""))
+        assertTrue(pilot.contains("callsign=\"Pilot · TESTSERIAL1234567890\""))
+        assertTrue(pilot.contains("__group name=\"Orange\""))
+        assertTrue(pilot.contains("operator (pilot) position"))
+        assertTrue(pilot.contains("link uid=\"FIELDWATCH-RID-TESTSERIAL1234567890\""))
+        assertFalse(pilot.contains(" (here)"))
+    }
+
+    @Test
+    fun keepUidsHoldsGpsBlipAndDropsGone() {
+        val cam = radio(fleetIds = setOf("fleet-axon"), lat = 37.5, lon = -122.2)
+        val uid = CotEvent.uid(cam)
+        val prev = listOf(TakSent(uid, cam.key, 1L, 37.5, -122.2))
+        val blip = cam.copy(latitude = null, longitude = null)
+        val keepBlip = TakPublish.keepUids(listOf(blip), on, fleets, emptyList(), prev)
+        assertTrue(uid in keepBlip)
+        val taggingOff = on.copy(tagLocation = false)
+        val keepOff = TakPublish.keepUids(listOf(blip), taggingOff, fleets, emptyList(), prev)
+        assertFalse(uid in keepOff)
+        val gone = cam.copy(gone = true)
+        val keepGone = TakPublish.keepUids(listOf(gone), on, fleets, emptyList(), prev)
+        assertFalse(uid in keepGone)
+    }
+
+    @Test
+    fun keepUidsDoesNotDropUnsentEligibleWhenCapped() {
+        val cam = radio(fleetIds = setOf("fleet-axon"), lat = 37.5, lon = -122.2)
+        val uid = CotEvent.uid(cam)
+        val keep = TakPublish.keepUids(listOf(cam), on, fleets, emptyList(), emptyList())
+        assertTrue(uid in keep)
+    }
+
+    @Test
+    fun uasIdChangeTombstonesMacUid() {
+        val macKeyed = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+        )
+        val stable = macKeyed.copy(payloadUasId = "TESTSERIAL1234567890")
+        val oldUid = CotEvent.uid(macKeyed)
+        val newUid = CotEvent.uid(stable)
+        assertEquals("FIELDWATCH-BLE-AABBCCDDEE01", oldUid)
+        assertEquals("FIELDWATCH-RID-TESTSERIAL1234567890", newUid)
+        val prev = listOf(TakSent(oldUid, macKeyed.key, 1L, 40.0, -74.0))
+        val keep = TakPublish.keepUids(listOf(stable), on, fleets, emptyList(), prev)
+        assertTrue(newUid in keep)
+        assertFalse(oldUid in keep)
+    }
+
+    @Test
+    fun tombstoneStaleEqualsNow() {
+        val xml = CotEvent.tombstoneXml("FIELDWATCH-BLE-AABBCCDDEE01", 37.5, -122.2, 0L)
+        assertTrue(xml.contains("uid=\"FIELDWATCH-BLE-AABBCCDDEE01\""))
+        assertTrue(xml.contains("stale=\"1970-01-01T00:00:00.000Z\""))
+        assertTrue(xml.contains("gone"))
+    }
+
+    @Test
+    fun udpPresets() {
+        assertEquals(TakUdpPreset.THIS_PHONE, TakPublish.udpPreset("127.0.0.1", 10011))
+        assertEquals(TakUdpPreset.LAN_MULTICAST, TakPublish.udpPreset("239.2.3.1", 6969))
+        assertEquals(TakUdpPreset.CUSTOM, TakPublish.udpPreset("239.2.3.1", 10011))
+        assertEquals(TakUdpPreset.CUSTOM, TakPublish.udpPreset("192.168.0.9", 10011))
+        assertEquals("127.0.0.1" to 10011, TakPublish.applyPreset(TakUdpPreset.THIS_PHONE))
+        assertEquals("239.2.3.1" to 6969, TakPublish.applyPreset(TakUdpPreset.LAN_MULTICAST))
+    }
+
+    @Test
+    fun stickyUasIdSurvivesLocationOnlyPacket() {
+        val basic = PayloadLocation.fromDecoded(listOf(textField("uas_id", "TESTSERIAL1234567890")))
+        assertEquals("TESTSERIAL1234567890", basic.uasId)
+        val location = PayloadLocation.fromDecoded(
+            listOf(field("latitude", 40.0), field("longitude", -74.0)),
+        )
+        val kept = location.mergeSticky(basic)
+        assertEquals("TESTSERIAL1234567890", kept.uasId)
+        assertEquals(40.0, kept.lat!!, 0.0)
     }
 
     private fun field(id: String, n: Double) = DecodedFieldValue(
@@ -243,6 +402,10 @@ class TakPublishTest {
         payloadLat: Double? = null,
         payloadLon: Double? = null,
         payloadAlt: Double? = null,
+        payloadOpLat: Double? = null,
+        payloadOpLon: Double? = null,
+        payloadUasId: String? = null,
+        payloadSelfId: String? = null,
         lat: Double? = null,
         lon: Double? = null,
         name: String = "",
@@ -275,5 +438,19 @@ class TakPublishTest {
         payloadLat = payloadLat,
         payloadLon = payloadLon,
         payloadAlt = payloadAlt,
+        payloadOpLat = payloadOpLat,
+        payloadOpLon = payloadOpLon,
+        payloadUasId = payloadUasId,
+        payloadSelfId = payloadSelfId,
+    )
+
+    private fun textField(id: String, text: String) = DecodedFieldValue(
+        fleetId = "f",
+        fleetName = "F",
+        id = id,
+        label = id,
+        display = text,
+        offset = 0,
+        length = text.length,
     )
 }

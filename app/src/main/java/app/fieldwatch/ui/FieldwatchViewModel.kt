@@ -49,6 +49,7 @@ import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
 import app.fieldwatch.domain.SettingsExchange
 import app.fieldwatch.domain.SignatureExchange
+import app.fieldwatch.domain.TakFeedStatus
 import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.ListSort
@@ -116,6 +117,7 @@ data class FieldwatchUi(
     val arrivalsLearning: Boolean = false,
     val displayPaused: Boolean = false,
     val operatorSpanM: Double = 0.0,
+    val takStatus: TakFeedStatus = TakFeedStatus(),
 )
 
 class FieldwatchViewModel(application: Application) : AndroidViewModel(application) {
@@ -178,7 +180,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             arrayOf(sel, fleetDraft, arr, now)
         },
         lastAlertAt,
-    ) { tripleA, quad, alerts ->
+        app.tak.status,
+    ) { tripleA, quad, alerts, takStatus ->
         val (devices, stats, config) = tripleA
         val sel = quad[0] as String?
         val fleetDraft = quad[1] as Fleet?
@@ -282,6 +285,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             } else {
                 app.operatorPathLengthM()
             },
+            takStatus = takStatus,
         )
     }.flowOn(Dispatchers.Default)
         .stateIn(

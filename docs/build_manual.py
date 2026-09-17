@@ -459,8 +459,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.2")
-    c.drawString(48, 94, "16 September 2026")
+    c.drawString(48, 108, "Version 1.0.3")
+    c.drawString(48, 94, "17 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.2  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.3  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1013,10 +1013,11 @@ def story():
         P(
             "<b>Out of the box.</b> First launch and Restore load the stock catalog. Every row "
             "labels when its rules hit. These Settings ship on: Keep screen on, Tag detections with GPS, "
-            "Online place names, Watchlist alerts, and Beep. Voice on watched signature ships off. Stock bookmarks (alert on a new match) "
-            "are on the Extra attention rows: Axon, WatchGuard Video, Ray-Ban / Meta glasses, "
+            "Online place names, Watchlist alerts, Beep, Voice on watched signature (What to say: Class + signature), and Jump to new watched detection. Stock bookmarks (alert on a new match) "
+            "are Extra attention rows: Axon, WatchGuard Video, Ray-Ban / Meta glasses, "
             "Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, "
-            "Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua). "
+            "Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua); "
+            "plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). "
             "Privacy mode, the shade notification, and the TAK / CoT feed stay off. "
             "Chip colors follow class (§9.5)."
         ),
@@ -1584,9 +1585,9 @@ def story():
         bullets([
             "<b>Appearance</b> — Dark theme. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
-            "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (off by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is class. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection works with beep, voice, or both. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names and optional alerts: rename, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks already watch the Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
+            "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names and optional alerts: rename, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Share log with tagging on contains operator coordinates.",
-            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Default port 10011 (ATAK CIV CoT input); host 239.2.3.1 (SA multicast). Same-phone ATAK CIV: this phone’s Wi-Fi IPv4 and 10011. Other ports: 6969 (SA multicast), 8087 (many TAK servers). What to send chips: Extra attention (on), Payload location (on — this is how stock Remote ID pins, using decode field ids latitude/longitude, not a Remote ID special case), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
+            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Night mode</b> — Off by default. Red-on-black field display (cockpit / sit). Text, chips, switches, RSSI, and Hunt marks become shades of red so green and blue do not dump into a dark eye. Background stays dark. Phone brightness is unchanged. Overrides Dark theme while this is on. Restore defaults turns it off. Fig. 8.",
         ]),
         figure_wrap(
@@ -1599,7 +1600,7 @@ def story():
             "<b>Allow background usage</b> — Switch. Opens Fieldwatch’s Battery page; turn on Allow background usage so the OS may run the scan when Fieldwatch is not in front. Follows that Android setting. Not Keep screen on.",
             "<b>Unrestricted battery</b> — Switch. Opens the Battery page. Select Unrestricted (not Optimized). Some phones (Samsung among them) do not open onto that choice — tap Allow background usage (the words, not the switch) to click through and select Unrestricted. Fieldwatch follows that grant when you return.",
             "<b>Signatures — export / import</b> — Export signatures shares a JSON pack of the whole catalog (stock plus any you added or edited, including Decode fields). Save signatures to SD card / storage… writes the same file through the system picker. Import signatures… reads a pack from another Fieldwatch. Same id or the same match rules are skipped, so importing twice does not clone the catalog. Extra rules on a stock row (for example a glob you added to Govee) merge onto the local row; a missing Decode fields map on that stock id is filled from the pack. A new name that already exists is imported as “Name (imported)”. Watchlist, filters, settings, logs, and GPS are not in the pack. A settings pack is a different file — use Import settings. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-signatures-YYYYMMDD.json</font>.",
-            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks, the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
+            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
             "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
         ]),
         P(
@@ -1615,7 +1616,7 @@ def story():
         callout(
             "Off by default — this puts coordinates on the LAN",
             "The TAK / CoT feed sends Cursor-on-Target UDP markers to whatever is listening "
-            "on the host and port you set (ATAK, WinTAK, iTAK, or a TAK server). Markers include "
+            "on the host and port you set (ATAK, WinTAK, or iTAK). Markers include "
             "the full MAC and either this phone’s GPS or an advertised payload lat/lon. "
             "Privacy mode pauses the feed so those are not sent. There is no Fieldwatch TAK server "
             "and no account. You are responsible for who is on that network and for local law. "
@@ -1631,18 +1632,19 @@ def story():
         P(
             "Cursor-on-Target (CoT) is the XML event ATAK already understands. Fieldwatch writes "
             "a small event per radio — uid, type, a point, a callsign, and a remarks line — and "
-            "sends it as a UDP datagram. The default port is <font face='Courier'>10011</font> "
-            "(ATAK CIV’s usual CoT input). Host defaults to <font face='Courier'>239.2.3.1</font> "
-            "(SA multicast). For ATAK CIV on the same phone, set Host to the phone’s Wi-Fi IPv4 "
-            "and leave 10011. SA multicast is <font face='Courier'>239.2.3.1:6969</font>. "
-            "Many TAK servers use 8087. Unicast host:port is the other shape, for a TAK server or "
-            "a single EUD."
+            "sends it as a UDP datagram. Destination chips: <b>This phone</b> "
+            "(<font face='Courier'>127.0.0.1:10011</font>, ATAK CIV on this handset), "
+            "<b>LAN multicast</b> (<font face='Courier'>239.2.3.1:6969</font>, other ATAKs on this Wi-Fi), "
+            "or <b>Custom</b> (unicast IPv4 / hostname). Host still defaults to "
+            "<font face='Courier'>239.2.3.1</font> port <font face='Courier'>10011</font> until you pick a chip. "
+            "UDP only. A TAK server’s TCP 8087 is not this feed — ATAK on a phone that is already "
+            "logged into a server may or may not relay injected CoT."
         ),
         bullets([
             "<b>It is</b> an overlay of radios Fieldwatch heard, at a coordinate Fieldwatch already has.",
             "<b>Heard here</b> means this phone’s GPS at last hear (the same stamp as a log row). The other radio is somewhere in earshot, not on that pin.",
             "<b>Advertised position</b> means the BLE advertisement itself decoded to WGS84 (stock Remote ID Location; any custom map whose field ids are <font face='Courier'>latitude</font> / <font face='Courier'>longitude</font>). That pin is what the gadget claimed, not a Fieldwatch DF fix.",
-            "<b>It is not</b> a Remote ID plugin, a drone tracker, direction-finding, pairing, GATT, or Wi-Fi monitor mode. It does not join the multicast group (send-only). It does not delete markers — ATAK drops them when the CoT <font face='Courier'>stale</font> time passes (~120 s without a refresh).",
+            "<b>It is not</b> a Remote ID plugin, a drone tracker, direction-finding, pairing, GATT, or Wi-Fi monitor mode. It does not join the multicast group (send-only). When a radio leaves the feed, Fieldwatch sends a CoT with stale=now so ATAK drops it instead of waiting ~120 s. Privacy pause does not send those gone events (the feed just stops; ATAK stale-times out).",
             "<b>It is not</b> the Live display. Filters do not shrink the feed. A radio you hid on the Live display still publishes if it matches What to send and has a pin.",
         ]),
         P("5.8.2 Two kinds of pin", "h3"),
@@ -1657,10 +1659,14 @@ def story():
             "Remote ID (ASTM F3411 / OpenDroneID on BLE UUID 0xFFFA) rotates message types. "
             "A Location message has lat/lon/alt; the next packet is often Basic ID with none. "
             "Fieldwatch keeps the last <i>valid</i> Location pair on that radio for the session, "
-            "so the ATAK pin does not blink off between types. The System message’s "
+            "so the ATAK pin does not blink off between types. Basic ID "
+            "<font face='Courier'>uas_id</font> sticks the same way — that is the TAK uid, "
+            "not the rotating BLE MAC — so one aircraft is one marker that <i>moves</i>. "
+            "Until the first Basic ID, the uid is still the MAC; then it jumps once and the "
+            "old MAC marker is dropped. The System message’s "
             "<font face='Courier'>op_lat</font> / <font face='Courier'>op_lon</font> are the "
-            "<b>pilot / operator</b> location in that standard — they are stored, they are "
-            "<i>not</i> the aircraft pin. A 0,0 pair, a non-finite number, or a value outside "
+            "<b>pilot / operator</b> location — they are a <i>second</i> pin (Orange), linked "
+            "to the aircraft, not a substitute for it. A 0,0 pair, a non-finite number, or a value outside "
             "±90 / ±180 is rejected and does not clobber a previous good fix."
         ),
         callout(
@@ -1687,7 +1693,9 @@ def story():
                 ["latitude (aliases lat)", "Advertised WGS84 latitude. Required with longitude for a payload pin."],
                 ["longitude (aliases lon, lng)", "Advertised WGS84 longitude. Required with latitude."],
                 ["alt_geo (aliases altitude, alt, hae)", "Optional HAE meters for the CoT point. Sticky with the lat/lon pair."],
-                ["op_lat / op_lon (aliases operator_lat / operator_lon)", "Remote ID System operator (pilot) location. Not the pin. Do not reuse these ids for the aircraft."],
+                ["op_lat / op_lon (aliases operator_lat / operator_lon)", "Remote ID System operator (pilot) location. Second TAK pin, linked to the aircraft. Not the aircraft pin. Do not reuse these ids for the aircraft."],
+                ["uas_id (alias serial)", "Remote ID Basic ID. Sticky. TAK aircraft uid when at least four characters after cleaning."],
+                ["self_id", "Remote ID Self ID. Sticky. Preferred advertised callsign when present."],
             ],
             [2.4 * inch, 4.1 * inch],
         ),
@@ -1704,23 +1712,25 @@ def story():
             "Put the phone and the TAK client on the <b>same LAN</b> if you will use multicast (239.2.3.1). Cellular and most guest Wi-Fi will not deliver that group. Some access points filter multicast — then use unicast.",
             "On ATAK CIV: Manage Inputs should show a UDP CoT listener (typically 10011 on 0.0.0.0). Stock ATAK also listens to 239.2.3.1:6969 for self-SA. You do not install a Fieldwatch plugin.",
             "Fieldwatch: Settings → Privacy mode <b>off</b> (the feed pauses while it is on).",
-            "Fieldwatch: Settings → TAK / CoT feed → On. Port defaults to 10011 (ATAK CIV). Host defaults to 239.2.3.1 — for ATAK CIV on this phone, set Host to the phone’s Wi-Fi IPv4 and leave 10011. SA multicast is 239.2.3.1:6969; many TAK servers use 8087.",
+            "Fieldwatch: Settings → TAK / CoT feed → On. Destination: This phone (127.0.0.1:10011) for ATAK CIV on this handset; LAN multicast (239.2.3.1:6969) for other ATAKs on this Wi-Fi; Custom for a unicast IPv4. If This phone does not plot, Custom with this phone’s Wi-Fi IPv4 (Settings footer) and port 10011. UDP only — not TCP 8087.",
             "Leave Extra attention and Payload location on (they ship on). That is the out-of-the-box set: “!” families at your GPS, plus any radio that advertised lat/lon (Remote ID) at that advertised point.",
-            "Scan. An Extra attention radio with a GPS fix, or a Remote ID Location packet, should appear on the TAK map within a few seconds. Callsign is the signature name (or a Named radio label). Remarks start with Fieldwatch · BLE/Wi-Fi · MAC · RSSI · heard here or advertised position.",
+            "Scan. An Extra attention radio with a GPS fix, or a Remote ID Location packet, should appear on the TAK map within a few seconds. Heard-here callsigns end in (here). Remote ID callsign is Self ID, else UAS ID, else the signature name. Settings shows last send count, dest, and time under the host fields.",
         ]),
         P("5.8.5 Host and port", "h3"),
         table(
             ["Setting", "Default", "What to put"],
             [
-                ["Host", "239.2.3.1", "SA multicast on the LAN, or a unicast IPv4 / hostname for a TAK server or one EUD. Trimmed on save. Empty is ignored so a wipe of the field does not store blank."],
-                ["Port", "10011", "UDP port 1–65535. Digits only. ATAK CIV CoT input (default). SA multicast uses 6969. Many TAK servers use 8087."],
+                ["This phone", "127.0.0.1:10011", "ATAK CIV on this handset. If nothing plots, Custom with the footer IPv4 and port 10011."],
+                ["LAN multicast", "239.2.3.1:6969", "Other ATAKs on this Wi-Fi (SA multicast). TTL 1. Guest Wi-Fi that isolates clients will fail."],
+                ["Custom host", "239.2.3.1", "Unicast IPv4 / hostname, or the default multicast address with port 10011. Trimmed on save. Empty is ignored so a wipe of the field does not store blank."],
+                ["Port", "10011", "UDP port 1–65535. Digits only. ATAK CIV CoT input (This phone). SA multicast uses 6969. Not a TAK server TCP 8087."],
             ],
             [1.2 * inch, 1.3 * inch, 4.0 * inch],
         ),
         Spacer(1, 6),
         bullets([
             "<b>Multicast (default).</b> Fieldwatch sends; it does not join the group. TTL is 1 (this LAN, not routed). Phone and ATAK must share a Wi-Fi (or Ethernet via a tether) that actually forwards 239.2.3.1. A hotspot that isolates clients will fail; try unicast to the ATAK device’s IP.",
-            "<b>Unicast.</b> Host = the TAK server or the EUD’s address. ATAK CIV on this phone: the phone’s Wi-Fi IPv4 and port 10011 (not 127.0.0.1). SA multicast is 239.2.3.1:6969. Many TAK servers use 8087. No multicast membership on either side.",
+            "<b>Unicast.</b> This phone uses 127.0.0.1:10011. Custom host = one EUD’s IPv4. Fieldwatch does not open a TCP stream to a TAK server (8087). If ATAK on this phone is already logged into a server, that ATAK may or may not relay injected CoT — prove it on one sit before counting on it.",
             "Fieldwatch already has install-time INTERNET (Online place names). The feed uses that permission for UDP. There is no Fieldwatch cloud; packets go only to the host you typed.",
             "Restore default signatures &amp; presets resets host/port and turns the feed off.",
         ]),
@@ -1759,15 +1769,16 @@ def story():
         ]),
         P(
             "Rate limit: a radio is sent when it first qualifies, when it has moved about 30 m, "
-            "or when about 10 s have passed. Sitting on one corner does not spam ATAK. The CoT "
-            "<font face='Courier'>stale</font> attribute is about 120 s after the last send, so a "
-            "radio that left earshot drops off the map without a delete event."
+            "or when about 10 s have passed. Sitting on one corner does not spam ATAK. When a radio "
+            "leaves the feed (gone, or no longer selected), Fieldwatch sends a CoT with "
+            "<font face='Courier'>stale</font> equal to now so ATAK drops it. Missing the 24-per-tick "
+            "cap or a GPS blip does not count as gone. Privacy pause does not send those events."
         ),
         P("5.8.8 What ATAK shows", "h3"),
         bullets([
-            "<b>uid</b> — <font face='Courier'>FIELDWATCH-BLE-</font> or <font face='Courier'>FIELDWATCH-WIFI-</font> plus the MAC without colons. The same radio updates in place; a rotated BLE address is a new marker.",
-            "<b>type</b> — advertised drone-class (Remote ID / DJI class) is <font face='Courier'>a-u-A-M-H-Q</font> (unknown UAV). Everything else, including heard-here Extra attention, is <font face='Courier'>a-u-G</font> (unknown ground). Not friendly/hostile affiliation.",
-            "<b>callsign</b> — Named radio label if that MAC is named; else an Extra attention signature name; else the first matching signature; else the advertised name; else the MAC tail.",
+            "<b>uid</b> — Remote ID with a sticky UAS ID is <font face='Courier'>FIELDWATCH-RID-</font> plus that id (one aircraft, one moving marker). Otherwise <font face='Courier'>FIELDWATCH-BLE-</font> or <font face='Courier'>FIELDWATCH-WIFI-</font> plus the MAC without colons. Pilot pin is <font face='Courier'>FIELDWATCH-PILOT-</font> plus the same id. A rotated BLE address without a UAS ID is still a new marker.",
+            "<b>type</b> — advertised drone-class (Remote ID / DJI class) is <font face='Courier'>a-u-A-M-H-Q</font> (unknown UAV, Yellow). Heard-here Extra attention is <font face='Courier'>a-u-G</font> (Maroon). Pilot is <font face='Courier'>a-u-G</font> (Orange). Other ground is Cyan. Not friendly/hostile affiliation.",
+            "<b>callsign</b> — Named radio label if that MAC is named; else advertised Self ID / UAS ID; else an Extra attention signature name; else the first matching signature; else the advertised name; else the MAC tail. Heard-here callsigns end in (here).",
             "<b>point</b> — lat/lon as above. <font face='Courier'>hae</font> is advertised altitude when known, else the CoT unknown (9999999). ce/le are unknown.",
             "<b>remarks</b> — Fieldwatch · Wi-Fi or BLE · full MAC · RSSI dBm · advertised position or heard here (operator GPS) · up to three signature names · Extra attention text when present.",
             "<b>how</b> — <font face='Courier'>m-g</font> (machine / GPS). Time/start/stale are UTC.",
@@ -1782,13 +1793,13 @@ def story():
             "Stock Android does not give Wi-Fi Neighbor Awareness Networking / stuffed beacons reliably. Many Remote ID aircraft also broadcast Wi-Fi; Fieldwatch’s Remote ID row is the BLE UUID 0xFFFA advertisement. A miss on BLE is a miss on TAK.",
             "No DF, no range. Heard-here follows you. Advertised position is whatever the gadget encoded, including a bad GPS on the aircraft.",
             "No pairing, no GATT, no encrypted ads. If lat/lon only exist after a connect, Fieldwatch will never pin them.",
-            "A randomized BLE MAC is a new uid when it rotates. Remote ID often uses a stable module address; phones do not.",
+            "A randomized BLE MAC is a new uid when it rotates, unless a sticky UAS ID is already on that radio (Remote ID Basic ID). Phones and bag tags do not get that id.",
             "All signatures in a plaza will load ATAK with café APs and headphones. That is the chip working. Turn it off.",
-            "Multicast does not traverse the internet. A teammate on LTE will not see 239.2.3.1 from your phone. Use a TAK server unicast (or their VPN) if you need that.",
+            "Multicast does not traverse the internet. A teammate on LTE will not see 239.2.3.1 from your phone. This feed is UDP; it does not log into a TAK server. Put ATAK on the LAN, or prove whether that ATAK relays injected CoT to the server.",
         ]),
         P("5.8.10 Field checklist", "h3"),
         P(
-            "A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
+            "Feed status under the host fields shows pins on the feed (what Fieldwatch is keeping on ATAK), sends this tick, dest, error, and time. A send count that flashes and returns to 0 is the 10 s / 30 m hold — the on-the-feed number should stay. A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
             "pentest) is the same switch with Payload location optional. For decode-map ids, §9.6."
         ),
     ]
@@ -2887,7 +2898,7 @@ def story():
             "If you get local false positives, hide the family on Filters or mute the noisy rules "
             "in the editor (for example a neighborhood of Espressif gadgets tripping Flock OUI 3C:71:BF). "
             "Restore default signatures &amp; presets rebuilds the catalog (including stock Decode fields), stock bookmarks, and the "
-            "default Settings switches (Keep screen on, Tag detections with GPS, Online place names, TAK / CoT off). "
+            "default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Voice on with Class + signature, TAK / CoT off). "
             "It also wipes custom signatures, presets, and named radios. Export signatures and Export settings first if you want a backup. "
             "Do not use Restore as an undo for a single rule."
         ),
@@ -3110,14 +3121,14 @@ def story():
         ),
         bullets([
             "Device: open detail → bookmark icon to be notified when that radio appears. Prefills a name (advertised name or type guess). Settings → Named radios lists those MACs: rename, Alert on/off, remove one, Clear all. Signature watches are not on that list. A rotated BLE address stays until you delete it.",
-            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua).",
+            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir).",
             "Master switch: Settings → Watchlist alerts. Off suppresses beep, voice, vibration, flash, and jump. Beep and Voice are independent (pip, spoken phrase, or both). Jump works with any of those. Settings → System notification (off by default) posts a silent shade card; skip it in the field.",
         ]),
         P("10.2 Beep, voice, flash, and optional shade card", "h2"),
         P(
             "The default alert is in-app only. Beep (on by default) is a synthesized ~1 kHz double pip "
-            "on media volume. Voice (off by default) speaks a short phrase. They are independent: "
-            "pip only, spoken phrase only, or pip then phrase. Either cue also flashes the row for one second "
+            "on media volume. Voice (on by default) speaks a short phrase (Class + signature). They are independent: "
+            "pip then phrase (the default), pip only, or spoken phrase only. Either cue also flashes the row for one second "
             "and can jump Live display to that row. Test alert plays whatever combination is on. "
             "On By class the matching class and signature open first so the flash is visible, "
             "and the jump keeps those headers on screen when the radio is not far down the outline. "
@@ -3131,13 +3142,13 @@ def story():
         ),
         P("10.2.1 Voice on watched signature", "h3"),
         P(
-            "Voice is the second watchlist cue. It ships off. Turn it on under Settings → "
-            "Voice on watched signature. Watchlist alerts still gates it — master off means no pip, "
+            "Voice is the second watchlist cue. It ships on. Turn it off under Settings → "
+            "Voice on watched signature if you only want the pip. Watchlist alerts still gates it — master off means no pip, "
             "no speech, no flash, no jump."
         ),
         P(
             "Settings → <b>What to say</b> picks the phrase (chips, enabled while Voice is on). "
-            "Default is <b>Class</b> — the same bucket as the Live display glyph. A bookmarked AirTag, "
+            "Default is <b>Class + signature</b>. <b>Class</b> is the same bucket as the Live display glyph. A bookmarked AirTag, "
             "Chipolo, or Tile all say “finder tags.” Axon says “public safety.” ISP / routers "
             "says “I S P routers.” Use that in a pocket or on a drive when you need the kind. "
             "<b>Signature</b> says the catalog row instead (“Apple AirTags,” “Axon”). "
@@ -3153,8 +3164,8 @@ def story():
             "same radio, a signature bookmark speaks that family, not whichever chip landed first."
         ),
         P(
-            "Pip and voice still mix three ways: pip only (the default), spoken phrase only, or "
-            "pip then phrase about 400 ms after the double pip. Use voice-only when you cannot look. "
+            "Pip and voice still mix three ways: pip then phrase about 400 ms after the double pip (the default), pip only, or "
+            "spoken phrase only. Use voice-only when you cannot look. "
             "Use pip only on a sit when speech would be noise. Use both when you want a heads-up "
             "then the words. Test alert plays the same mix — with Voice on and Class selected you "
             "hear “finder tags”; Signature says “Apple AirTags”; Class + signature says both. "
@@ -4019,18 +4030,19 @@ def story():
         P("<b>Setup.</b>", "body_left"),
         numbered([
             "Phone and ATAK (or WinTAK / iTAK) on the same Wi-Fi. Confirm the AP does not isolate clients. If multicast never arrives, you will switch Host to the ATAK device’s IPv4.",
-            "ATAK already listens to UDP 239.2.3.1:6969 for SA. No Fieldwatch plugin. For a TAK server, have that server’s unicast host and CoT input port ready.",
+            "ATAK already listens to UDP 239.2.3.1:6969 for SA. No Fieldwatch plugin. This feed is UDP; it does not log into a TAK server.",
             "Fieldwatch → Settings → Privacy mode Off. Tag detections with GPS On (high-accuracy Location) if you want heard-here pins; Remote ID advertised position does not need it.",
-            "Settings → TAK / CoT feed On. Port 10011 (ATAK CIV). For ATAK CIV on this phone, set Host to the phone’s Wi-Fi IPv4. SA multicast is 239.2.3.1:6969; many TAK servers use 8087. Extra attention On, Payload location On, Watchlist Off, All signatures Off.",
+            "Settings → TAK / CoT feed On. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs on this Wi-Fi. Extra attention On, Payload location On, Watchlist Off, All signatures Off. Confirm Feed status under the host fields shows a send, not an error.",
             "Live display: All traffic, High performance. Do not filter to Drones only if you also want body-cam / glasses — the feed ignores Live display filters, but you still need those radios to match.",
         ]),
         P(
             "<b>What you should see.</b> Within a few seconds of a qualifying hear, ATAK plots "
             "a marker. Extra attention (Axon, glasses, Flipper, Pineapple, …) sits at <i>your</i> "
             "GPS — walk and it follows you while that radio is in earshot. Remote ID Location "
-            "sits at the <i>advertised</i> aircraft lat/lon (CoT type unknown UAV); the next Basic ID "
-            "packet does not clear it. Callsign is the signature name. Remarks say advertised "
-            "position or heard here. A radio that leaves goes stale on ATAK after about two minutes.",
+            "sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV); the next Basic ID "
+            "packet does not clear it and, once UAS ID is heard, that aircraft is one marker that moves. "
+            "A decoded pilot location is a second Orange pin. Heard-here callsigns end in (here). "
+            "A radio that leaves is dropped on ATAK instead of sitting two minutes."
             "body_left",
         ),
         table(
@@ -4040,7 +4052,7 @@ def story():
                 ["Pins sit on me, not the drone", "That radio has no advertised lat/lon (or Payload location is off). Heard-here is working. Remote ID needs a Location message (protocol 2) on BLE FFFA."],
                 ["Drone pin is kilometers away", "Expected for advertised position. Fieldwatch did not DF it. The aircraft encoded that WGS84."],
                 ["Café APs filled the map", "All signatures is on. Turn it off. Extra attention + Payload location is the field default."],
-                ["Marker vanished after ~2 min", "The radio left earshot or scanning stopped. CoT stale, not a delete. Start scanning again if you still want it."],
+                ["Marker vanished after ~2 min", "The radio left earshot, scanning stopped, or Fieldwatch sent a gone event. Start scanning again if you still want it."],
                 ["I want one bag tag on the map", "Watchlist On, bookmark that MAC (Alert on). Extra attention can stay on. Do not use All signatures."],
                 ["Custom sensor with lat/lon in the ad", "Decode fields: ids latitude and longitude (scale as the spec). Payload location On. No TAK checkbox. §5.8.3, §9.6."],
             ],
@@ -4143,10 +4155,10 @@ def story():
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
             ["Named radios", "Settings list of one-MAC custom names and optional alerts (detail Save name, or the bookmark icon). Rename, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. §5.5, §5.7, §8.1, §10.1."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
-            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Default port 10011 (ATAK CIV); host 239.2.3.1 (SA multicast). Same-phone ATAK CIV: this phone’s Wi-Fi IPv4 and 10011. Other ports: 6969 (SA multicast), 8087 (many TAK servers). Pins Extra attention at operator GPS (heard here) and advertised decode lat/lon (Payload location — stock Remote ID, or any map whose field ids are latitude/longitude). Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
+            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
             ["Night mode", "Settings switch under TAK / CoT, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Background stays dark. Overrides Dark theme while on. Phone brightness is unchanged. Fig. 8, §5.7."],
-            ["Heard here (TAK)", "CoT pin at this phone’s GPS at last hear. The other radio is in earshot, not on that point. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists."],
-            ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID Location. Sticky across ASTM message types. op_lat / op_lon are the pilot and are not this pin. GPS tagging can be off."],
+            ["Heard here (TAK)", "CoT pin at this phone’s GPS at last hear. The other radio is in earshot, not on that point. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists."],
+            ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID Location. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. GPS tagging can be off."],
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
             ["Reports", "Bottom tab. Debrief (text/PDF), AI Export, Signature candidates, Share log, Save log, Reset / clear log. Config for GPS, place names, and logging on/off stays on Settings. §5.6."],
             ["Signature candidates", "Reports action. Re-matches the rotating log against the current catalog, then lists unmatched families that share a unique on-air ID on two or more radios. Randomized addresses and house-like names are skipped. Create signature opens the editor as a draft (shared rule, no MAC pin). Save returns to the list and re-runs it. Offline. §5.6.1, §9.2.1, §11.5."],
@@ -4202,7 +4214,7 @@ def story():
             ["UniFi AP", "Wi-Fi-only catalog signature (ISP / routers). Factory SSIDs UniFi* / UAP-* / UBNT* plus Ubiquiti IEEE OUIs on the BSSID or a vendor IE. Virtual BSSIDs miss the MAC OUI but still hit on a Ubiquiti vendor IE. A separate UniFi row is name-only on either radio. UniFi Protect cameras stay Surveillance. §9.5, Appendix B."],
             ["Tag detections with GPS", "Settings switch, on by default. Current GPS/network updates while scanning; stamps each hear (detail, Moving with you, Debrief, log lat/lon, heard-here TAK pins). Last-known older than 30 s ignored. Operator phone at hear-time, not the other radio. Advertised TAK pins (Remote ID) do not need this. High-accuracy Location or the path stays 0. §5.7, §5.8."],
             ["Share as text", "Device-detail button. Plain dump of the open radio (identity, signal, decode, session). Not the sit report and not the rotating log."],
-            ["Voice (watchlist)", "Settings → Voice on watched signature, off by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class. A named radio speaks its watch name instead, including a custom name from Named radios. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix. Jump works with voice alone. §5.7, §10.2.1."],
+            ["Voice (watchlist)", "Settings → Voice on watched signature, on by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class + signature. A named radio speaks its watch name instead, including a custom name from Named radios. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix. Jump works with voice alone. §5.7, §10.2.1."],
             ["Hunt", "Device-detail, BLE only. Full-screen closer/further from smoothed RSSI. Rings around YOU contract on Closer and expand on Further. Very Close at about −45 dBm or louder (look around; still not meters). Loudest-this-hunt + hunt sparkline. Beep / Vibrate at the bottom (off by default; faster as RSSI gets louder; silent when Quiet/Gone; not the watchlist chirp, never speaks). Optional body-block turn for a crude heading (§12.13). Walls, metal, people, and floors change RSSI without a change in range. Not distance, not DF. Wi-Fi omitted (OS scan throttle; Faster Wi-Fi AP scans still batch, not Hunt)."],
             ["lat / lon (log)", "CSV columns and JSON fields on each new log row when Tag detections with GPS is on and a fix exists. Operator phone at hear-time, not the other radio. Empty/null otherwise. In CSV these columns sit before vendor_ie so older files still parse."],
             ["Where you were", "Debrief / AI Export section. Operator path split into stays (~40 m) and transits. Lat/lon once per stay, optional street name, loud radios heard there. Not lat/lon on every inventory line."],
@@ -4235,7 +4247,7 @@ def story():
             "Every stock signature always labels when its rules hit. "
             "Hide a noisy family on Filters (Hide these for a class, or Hide selected for one row). "
             "Chip colors are by class (§9.5). Extra attention and a stock bookmark ship on the "
-            "body-cam, camera-glasses, recording-wearable, pentest, public-safety vehicle AP, and roadside / public camera + ALPR rows noted below. Consumer cameras, ISP "
+            "body-cam, camera-glasses, recording-wearable, pentest, public-safety vehicle AP, and roadside / public camera + ALPR rows noted below, plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Consumer cameras, ISP "
             "gateways, and office mice will label when their factory names or OUIs are heard. "
             "The table is A–Z by signature name."
         ),
@@ -4277,12 +4289,12 @@ def story():
             ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
-            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6)."],
-            ["Remote ID", "BLE UUID 0xFFFA (ASTM F3411 / FAA Remote ID)", "In-flight digital license plate. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. Not FIDO FFF9 or Thread FFFB. Wi-Fi NAN often misses on stock Android. Not a tail number. Drones class. Decode fields: Open Drone ID app/counter/message; protocol 2 Basic ID / location / Self ID / System / Operator ID (§9.6)."],
-            ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. RID in flight is often Wi-Fi beacon (easy to miss) — UUID FFFA is the Remote ID row. Drones class."],
-            ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class."],
-            ["Parrot", "Names ANAFI* / Bebop*", "Parrot drones. Not company 0x0043 (automotive). Disco* not used. Drones class."],
-            ["HOVERAir", "Wi-Fi Hover* / HoverX1_*; names HOVERAir*", "Zero Zero Robotics flying cameras. Drones class."],
+            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
+            ["Remote ID", "BLE UUID 0xFFFA (ASTM F3411 / FAA Remote ID)", "In-flight digital license plate. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. Not FIDO FFF9 or Thread FFFB. Wi-Fi NAN often misses on stock Android. Not a tail number. Drones class. Decode fields: Open Drone ID app/counter/message; protocol 2 Basic ID / location / Self ID / System / Operator ID (§9.6). Stock bookmark."],
+            ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. RID in flight is often Wi-Fi beacon (easy to miss) — UUID FFFA is the Remote ID row. Drones class. Stock bookmark."],
+            ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
+            ["Parrot", "Names ANAFI* / Bebop*", "Parrot drones. Not company 0x0043 (automotive). Disco* not used. Drones class. Stock bookmark."],
+            ["HOVERAir", "Wi-Fi Hover* / HoverX1_*; names HOVERAir*", "Zero Zero Robotics flying cameras. Drones class. Stock bookmark."],
             ["Starlink", "Wi-Fi SSIDs STARLINK* / Starlink*; SpaceX OUI 00:26:12", "BSSID often randomized; name is the usual hit."],
             ["Meraki", "Wi-Fi SSIDs Meraki* plus Cisco Meraki IEEE OUIs", "Not Cisco Systems OUIs. Renamed SSID still hits on BSSID. Cisco vendor IE 00:00:0C on the same beacon stays Meraki only. ISP / routers class."],
             ["Cisco", "Wi-Fi Cisco*; tsunami; Cisco Systems and Cisco SPVTG IEEE OUIs", "Not a Cisco substring (Francisco). AP beacons only. Meraki / Cisco-Linksys have their own OUI lists. ISP / routers class."],
@@ -4535,7 +4547,7 @@ def story():
             ["Cannot find Mark seen / Reset seen", "Those buttons appear only while New detections only is on.", "Turn on Filters → New detections only. Mark seen and Reset seen appear on the Live display, just above the tabs."],
             ["Cannot find Start over", "It is on the Live display, not Filters.", "Turn on Filters → Moving with you. Start over sits above the tabs. It clears the GPS path, not the live list."],
             ["Watchlist never fires", "Alerts off, both Beep and Voice off, or the hit is hidden by New detections only / another filter.", "Enable Watchlist alerts, then Beep, Voice, or both. Confirm the family is bookmarked and the row would show on the Live display. Tap Test alert; raise media volume. Jump works with any of those cues. System notification is optional and off by default."],
-            ["Watchlist beeps but does not speak", "Voice on watched signature is off, media volume is down, or the phone has no text-to-speech pack.", "Settings → Voice on watched signature. Raise media volume. Tap Test alert — Class says “finder tags,” Signature says “Apple AirTags,” Class + signature says both (after the pip if Beep is also on). Hunt never speaks."],
+            ["Watchlist beeps but does not speak", "Voice on watched signature was turned off, media volume is down, or the phone has no text-to-speech pack.", "Settings → Voice on watched signature (ships on). Raise media volume. Tap Test alert — Class + signature says “finder tags, Apple AirTags” after the pip if Beep is also on. Hunt never speaks."],
             ["Trackers / Surveillance shows nothing", "Show only that class, and no matching radios are on the air.", "Empty Live display means none of that class is in earshot (a bag AirTag is the check for Trackers). Hide these on another class does not mute labels."],
             ["Signatures only switch does nothing under Show only", "Show only already hides unmatched radios.", "The switch is dimmed while Show only has a class or selected signatures picked. Turn Show only off to use Signatures only, or use Hide these if unmatched radios should stay."],
             ["Moving with you empty after Trackers / Show only", "Class Show only, Signatures only, Named radios only, or Watched only was still on. Finder tags rotate MACs, so they often fail co-travel, and unmatched radios were hidden.", "Tap the Moving with you preset, or turn the switch on. Either one clears Show only, Signatures only, Named radios only, and Watched only. Hide these stays if you were hiding a bag tag. The path still needs about 50 m."],
@@ -4559,11 +4571,12 @@ def story():
             ["Where you were has coords but no street", "Online place names is off, or on with no internet / no geocoder.", "Expected. Stays still print lat/lon. Distance does not need internet. Turn the switch off if you want no lookup attempt."],
             ["Last fix or Debrief shows “masked” instead of lat/lon", "Privacy mode is on.", "Expected. Settings → Privacy mode hides GPS coordinates on the screen and in sit reports. Street names are omitted too. The log still has lat/lon. A TAK / CoT feed is paused. Turn Privacy mode off when you need the pin or the overlay."],
             ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Night mode Off. Dark theme stays as you left it. Restore defaults also turns Night mode off. Fig. 8."],
-            ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong LAN / multicast filtered, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Same Wi-Fi as ATAK; if 239.2.3.1 never arrives, set Host to the ATAK IPv4. Confirm the Live display shows a “!” or Remote ID. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
+            ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 2); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
             ["ATAK filled with café APs", "All signatures is on.", "Turn All signatures off. Field default is Extra attention + Payload location."],
-            ["TAK marker vanished", "CoT stale (~120 s) after the radio left or scanning stopped.", "Expected. Fieldwatch does not send delete events. Keep scanning to refresh. A rotated BLE MAC is a new uid."],
+            ["TAK marker vanished", "The radio left the feed, scanning stopped, or Privacy mode paused it.", "Expected. Fieldwatch sends a gone event (stale=now) when a radio leaves. Privacy pause does not; ATAK then stale-times out ~120 s. A rotated BLE MAC without a sticky UAS ID is a new uid."],
+            ["Remote ID is a cloud of dots on ATAK", "UID was the BLE MAC, which Remote ID rotates.", "1.0.3 keys the aircraft on sticky UAS ID. One marker should move. Until the first Basic ID packet, it still keys on MAC, then jumps once."],
             ["GPS path stays 0 m while I drive / Moving with you says keep moving", "The phone is not giving a live fix.", "Turn on Tag detections with GPS and high-accuracy Location. Scanning must be running. Wait until the path meter is not 0, then walk or drive."],
             ["Second iPhone in the car did not show under Moving with you", "iOS rotates the BLE address, so Fieldwatch sees a new radio with an empty GPS trail.", "Expected. Use a tag with a stable MAC (AirTag/Tile in the bag) as the confidence check. Phones will not stitch as one follower."],
             ["Moving with you lists house APs after I get home", "Wi-Fi access points are excluded from this filter.", "Expected. A loud AP you drive past paints your hear-time path and would look like co-travel, so APs never qualify. Bag and car BLE tags should stay on."],
@@ -4592,9 +4605,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.2 (versionCode 3), field build of 16 September 2026"],
-                ["Document version", "1.0.2"],
-                ["Document date", "16 September 2026"],
+                ["Software version", "1.0.3 (versionCode 4), field build of 17 September 2026"],
+                ["Document version", "1.0.3"],
+                ["Document date", "17 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],
