@@ -48,7 +48,13 @@ Android 10+. Allow install from the app you used to open the APK. Play Protect m
 adb install -r dist/Fieldwatch.apk
 ```
 
-1.0.5 is signed with an Off Grid Pete LLC release certificate. If 1.0.4 or earlier is already on the phone, uninstall it first (`adb uninstall app.fieldwatch`); Android will not update over a different signer. Certificate SHA-256 is in `instruction.txt`.
+### 1.0.5 — a real publisher certificate (one-time reinstall)
+
+This release is a little more professional about how the APK is signed. Android attaches a certificate to every app so the phone can tell “this update is from the same publisher as the app I already have.” Through 1.0.4, Fieldwatch used the generic Android developer certificate that the build tools ship with. That is normal while you are iterating, but people who scan a sideload APK (and some scanners) flag it: a public build should not look like a debug leftover. 1.0.5 is signed with an Off Grid Pete LLC certificate instead. Same hobby app; the file now has a publisher name scanners can check. The fingerprint is in `instruction.txt` if you want to compare.
+
+The catch is one-time. The phone treats a new certificate as a different publisher, so it will not install 1.0.5 on top of 1.0.4 or earlier. You uninstall the old Fieldwatch, then install this APK. After that, later versions use the same certificate, so ordinary updates work again. You will not have to uninstall for 1.0.6.
+
+Uninstall wipes what is on the phone. If you added signatures, changed Settings, named radios, or saved filter presets, do this first: Settings → **Export signatures** and **Export settings**. Share or save those two files somewhere you can get them after. They are not the log and not GPS. Then uninstall (long-press the Fieldwatch icon, or `adb uninstall app.fieldwatch`), install 1.0.5, open it, tap through the disclaimer, and use **Import signatures** and **Import settings**. If you never customized, skip the export and just uninstall, then install.
 
 ## What Fieldwatch is not
 
