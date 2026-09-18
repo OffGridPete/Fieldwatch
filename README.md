@@ -48,6 +48,8 @@ Android 10+. Allow install from the app you used to open the APK. Play Protect m
 adb install -r dist/Fieldwatch.apk
 ```
 
+1.0.5 is signed with an Off Grid Pete LLC release certificate. If 1.0.4 or earlier is already on the phone, uninstall it first (`adb uninstall app.fieldwatch`); Android will not update over a different signer. Certificate SHA-256 is in `instruction.txt`.
+
 Fieldwatch will not overwrite an existing Spectre install (`app.spectre`). Uninstall Spectre when you no longer need it.
 
 Signature packs exported from Spectre (`spectre-signatures`) still import.

@@ -5,6 +5,21 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+fun localProp(name: String): String? {
+    val file = rootProject.file("local.properties")
+    if (!file.isFile) return null
+    for (raw in file.readLines()) {
+        val line = raw.trim()
+        if (line.isEmpty() || line.startsWith("#")) continue
+        val split = line.indexOf('=')
+        if (split <= 0) continue
+        if (line.substring(0, split).trim() == name) {
+            return line.substring(split + 1).trim().takeIf { it.isNotEmpty() }
+        }
+    }
+    return null
+}
+
 android {
     namespace = "app.fieldwatch"
     compileSdk = 35
@@ -13,9 +28,31 @@ android {
         applicationId = "app.fieldwatch"
         minSdk = 29
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
         vectorDrawables.useSupportLibrary = true
+    }
+
+    val releaseStore = localProp("FIELDWATCH_STORE_FILE")
+    val releaseStorePassword = localProp("FIELDWATCH_STORE_PASSWORD")
+    val releaseKeyAlias = localProp("FIELDWATCH_KEY_ALIAS")
+    val releaseKeyPassword = localProp("FIELDWATCH_KEY_PASSWORD")
+    val hasReleaseSigning =
+        releaseStore != null &&
+            releaseStorePassword != null &&
+            releaseKeyAlias != null &&
+            releaseKeyPassword != null &&
+            file(releaseStore).isFile
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStore!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -26,6 +63,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             applicationIdSuffix = ""

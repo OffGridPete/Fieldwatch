@@ -8,6 +8,8 @@ app/build/
 *.aab
 *.ap_
 local.properties
+*.jks
+*.keystore
 
 # IDE
 .idea/
