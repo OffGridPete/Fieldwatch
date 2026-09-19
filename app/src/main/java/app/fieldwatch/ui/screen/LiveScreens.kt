@@ -2,10 +2,6 @@ package app.fieldwatch.ui.screen
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -44,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -53,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.isActive
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -546,6 +544,49 @@ private fun radarPoint(
     )
 }
 
+private fun sweepBehindDegrees(sweepDeg: Float, mac: String): Float {
+    val blip = ((mac.hashCode() ushr 1) % 360).toFloat()
+    var beam = (270f + sweepDeg) % 360f
+    if (beam < 0f) beam += 360f
+    var behind = beam - blip
+    while (behind < 0f) behind += 360f
+    return behind
+}
+
+/** 1 at the beam, falling off through the trail, dim between paints. */
+private fun sweepPaint(behindDeg: Float): Float = when {
+    behindDeg <= 8f -> 1f
+    behindDeg < 120f -> {
+        val u = (behindDeg - 8f) / 112f
+        (1f - u) * (1f - u)
+    }
+    else -> 0.20f
+}
+
+private fun DrawScope.drawRadarSweep(center: Offset, maxR: Float, beam: Color, night: Boolean) {
+    val trailDeg = 58f
+    val steps = 24
+    val slice = trailDeg / steps
+    val box = androidx.compose.ui.geometry.Size(maxR * 2, maxR * 2)
+    val origin = Offset(center.x - maxR, center.y - maxR)
+    for (i in 0 until steps) {
+        val t = i / (steps - 1f).coerceAtLeast(1f)
+        val fade = 1f - t
+        drawArc(
+            color = beam.copy(alpha = 0.32f * fade * fade * fade),
+            startAngle = -90f - i * slice,
+            sweepAngle = -(slice + 1.1f),
+            useCenter = true,
+            topLeft = origin,
+            size = box,
+        )
+    }
+    val tip = Offset(center.x, center.y - maxR)
+    drawLine(beam.copy(alpha = 0.16f), center, tip, 15f)
+    drawLine(beam.copy(alpha = 0.42f), center, tip, 7f)
+    drawLine(beam.copy(alpha = if (night) 0.95f else 0.88f), center, tip, 2.2f)
+}
+
 private fun DrawScope.drawRadarContact(
     pos: Offset,
     color: Color,
@@ -594,6 +635,31 @@ private fun DrawScope.drawRadarContact(
     drawCircle(Color.Black.copy(alpha = 0.35f), radius = rad + 1.2f, center = pos, style = Stroke(1.4f))
 }
 
+/**
+ * Vsync sweep so the beam still moves when Developer options
+ * Animator duration scale is off (tween infinite animations freeze).
+ */
+@Composable
+private fun rememberRadarSweepDegrees(periodMs: Int = 4200): MutableFloatState {
+    val sweep = remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(periodMs) {
+        var last = 0L
+        val periodNs = periodMs * 1_000_000L
+        while (isActive) {
+            withFrameNanos { now ->
+                if (last != 0L) {
+                    val add = (now - last).toDouble() / periodNs * 360.0
+                    var next = sweep.floatValue + add.toFloat()
+                    while (next >= 360f) next -= 360f
+                    sweep.floatValue = next
+                }
+                last = now
+            }
+        }
+    }
+    return sweep
+}
+
 @Composable
 private fun RadarView(
     devices: List<Sighting>,
@@ -607,11 +673,7 @@ private fun RadarView(
     flashKeys: Set<String> = emptySet(),
     alertedKeys: Set<String> = emptySet(),
 ) {
-    val sweep by rememberInfiniteTransition(label = "sweep").animateFloat(
-        0f, 360f,
-        infiniteRepeatable(tween(4200, easing = LinearEasing), RepeatMode.Restart),
-        label = "deg",
-    )
+    val sweep = rememberRadarSweepDegrees()
     val night = LocalNightMode.current
     val ring = MaterialTheme.colorScheme.outline
     val beam = MaterialTheme.colorScheme.primary
@@ -707,26 +769,19 @@ private fun RadarView(
             drawLine(ring.copy(alpha = 0.4f), Offset(c.x - maxR, c.y), Offset(c.x + maxR, c.y), 2f)
             drawLine(ring.copy(alpha = 0.4f), Offset(c.x, c.y - maxR), Offset(c.x, c.y + maxR), 2f)
 
-            rotate(sweep, c) {
-                drawLine(beam.copy(alpha = 0.9f), c, Offset(c.x, c.y - maxR), 5f)
-                drawArc(
-                    color = beam.copy(alpha = 0.16f),
-                    startAngle = -90f,
-                    sweepAngle = -42f,
-                    useCenter = true,
-                    topLeft = Offset(c.x - maxR, c.y - maxR),
-                    size = androidx.compose.ui.geometry.Size(maxR * 2, maxR * 2),
-                )
+            rotate(sweep.floatValue, c) {
+                drawRadarSweep(c, maxR, beam, night)
             }
 
             val now = System.currentTimeMillis()
             val phosphor = PhosphorActive.nightIf(night)
-            fun contact(device: Sighting): Triple<Offset, Color, Boolean>? {
+            fun contact(device: Sighting, persist: Boolean = true): Triple<Offset, Color, Boolean>? {
                 val plotRssi = device.sortRssi(sort, windowMs, now)
                 if (!RadarPlot.onDisc(plotRssi.toInt(), maxR, z)) return null
                 val pos = radarPoint(device, c, maxR, plotRssi, z)
                 val named = device.fleetIds.isNotEmpty()
-                val alpha = if (device.gone) 0.45f else 1f
+                val paint = if (persist) sweepPaint(sweepBehindDegrees(sweep.floatValue, device.mac)) else 1f
+                val alpha = (if (device.gone) 0.45f else 1f) * (0.35f + 0.65f * paint)
                 val color = (device.fleetIds.firstOrNull()
                     ?.let { Color(Palette.color(vm.fleetColor(it))) }
                     ?: rssiColor(plotRssi.toInt()))
@@ -760,13 +815,13 @@ private fun RadarView(
             }
             devices.forEach { device ->
                 if (device.key in flashKeys || device.key !in alertedKeys) return@forEach
-                val (pos, color, named) = contact(device) ?: return@forEach
+                val (pos, color, named) = contact(device, persist = false) ?: return@forEach
                 val ring = phosphor.copy(alpha = if (device.gone) 0.45f else 1f)
                 drawRadarContact(pos, color, named, device.gone, null, alertedRing = ring)
             }
             devices.forEach { device ->
                 if (device.key !in flashKeys) return@forEach
-                val (pos, color, named) = contact(device) ?: return@forEach
+                val (pos, color, named) = contact(device, persist = false) ?: return@forEach
                 val started = flashAt[device.key] ?: now
                 drawRadarContact(pos, color, named, device.gone, now - started)
             }

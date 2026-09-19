@@ -506,14 +506,14 @@ data class AppSettings(
     val tagLocation: Boolean = true,
     /** Reverse-geocode GPS stamps in Debrief when the phone is online. Default on. */
     val onlineLookup: Boolean = true,
-    val viewMode: ViewMode = ViewMode.LIST,
+    val viewMode: ViewMode = ViewMode.BY_CLASS,
     val strengthSort: StrengthSort = StrengthSort.AVERAGE,
     val averageWindowSec: Int = 30,
     val listSort: ListSort = ListSort.STRENGTH,
     val showRssiBar: Boolean = true,
     val showFleetName: Boolean = true,
-    val showFrequency: Boolean = false,
-    val showSeenTimes: Boolean = false,
+    val showFrequency: Boolean = true,
+    val showSeenTimes: Boolean = true,
     /** Live row first line. Default is MAC. */
     val listTitleLine: ListLine = ListLine.MAC,
     /** Live row second line. Default is name, else type guess. NONE hides the line. */

@@ -459,8 +459,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.5")
-    c.drawString(48, 94, "18 September 2026")
+    c.drawString(48, 108, "Version 1.0.6")
+    c.drawString(48, 94, "19 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.5  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.6  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -999,7 +999,7 @@ def story():
             "Grant the permission screen. Fieldwatch will not start radios until the required set is complete.",
             "A foreground notification <b>Fieldwatch scanning</b> appears. Leave it; dismissing via Stop ends collection.",
             "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock signature catalog, presets, bookmarks, and Settings listed in the Appendix. Later launches reload that file. Restore default signatures &amp; presets writes it from the stock catalog again. Settings → Export signatures shares the catalog as JSON. Settings → Export settings shares switches, the current filter, presets, and named radios. Neither pack has logs or GPS (§5.7, §9.3).",
-            "The Live display opens on the last view mode (default: Strength list). The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
+            "The Live display opens on the last view mode (default: By class). Display ships with RSSI bars, Signature names, Frequency, and First / last seen on. The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
             "Turn on system Location and Bluetooth if either is off. The Live display header and Settings show radio hints (Wi-Fi next Ns, waiting on OS, BLE cycling). Keep screen on is enabled by default. If you will leave the app: Settings → Allow background usage, then Unrestricted battery. Some phones (Samsung among them) do not open onto Unrestricted — tap Allow background usage to click through and select it.",
         ]),
         callout(
@@ -1024,7 +1024,7 @@ def story():
         P("4.4 The first five minutes", "h2"),
         numbered([
             "Confirm the header is counting (Wi-Fi, Bluetooth, and signatures icons with numbers). If both radio counts stay at 0, Location / Wi-Fi / Bluetooth are probably off at the system level — turn them on, wait ~30 s for the first Wi-Fi batch.",
-            "You should be on the Live display, Strength list. Each row is one radio. The circle is a class glyph (unmatched = ?) — that is the glanceable mark. AP = Wi-Fi access point and LE = BLE advertiser; they still mean those two radio kinds (§1.1). On the Live display they are a small Wi-Fi or Bluetooth icon at the start of the subtitle, not two-letter tags and not the title. Default first line is the MAC (SemiBold). Default second line is that icon, then Name + type (SSID / advertised BLE name / a type guess such as Apple · AirTag), then rand/gone. Vendor is not on the list — open detail. The number on the right is RSSI in dBm (loudness here, not meters; −50 is louder than −90).",
+            "You should be on the Live display, By class. Tap a class, then a signature, then a radio. Each radio row is one radio. The circle is a class glyph (unmatched = ?) — that is the glanceable mark. AP = Wi-Fi access point and LE = BLE advertiser; they still mean those two radio kinds (§1.1). On the Live display they are a small Wi-Fi or Bluetooth icon at the start of the subtitle, not two-letter tags and not the title. Default first line is the MAC (SemiBold). Default second line is that icon, then Name + type (SSID / advertised BLE name / a type guess such as Apple · AirTag), then rand/gone. RSSI bars, signature names, Frequency, and first/last seen ship on. Vendor is not on the list — open detail. The number on the right is RSSI in dBm (loudness here, not meters; −50 is louder than −90).",
             "Tap the tune / chevron (top right). That is <b>Display</b>: how the list looks for this job. View, Sort, Brief hold, Title line, Subtitle line, then switches for RSSI bars, signature names, Frequency (channel · MHz under RSSI), first/last. Close it when the list looks the way you want. In a crowded plaza, set Subtitle to None and turn the extras off — you still have every radio; you just see less of each. Filters hide radios; Display hides fields. §5.3.",
             "Tap a row. That is device detail: identity, “What this looks like,” Signature family (whether this radio’s on-air ID is a catalog candidate), signal, decode, optional Decoded fields on BLE when that signature has a map (§9.6), bookmark (watch this MAC), Hunt on BLE, Create signature from device. Custom name is hidden on a random / privacy MAC. Back returns to the Live display.",
             "Bottom bar, left to right: Live, Filters, Signatures, Reports, Settings. The Live tab is the Live display in this book. The Filters tab trims <i>who</i> the Live display shows (presets, class Show only / Hide these, Show only selected / Hide selected signatures). Display trims <i>how much of each row</i> you see. Signatures is the pattern catalog (tap to edit, bookmark to beep). Reports is Debrief, AI Export, Share log, Save log, Reset / clear log. Settings is intensity, GPS tagging (on), Keep screen on (on), Online place names (on), logging options. TAK / CoT is off until you turn it on (§5.8).",
@@ -1218,7 +1218,7 @@ def story():
         ]),
         P("View and linger", "h3"),
         bullets([
-            "<b>View</b> — Classic radar, Strength list (default), Timeline, Hybrid + sparklines, By class. Same filtered set; only the picture changes. Sort orders the list / hybrid / timeline and the radios under a signature in By class. Radar still plots by RSSI radius (a seat on the ring, not a stack). §6.",
+            "<b>View</b> — Classic radar, Strength list, Timeline, Hybrid + sparklines, By class (default). Same filtered set; only the picture changes. Sort orders the list / hybrid / timeline and the radios under a signature in By class. Radar still plots by RSSI radius (a seat on the ring, not a stack). §6.",
             "<b>Brief hold</b> — Off (Stale after only), or hold 10 / 30 / 60 s after the last packet. The row stays at last-heard RSSI, rank, and radar ring; values do not decay. A new packet updates them. On-screen linger is the longer of Stale after and Brief hold. Filters → New detections only uses this same time as the minimum stay after the last packet.",
         ]),
         P("Sort — order of the list", "h3"),
@@ -1254,12 +1254,12 @@ def story():
         bullets([
             "<b>RSSI bars</b> — Switch, on by default. Track plus fill from last-heard strength (the same last packet as the number, not the 30 s average).",
             "<b>Signature names</b> — Switch, on by default. Independent of bars. List, hybrid, and timeline show up to three chips when a device matches more than one signature. Radar uses only the first match as the blip label. Detail lists every match. Off still matches; it only hides the chips.",
-            "<b>Frequency</b> — Switch, off by default. Channel and MHz sit under the RSSI on the right so a long name does not cut them off (for example <font face='Courier'>ch6 · 2437MHz</font>). BLE advertisements usually have no frequency.",
-            "<b>First / last seen</b> — Switch, off by default. Age since first packet this session and age since the last packet, ticking once a second.",
+            "<b>Frequency</b> — Switch, on by default. Channel and MHz sit under the RSSI on the right so a long name does not cut them off (for example <font face='Courier'>ch6 · 2437MHz</font>). BLE advertisements usually have no frequency.",
+            "<b>First / last seen</b> — Switch, on by default. Age since first packet this session and age since the last packet, ticking once a second.",
         ]),
         P(
-            "<b>Default row</b> (Strength list, Sort Strongest avg 30s, Title MAC, Subtitle Name + type, "
-            "bars on, signatures on, Frequency off, first/last off, Brief hold 10 s): class glyph in "
+            "<b>Default row</b> (By class, Sort Strongest avg 30s, Title MAC, Subtitle Name + type, "
+            "bars on, signatures on, Frequency on, first/last on, Brief hold 10 s): class glyph in "
             "a circle (unmatched = ?); first line MAC; second line the Wi-Fi or Bluetooth icon, then name or type guess, "
             "then rand/gone; live RSSI, trend, and avg N on the right; optional bar and chips. "
             "A bookmarked new hit flashes the row for one second when the watchlist fires (pip and/or spoken class). After that, a phosphor (night-green) bell stays on the chip row for the rest of the session.",
@@ -4605,9 +4605,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.5 (versionCode 6), field build of 18 September 2026"],
-                ["Document version", "1.0.5"],
-                ["Document date", "18 September 2026"],
+                ["Software version", "1.0.6 (versionCode 7), field build of 19 September 2026"],
+                ["Document version", "1.0.6"],
+                ["Document date", "19 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

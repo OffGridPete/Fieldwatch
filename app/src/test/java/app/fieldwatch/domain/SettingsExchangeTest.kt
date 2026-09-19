@@ -15,6 +15,11 @@ class SettingsExchangeTest {
         assertTrue(stock.darkTheme)
         assertTrue(stock.keepScreenOn)
         assertTrue(stock.alertBeep)
+        assertEquals(ViewMode.BY_CLASS, stock.viewMode)
+        assertTrue(stock.showRssiBar)
+        assertTrue(stock.showFleetName)
+        assertTrue(stock.showFrequency)
+        assertTrue(stock.showSeenTimes)
     }
 
     private val stockFleets = DefaultCatalog.fleets()
