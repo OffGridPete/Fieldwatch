@@ -176,6 +176,38 @@ class TakPublishTest {
     }
 
     @Test
+    fun heardHereMovesOnFirstAndLouderKeepsPeakOnRefresh() {
+        assertEquals(TakHeardHere.MOVE, TakPublish.heardHereAction(null, null, 1_000L, -80))
+        assertEquals(TakHeardHere.MOVE, TakPublish.heardHereAction(1_000L, Int.MIN_VALUE, 1_100L, -80))
+        assertEquals(TakHeardHere.SKIP, TakPublish.heardHereAction(1_000L, -60, 5_000L, -70))
+        assertEquals(TakHeardHere.SKIP, TakPublish.heardHereAction(1_000L, -60, 5_000L, -60))
+        assertEquals(TakHeardHere.MOVE, TakPublish.heardHereAction(1_000L, -60, 2_000L, -50))
+        assertEquals(TakHeardHere.REFRESH, TakPublish.heardHereAction(1_000L, -60, 12_000L, -90))
+        assertEquals(TakHeardHere.REFRESH, TakPublish.heardHereAction(1_000L, -60, 12_000L, -60))
+        assertEquals(TakHeardHere.MOVE, TakPublish.heardHereAction(1_000L, -60, 12_000L, -40))
+    }
+
+    @Test
+    fun extraAttentionMarkerIsHeardHereNotAdvertised() {
+        val cam = radio(fleetIds = setOf("fleet-axon"), lat = 37.5, lon = -122.2)
+        val marks = TakPublish.markers(cam, on, fleets, emptyList())
+        assertEquals(1, marks.size)
+        assertFalse(marks[0].advertised)
+        assertFalse(marks[0].pilot)
+    }
+
+    @Test
+    fun watchlistHeardHereIsNotAdvertised() {
+        val unmatched = radio(fleetIds = emptySet(), lat = 1.0, lon = 2.0)
+        val loud = WatchTarget(id = "n1", deviceKey = unmatched.key, label = "van", alert = true)
+        val settings = on.copy(takWatchlist = true, takAttention = false, takPayloadFix = false)
+        val marks = TakPublish.markers(unmatched, settings, fleets, listOf(loud))
+        assertEquals(1, marks.size)
+        assertFalse(marks[0].advertised)
+        assertFalse(marks[0].pilot)
+    }
+
+    @Test
     fun cotXmlUsesAdvertisedDroneTypeAndEscapes() {
         val drone = radio(
             fleetIds = setOf("fleet-remote-id"),

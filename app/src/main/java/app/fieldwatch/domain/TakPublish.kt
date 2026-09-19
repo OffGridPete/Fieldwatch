@@ -41,7 +41,14 @@ data class TakSent(
     val at: Long,
     val lat: Double,
     val lon: Double,
+    val rssi: Int = Int.MIN_VALUE,
 )
+
+enum class TakHeardHere {
+    SKIP,
+    MOVE,
+    REFRESH,
+}
 
 data class TakMarker(
     val uid: String,
@@ -78,8 +85,9 @@ object TakPublish {
     }
 
     /**
-     * Advertised decode lat/lon win. Otherwise the operator GPS at last hear,
+     * Advertised decode lat/lon win. Otherwise this hear’s operator GPS,
      * and only while GPS tagging is on. GPS off + no payload = no pin.
+     * Heard-here TAK holds the loudest of these (see [heardHereAction]).
      */
     fun pin(device: Sighting, settings: AppSettings): Pair<Double, Double>? {
         if (PayloadLocation.validCoord(device.payloadLat, device.payloadLon)) {
@@ -133,6 +141,24 @@ object TakPublish {
         if (lastAt == null || lastLat == null || lastLon == null) return true
         if (now - lastAt >= minIntervalMs) return true
         return Geo.meters(lastLat, lastLon, lat, lon) >= moveM
+    }
+
+    /**
+     * Heard-here pins sit on operator GPS. Move only when this hear is
+     * louder than the last send (closer). Weaker hears still refresh the
+     * same lat/lon after [minIntervalMs] so ATAK does not stale-drop.
+     */
+    fun heardHereAction(
+        lastAt: Long?,
+        lastRssi: Int?,
+        now: Long,
+        rssi: Int,
+        minIntervalMs: Long = TakDefaults.MIN_INTERVAL_MS,
+    ): TakHeardHere {
+        if (lastAt == null || lastRssi == null || lastRssi == Int.MIN_VALUE) return TakHeardHere.MOVE
+        if (rssi > lastRssi) return TakHeardHere.MOVE
+        if (now - lastAt >= minIntervalMs) return TakHeardHere.REFRESH
+        return TakHeardHere.SKIP
     }
 
     fun hasAttention(device: Sighting, fleets: List<Fleet>): Boolean {

@@ -459,7 +459,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.6")
+    c.drawString(48, 108, "Version 1.0.7")
     c.drawString(48, 94, "19 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.6  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.7  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1587,7 +1587,7 @@ def story():
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names and optional alerts: rename, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Share log with tagging on contains operator coordinates.",
-            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
+            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Night mode</b> — Off by default. Red-on-black field display (cockpit / sit). Text, chips, switches, RSSI, and Hunt marks become shades of red so green and blue do not dump into a dark eye. Background stays dark. Phone brightness is unchanged. Overrides Dark theme while this is on. Restore defaults turns it off. Fig. 8.",
         ]),
         figure_wrap(
@@ -1642,7 +1642,7 @@ def story():
         ),
         bullets([
             "<b>It is</b> an overlay of radios Fieldwatch heard, at a coordinate Fieldwatch already has.",
-            "<b>Heard here</b> means this phone’s GPS at last hear (the same stamp as a log row). The other radio is somewhere in earshot, not on that pin.",
+            "<b>Heard here</b> means this phone’s GPS at the loudest hear so far (closest approach). The other radio is somewhere in earshot, not on that pin. Walking away does not drag it.",
             "<b>Advertised position</b> means the BLE advertisement itself decoded to WGS84 (stock Remote ID Location; any custom map whose field ids are <font face='Courier'>latitude</font> / <font face='Courier'>longitude</font>). That pin is what the gadget claimed, not a Fieldwatch DF fix.",
             "<b>It is not</b> a Remote ID plugin, a drone tracker, direction-finding, pairing, GATT, or Wi-Fi monitor mode. It does not join the multicast group (send-only). When a radio leaves the feed, Fieldwatch sends a CoT with stale=now so ATAK drops it instead of waiting ~120 s. Privacy pause does not send those gone events (the feed just stops; ATAK stale-times out).",
             "<b>It is not</b> the Live display. Filters do not shrink the feed. A radio you hid on the Live display still publishes if it matches What to send and has a pin.",
@@ -1653,7 +1653,7 @@ def story():
         ),
         numbered([
             "<b>Advertised payload.</b> If this radio has a sticky <font face='Courier'>latitude</font> + <font face='Courier'>longitude</font> from a decode map, that pair is the pin. GPS tagging can be off. Stock Remote ID uses this path.",
-            "<b>Operator GPS (heard here).</b> Otherwise the last tagged hear on this radio. Settings → Tag detections with GPS must be on, and there must be a live fix (last-known older than 30 s is ignored, same as the log). GPS tagging off and no payload → nothing is sent for that radio.",
+            "<b>Operator GPS (heard here).</b> Otherwise a tagged hear on this radio. The TAK pin holds the loudest RSSI so far (closest approach), not the last hear. Settings → Tag detections with GPS must be on, and there must be a live fix (last-known older than 30 s is ignored, same as the log). GPS tagging off and no payload → nothing is sent for that radio.",
         ]),
         P(
             "Remote ID (ASTM F3411 / OpenDroneID on BLE UUID 0xFFFA) rotates message types. "
@@ -1672,9 +1672,11 @@ def story():
         callout(
             "Heard-here is still this phone",
             "An Axon, Flipper, or Pineapple marker at your GPS is “I heard that radio here,” "
-            "not “that gadget is at this lat/lon.” Walk, and the pin follows you while the radio "
-            "stays in earshot. Remote ID Location is the exception: that pin is the advertised "
-            "aircraft position, which may be kilometers from you.",
+            "not “that gadget is at this lat/lon.” The pin updates only when this hear is louder "
+            "than the last send (you got closer). Walk away and it stays. A keep-alive every ~10 s "
+            "refreshes the same lat/lon so ATAK does not drop it. This is not direction-finding. "
+            "Remote ID Location is the exception: that pin is the advertised aircraft position, "
+            "which may be kilometers from you.",
             "note",
         ),
         P("5.8.3 Generic field ids — Remote ID works without a special case", "h3"),
@@ -1768,11 +1770,15 @@ def story():
             "<b>Scanning stopped</b> — Stop on the scan notification ends the loop. Markers already on ATAK stale out in ~120 s.",
         ]),
         P(
-            "Rate limit: a radio is sent when it first qualifies, when it has moved about 30 m, "
-            "or when about 10 s have passed. Sitting on one corner does not spam ATAK. When a radio "
-            "leaves the feed (gone, or no longer selected), Fieldwatch sends a CoT with "
-            "<font face='Courier'>stale</font> equal to now so ATAK drops it. Missing the 24-per-tick "
-            "cap or a GPS blip does not count as gone. Privacy pause does not send those events."
+            "Advertised aircraft, pilot, and this-phone markers are sent when they first qualify, "
+            "when they have moved about 30 m, or when about 10 s have passed. Heard-here markers "
+            "move only when this hear is louder than the last send (closest approach); weaker hears "
+            "still refresh the same lat/lon after about 10 s so ATAK does not stale-drop. Peak RSSI "
+            "is kept across those keep-alives so a later louder hear still moves the pin. Sitting on "
+            "one corner does not spam ATAK. When a radio leaves the feed (gone, or no longer selected), "
+            "Fieldwatch sends a CoT with <font face='Courier'>stale</font> equal to now so ATAK drops it. "
+            "Missing the 24-per-tick cap or a GPS blip does not count as gone. Privacy pause does not "
+            "send those events."
         ),
         P("5.8.8 What ATAK shows", "h3"),
         bullets([
@@ -1791,7 +1797,7 @@ def story():
         P("5.8.9 Limits you will hit", "h3"),
         bullets([
             "Stock Android does not give Wi-Fi Neighbor Awareness Networking / stuffed beacons reliably. Many Remote ID aircraft also broadcast Wi-Fi; Fieldwatch’s Remote ID row is the BLE UUID 0xFFFA advertisement. A miss on BLE is a miss on TAK.",
-            "No DF, no range. Heard-here follows you. Advertised position is whatever the gadget encoded, including a bad GPS on the aircraft.",
+            "No DF, no range. Heard-here is the loudest operator GPS while that radio was in earshot, not a bearing. Advertised position is whatever the gadget encoded, including a bad GPS on the aircraft.",
             "No pairing, no GATT, no encrypted ads. If lat/lon only exist after a connect, Fieldwatch will never pin them.",
             "A randomized BLE MAC is a new uid when it rotates, unless a sticky UAS ID is already on that radio (Remote ID Basic ID). Phones and bag tags do not get that id.",
             "All signatures in a plaza will load ATAK with café APs and headphones. That is the chip working. Turn it off.",
@@ -1799,7 +1805,7 @@ def story():
         ]),
         P("5.8.10 Field checklist", "h3"),
         P(
-            "Feed status under the host fields shows pins on the feed (what Fieldwatch is keeping on ATAK), sends this tick, dest, error, and time. A send count that flashes and returns to 0 is the 10 s / 30 m hold — the on-the-feed number should stay. A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
+            "Feed status under the host fields shows pins on the feed (what Fieldwatch is keeping on ATAK), sends this tick, dest, error, and time. A send count that flashes and returns to 0 is the keep-alive hold (about 10 s, or 30 m for advertised / this-phone) — the on-the-feed number should stay. A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
             "pentest) is the same switch with Payload location optional. For decode-map ids, §9.6."
         ),
     ]
@@ -4038,11 +4044,11 @@ def story():
         P(
             "<b>What you should see.</b> Within a few seconds of a qualifying hear, ATAK plots "
             "a marker. Extra attention (Axon, glasses, Flipper, Pineapple, …) sits at <i>your</i> "
-            "GPS — walk and it follows you while that radio is in earshot. Remote ID Location "
-            "sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV); the next Basic ID "
+            "GPS at the loudest hear — walk toward it and the pin updates; walk away and it stays. "
+            "Remote ID Location sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV); the next Basic ID "
             "packet does not clear it and, once UAS ID is heard, that aircraft is one marker that moves. "
             "A decoded pilot location is a second Orange pin. Heard-here callsigns end in (here). "
-            "A radio that leaves is dropped on ATAK instead of sitting two minutes."
+            "A radio that leaves is dropped on ATAK instead of sitting two minutes.",
             "body_left",
         ),
         table(
@@ -4050,6 +4056,7 @@ def story():
             [
                 ["Nothing on the map", "Privacy mode, master off, wrong LAN, or no Extra attention / Remote ID on the air yet. Open the Live display and confirm a “!” or a Remote ID chip. Try unicast to the ATAK IP if multicast is filtered."],
                 ["Pins sit on me, not the drone", "That radio has no advertised lat/lon (or Payload location is off). Heard-here is working. Remote ID needs a Location message (protocol 2) on BLE FFFA."],
+                ["Heard-here pin stayed where I was louder", "Expected. Heard-here holds closest approach (louder RSSI), not the last hear. A keep-alive every ~10 s refreshes the same lat/lon. This is not DF."],
                 ["Drone pin is kilometers away", "Expected for advertised position. Fieldwatch did not DF it. The aircraft encoded that WGS84."],
                 ["Café APs filled the map", "All signatures is on. Turn it off. Extra attention + Payload location is the field default."],
                 ["Marker vanished after ~2 min", "The radio left earshot, scanning stopped, or Fieldwatch sent a gone event. Start scanning again if you still want it."],
@@ -4155,9 +4162,9 @@ def story():
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
             ["Named radios", "Settings list of one-MAC custom names and optional alerts (detail Save name, or the bookmark icon). Rename, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. §5.5, §5.7, §8.1, §10.1."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
-            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
+            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
             ["Night mode", "Settings switch under TAK / CoT, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Background stays dark. Overrides Dark theme while on. Phone brightness is unchanged. Fig. 8, §5.7."],
-            ["Heard here (TAK)", "CoT pin at this phone’s GPS at last hear. The other radio is in earshot, not on that point. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists."],
+            ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID Location. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. GPS tagging can be off."],
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
             ["Reports", "Bottom tab. Debrief (text/PDF), AI Export, Signature candidates, Share log, Save log, Reset / clear log. Config for GPS, place names, and logging on/off stays on Settings. §5.6."],
@@ -4574,6 +4581,7 @@ def story():
             ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 2); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
+            ["TAK heard-here pin did not follow me when I walked away", "Heard-here holds the loudest hear.", "Expected. Walk closer to move it. Keep-alives stay on the same lat/lon. Not DF. §5.8.7."],
             ["ATAK filled with café APs", "All signatures is on.", "Turn All signatures off. Field default is Extra attention + Payload location."],
             ["TAK marker vanished", "The radio left the feed, scanning stopped, or Privacy mode paused it.", "Expected. Fieldwatch sends a gone event (stale=now) when a radio leaves. Privacy pause does not; ATAK then stale-times out ~120 s. A rotated BLE MAC without a sticky UAS ID is a new uid."],
             ["Remote ID is a cloud of dots on ATAK", "UID was the BLE MAC, which Remote ID rotates.", "1.0.3 keys the aircraft on sticky UAS ID. One marker should move. Until the first Basic ID packet, it still keys on MAC, then jumps once."],
@@ -4605,8 +4613,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.6 (versionCode 7), field build of 19 September 2026"],
-                ["Document version", "1.0.6"],
+                ["Software version", "1.0.7 (versionCode 8), field build of 19 September 2026"],
+                ["Document version", "1.0.7"],
                 ["Document date", "19 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

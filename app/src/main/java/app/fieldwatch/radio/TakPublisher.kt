@@ -7,6 +7,7 @@ import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.TakDefaults
 import app.fieldwatch.domain.TakFeedStatus
+import app.fieldwatch.domain.TakHeardHere
 import app.fieldwatch.domain.TakPublish
 import app.fieldwatch.domain.TakSent
 import app.fieldwatch.domain.WatchTarget
@@ -95,15 +96,38 @@ class TakPublisher {
             for (mark in marks) {
                 if (emitted >= TakDefaults.MAX_PER_TICK) break
                 val prev = last[mark.uid]
-                if (!TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, mark.lat, mark.lon)) {
-                    continue
+                val lat: Double
+                val lon: Double
+                val peakRssi: Int
+                if (mark.advertised || mark.pilot) {
+                    if (!TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, mark.lat, mark.lon)) {
+                        continue
+                    }
+                    lat = mark.lat
+                    lon = mark.lon
+                    peakRssi = mark.device.rssi
+                } else {
+                    when (TakPublish.heardHereAction(prev?.at, prev?.rssi, now, mark.device.rssi)) {
+                        TakHeardHere.SKIP -> continue
+                        TakHeardHere.MOVE -> {
+                            lat = mark.lat
+                            lon = mark.lon
+                            peakRssi = mark.device.rssi
+                        }
+                        TakHeardHere.REFRESH -> {
+                            val held = prev ?: continue
+                            lat = held.lat
+                            lon = held.lon
+                            peakRssi = held.rssi
+                        }
+                    }
                 }
                 val xml = CotEvent.xml(
                     device = mark.device,
                     fleets = fleets,
                     watchlist = watchlist,
-                    lat = mark.lat,
-                    lon = mark.lon,
+                    lat = lat,
+                    lon = lon,
                     advertised = mark.advertised,
                     now = now,
                     pilot = mark.pilot,
@@ -112,7 +136,7 @@ class TakPublisher {
                     lastErr = "send failed"
                     continue
                 }
-                last[mark.uid] = TakSent(mark.uid, mark.deviceKey, now, mark.lat, mark.lon)
+                last[mark.uid] = TakSent(mark.uid, mark.deviceKey, now, lat, lon, peakRssi)
                 sent++
                 emitted++
             }

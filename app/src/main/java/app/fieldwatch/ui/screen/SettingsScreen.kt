@@ -452,7 +452,8 @@ fun SettingsScreen(
                     "This phone (${TakDefaults.LOOPBACK}:${TakDefaults.PORT}) is ATAK CIV on this handset. " +
                     "LAN multicast is ${TakDefaults.SA_HOST}:${TakDefaults.SA_PORT}. " +
                     "Custom is a unicast IPv4 or hostname. UDP only — a TAK server’s TCP 8087 is not this feed. " +
-                    "Heard-here pins sit at this phone’s GPS and are labeled (here). " +
+                    "Heard-here pins sit at this phone’s GPS at the loudest hear (closest approach) and are labeled (here). " +
+                    "Walking away does not drag the pin; a louder hear moves it. Keep-alives refresh the same lat/lon every ~10 s so ATAK does not drop it. " +
                     "Advertised lat/lon (stock Remote ID) sit on the aircraft; the same Remote ID " +
                     "keeps one marker that moves (UAS ID, not the rotating BLE MAC). " +
                     "A decoded pilot location is a second pin. Gone radios are dropped on ATAK instead of sitting 120 s. " +
@@ -852,7 +853,8 @@ private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel, stat
             "Watchlist (off): bookmarked signatures and named radios with Alert on. " +
             "All signatures (off): every labeled radio — noisy in a plaza. Unmatched radios never go. " +
             "A pin still needs coordinates: advertised payload, or GPS tagging with a live fix. " +
-            "Heard-here callsigns end in (here). Remote ID keeps one aircraft marker (UAS ID) plus a pilot pin when that location decoded.",
+            "Heard-here holds the loudest hear, not the last, and callsigns end in (here). " +
+            "Remote ID keeps one aircraft marker (UAS ID) plus a pilot pin when that location decoded.",
         style = MaterialTheme.typography.bodySmall,
         color = muted,
     )
