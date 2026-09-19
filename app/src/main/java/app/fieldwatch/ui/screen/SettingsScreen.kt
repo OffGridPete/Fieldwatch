@@ -457,6 +457,7 @@ fun SettingsScreen(
                     "Advertised lat/lon (stock Remote ID) sit on the aircraft; the same Remote ID " +
                     "keeps one marker that moves (UAS ID, not the rotating BLE MAC). " +
                     "A decoded pilot location is a second pin. Gone radios are dropped on ATAK instead of sitting 120 s. " +
+                    "Tap a marker in ATAK for remarks (name, MAC, RSSI, signatures). " +
                     "Not direction-finding. Not a Remote ID plugin. Privacy mode pauses the feed.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

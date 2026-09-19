@@ -459,7 +459,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.0.7")
+    c.drawString(48, 108, "Version 1.0.8")
     c.drawString(48, 94, "19 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -500,7 +500,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.0.7  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.0.8  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1786,7 +1786,7 @@ def story():
             "<b>type</b> — advertised drone-class (Remote ID / DJI class) is <font face='Courier'>a-u-A-M-H-Q</font> (unknown UAV, Yellow). Heard-here Extra attention is <font face='Courier'>a-u-G</font> (Maroon). Pilot is <font face='Courier'>a-u-G</font> (Orange). Other ground is Cyan. Not friendly/hostile affiliation.",
             "<b>callsign</b> — Named radio label if that MAC is named; else advertised Self ID / UAS ID; else an Extra attention signature name; else the first matching signature; else the advertised name; else the MAC tail. Heard-here callsigns end in (here).",
             "<b>point</b> — lat/lon as above. <font face='Courier'>hae</font> is advertised altitude when known, else the CoT unknown (9999999). ce/le are unknown.",
-            "<b>remarks</b> — Fieldwatch · Wi-Fi or BLE · full MAC · RSSI dBm · advertised position or heard here (operator GPS) · up to three signature names · Extra attention text when present.",
+            "<b>remarks</b> — A short card (newlines) when you inspect the marker: callsign, Wi-Fi or BLE, full MAC, RSSI dBm, Wi-Fi channel when known, advertised position / heard here (operator GPS) / operator (pilot) position, UAS ID, advertised name if it is not already the callsign, up to three signature names, Extra attention text. Cap about 800 characters. Map label is still the 32-character callsign. Privacy mode pauses the feed, so remarks are not sent while it is on.",
             "<b>how</b> — <font face='Courier'>m-g</font> (machine / GPS). Time/start/stale are UTC.",
         ]),
         P(
@@ -4048,6 +4048,7 @@ def story():
             "Remote ID Location sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV); the next Basic ID "
             "packet does not clear it and, once UAS ID is heard, that aircraft is one marker that moves. "
             "A decoded pilot location is a second Orange pin. Heard-here callsigns end in (here). "
+            "Tap a marker for remarks (name, MAC, RSSI, signatures). "
             "A radio that leaves is dropped on ATAK instead of sitting two minutes.",
             "body_left",
         ),
@@ -4613,8 +4614,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.0.7 (versionCode 8), field build of 19 September 2026"],
-                ["Document version", "1.0.7"],
+                ["Software version", "1.0.8 (versionCode 9), field build of 19 September 2026"],
+                ["Document version", "1.0.8"],
                 ["Document date", "19 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

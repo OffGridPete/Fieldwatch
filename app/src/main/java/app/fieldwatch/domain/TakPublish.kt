@@ -16,6 +16,7 @@ object TakDefaults {
     const val MOVE_M = 30.0
     const val STALE_MS = 120_000L
     const val MAX_PER_TICK = 24
+    const val REMARKS_MAX = 800
 }
 
 enum class TakUdpPreset {
@@ -370,7 +371,7 @@ object CotEvent {
             if (pilot) TakPublish.pilotCallsign(device)
             else TakPublish.callsign(device, fleets, watchlist),
         )
-        val remarks = xmlEscape(remarks(device, fleets, advertised, pilot))
+        val remarks = xmlEscape(remarks(device, fleets, advertised, pilot, watchlist))
         val hae = if (pilot) 9999999.0 else device.payloadAlt?.takeIf { it.isFinite() } ?: 9999999.0
         val linkUid = when {
             pilot -> uid(device)
@@ -432,7 +433,15 @@ object CotEvent {
         role = "Team Member",
     )
 
-    fun remarks(device: Sighting, fleets: List<Fleet>, advertised: Boolean, pilot: Boolean = false): String {
+    fun remarks(
+        device: Sighting,
+        fleets: List<Fleet>,
+        advertised: Boolean,
+        pilot: Boolean = false,
+        watchlist: List<WatchTarget> = emptyList(),
+    ): String {
+        val callsign = if (pilot) TakPublish.pilotCallsign(device)
+            else TakPublish.callsign(device, fleets, watchlist)
         val names = fleets.filter { it.id in device.fleetIds }.map { it.name }.distinct()
         val kind = if (device.kind == RadioKind.WIFI) "Wi-Fi" else "BLE"
         val where = when {
@@ -440,21 +449,63 @@ object CotEvent {
             advertised -> "advertised position"
             else -> "heard here (operator GPS)"
         }
+        val radio = buildString {
+            append(kind)
+            append("  ")
+            append(device.mac)
+            append("  ")
+            append(device.rssi)
+            append(" dBm")
+            if (device.kind == RadioKind.WIFI && device.channel > 0) {
+                append("  ch ")
+                append(device.channel)
+            } else if (device.kind == RadioKind.WIFI && device.frequencyMhz > 0) {
+                append("  ")
+                append(device.frequencyMhz)
+                append(" MHz")
+            }
+        }
+        val advertisedName = device.name.trim()
+        val showName = advertisedName.isNotEmpty() &&
+            !advertisedName.equals(device.mac, ignoreCase = true) &&
+            !callsign.contains(advertisedName, ignoreCase = true)
+        val uas = device.payloadUasId?.trim()?.takeIf { it.isNotEmpty() }
+        val sigLine = names.take(3).filter { name ->
+            !callsign.contains(name, ignoreCase = true)
+        }.joinToString(", ")
+        val extra = device.attentionNotes(fleets).firstOrNull()
         return buildString {
-            append("Fieldwatch · $kind · ${device.mac} · ${device.rssi} dBm · $where")
-            device.payloadUasId?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            append(callsign)
+            append('\n')
+            append(radio)
+            append('\n')
+            append(where)
+            if (uas != null) {
                 append(" · UAS ID ")
-                append(it.take(24))
+                append(uas.take(24))
             }
-            if (names.isNotEmpty()) {
-                append(" · ")
-                append(names.take(3).joinToString(", "))
+            if (showName) {
+                append('\n')
+                append(advertisedName.take(32))
             }
-            device.attentionNotes(fleets).firstOrNull()?.let { (name, note) ->
-                append(" · Extra attention ($name): ")
+            if (sigLine.isNotEmpty()) {
+                append('\n')
+                append(sigLine)
+            }
+            extra?.let { (name, note) ->
+                append('\n')
+                append("Extra attention")
+                if (!callsign.contains(name, ignoreCase = true) &&
+                    !sigLine.contains(name, ignoreCase = true)
+                ) {
+                    append(" (")
+                    append(name)
+                    append(")")
+                }
+                append(": ")
                 append(note.take(120))
             }
-        }.take(400)
+        }.trimEnd().take(TakDefaults.REMARKS_MAX)
     }
 
     private fun eventXml(
@@ -506,6 +557,8 @@ object CotEvent {
                 '>' -> append("&gt;")
                 '"' -> append("&quot;")
                 '\'' -> append("&apos;")
+                '\n' -> append("&#10;")
+                '\r' -> { }
                 else -> if (ch.code >= 32) append(ch)
             }
         }

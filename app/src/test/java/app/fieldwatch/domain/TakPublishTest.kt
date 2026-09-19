@@ -240,6 +240,53 @@ class TakPublishTest {
     @Test
     fun xmlEscapeAmpersandAndTags() {
         assertEquals("A &amp; &lt;B&gt; &quot;c&quot;", CotEvent.xmlEscape("A & <B> \"c\""))
+        assertEquals("a&#10;b", CotEvent.xmlEscape("a\nb"))
+    }
+
+    @Test
+    fun remarksAreAReadableCard() {
+        val cam = radio(fleetIds = setOf("fleet-axon"), lat = 37.5, lon = -122.2)
+        val text = CotEvent.remarks(cam, fleets, advertised = false)
+        val lines = text.split('\n')
+        assertEquals("Axon (here)", lines[0])
+        assertEquals("BLE  AA:BB:CC:DD:EE:01  -60 dBm", lines[1])
+        assertEquals("heard here (operator GPS)", lines[2])
+        assertTrue(text.contains("Extra attention: "))
+        assertTrue(text.contains("Body-worn"))
+        assertFalse(text.contains("Extra attention (Axon)"))
+        val xml = CotEvent.xml(
+            device = cam,
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 37.5,
+            lon = -122.2,
+            advertised = false,
+            now = 0L,
+        )
+        assertTrue(xml.contains("&#10;"))
+        assertTrue(xml.contains("Axon (here)&#10;BLE  AA:BB:CC:DD:EE:01  -60 dBm"))
+        assertFalse(xml.contains("Fieldwatch · "))
+    }
+
+    @Test
+    fun advertisedRemarksKeepPayloadAndSkipRepeatName() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadUasId = "TESTSERIAL1234567890",
+            payloadSelfId = "N12345",
+        )
+        val text = CotEvent.remarks(drone, fleets, advertised = true)
+        val lines = text.split('\n')
+        assertEquals("N12345", lines[0])
+        assertEquals("BLE  AA:BB:CC:DD:EE:01  -60 dBm", lines[1])
+        assertTrue(lines[2].startsWith("advertised position"))
+        assertTrue(lines[2].contains("UAS ID TESTSERIAL1234567890"))
+        assertTrue(text.contains("Remote ID"))
+        val pilot = CotEvent.remarks(drone, fleets, advertised = true, pilot = true)
+        assertEquals("Pilot · TESTSERIAL1234567890", pilot.lineSequence().first())
+        assertTrue(pilot.contains("operator (pilot) position"))
     }
 
     @Test
