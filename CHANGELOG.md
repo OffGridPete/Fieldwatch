@@ -6,7 +6,7 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## 1.1.0 — 19 September 2026
 
-- Named sits. Optional: start a sit from the flag on Live (or Reports). Debrief and AI Export use that window instead of the last 15 minutes in RAM. Live list, Filters, Hunt, and TAK are unchanged if you never start one.
+- Named sits. Optional: Reports → Start sit. Debrief and AI Export use that window instead of the last 15 minutes in RAM. Live list, Filters, Hunt, and TAK are unchanged if you never start one.
 
 ## 1.0.8 — 19 September 2026
 
