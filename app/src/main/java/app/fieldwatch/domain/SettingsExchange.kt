@@ -94,13 +94,15 @@ object SettingsExchange {
 
     /**
      * Replace Settings, the current filter, presets, and watchlist.
-     * Keep the catalog, logs, GPS, already-seen keys, and the local disclaimer click-through.
+     * Keep the catalog, logs, GPS, already-seen keys, the local disclaimer click-through,
+     * and whether this phone already showed the Live tour.
      */
     fun apply(local: PersistedConfig, pack: SettingsPack): Pair<PersistedConfig, SettingsImportResult> {
         val next = local.copy(
             settings = pack.settings.copy(
                 disclaimerAccepted = local.settings.disclaimerAccepted,
                 disclaimerRev = local.settings.disclaimerRev,
+                liveTourDone = local.settings.liveTourDone,
             ),
             filter = pack.filter,
             presets = pack.presets,

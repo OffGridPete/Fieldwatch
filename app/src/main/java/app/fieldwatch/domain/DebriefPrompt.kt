@@ -23,26 +23,30 @@ object DebriefPrompt {
         now: Long = System.currentTimeMillis(),
         operatorPath: List<GpsSample> = emptyList(),
         places: DebriefPlaces = DebriefPlaces.Off,
+        window: DebriefWindow? = null,
     ): String {
         val names = fleets.associate { it.id to it.name }
-        val windowStart = now - WINDOW_MS
+        val win = window ?: DebriefWindow(now - WINDOW_MS, now)
+        val windowStart = win.startAt
+        val windowEnd = win.endAt
         val in15 = devices.filter { it.lastSeen >= windowStart || it.firstSeen >= windowStart }
             .sortedByDescending { it.rssi }
-        val in5 = in15.filter { it.lastSeen >= now - WINDOW_SHORT_MS || it.firstSeen >= now - WINDOW_SHORT_MS }
+        val shortStart = maxOf(windowStart, windowEnd - WINDOW_SHORT_MS)
+        val in5 = in15.filter { it.lastSeen >= shortStart || it.firstSeen >= shortStart }
         val wifi = in15.filter { it.kind == RadioKind.WIFI }
         val ble = in15.filter { it.kind == RadioKind.BLE }
         val named = in15.filter { it.fleetIds.isNotEmpty() }
         val hidden = wifi.filter { it.hiddenSsid }
         val randomized = ble.count { it.randomized }
         val arrived = in15.filter { it.firstSeen >= windowStart }
-        val departed = in15.filter { it.gone || it.lastSeen < now - 45_000L }
-        val persistent = in15.filter { dwellMs(it, windowStart, now) >= WINDOW_MS * 2 / 3 }
-        val iso = utc(now)
+        val departed = in15.filter { it.gone || it.lastSeen < windowEnd - 45_000L }
+        val persistent = in15.filter { dwellMs(it, windowStart, windowEnd) >= win.durationMs * 2 / 3 }
+        val iso = utc(windowEnd)
         val start = utc(windowStart)
         val mesh = wifi.filter { isMesh(it) }
-        val colocated = in15.filter { colocatedWithSit(it, windowStart, now) }
+        val colocated = in15.filter { colocatedWithSit(it, windowStart, windowEnd) }
         val top5 = in15.distinctBy { it.key }.sortedByDescending { it.rssi }.take(5)
-        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places)
+        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win)
         val sigFamilies = named.groupBy { d ->
             d.fleetIds.joinToString("+") { names[it] ?: it }
         }.mapValues { it.value.size }.toList().sortedByDescending { it.second }
@@ -89,7 +93,13 @@ object DebriefPrompt {
             appendLine()
             appendLine("## Collection context")
             appendLine("- Tool: Fieldwatch (app.fieldwatch), receive-only, no association / injection / cloud.")
-            appendLine("- Window: last **15 minutes** ($start → $iso UTC), with a **5-minute** recent slice.")
+            appendLine(
+                if (win.sitName != null) {
+                    "- Window: sit **${win.sitName}** ($start → $iso UTC), with a recent slice."
+                } else {
+                    "- Window: last **15 minutes** ($start → $iso UTC), with a **5-minute** recent slice."
+                },
+            )
             appendLine("- Scan intensity: ${settings.intensity.name.lowercase()}. Stale after ${settings.staleSec}s. Brief hold ${settings.decaySec}s.")
             appendLine("- Location tags on rows: ${if (settings.tagLocation) "on" else "off"}.")
             appendLine("- Online place names: ${if (settings.onlineLookup) "on" else "off"}.")
@@ -101,7 +111,7 @@ object DebriefPrompt {
             appendLine()
             appendLine("## Working data (for statistics — do not copy into the answer)")
             appendLine()
-            append(DebriefReport.gpsAnalystMarkdown(devices, fleets, settings, operatorPath, now, places).trimEnd())
+            append(DebriefReport.gpsAnalystMarkdown(devices, fleets, settings, operatorPath, now, places, win).trimEnd())
             appendLine()
             appendLine()
             appendLine("## Counts")
@@ -109,15 +119,18 @@ object DebriefPrompt {
                 this,
                 listOf("slice", "Wi-Fi APs", "BLE ads", "signature hits", "hidden SSIDs", "randomized BLE", "new in slice", "persistent (~whole window)"),
                 listOf(
-                    listOf("15 min", wifi.size, ble.size, named.size, hidden.size, randomized, arrived.size, persistent.size).map { it.toString() },
                     listOf(
-                        "5 min",
+                        if (win.sitName != null) "sit" else "15 min",
+                        wifi.size, ble.size, named.size, hidden.size, randomized, arrived.size, persistent.size,
+                    ).map { it.toString() },
+                    listOf(
+                        "recent",
                         in5.count { it.kind == RadioKind.WIFI }.toString(),
                         in5.count { it.kind == RadioKind.BLE }.toString(),
                         in5.count { it.fleetIds.isNotEmpty() }.toString(),
                         in5.count { it.hiddenSsid }.toString(),
                         in5.count { it.kind == RadioKind.BLE && it.randomized }.toString(),
-                        in5.count { it.firstSeen >= now - WINDOW_SHORT_MS }.toString(),
+                        in5.count { it.firstSeen >= shortStart }.toString(),
                         "—",
                     ),
                 ),

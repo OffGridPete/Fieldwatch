@@ -32,10 +32,14 @@ import app.fieldwatch.ui.component.DecodeGlyph
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import app.fieldwatch.domain.Sit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -120,6 +124,8 @@ fun LivePane(
     val demoMode = state.settings.demoMode
     val flashKeys by vm.flashKeys.collectAsStateWithLifecycle()
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
+    var renameSit by remember { mutableStateOf(false) }
+    var renameDraft by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize()) {
         if (state.displayPaused) {
             Text(
@@ -163,6 +169,62 @@ fun LivePane(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+        }
+        val openSit = state.sit.open
+        if (openSit != null) {
+            val now = System.currentTimeMillis()
+            val dur = Sit.fmtDuration(openSit.durationMs(now))
+            val cap = when {
+                state.sit.memoryTight -> " · memory cap"
+                state.sit.atCap -> " · ${Sit.RADIO_CAP} cap"
+                else -> ""
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Sit · ${openSit.name} · $dur · ${state.sit.radioCount} radios$cap",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            renameDraft = openSit.name
+                            renameSit = true
+                        },
+                )
+            }
+        }
+        if (renameSit && openSit != null) {
+            AlertDialog(
+                onDismissRequest = { renameSit = false },
+                title = { Text("Rename sit") },
+                text = {
+                    OutlinedTextField(
+                        value = renameDraft,
+                        onValueChange = { renameDraft = it.take(Sit.NAME_MAX) },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            renameSit = false
+                            vm.renameSit(openSit.id, renameDraft)
+                        },
+                    ) { Text("Save") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { renameSit = false }) { Text("Cancel") }
+                },
             )
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {

@@ -65,9 +65,12 @@ data class DebriefDoc(
     val takeaway: String,
     val sections: List<DebriefSection>,
     val extraAttention: List<ExtraAttentionHit> = emptyList(),
+    val heading: String = "FIELDWATCH FIELD DEBRIEF",
+    val pdfKicker: String = "FIELD DEBRIEF",
+    val pdfTitle: String = "Field debrief",
 ) {
     fun toPlainText(): String = buildString {
-        appendLine("FIELDWATCH FIELD DEBRIEF")
+        appendLine(heading)
         appendLine()
         appendLine("DISCLAIMER")
         appendLine(disclaimer)
@@ -124,7 +127,8 @@ object DebriefReport {
         operatorPath: List<GpsSample>,
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
-    ): String = document(devices, fleets, settings, operatorPath, now, places).toPlainText()
+        window: DebriefWindow? = null,
+    ): String = document(devices, fleets, settings, operatorPath, now, places, window).toPlainText()
 
     fun document(
         devices: List<Sighting>,
@@ -133,9 +137,12 @@ object DebriefReport {
         operatorPath: List<GpsSample>,
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
+        window: DebriefWindow? = null,
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
-        val windowStart = now - WINDOW_MS
+        val win = window ?: DebriefWindow(now - WINDOW_MS, now)
+        val windowStart = win.startAt
+        val windowEnd = win.endAt
         val inWin = devices.filter { it.lastSeen >= windowStart || it.firstSeen >= windowStart }
             .sortedByDescending { it.rssi }
         val wifi = inWin.filter { it.kind == RadioKind.WIFI }
@@ -144,23 +151,23 @@ object DebriefReport {
         val hidden = wifi.filter { it.hiddenSsid }
         val randomized = ble.count { it.randomized }
         val arrived = inWin.filter { it.firstSeen >= windowStart }
-        val persistent = inWin.filter { dwellMs(it, windowStart, now) >= WINDOW_MS * 2 / 3 }
-        val path = operatorPath.filter { it.at >= windowStart }
+        val persistent = inWin.filter { dwellMs(it, windowStart, windowEnd) >= win.durationMs * 2 / 3 }
+        val path = operatorPath.filter { it.at in windowStart..windowEnd }
         val pathSpan = Geo.spanM(path)
         val pathLen = Geo.pathLengthM(path)
         val trackers = inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.FINDER }
-        val follow = followAssessments(trackers, names, path, windowStart, now, TrackerMatch.Kind.FINDER)
+        val follow = followAssessments(trackers, names, path, windowStart, windowEnd, TrackerMatch.Kind.FINDER)
         val following = follow.filter { it.verdict == Verdict.FOLLOWING }
         val withYou = follow.filter { it.verdict == Verdict.MOVED_WITH_YOU }
         val ownLikely = follow.filter { it.verdict == Verdict.OWN_LIKELY }
         val wholeSit = ownLikely + withYou
         val beaconFollow = followAssessments(
             inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.BEACON },
-            names, path, windowStart, now, TrackerMatch.Kind.BEACON,
+            names, path, windowStart, windowEnd, TrackerMatch.Kind.BEACON,
         )
         val wearableFollow = followAssessments(
             inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.WEARABLE },
-            names, path, windowStart, now, TrackerMatch.Kind.WEARABLE,
+            names, path, windowStart, windowEnd, TrackerMatch.Kind.WEARABLE,
         )
         val beaconsWithYou = stayedWithYou(beaconFollow)
         val wearablesWithYou = stayedWithYou(wearableFollow)
@@ -223,7 +230,7 @@ object DebriefReport {
             }
         }
         val persistBody = buildString {
-            appendLine("Sat most of the 15 minutes: ${persistent.size}")
+            appendLine("Sat most of this window: ${persistent.size}")
             persistent.take(15).forEach {
                 appendLine("  · ${it.displayName}  ${it.mac}  dwell ${fmtDur(dwellMs(it, windowStart, now))}")
             }
@@ -256,8 +263,8 @@ object DebriefReport {
         var n = 1
         fun next() = (n++).toString()
         val sections = buildList {
-            add(DebriefSection(next(), "Executive summary", execSummary(wifi, ble, named, hidden, randomized, pathSpan, pathLen, following, withYou, ownLikely, beaconsWithYou, wearablesWithYou, settings, places)))
-            add(DebriefSection(next(), "Where you were", whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, now)))
+            add(DebriefSection(next(), "Executive summary", execSummary(wifi, ble, named, hidden, randomized, pathSpan, pathLen, following, withYou, ownLikely, beaconsWithYou, wearablesWithYou, settings, places, win)))
+            add(DebriefSection(next(), "Where you were", whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd)))
             add(
                 DebriefSection(
                     next(),
@@ -353,20 +360,33 @@ object DebriefReport {
             add(DebriefSection(next(), "Recommended actions", actionBody))
         }
 
+        val windowLine = if (win.sitName != null) {
+            "sit ${win.sitName} (${utc(windowStart)} → ${utc(windowEnd)} UTC)"
+        } else {
+            "last 15 minutes (${utc(windowStart)} → ${utc(windowEnd)} UTC)"
+        }
+        val heading = if (win.sitName != null) {
+            "FIELDWATCH SIT — ${win.sitName}"
+        } else {
+            "FIELDWATCH FIELD DEBRIEF"
+        }
+        val meta = buildList {
+            add("Generated" to "${utc(now)} UTC")
+            if (win.sitName != null) add("Sit" to win.sitName)
+            add("Window" to windowLine)
+            add("Radios" to "${inWin.size}")
+            add("Tool" to "Fieldwatch (app.fieldwatch) · stock Android · receive-only Wi-Fi AP + BLE advertiser")
+            add("Scan" to "${settings.intensity.name.lowercase()} · stale ${settings.staleSec}s · brief hold ${settings.decaySec}s")
+            add("GPS tag" to if (settings.tagLocation) "on" else "off")
+            add("Distance" to distanceLine)
+            add("Places" to lookupLine)
+            add("Classification" to "Operationally sensitive — neighbor SSIDs, MACs, operator GPS")
+        }
         return DebriefDoc(
             generatedUtc = utc(now),
-            windowLine = "last 15 minutes (${utc(windowStart)} → ${utc(now)} UTC)",
-            meta = listOf(
-                "Generated" to "${utc(now)} UTC",
-                "Window" to "last 15 minutes (${utc(windowStart)} → ${utc(now)} UTC)",
-                "Tool" to "Fieldwatch (app.fieldwatch) · stock Android · receive-only Wi-Fi AP + BLE advertiser",
-                "Scan" to "${settings.intensity.name.lowercase()} · stale ${settings.staleSec}s · brief hold ${settings.decaySec}s",
-                "GPS tag" to if (settings.tagLocation) "on" else "off",
-                "Distance" to distanceLine,
-                "Places" to lookupLine,
-                "Classification" to "Operationally sensitive — neighbor SSIDs, MACs, operator GPS",
-            ),
-            disclaimer = FieldwatchDisclaimer.report,
+            windowLine = windowLine,
+            meta = meta,
+            disclaimer = FieldwatchDisclaimer.report(win),
             trackingAlert = following.isNotEmpty() || ownLikely.isNotEmpty() || withYou.isNotEmpty(),
             takeaway = takeaway(following, withYou, ownLikely, beaconsWithYou, wearablesWithYou, pathSpan, settings, named),
             sections = sections,
@@ -377,6 +397,9 @@ object DebriefReport {
                     note = note,
                 )
             },
+            heading = heading,
+            pdfKicker = if (win.sitName != null) "SIT" else "FIELD DEBRIEF",
+            pdfTitle = if (win.sitName != null) "Sit — ${win.sitName}" else "Field debrief",
         )
     }
 
@@ -391,25 +414,28 @@ object DebriefReport {
         operatorPath: List<GpsSample>,
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
+        window: DebriefWindow? = null,
     ): String = buildString {
         val names = fleets.associate { it.id to it.name }
-        val windowStart = now - WINDOW_MS
-        val path = operatorPath.filter { it.at >= windowStart }
+        val win = window ?: DebriefWindow(now - WINDOW_MS, now)
+        val windowStart = win.startAt
+        val windowEnd = win.endAt
+        val path = operatorPath.filter { it.at in windowStart..windowEnd }
         val pathSpan = Geo.spanM(path)
         val pathLen = Geo.pathLengthM(path)
         val inWin = devices.filter { it.lastSeen >= windowStart || it.firstSeen >= windowStart }
         val trackers = inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.FINDER }
-        val follow = followAssessments(trackers, names, path, windowStart, now, TrackerMatch.Kind.FINDER)
+        val follow = followAssessments(trackers, names, path, windowStart, windowEnd, TrackerMatch.Kind.FINDER)
         val beaconsMd = stayedWithYou(
             followAssessments(
                 inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.BEACON },
-                names, path, windowStart, now, TrackerMatch.Kind.BEACON,
+                names, path, windowStart, windowEnd, TrackerMatch.Kind.BEACON,
             ),
         )
         val wearablesMd = stayedWithYou(
             followAssessments(
                 inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.WEARABLE },
-                names, path, windowStart, now, TrackerMatch.Kind.WEARABLE,
+                names, path, windowStart, windowEnd, TrackerMatch.Kind.WEARABLE,
             ),
         )
 
@@ -420,7 +446,7 @@ object DebriefReport {
                 if (places.attempted) places.note
                 else "off (Settings → Online place names in Debrief). No reverse-geocode this export.",
         )
-        append(whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, now).trimEnd())
+        append(whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd).trimEnd())
         appendLine()
         appendLine()
         if (path.size < 2 || pathSpan < MOVE_M) {
@@ -623,8 +649,14 @@ object DebriefReport {
         wearablesWithYou: List<FollowHit>,
         settings: AppSettings,
         places: DebriefPlaces,
+        window: DebriefWindow,
     ): String = buildString {
-        append("In the last 15 minutes Fieldwatch heard ${wifi.size} Wi-Fi access points and ${ble.size} BLE advertisers")
+        val whenPhrase = if (window.sitName != null) {
+            "In sit ${window.sitName}"
+        } else {
+            "In the last 15 minutes"
+        }
+        append("$whenPhrase Fieldwatch heard ${wifi.size} Wi-Fi access points and ${ble.size} BLE advertisers")
         append(" (${named.size} signature-matched, ${hidden.size} hidden SSIDs, $randomized randomized BLE). ")
         if (settings.tagLocation && pathLen > 0) {
             append("Overall distance traveled: ${fmtDist(pathLen)} along the GPS path (straight-line span ${fmtDist(pathSpan)}). ")

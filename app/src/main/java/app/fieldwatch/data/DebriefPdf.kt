@@ -68,7 +68,7 @@ object DebriefPdf {
 
     private fun layoutBlocks(doc: DebriefDoc): List<Block> {
         val out = ArrayList<Block>()
-        out += titleBlock("Field debrief")
+        out += titleBlock(doc.pdfTitle)
         out += spacer(6f)
         out += sectionHead("", "Disclaimer", alert = false)
         doc.disclaimer.split("\n\n").forEach { para ->
@@ -302,7 +302,7 @@ object DebriefPdf {
             isAntiAlias = true
             letterSpacing = 0.08f
         }
-        val label = "FIELD DEBRIEF"
+        val label = doc.pdfKicker
         canvas.drawText(label, PAGE_W - MARGIN - sub.measureText(label), 26f, sub)
         if (doc.trackingAlert) {
             val alert = Paint().apply { color = ALERT_BAR; style = Paint.Style.FILL }

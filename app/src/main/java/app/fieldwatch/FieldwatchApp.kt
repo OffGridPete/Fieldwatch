@@ -11,6 +11,7 @@ import app.fieldwatch.alert.Alerter
 import app.fieldwatch.data.ConfigStore
 import app.fieldwatch.data.DeviceStore
 import app.fieldwatch.data.LogStore
+import app.fieldwatch.data.SitStore
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.Geo
@@ -38,6 +39,8 @@ class FieldwatchApp : Application() {
         private set
     lateinit var logs: LogStore
         private set
+    lateinit var sits: SitStore
+        private set
     lateinit var alerter: Alerter
         private set
     lateinit var tak: TakPublisher
@@ -64,6 +67,7 @@ class FieldwatchApp : Application() {
         RadioDb.init(this)
         devices = DeviceStore()
         logs = LogStore(this)
+        sits = SitStore(this, scope)
         alerter = Alerter(this)
         tak = TakPublisher()
         runBlocking {
@@ -73,7 +77,9 @@ class FieldwatchApp : Application() {
                 config.settings.logRotateKb,
                 config.settings.loggingEnabled,
             )
+            sits.load()
         }
+        sits.startFlusher()
         syncLocationUpdates()
         if (config.settings.alertVoice) alerter.prepareVoice()
         if (config.filter.arrivalsOnly) {
@@ -262,17 +268,18 @@ class FieldwatchApp : Application() {
             val last = operatorPath.lastOrNull()
             if (last != null && Geo.meters(last.lat, last.lon, lat, lon) < 15.0) {
                 operatorPath[operatorPath.lastIndex] = GpsSample(at, lat, lon)
-                return
-            }
-            if (last != null) {
-                pathLengthM += Geo.meters(last.lat, last.lon, lat, lon)
-            }
-            operatorPath += GpsSample(at, lat, lon)
-            if (operatorPath.size > 80) {
-                operatorPath.removeAt(0)
-                pathLengthM = Geo.pathLengthM(operatorPath)
+            } else {
+                if (last != null) {
+                    pathLengthM += Geo.meters(last.lat, last.lon, lat, lon)
+                }
+                operatorPath += GpsSample(at, lat, lon)
+                if (operatorPath.size > 80) {
+                    operatorPath.removeAt(0)
+                    pathLengthM = Geo.pathLengthM(operatorPath)
+                }
             }
         }
+        if (::sits.isInitialized) sits.recordPath(lat, lon, at)
     }
 
     fun operatorPathCopy(): List<GpsSample> = synchronized(pathLock) { operatorPath.toList() }

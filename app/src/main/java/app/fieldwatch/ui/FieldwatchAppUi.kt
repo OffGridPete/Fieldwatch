@@ -50,6 +50,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,12 +73,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -268,15 +273,24 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    LinearProgressIndicator(
-                        progress = { export.progress },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        "${(export.progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
+                    if (export.spinner) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .align(Alignment.CenterHorizontally),
+                            strokeWidth = 3.dp,
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { export.progress },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            "${(export.progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
                 }
             },
             confirmButton = { },
@@ -325,6 +339,13 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
         )
     }
     val view = LocalView.current
+    var tourTargets by remember { mutableStateOf(LiveTourTargets()) }
+    val showTour = !state.settings.liveTourDone && route == "live"
+    LaunchedEffect(showTour) {
+        if (showTour && state.settings.scanControlsExpanded) {
+            vm.setScanControlsExpanded(false)
+        }
+    }
     val keepAwake = state.settings.keepScreenOn || route == "hunt"
     DisposableEffect(keepAwake) {
         val window = (view.context as? android.app.Activity)?.window
@@ -337,6 +358,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             if (route != "detail" && route != "hunt") {
@@ -360,7 +382,13 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 },
                         ) {
                             Text(
-                                if (state.displayPaused) "FIELDWATCH  ·  PAUSED" else "FIELDWATCH",
+                                when {
+                                    state.sit.open != null && state.displayPaused ->
+                                        "FIELDWATCH  ·  SIT  ·  PAUSED"
+                                    state.sit.open != null -> "FIELDWATCH  ·  SIT"
+                                    state.displayPaused -> "FIELDWATCH  ·  PAUSED"
+                                    else -> "FIELDWATCH"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp,
                                 maxLines = 1,
@@ -392,9 +420,11 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     },
                     actions = {
                         if (route == "live") {
-                            IconButton(onClick = {
-                                vm.setScanControlsExpanded(!state.settings.scanControlsExpanded)
-                            }) {
+                            IconButton(
+                                onClick = {
+                                    vm.setScanControlsExpanded(!state.settings.scanControlsExpanded)
+                                },
+                            ) {
                                 Icon(
                                     if (state.settings.scanControlsExpanded) {
                                         Icons.Outlined.ExpandLess
@@ -405,6 +435,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                         "Hide scan options"
                                     } else {
                                         "Show scan options"
+                                    },
+                                    modifier = Modifier.onGloballyPositioned {
+                                        tourTargets = tourTargets.copy(tune = it.boundsInRoot())
                                     },
                                 )
                             }
@@ -429,6 +462,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         FieldwatchNavTab(
                             weight = 1f,
                             selected = route == "live",
+                            onBounds = { tourTargets = tourTargets.copy(pause = it) },
                             onClick = {
                                 if (route == "live") {
                                     vm.toggleLiveDisplay()
@@ -451,6 +485,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         FieldwatchNavTab(
                             weight = 1f,
                             selected = route == "filters",
+                            onBounds = { tourTargets = tourTargets.copy(filters = it) },
                             onClick = { nav.navigate("filters") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.FilterAlt, null) },
                             label = "Filters",
@@ -458,6 +493,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         FieldwatchNavTab(
                             weight = 1.45f,
                             selected = route == "fleets",
+                            onBounds = { tourTargets = tourTargets.copy(signatures = it) },
                             onClick = { nav.navigate("fleets") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Hub, null) },
                             label = "Signatures",
@@ -465,6 +501,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         FieldwatchNavTab(
                             weight = 1f,
                             selected = route == "reports" || route == "candidates",
+                            onBounds = { tourTargets = tourTargets.copy(reports = it) },
                             onClick = { nav.navigate("reports") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Description, null) },
                             label = "Reports",
@@ -472,6 +509,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         FieldwatchNavTab(
                             weight = 1.05f,
                             selected = route == "settings" || route == "radio-bookmarks",
+                            onBounds = { tourTargets = tourTargets.copy(settings = it) },
                             onClick = { nav.navigate("settings") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Settings, null) },
                             label = "Settings",
@@ -571,6 +609,11 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     state = state,
                     vm = vm,
                     onRadioBookmarks = { nav.navigate("radio-bookmarks") },
+                    onShowLiveTour = {
+                        vm.showLiveTour {
+                            nav.navigate("live") { launchSingleTop = true }
+                        }
+                    },
                 )
             }
             composable("radio-bookmarks") {
@@ -634,6 +677,10 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             }
         }
     }
+    if (showTour) {
+        LiveChromeTour(targets = tourTargets, onDismiss = vm::dismissLiveTour)
+    }
+    }
 }
 
 @Composable
@@ -666,6 +713,7 @@ private fun RowScope.FieldwatchNavTab(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     label: String,
+    onBounds: (Rect) -> Unit = {},
 ) {
     val color = if (selected) {
         MaterialTheme.colorScheme.primary
@@ -685,7 +733,9 @@ private fun RowScope.FieldwatchNavTab(
                 Modifier.height(32.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                icon()
+                Box(Modifier.onGloballyPositioned { onBounds(it.boundsInRoot()) }) {
+                    icon()
+                }
             }
             Text(
                 label,

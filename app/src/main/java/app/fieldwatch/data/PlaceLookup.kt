@@ -37,8 +37,9 @@ object PlaceLookup {
         path: List<GpsSample>,
         devices: List<Sighting>,
         now: Long = System.currentTimeMillis(),
+        onProgress: ((String) -> Unit)? = null,
     ): DebriefPlaces = withContext(Dispatchers.IO) {
-        runCatching { lookupInner(context, path, devices, now) }
+        runCatching { lookupInner(context, path, devices, now, onProgress) }
             .getOrElse { DebriefPlaces(attempted = true, available = false, note = "Online lookup failed silently. Coordinates only.") }
     }
 
@@ -47,6 +48,7 @@ object PlaceLookup {
         path: List<GpsSample>,
         devices: List<Sighting>,
         now: Long,
+        onProgress: ((String) -> Unit)?,
     ): DebriefPlaces {
         if (!online(context)) {
             return DebriefPlaces(
@@ -73,7 +75,8 @@ object PlaceLookup {
         val geocoder = Geocoder(context, Locale.getDefault())
         val cache = LinkedHashMap<String, String>()
         val lines = ArrayList<String>(fixes.size)
-        for (fix in fixes) {
+        for ((i, fix) in fixes.withIndex()) {
+            onProgress?.invoke("Looking up place names (${i + 1} of ${fixes.size})…")
             val key = app.fieldwatch.domain.Geo.cellKey(fix.lat, fix.lon)
             val name = cache[key] ?: reverse(geocoder, fix.lat, fix.lon)?.also { cache[key] = it }
             val coord = "%.5f, %.5f".format(Locale.US, fix.lat, fix.lon)

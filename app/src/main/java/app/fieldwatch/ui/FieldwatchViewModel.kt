@@ -56,6 +56,9 @@ import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.domain.WatchTarget
+import app.fieldwatch.domain.DebriefWindow
+import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SitUi
 import app.fieldwatch.radio.RadioPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -85,6 +88,8 @@ private data class FamilyLogSnap(
 data class ExportUi(
     val active: Boolean = false,
     val progress: Float = 0f,
+    /** True: spinning wait (Debrief / AI Export). False: determinate bar (log). */
+    val spinner: Boolean = false,
     val message: String = "",
     val share: Intent? = null,
     val shareTitle: String = "Export Fieldwatch logs",
@@ -118,6 +123,7 @@ data class FieldwatchUi(
     val displayPaused: Boolean = false,
     val operatorSpanM: Double = 0.0,
     val takStatus: TakFeedStatus = TakFeedStatus(),
+    val sit: SitUi = SitUi(),
 )
 
 class FieldwatchViewModel(application: Application) : AndroidViewModel(application) {
@@ -294,13 +300,13 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             FieldwatchUi(settings = app.config.settings),
         )
 
-    val ui: StateFlow<FieldwatchUi> = combine(liveUi, displayPaused, selectedKey, heldSelected) { live, paused, selKey, held ->
+    val ui: StateFlow<FieldwatchUi> = combine(liveUi, displayPaused, selectedKey, heldSelected, app.sits.ui) { live, paused, selKey, held, sit ->
         if (!paused) {
             frozenUi = null
             val selected = live.selected ?: held?.takeIf { selKey != null && it.key == selKey }?.let { snap ->
                 if (snap.gone) snap else snap.copy(gone = true)
             }
-            live.copy(displayPaused = false, selected = selected)
+            live.copy(displayPaused = false, selected = selected, sit = sit)
         } else {
             val hold = frozenUi ?: live
             frozenUi = hold
@@ -314,6 +320,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 devices = hold.devices,
                 filtered = hold.filtered,
                 selected = selected,
+                sit = sit,
             )
         }
     }.stateIn(
@@ -426,6 +433,23 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
             startScan()
+        }
+    }
+
+    fun dismissLiveTour() {
+        viewModelScope.launch {
+            app.config.update {
+                it.copy(settings = it.settings.copy(liveTourDone = true))
+            }
+        }
+    }
+
+    fun showLiveTour(then: () -> Unit = {}) {
+        viewModelScope.launch {
+            app.config.update {
+                it.copy(settings = it.settings.copy(liveTourDone = false))
+            }
+            then()
         }
     }
 
@@ -609,6 +633,45 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun toggleLiveDisplay() {
         displayPaused.value = !displayPaused.value
+    }
+
+    fun defaultSitName(): String = Sit.defaultName(System.currentTimeMillis())
+
+    fun startSit(name: String) {
+        viewModelScope.launch {
+            val heard = app.devices.devices.value.filter { !it.gone }
+            app.sits.start(name, heard, app.config.fleets, app.config.watchlist)
+            publishSitNotice()
+        }
+    }
+
+    fun endSit() {
+        viewModelScope.launch {
+            app.sits.end(app.config.fleets)
+            publishSitNotice()
+        }
+    }
+
+    fun renameSit(id: String, name: String) {
+        viewModelScope.launch { app.sits.rename(id, name) }
+    }
+
+    fun deleteSit(id: String) {
+        viewModelScope.launch { app.sits.delete(id) }
+    }
+
+    fun deleteAllSits() {
+        viewModelScope.launch { app.sits.deleteAllClosed() }
+    }
+
+    fun selectSit(id: String?) {
+        app.sits.select(id)
+    }
+
+    private fun publishSitNotice() {
+        val notice = app.sits.ui.value.notice ?: return
+        _export.value = ExportUi(noticeTitle = "Sits", noticeMessage = notice)
+        app.sits.consumeNotice()
     }
 
     fun updateFilter(transform: (FilterState) -> FilterState) {
@@ -1080,10 +1143,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startFieldDebriefPdf() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = ExportUi(active = true, progress = 0.3f, message = "Writing debrief PDF…")
+            _export.value = busy("Writing debrief PDF…")
             runCatching {
                 val doc = fieldDebriefDoc { msg ->
-                    _export.value = ExportUi(active = true, progress = 0.45f, message = msg)
+                    _export.value = busy(msg)
                 }
                 val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
@@ -1095,7 +1158,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     type = "application/pdf"
                     clipData = ClipData.newRawUri("debrief", uri)
                     putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch field debrief — last 15 minutes")
+                    putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }.onSuccess { intent ->
@@ -1114,14 +1177,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startFieldDebrief() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = ExportUi(active = true, progress = 0.3f, message = "Writing debrief…")
+            _export.value = busy("Writing debrief…")
             runCatching {
                 val doc = fieldDebriefDoc { msg ->
-                    _export.value = ExportUi(active = true, progress = 0.45f, message = msg)
+                    _export.value = busy(msg)
                 }
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch field debrief — last 15 minutes")
+                    putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
                     putExtra(Intent.EXTRA_TEXT, doc.toPlainText())
                 }
             }.onSuccess { intent ->
@@ -1137,17 +1200,26 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    private fun busy(message: String) = ExportUi(active = true, spinner = true, message = message)
+
+    private fun debriefSubject(doc: DebriefDoc): String =
+        if (doc.heading.startsWith("FIELDWATCH SIT")) doc.heading else "Fieldwatch field debrief — last 15 minutes"
+
     private suspend fun fieldDebriefDoc(onLookup: (String) -> Unit): DebriefDoc {
         val settings = app.config.settings
-        val devices = app.devices.devices.value
         val fleets = app.config.fleets
-        val path = app.operatorPathCopy()
         val now = System.currentTimeMillis()
+        val source = app.sits.debriefSource(now)
+        val devices = source?.devices ?: app.devices.devices.value
+        val path = source?.operatorPath ?: app.operatorPathCopy()
+        val window = source?.let { DebriefWindow(it.startAt, it.endAt, it.name) }
         val places = if (settings.demoMode) {
             DebriefPlaces.Off
         } else if (settings.onlineLookup) {
-            onLookup("Looking up place names for debrief…")
-            PlaceLookup.lookup(app, path, devices, now)
+            onLookup("Looking up place names…")
+            val found = PlaceLookup.lookup(app, path, devices, now, onProgress = onLookup)
+            onLookup("Writing debrief…")
+            found
         } else {
             DebriefPlaces.Off
         }
@@ -1159,6 +1231,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 operatorPath = path,
                 now = now,
                 places = places,
+                window = window,
             ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
         }
     }
@@ -1166,18 +1239,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startAiExport() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = ExportUi(active = true, progress = 0.3f, message = "Building AI export prompt…")
+            _export.value = busy("Building AI export prompt…")
             runCatching {
                 val settings = app.config.settings
-                val devices = app.devices.devices.value
                 val fleets = app.config.fleets
-                val path = app.operatorPathCopy()
                 val now = System.currentTimeMillis()
+                val source = app.sits.debriefSource(now)
+                val devices = source?.devices ?: app.devices.devices.value
+                val path = source?.operatorPath ?: app.operatorPathCopy()
+                val window = source?.let { DebriefWindow(it.startAt, it.endAt, it.name) }
                 val places = if (settings.demoMode) {
                     DebriefPlaces.Off
                 } else if (settings.onlineLookup) {
-                    _export.value = ExportUi(active = true, progress = 0.4f, message = "Looking up place names…")
-                    PlaceLookup.lookup(app, path, devices, now)
+                    _export.value = busy("Looking up place names…")
+                    val found = PlaceLookup.lookup(app, path, devices, now) { msg ->
+                        _export.value = busy(msg)
+                    }
+                    _export.value = busy("Building AI export prompt…")
+                    found
                 } else {
                     DebriefPlaces.Off
                 }
@@ -1189,6 +1268,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         now = now,
                         operatorPath = path,
                         places = places,
+                        window = window,
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),
@@ -1202,7 +1282,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 }
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch AI export — last 15 minutes")
+                    putExtra(
+                        Intent.EXTRA_SUBJECT,
+                        if (window != null) "Fieldwatch AI export — sit ${window.sitName}"
+                        else "Fieldwatch AI export — last 15 minutes",
+                    )
                     putExtra(Intent.EXTRA_TEXT, text)
                 }
             }.onSuccess { intent ->
@@ -1221,7 +1305,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startDeviceDetailAiExport(device: Sighting) {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = ExportUi(active = true, progress = 0.3f, message = "Building AI export prompt…")
+            _export.value = busy("Building AI export prompt…")
             runCatching {
                 val settings = app.config.settings
                 val names = device.fleetIds.map { fleetName(it) }
@@ -1230,8 +1314,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 val places = if (settings.demoMode) {
                     DebriefPlaces.Off
                 } else if (settings.onlineLookup && (settings.tagLocation || device.latitude != null)) {
-                    _export.value = ExportUi(active = true, progress = 0.4f, message = "Looking up place names…")
-                    PlaceLookup.lookup(app, app.operatorPathCopy(), listOf(device), System.currentTimeMillis())
+                    _export.value = busy("Looking up place names…")
+                    val found = PlaceLookup.lookup(app, app.operatorPathCopy(), listOf(device), System.currentTimeMillis()) { msg ->
+                        _export.value = busy(msg)
+                    }
+                    _export.value = busy("Building AI export prompt…")
+                    found
                 } else {
                     DebriefPlaces.Off
                 }

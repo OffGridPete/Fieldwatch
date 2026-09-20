@@ -85,6 +85,7 @@ fun SettingsScreen(
     state: FieldwatchUi,
     vm: FieldwatchViewModel,
     onRadioBookmarks: () -> Unit,
+    onShowLiveTour: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val settings = state.settings
@@ -615,6 +616,16 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Import settings…") }
             }
+
+            FieldwatchActionButton(
+                onClick = onShowLiveTour,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Show Live tour") }
+            Text(
+                "Chrome overlay on Live: Tune is Display (Radar, list, By class), Pause, Filters, Signatures, Reports, Settings. First-run after the license; this button shows it again.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             Text(
                 "Fieldwatch ${app.fieldwatch.BuildConfig.VERSION_NAME}  ·  passive Wi-Fi + BLE only. " +

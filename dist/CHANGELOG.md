@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.0 — 19 September 2026
+
+- Named sits. Optional: start a sit from the flag on Live (or Reports). Debrief and AI Export use that window instead of the last 15 minutes in RAM. Live list, Filters, Hunt, and TAK are unchanged if you never start one.
+
 ## 1.0.8 — 19 September 2026
 
 - TAK remarks are a short card when you inspect a marker: callsign, radio kind, MAC, RSSI, heard-here vs advertised vs pilot, signatures, Extra attention. Map label is still the 32-character callsign.

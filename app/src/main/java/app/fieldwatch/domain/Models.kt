@@ -565,6 +565,8 @@ data class AppSettings(
     /** First-run click-through. Scanning does not start until [disclaimerRev] matches [DISCLAIMER_REV]. */
     val disclaimerAccepted: Boolean = false,
     val disclaimerRev: Int = 0,
+    /** Chrome overlay on Live after the license. Settings can show it again. */
+    val liveTourDone: Boolean = false,
     /** Signatures tab: Name A–Z (default) or Class A–Z. */
     val signatureListSort: SignatureListSort = SignatureListSort.NAME,
     /** By class: hide class headers with 0 radios. Off = show all (zeros stay). */
@@ -607,6 +609,7 @@ data class RssiSample(
     val rssi: Int,
 )
 
+@Serializable
 data class GpsSample(
     val at: Long,
     val lat: Double,

@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,8 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.fieldwatch.domain.Sit
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
 import app.fieldwatch.ui.FieldwatchUi
@@ -39,6 +45,12 @@ fun ReportsScreen(
 ) {
     val settings = state.settings
     var confirmClear by remember { mutableStateOf(false) }
+    var startSit by remember { mutableStateOf(false) }
+    var sitNameDraft by remember { mutableStateOf("") }
+    var renameSitId by remember { mutableStateOf<String?>(null) }
+    var renameDraft by remember { mutableStateOf("") }
+    var deleteSitId by remember { mutableStateOf<String?>(null) }
+    var confirmDeleteAll by remember { mutableStateOf(false) }
     Scaffold(
         contentWindowInsets = NestedTabInsets,
         topBar = { NestedTopBar("Reports") },
@@ -59,6 +71,101 @@ fun ReportsScreen(
                 )
             }
 
+            SectionCard("Sits") {
+                val open = state.sit.open
+                if (open != null) {
+                    val dur = Sit.fmtDuration(open.durationMs())
+                    Text(
+                        "This sit: ${open.name} · $dur · ${state.sit.radioCount} radios",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    FieldwatchActionButton(
+                        onClick = vm::endSit,
+                        enabled = !exporting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("End sit") }
+                } else {
+                    FieldwatchActionButton(
+                        onClick = {
+                            sitNameDraft = vm.defaultSitName()
+                            startSit = true
+                        },
+                        enabled = !exporting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Start sit") }
+                    Text(
+                        "No sit running. Start sit here. Debrief below stays last 15 minutes until you do.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.sit.closed.isEmpty() && open == null) {
+                    Text(
+                        "No saved sits.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.sit.closed.isNotEmpty()) {
+                    val pickEnabled = open == null && !exporting
+                    SitChoiceRow(
+                        selected = state.sit.selectedId == null,
+                        enabled = pickEnabled,
+                        title = "Last 15 minutes",
+                        subtitle = "Debrief uses RAM, not a saved sit.",
+                        onSelect = { vm.selectSit(null) },
+                    )
+                    state.sit.closed.forEach { row ->
+                        val dur = Sit.fmtDuration(row.durationMs())
+                        val extra = if (row.extraAttentionCount > 0) {
+                            " · Extra attention ${row.extraAttentionCount}"
+                        } else {
+                            ""
+                        }
+                        SitChoiceRow(
+                            selected = state.sit.selectedId == row.id,
+                            enabled = pickEnabled,
+                            title = row.name,
+                            subtitle = "${Sit.defaultName(row.startAt)} · $dur · ${row.radioCount} radios$extra",
+                            onSelect = { vm.selectSit(row.id) },
+                        )
+                    }
+                    if (open != null) {
+                        Text(
+                            "End sit to pick a saved one for Debrief.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    val picked = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FieldwatchActionButton(
+                            onClick = {
+                                if (picked != null) {
+                                    renameSitId = picked.id
+                                    renameDraft = picked.name
+                                }
+                            },
+                            enabled = !exporting && picked != null,
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Rename") }
+                        FieldwatchActionButton(
+                            onClick = { if (picked != null) deleteSitId = picked.id },
+                            enabled = !exporting && picked != null,
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Delete") }
+                    }
+                    FieldwatchActionButton(
+                        onClick = { confirmDeleteAll = true },
+                        enabled = !exporting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Delete all sits") }
+                }
+            }
+
             SectionCard("Sit report") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -76,7 +183,7 @@ fun ReportsScreen(
                 ) { Text("Debrief (PDF)") }
             }
             Text(
-                "Last 15 minutes in memory. Same report, two formats. GPS following test when tagging is on and you have moved. Not a legal finding.",
+                sitReportCaption(state),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -154,4 +261,153 @@ fun ReportsScreen(
             }
         }
     }
+    if (startSit) {
+        AlertDialog(
+            onDismissRequest = { startSit = false },
+            title = { Text("Start sit") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = sitNameDraft,
+                        onValueChange = { sitNameDraft = it.take(Sit.NAME_MAX) },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "Debrief and AI Export use this window until you end it. The Live list is unchanged.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Sit.dropWarning(state.sit.closed)?.let { warn ->
+                        Text(
+                            warn,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    startSit = false
+                    vm.startSit(sitNameDraft)
+                }) { Text("Start") }
+            },
+            dismissButton = {
+                TextButton(onClick = { startSit = false }) { Text("Cancel") }
+            },
+        )
+    }
+    val renaming = renameSitId
+    if (renaming != null) {
+        AlertDialog(
+            onDismissRequest = { renameSitId = null },
+            title = { Text("Rename sit") },
+            text = {
+                OutlinedTextField(
+                    value = renameDraft,
+                    onValueChange = { renameDraft = it.take(Sit.NAME_MAX) },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    renameSitId = null
+                    vm.renameSit(renaming, renameDraft)
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { renameSitId = null }) { Text("Cancel") }
+            },
+        )
+    }
+    val deleting = deleteSitId
+    if (deleting != null) {
+        AlertDialog(
+            onDismissRequest = { deleteSitId = null },
+            title = { Text("Delete this sit?") },
+            text = { Text("Removes the saved sit from this phone. The log is unchanged.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteSitId = null
+                    vm.deleteSit(deleting)
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteSitId = null }) { Text("Cancel") }
+            },
+        )
+    }
+    if (confirmDeleteAll) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAll = false },
+            title = { Text("Delete all sits?") },
+            text = { Text("Removes saved sits from this phone. An open sit is not deleted. The log is unchanged.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteAll = false
+                    vm.deleteAllSits()
+                }) { Text("Delete all") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAll = false }) { Text("Cancel") }
+            },
+        )
+    }
+}
+
+@Composable
+private fun SitChoiceRow(
+    selected: Boolean,
+    enabled: Boolean,
+    title: String,
+    subtitle: String,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                onClick = onSelect,
+                role = Role.RadioButton,
+            )
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null,
+            enabled = enabled,
+        )
+        Column(Modifier.padding(start = 8.dp).fillMaxWidth()) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (selected && enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun sitReportCaption(state: FieldwatchUi): String {
+    val open = state.sit.open
+    if (open != null) {
+        return "This sit (${open.name}), not the last 15 minutes. GPS following test when tagging is on and you have moved. Not a legal finding."
+    }
+    val selected = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
+    if (selected != null) {
+        return "Sit: ${selected.name}. GPS following test when tagging is on and you have moved. Not a legal finding."
+    }
+    return "Last 15 minutes in memory. Same report, two formats. GPS following test when tagging is on and you have moved. Not a legal finding."
 }

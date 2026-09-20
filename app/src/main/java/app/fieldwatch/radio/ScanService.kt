@@ -152,6 +152,7 @@ class ScanService : LifecycleService() {
                 val fleets = app.config.fleets
                 val settings = app.config.settings
                 val seen = app.devices.ingestBatch(tagged, fleets, settings.staleSec)
+                app.sits.ingest(seen, fleets, app.config.watchlist)
                 if (settings.loggingEnabled) {
                     val toLog = seen.filter { it.hitCount <= 1 || it.hitCount % 25 == 0 }.take(16)
                     for (row in toLog) {

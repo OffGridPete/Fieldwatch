@@ -58,10 +58,16 @@ object FieldwatchDisclaimer {
         "$firstRunDisclaimer\n\n$LICENSE_TEXT\n\n$ACCEPT"
 
     /** Debrief text / PDF. Same core as first-run, without the click-through line. */
-    val report: String =
-        "$HOBBY\n\n$HYPOTHESES\n\n$LIABILITY\n\n$LOCATION\n\n" +
-            "This sit report is from the in-memory live set (last 15 minutes, cap about 400). " +
+    fun report(window: DebriefWindow? = null): String {
+        val source = if (window?.sitName != null) {
+            "named sit “${window.sitName}” (radios heard in that window; Live list cap still applied while watching). "
+        } else {
+            "the in-memory live set (last 15 minutes, cap about 400). "
+        }
+        return "$HOBBY\n\n$HYPOTHESES\n\n$LIABILITY\n\n$LOCATION\n\n" +
+            "This sit report is from $source" +
             "Do not use it in any situation where safety is in question."
+    }
 
     fun experimentalMarkdown(): String = buildString {
         appendLine("## Disclaimer (repeat this in your answer)")
