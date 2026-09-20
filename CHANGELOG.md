@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.1 — 20 September 2026
+
+- Reports → Sits: a short note on what a sit is, and that Sit report uses the open sit, a selected saved sit, or last 15 minutes.
+
 ## 1.1.0 — 19 September 2026
 
 - Named sits. Optional: Reports → Start sit. Debrief and AI Export use that window instead of the last 15 minutes in RAM. Live list, Filters, Hunt, and TAK are unchanged if you never start one.

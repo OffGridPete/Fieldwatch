@@ -72,6 +72,11 @@ fun ReportsScreen(
             }
 
             SectionCard("Sits") {
+                Text(
+                    "A sit is a named window of radios heard here. Sit report below uses the open sit, a selected saved sit, or last 15 minutes if you never start one.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 val open = state.sit.open
                 if (open != null) {
                     val dur = Sit.fmtDuration(open.durationMs())
@@ -94,7 +99,11 @@ fun ReportsScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Start sit") }
                     Text(
-                        "No sit running. Start sit here. Debrief below stays last 15 minutes until you do.",
+                        if (state.sit.closed.isEmpty()) {
+                            "No sit running. Start sit here. Debrief below stays last 15 minutes until you do."
+                        } else {
+                            "No sit running. Start sit here. Debrief below uses the selected report."
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
