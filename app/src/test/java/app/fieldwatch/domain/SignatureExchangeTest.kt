@@ -544,6 +544,62 @@ class SignatureExchangeTest {
     }
 
     @Test
+    fun overlayStockReplacesAttentionAndClassKeepsMuteAndExtraRules() {
+        val localGovee = stock.first { it.id == "fleet-govee" }
+        val muted = localGovee.copy(enabled = false)
+        val extra = MatchRule(kind = RuleKind.NAME_CONTAINS, text = "MyGovee")
+        val customized = muted.copy(rules = muted.rules + extra)
+        val custom = Fleet(
+            id = "custom-bag",
+            name = "Bag tag",
+            builtIn = false,
+            kind = SignatureClass.FINDER,
+            rules = listOf(MatchRule(kind = RuleKind.NAME_CONTAINS, text = "Bag")),
+        )
+        val incomingGovee = localGovee.copy(
+            attentionNote = "Govee Extra attention for test.",
+            notes = "new notes",
+            kind = SignatureClass.HOME,
+        )
+        val brandNew = Fleet(
+            id = "fleet-new-stock",
+            name = "New Stock",
+            builtIn = true,
+            kind = SignatureClass.SURVEILLANCE,
+            attentionNote = "Look with your eyes.",
+            rules = listOf(MatchRule(kind = RuleKind.NAME_CONTAINS, text = "BrandNew")),
+        )
+        val (next, result) = SignatureExchange.overlayStock(
+            listOf(customized, custom),
+            listOf(incomingGovee, brandNew),
+        )
+        assertEquals(null, result.error)
+        assertEquals(1, result.added)
+        assertEquals(1, result.updated)
+        val govee = next.first { it.id == "fleet-govee" }
+        assertFalse(govee.enabled)
+        assertEquals("Govee Extra attention for test.", govee.attentionNote)
+        assertEquals("new notes", govee.notes)
+        assertTrue(govee.rules.any { it.text == "MyGovee" })
+        assertTrue(next.any { it.id == "custom-bag" })
+        val added = next.first { it.id == "fleet-new-stock" }
+        assertEquals("Look with your eyes.", added.attentionNote)
+        assertTrue(added.builtIn)
+    }
+
+    @Test
+    fun overlayStockDoesNotClobberCustomWithSameId() {
+        val stockRow = stock.first { it.id == "fleet-govee" }
+        val custom = stockRow.copy(builtIn = false, name = "My Govee")
+        val incoming = stockRow.copy(attentionNote = "stock attention")
+        val (next, result) = SignatureExchange.overlayStock(listOf(custom), listOf(incoming))
+        assertEquals(0, result.updated)
+        assertEquals(0, result.added)
+        assertEquals("My Govee", next.single().name)
+        assertTrue(next.single().attentionNote.isEmpty())
+    }
+
+    @Test
     fun parseAcceptsLegacySpectreFormat() {
         val json = SignatureExchange.encode(
             SignatureExchange.pack(

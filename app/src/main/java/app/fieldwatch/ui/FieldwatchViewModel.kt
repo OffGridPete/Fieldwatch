@@ -13,6 +13,7 @@ import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.attentionNotes
 import app.fieldwatch.domain.signatureNotes
 import app.fieldwatch.domain.detectionPolicy
+import app.fieldwatch.data.CatalogRemote
 import app.fieldwatch.data.DebriefPdf
 import app.fieldwatch.data.PlaceLookup
 import app.fieldwatch.domain.DeviceDetailPrompt
@@ -124,6 +125,7 @@ data class FieldwatchUi(
     val operatorSpanM: Double = 0.0,
     val takStatus: TakFeedStatus = TakFeedStatus(),
     val sit: SitUi = SitUi(),
+    val catalogVersion: Int = 0,
 )
 
 class FieldwatchViewModel(application: Application) : AndroidViewModel(application) {
@@ -292,12 +294,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 app.operatorPathLengthM()
             },
             takStatus = takStatus,
+            catalogVersion = config.version,
         )
     }.flowOn(Dispatchers.Default)
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            FieldwatchUi(settings = app.config.settings),
+            FieldwatchUi(
+                settings = app.config.settings,
+                catalogVersion = app.config.config.value.version,
+            ),
         )
 
     val ui: StateFlow<FieldwatchUi> = combine(liveUi, displayPaused, selectedKey, heldSelected, app.sits.ui) { live, paused, selKey, held, sit ->
@@ -990,6 +996,79 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     error = err.message ?: "Could not save signatures",
                     errorTitle = "Could not save signatures",
                 )
+            }
+        }
+    }
+
+    fun updateStockCatalogFromGitHub() {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            if (!PlaceLookup.online(app)) {
+                _export.value = ExportUi(
+                    errorTitle = "No internet",
+                    error = "No internet. Use Import signatures from a file.",
+                )
+                return@launch
+            }
+            _export.value = ExportUi(
+                active = true,
+                spinner = true,
+                message = "Updating stock catalog…",
+            )
+            runCatching {
+                val text = withContext(Dispatchers.IO) {
+                    CatalogRemote.fetch(
+                        userAgent = "Fieldwatch/${BuildConfig.VERSION_NAME}",
+                    )
+                }
+                val pack = SignatureExchange.parse(text)
+                val result = app.config.overlayStockCatalog(pack)
+                result.error?.let { throw IllegalStateException(it) }
+                if (!result.alreadyLatest) {
+                    app.devices.refresh(
+                        app.config.fleets,
+                        app.config.settings.staleSec,
+                        policy = app.config.settings.detectionPolicy(),
+                        decaySec = app.config.settings.decaySec,
+                    )
+                }
+                result
+            }.onSuccess { result ->
+                _export.value = if (result.alreadyLatest) {
+                    ExportUi(
+                        noticeTitle = "Already on the latest catalog",
+                        noticeMessage = "Already on catalog ${result.catalogVersion}. Nothing to update.",
+                    )
+                } else {
+                    val bits = mutableListOf<String>()
+                    if (result.updated > 0) bits += "updated ${result.updated}"
+                    if (result.added > 0) bits += "added ${result.added}"
+                    val change = if (bits.isEmpty()) "No stock rows changed."
+                    else bits.joinToString(" · ").replaceFirstChar { it.uppercase() } + "."
+                    ExportUi(
+                        noticeTitle = "Catalog updated",
+                        noticeMessage = "Stock catalog is now ${result.catalogVersion}. $change " +
+                            "Bookmarks and Settings were not changed.",
+                    )
+                }
+            }.onFailure { err ->
+                val msg = err.message.orEmpty()
+                val access = msg.contains("HTTP", ignoreCase = true) ||
+                    msg.contains("Unable to resolve", ignoreCase = true) ||
+                    msg.contains("failed to connect", ignoreCase = true) ||
+                    msg.contains("timeout", ignoreCase = true) ||
+                    msg.contains("GitHub", ignoreCase = true)
+                _export.value = if (access) {
+                    ExportUi(
+                        errorTitle = "Could not reach GitHub",
+                        error = "Could not reach the catalog on GitHub. Try again later, or use Import signatures from a file.",
+                    )
+                } else {
+                    ExportUi(
+                        errorTitle = "Could not import catalog",
+                        error = err.message ?: "Could not import catalog.",
+                    )
+                }
             }
         }
     }

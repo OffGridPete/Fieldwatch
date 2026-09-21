@@ -17,6 +17,8 @@ import app.fieldwatch.domain.SettingsImportResult
 import app.fieldwatch.domain.SettingsPack
 import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.SignatureImportResult
+import app.fieldwatch.domain.SignaturePack
+import app.fieldwatch.domain.StockCatalogUpdateResult
 import app.fieldwatch.domain.WatchTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -129,6 +131,34 @@ class ConfigStore(context: Context) {
             if (applied.error != null) local else next
         }
         return result
+    }
+
+    suspend fun overlayStockCatalog(pack: SignaturePack): StockCatalogUpdateResult = mutex.withLock {
+        if (pack.catalogVersion <= 0) {
+            return@withLock StockCatalogUpdateResult(error = "This pack has no catalog version.")
+        }
+        val local = _config.value
+        if (pack.catalogVersion <= local.version) {
+            return@withLock StockCatalogUpdateResult(
+                alreadyLatest = true,
+                catalogVersion = local.version,
+            )
+        }
+        val (fleets, overlay) = SignatureExchange.overlayStock(local.fleets, pack.fleets)
+        if (overlay.error != null) {
+            return@withLock StockCatalogUpdateResult(error = overlay.error)
+        }
+        val next = local.copy(fleets = fleets, version = pack.catalogVersion)
+        _config.value = next
+        withContext(Dispatchers.IO) {
+            val tmp = File(file.parentFile, "config.tmp")
+            tmp.writeText(json.encodeToString(next))
+            if (!tmp.renameTo(file)) {
+                file.writeText(tmp.readText())
+                tmp.delete()
+            }
+        }
+        overlay.copy(catalogVersion = pack.catalogVersion)
     }
 
     private fun patchBuiltIn(cfg: PersistedConfig): PersistedConfig {
@@ -888,7 +918,7 @@ class ConfigStore(context: Context) {
     private fun seed(): PersistedConfig {
         val fleets = DefaultCatalog.fleets()
         return PersistedConfig(
-            version = CATALOG_V72,
+            version = CATALOG_VERSION,
             fleets = fleets,
             filter = FilterState(),
             presets = FilterEngine().defaultPresets(fleets),
@@ -898,6 +928,8 @@ class ConfigStore(context: Context) {
     }
 
     companion object {
+        /** Stock catalog generation. Settings footer and the GitHub pack use this. */
+        const val CATALOG_VERSION = 72
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -968,7 +1000,7 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V69 = 69
         private const val CATALOG_V70 = 70
         private const val CATALOG_V71 = 71
-        private const val CATALOG_V72 = 72
+        private const val CATALOG_V72 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",

@@ -20,6 +20,14 @@ data class SignaturePack(
     }
 }
 
+data class StockCatalogUpdateResult(
+    val alreadyLatest: Boolean = false,
+    val added: Int = 0,
+    val updated: Int = 0,
+    val catalogVersion: Int = 0,
+    val error: String? = null,
+)
+
 data class SignatureImportResult(
     val added: Int = 0,
     val merged: Int = 0,
@@ -188,5 +196,63 @@ object SignatureExchange {
         var i = 2
         while ("$base (imported $i)".lowercase() in taken) i++
         return "$base (imported $i)" to true
+    }
+
+    /**
+     * Replace stock rows from a GitHub / file pack. Keeps user mute ([Fleet.enabled]),
+     * extra rules they added on a stock id, and every custom row. Does not touch
+     * watchlist or Settings.
+     */
+    fun overlayStock(existing: List<Fleet>, incoming: List<Fleet>): Pair<List<Fleet>, StockCatalogUpdateResult> {
+        val stockIn = incoming.filter { it.builtIn || it.id.startsWith("fleet-") }
+            .filter { it.rules.isNotEmpty() }
+            .map { it.copy(kind = it.kind.folded(), builtIn = true) }
+        if (stockIn.isEmpty()) {
+            return existing to StockCatalogUpdateResult(error = "This pack has no stock signatures.")
+        }
+        val byId = existing.mapIndexed { index, fleet -> fleet.id to index }.toMap().toMutableMap()
+        val next = existing.toMutableList()
+        var added = 0
+        var updated = 0
+        for (stock in stockIn) {
+            val index = byId[stock.id]
+            if (index == null) {
+                next += stock
+                byId[stock.id] = next.lastIndex
+                added++
+                continue
+            }
+            val local = next[index]
+            if (!local.builtIn) continue
+            val stockKeys = stock.rules.map { ruleKey(it) }.toSet()
+            val extras = local.rules.filter { ruleKey(it) !in stockKeys }
+            val overlaid = stock.copy(
+                enabled = local.enabled,
+                rules = stock.rules + extras,
+                builtIn = true,
+            )
+            if (stockFieldsDiffer(local, overlaid)) {
+                next[index] = overlaid
+                updated++
+            }
+        }
+        val sorted = next.sortedBy { it.name.lowercase() }
+        return sorted to StockCatalogUpdateResult(added = added, updated = updated)
+    }
+
+    private fun stockFieldsDiffer(local: Fleet, overlaid: Fleet): Boolean {
+        if (local.name != overlaid.name) return true
+        if (local.kind != overlaid.kind) return true
+        if (local.colorIndex != overlaid.colorIndex) return true
+        if (local.notes != overlaid.notes) return true
+        if (local.attentionNote != overlaid.attentionNote) return true
+        if (local.matchAny != overlaid.matchAny) return true
+        if (local.minPeers != overlaid.minPeers) return true
+        if (local.peerWindowSec != overlaid.peerWindowSec) return true
+        if (local.clusterByOui != overlaid.clusterByOui) return true
+        if (local.sequentialMac != overlaid.sequentialMac) return true
+        if (local.decode != overlaid.decode) return true
+        if (local.rules.map { ruleKey(it) } != overlaid.rules.map { ruleKey(it) }) return true
+        return false
     }
 }

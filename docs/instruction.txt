@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.1.1 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.1.2 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  f65114f123f5f7298637ae545434386edef878597ac2e50867a1f527c39b575c
+  36abdfd2044331d41b717ddcfe2b99b1935971bf87a13835f274b15331c54bbf
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
@@ -282,7 +282,10 @@ Max collection (battery is the cost) — full walk-through:
                stay on Settings.
   Settings     Scan intensity, Faster Wi-Fi AP scans, GPS tagging,
                Online place names, Keep screen on, logging options,
-               Watchlist, Named radios. GPS tagging, Online place names, Keep screen
+               Watchlist, Named radios. Footer: Fieldwatch version · Catalog N.
+               Update stock catalog from GitHub needs internet; replaces
+               stock rows (Extra attention too); bookmarks stay. Offline:
+               Import signatures. GPS tagging, Online place names, Keep screen
                on, Watchlist alerts, and Beep ship on. Voice on watched
                signature ships off. Beep and Voice are independent:
                pip, spoken phrase, or both. What to say (while Voice is
