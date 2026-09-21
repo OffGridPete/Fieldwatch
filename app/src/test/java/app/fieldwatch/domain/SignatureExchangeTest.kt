@@ -277,17 +277,43 @@ class SignatureExchangeTest {
             "fleet-flock-cameras", "fleet-fs-ext-battery", "fleet-penguin", "fleet-pigvision",
             "fleet-genetec", "fleet-rekor", "fleet-vigilant", "fleet-verkada",
             "fleet-avigilon", "fleet-axis", "fleet-hikvision", "fleet-dahua",
+            "fleet-hanwha-wisenet", "fleet-uniview", "fleet-rhombus",
         )
         for (id in publicCameras) {
             assertTrue(id, ids.getValue(id).attentionNote.isNotBlank())
         }
         assertTrue(ids.getValue("fleet-unifi-protect").attentionNote.isBlank())
         assertTrue(ids.getValue("fleet-salto").attentionNote.isBlank())
+        assertEquals("Access control", SignatureClass.LOCK.label())
+        for (id in listOf("fleet-seos", "fleet-salto", "fleet-dormakaba", "fleet-paxton", "fleet-august")) {
+            assertEquals(id, SignatureClass.LOCK, ids.getValue(id).kind)
+        }
+        assertEquals(SignatureClass.SURVEILLANCE, ids.getValue("fleet-bluetoad").kind)
+        assertTrue(ids.getValue("fleet-bluetoad").attentionNote.isBlank())
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         for (id in publicCameras) {
             assertTrue(id, id in watched)
         }
         assertFalse("fleet-unifi-protect" in watched)
+        assertFalse("fleet-bluetoad" in watched)
+        assertFalse("fleet-bliptrack" in watched)
+        assertEquals(SignatureClass.SURVEILLANCE, ids.getValue("fleet-bliptrack").kind)
+        assertTrue(ids.getValue("fleet-bliptrack").attentionNote.isBlank())
+        assertEquals(SignatureClass.MESH, ids.getValue("fleet-meshcore").kind)
+        assertEquals(SignatureClass.MESH, ids.getValue("fleet-gotenna").kind)
+        assertEquals(SignatureClass.MESH, ids.getValue("fleet-sensecap").kind)
+        assertEquals(SignatureClass.MESH, ids.getValue("fleet-rak-wisgate").kind)
+        assertTrue(ids.getValue("fleet-meshcore").attentionNote.isBlank())
+        assertFalse("fleet-meshcore" in watched)
+        assertFalse("fleet-gotenna" in watched)
+        assertFalse("fleet-sensecap" in watched)
+        assertFalse("fleet-rak-wisgate" in watched)
+        assertEquals(SignatureClass.HACKING, ids.getValue("fleet-ghostesp").kind)
+        assertEquals(SignatureClass.HACKING, ids.getValue("fleet-bruce").kind)
+        assertTrue(ids.getValue("fleet-ghostesp").attentionNote.isNotBlank())
+        assertTrue(ids.getValue("fleet-bruce").attentionNote.isNotBlank())
+        assertTrue("fleet-ghostesp" in watched)
+        assertTrue("fleet-bruce" in watched)
         val extraSurveillance = ids.values.filter {
             it.builtIn && it.kind == SignatureClass.SURVEILLANCE && it.attentionNote.isNotBlank()
         }.map { it.id }
@@ -337,6 +363,64 @@ class SignatureExchangeTest {
         assertEquals(SignatureClass.HEALTH, ids.getValue("fleet-omron").kind)
         assertEquals(SignatureClass.HEALTH, ids.getValue("fleet-withings").kind)
         assertEquals(SignatureClass.HEALTH, ids.getValue("fleet-dexcom").kind)
+    }
+
+    @Test
+    fun blueToadSpectraHitsNameAndIterisOuiButNotGenericWords() {
+        val engine = SignatureEngine()
+        val named = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:10", "BlueTOAD-12AB")
+        val velocity = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:11", "Vantage Velocity 4")
+        val oui = sighting(RadioKind.WIFI, "00:14:7B:11:22:33", "Cabinet")
+        val generic = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:12", "Spectra Audio")
+        val vantage = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:13", "Vantage Point")
+        val hits = engine.match(listOf(named, velocity, oui, generic, vantage), stock)
+        assertTrue("BlueTOAD SSID", "fleet-bluetoad" in hits.getValue(named.key))
+        assertTrue("Vantage Velocity name", "fleet-bluetoad" in hits.getValue(velocity.key))
+        assertTrue("Iteris OUI 00:14:7B", "fleet-bluetoad" in hits.getValue(oui.key))
+        assertTrue("Spectra alone stays unmatched", hits.getValue(generic.key).isEmpty())
+        assertTrue("Vantage alone stays unmatched", hits.getValue(vantage.key).isEmpty())
+    }
+
+    @Test
+    fun catalogV70FamiliesHitUniqueIdsNotGenericWords() {
+        val engine = SignatureEngine()
+        val blip = sighting(RadioKind.WIFI, "00:0E:A5:11:22:33", "Cabinet")
+        val wisenet = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:20", "XNV-6080_0076_WISENET")
+        val uniview = sighting(RadioKind.WIFI, "48:EA:63:11:22:33", "Yard")
+        val rhombus = sighting(RadioKind.WIFI, "CC:47:BD:11:22:33", "Lobby")
+        val mesh = ble(name = "MeshCore_A1B2", mac = "AA:BB:CC:DD:EE:10")
+        val nordic = ble(name = "", mac = "AA:BB:CC:DD:EE:11").copy(
+            serviceUuids = listOf("6E400001-B5A3-F393-E0A9-E50E24DCCA9E"),
+        )
+        val gotenna = ble(name = "", mac = "AA:BB:CC:DD:EE:12").copy(
+            serviceUuids = listOf("1276aaee-df5e-11e6-bf01-fe55135034f3"),
+        )
+        val sense = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:21", "SenseCAP_A1B2C3")
+        val rak = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:22", "RAK7268_A1B2")
+        val ghost = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:23", "GhostNet")
+        val bruce = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:24", "BruceNet")
+        val genericGhost = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:25", "Ghost")
+        val genericBruce = sighting(RadioKind.WIFI, "AA:BB:CC:00:00:26", "Bruce")
+        val hits = engine.match(
+            listOf(
+                blip, wisenet, uniview, rhombus, mesh, nordic, gotenna,
+                sense, rak, ghost, bruce, genericGhost, genericBruce,
+            ),
+            stock,
+        )
+        assertTrue("BlipTrack OUI", "fleet-bliptrack" in hits.getValue(blip.key))
+        assertTrue("Wisenet setup SSID", "fleet-hanwha-wisenet" in hits.getValue(wisenet.key))
+        assertTrue("Uniview OUI", "fleet-uniview" in hits.getValue(uniview.key))
+        assertTrue("Rhombus OUI", "fleet-rhombus" in hits.getValue(rhombus.key))
+        assertTrue("MeshCore name", "fleet-meshcore" in hits.getValue(mesh.key))
+        assertFalse("Nordic UART is not MeshCore", "fleet-meshcore" in hits.getValue(nordic.key))
+        assertTrue("goTenna service UUID", "fleet-gotenna" in hits.getValue(gotenna.key))
+        assertTrue("SenseCAP setup AP", "fleet-sensecap" in hits.getValue(sense.key))
+        assertTrue("RAK WisGate setup AP", "fleet-rak-wisgate" in hits.getValue(rak.key))
+        assertTrue("GhostNet", "fleet-ghostesp" in hits.getValue(ghost.key))
+        assertTrue("BruceNet", "fleet-bruce" in hits.getValue(bruce.key))
+        assertFalse("Ghost alone", "fleet-ghostesp" in hits.getValue(genericGhost.key))
+        assertFalse("Bruce alone", "fleet-bruce" in hits.getValue(genericBruce.key))
     }
 
     @Test

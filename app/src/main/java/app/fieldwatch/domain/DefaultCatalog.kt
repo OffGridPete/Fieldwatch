@@ -60,7 +60,7 @@ object DefaultCatalog {
      * Extra attention rows: body-cam / public-safety APs, camera glasses,
      * recording wearables, pentest kit, and roadside / public camera + ALPR.
      * Plus every built-in Drone-class row. Not Tesla, not headphones, not
-     * UniFi Protect, not access-control locks.
+     * UniFi Protect, not BlueTOAD Spectra, not BlipTrack, not access-control locks.
      */
     fun defaultWatchlist(): List<WatchTarget> =
         fleets()
@@ -253,7 +253,16 @@ object DefaultCatalog {
         dahua(),
         meshtastic(),
         helium(),
+        meshCore(),
+        goTenna(),
+        senseCap(),
+        rakWisGate(),
         genetec(),
+        blueToadSpectra(),
+        blipTrack(),
+        hanwhaWisenet(),
+        uniview(),
+        rhombus(),
         rekor(),
         axon(),
         watchGuardVideo(),
@@ -269,6 +278,8 @@ object DefaultCatalog {
         flipperZero(),
         pwnagotchi(),
         marauderDeauther(),
+        ghostEsp(),
+        bruceFirmware(),
         porkchop(),
         pokemonGoPlus(),
         hatch(),
@@ -1689,8 +1700,8 @@ object DefaultCatalog {
         id = "fleet-seos",
         name = "ASSA ABLOY",
         enabled = true,
-        colorIndex = Hue.SURVEILLANCE,
-        kind = SignatureClass.SURVEILLANCE,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
         matchAny = true,
         notes = "ASSA ABLOY / HID Seos or Yale access credential. Phones on HID Mobile Access can advertise a Seos name.",
         builtIn = true,
@@ -1765,8 +1776,8 @@ object DefaultCatalog {
         id = "fleet-salto",
         name = "SALTO",
         enabled = true,
-        colorIndex = Hue.SURVEILLANCE,
-        kind = SignatureClass.SURVEILLANCE,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
         matchAny = true,
         notes = "SALTO commercial access lock or reader.",
         builtIn = true,
@@ -1782,8 +1793,8 @@ object DefaultCatalog {
         id = "fleet-dormakaba",
         name = "dormakaba",
         enabled = true,
-        colorIndex = Hue.SURVEILLANCE,
-        kind = SignatureClass.SURVEILLANCE,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
         matchAny = true,
         notes = "dormakaba, Saflok, or Oracode hotel / commercial lock.",
         builtIn = true,
@@ -1885,8 +1896,8 @@ object DefaultCatalog {
         id = "fleet-paxton",
         name = "Paxton",
         enabled = true,
-        colorIndex = Hue.SURVEILLANCE,
-        kind = SignatureClass.SURVEILLANCE,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
         matchAny = true,
         notes = "Paxton / Net2 door reader or access panel.",
         builtIn = true,
@@ -2339,6 +2350,75 @@ object DefaultCatalog {
         ),
     )
 
+    private fun meshCore() = Fleet(
+        id = "fleet-meshcore",
+        name = "MeshCore",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.MESH,
+        matchAny = true,
+        notes = "MeshCore LoRa companion radio. Off-grid text/location, not cellular. Name-only — Nordic UART UUID is every ESP32 serial board and is not this row.",
+        builtIn = true,
+        rules = listOf(
+            bleName("MeshCore"),
+            bleGlob("MeshCore*"),
+        ),
+    )
+
+    private fun goTenna() = Fleet(
+        id = "fleet-gotenna",
+        name = "goTenna",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.MESH,
+        matchAny = true,
+        notes = "goTenna Mesh or Pro companion radio. Pairs over BLE; the mesh itself is UHF and Fieldwatch cannot hear it. Pro is sold to agencies. Pattern match, not that operator.",
+        builtIn = true,
+        rules = listOf(
+            uuid("1276aaee-df5e-11e6-bf01-fe55135034f3"),
+            uuid("f0abaaee-ebfa-f96f-28da-076c35a521db"),
+            bleName("goTenna"),
+            bleGlob("goTenna*"),
+            bleGlob("gotenna*"),
+        ),
+    )
+
+    private fun senseCap() = Fleet(
+        id = "fleet-sensecap",
+        name = "SenseCAP",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.MESH,
+        matchAny = true,
+        notes = "Seeed SenseCAP LoRaWAN / Helium indoor gateway setup AP (SenseCAP_XXXXXX). Quiet once it is on Ethernet. Helium-named units can also hit the Helium row.",
+        builtIn = true,
+        rules = listOf(
+            wifiName("SenseCAP"),
+            wifiGlob("SenseCAP*"),
+            wifiGlob("SenseCAP_*"),
+        ),
+    )
+
+    private fun rakWisGate() = Fleet(
+        id = "fleet-rak-wisgate",
+        name = "RAK WisGate",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.MESH,
+        matchAny = true,
+        notes = "RAKwireless WisGate LoRaWAN gateway setup AP (RAK7268_XXXX and similar). Quiet once it is on Ethernet.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("RAK7*"),
+            wifiGlob("RAK7268*"),
+            wifiGlob("RAK7249*"),
+            wifiGlob("RAK7289*"),
+            wifiGlob("RAK7391*"),
+            name("WisGate"),
+            glob("WisGate*"),
+        ),
+    )
+
     private fun genetec() = Fleet(
         id = "fleet-genetec",
         name = "Genetec AutoVu",
@@ -2354,6 +2434,114 @@ object DefaultCatalog {
             name("AutoVu"),
             glob("Genetec*"),
             glob("AutoVu*"),
+        ),
+    )
+
+    private fun blueToadSpectra() = Fleet(
+        id = "fleet-bluetoad",
+        name = "BlueTOAD Spectra",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Iteris roadside Bluetooth travel-time reader (Vantage Velocity, now BlueTOAD Spectra / Spectra CV). Samples phones, headsets, and in-car Bluetooth as vehicles pass; matching the same ID at two points gives speed. About 100 m. A sample, not a full count. Quiet or Ethernet-only cabinets may not advertise. Spectra CV also uses 5.9 GHz C-V2X, which Fieldwatch cannot hear. IEEE Iteris OUI can also hit other Iteris roadside kit. Pattern match, not that cabinet.",
+        builtIn = true,
+        rules = listOf(
+            // IEEE MA-L registered to Iteris, Inc.
+            oui("00:14:7B"),
+            name("BlueTOAD"),
+            glob("BlueTOAD*"),
+            name("Vantage Velocity"),
+            glob("VantageVelocity*"),
+            glob("Vantage-Velocity*"),
+            name("Spectra CV"),
+            glob("SpectraCV*"),
+            glob("Spectra-CV*"),
+            name("TrafficCast"),
+            glob("TrafficCast*"),
+            name("VantageARGUS"),
+            glob("VantageARGUS*"),
+            name("BlueARGUS"),
+            glob("BlueARGUS*"),
+        ),
+    )
+
+    private fun blipTrack() = Fleet(
+        id = "fleet-bliptrack",
+        name = "BlipTrack",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "BLIP Systems BlipTrack roadside Bluetooth/Wi-Fi travel-time sensor. Same job as BlueTOAD Spectra: samples passing phones and in-car radios at two points for speed. Quiet or Ethernet-only cabinets may not advertise. Pattern match, not that cabinet.",
+        builtIn = true,
+        rules = listOf(
+            // IEEE MA-L registered to BLIP Systems
+            oui("00:0E:A5"),
+            name("BlipTrack"),
+            glob("BlipTrack*"),
+            name("BLIP Systems"),
+            glob("BLIP-Track*"),
+        ),
+    )
+
+    private fun hanwhaWisenet() = Fleet(
+        id = "fleet-hanwha-wisenet",
+        name = "Hanwha Wisenet",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Hanwha Vision / Wisenet camera (ex-Samsung Techwin). Common on commercial CCTV and some public poles.",
+        attentionNote = "Hanwha Vision / Wisenet cameras. Common on commercial CCTV and some public poles. A *_WISENET setup SSID is the stronger hit; IEEE 00:09:18 is Samsung Techwin. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            oui("00:09:18"),
+            name("Wisenet"),
+            glob("Wisenet*"),
+            glob("*_WISENET"),
+            glob("*WISENET*"),
+            name("Hanwha"),
+            glob("Hanwha*"),
+        ),
+    )
+
+    private fun uniview() = Fleet(
+        id = "fleet-uniview",
+        name = "Uniview",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Uniview / UNV / Uniarch camera. Common on commercial CCTV and some public poles.",
+        attentionNote = "Uniview / UNV cameras. Common on commercial CCTV and some public poles. IEEE Zhejiang Uniview OUIs or a Uniview / UNV- name. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = buildList {
+            listOf(
+                "14:BA:88", "48:EA:63", "6C:F1:7E", "88:26:3F", "C4:79:05",
+            ).forEach { add(oui(it)) }
+            add(name("Uniview"))
+            add(glob("Uniview*"))
+            add(glob("UNV-*"))
+            add(name("Uniarch"))
+            add(glob("Uniarch*"))
+        },
+    )
+
+    private fun rhombus() = Fleet(
+        id = "fleet-rhombus",
+        name = "Rhombus",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Rhombus cloud camera. BLE is loudest when the camera is unregistered or offline.",
+        attentionNote = "Rhombus cloud cameras on buildings and some public sites. IEEE CC:47:BD or a Rhombus name. BLE often only while unregistered or offline. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            oui("CC:47:BD"),
+            name("Rhombus"),
+            glob("Rhombus*"),
         ),
     )
 
@@ -2638,6 +2826,38 @@ object DefaultCatalog {
             name("ESP32 Marauder"),
             name("Deauther"),
             glob("Deauther*"),
+        ),
+    )
+
+    private fun ghostEsp() = Fleet(
+        id = "fleet-ghostesp",
+        name = "GhostESP",
+        enabled = true,
+        colorIndex = Hue.HACKING,
+        kind = SignatureClass.HACKING,
+        matchAny = true,
+        notes = "GhostESP ESP32 audit firmware. Default setup AP is GhostNet. Same boards are DIY; renamed units miss.",
+        attentionNote = "GhostESP ESP32 audit firmware default AP (GhostNet). Same boards are DIY. Not proof of an attack. A miss is not a clean bill (renamed). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            wifiName("GhostNet"),
+            wifiGlob("GhostNet*"),
+        ),
+    )
+
+    private fun bruceFirmware() = Fleet(
+        id = "fleet-bruce",
+        name = "Bruce",
+        enabled = true,
+        colorIndex = Hue.HACKING,
+        kind = SignatureClass.HACKING,
+        matchAny = true,
+        notes = "Bruce ESP32 pentest firmware. Default setup AP is BruceNet. Same boards are DIY; renamed units and evil-portal SSIDs miss.",
+        attentionNote = "Bruce ESP32 pentest firmware default AP (BruceNet). Same boards are DIY. Evil-portal SSIDs look like ordinary Wi-Fi and will not hit this row. Not proof of an attack. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            wifiName("BruceNet"),
+            wifiGlob("BruceNet*"),
         ),
     )
 

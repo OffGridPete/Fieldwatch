@@ -228,8 +228,9 @@ Max collection (battery is the cost) — full walk-through:
                public-safety vehicle APs, and roadside / public camera +
                ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec
                AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis,
-               Hikvision, Dahua). Tesla, headphones, UniFi Protect, and
-               access-control locks do not. Flock LiteOn / Espressif OUIs
+               Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) and
+               GhostESP / Bruce. Tesla, headphones, UniFi Protect,
+               BlueTOAD Spectra, BlipTrack, and access-control locks do not. Flock LiteOn / Espressif OUIs
                can be noisy; unbookmark that row if it is.
                UniFi AP is Wi-Fi-only (Ubiquiti OUIs + factory SSIDs), ISP / routers class.
                A separate UniFi row matches advertised names on either radio (same class).
@@ -250,17 +251,17 @@ Max collection (battery is the cost) — full walk-through:
                ads stay hex. Not pairing. How to type a map from a payload
                spec: User Manual §9.6.1–§9.6.5. Stock maps: §9.6.6.
                Stock chip colors by class (change any row):
-                 red    pentest / cheap serial
-                 amber  cameras / ALPR / municipal / UniFi Protect / DJI / ASSA ABLOY / SALTO
+                 red    pentest / cheap serial (incl. GhostESP / Bruce)
+                 amber  cameras / ALPR / municipal / UniFi Protect / BlueTOAD / BlipTrack / DJI
                  purple phones / Find My (Apple Device, Fast Pair, AirTags, Chipolo, Google)
                  cyan   wearable trackers / beacons (SmartTag, Tile, iBeacon, Target Atrius basket, Minew)
-                 green  mesh / LoRa (Meshtastic, Helium)
+                 green  mesh / LoRa (Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK)
                  orange glasses and audio (same color; class splits them)
                  teal   public safety (body-cam / public-safety AP) and vehicle (same color; class splits them).
                         Public safety class is used in law enforcement, not exclusive to it —
                         government, municipal, and other corporate fleets likely
                         run some of the same kit.
-                 silver consumer cameras (Wyze / Ring / GoPro / Osmo / Insta360) / home IoT / ISP Wi-Fi / thermostats / Tuya / home locks / retail signage / Unknown Signature
+                 silver consumer cameras (Wyze / Ring / GoPro / Osmo / Insta360) / home IoT / ISP Wi-Fi / thermostats / Tuya / access control / retail signage / Unknown Signature
                Unmatched radios color by RSSI, not class. Full catalog:
                User Manual §9.5 and Appendix B.
   Reports      Debrief (text or PDF), AI Export, Signature candidates,

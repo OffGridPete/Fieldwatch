@@ -616,6 +616,38 @@ object DeviceExplain {
                     Hint("beacon", "an Estimote beacon", "Matched signature $raw.", 7)
                 n == "kontakt.io" || n == "kontakt" ->
                     Hint("beacon", "a Kontakt.io beacon", "Matched signature $raw.", 7)
+                "bluetoad" in n ->
+                    Hint(
+                        "roadside",
+                        "an Iteris BlueTOAD / Vantage Velocity roadside Bluetooth travel-time reader",
+                        "Matched signature $raw.",
+                        7,
+                    )
+                "bliptrack" in n ->
+                    Hint(
+                        "roadside",
+                        "a BLIP Systems BlipTrack roadside travel-time sensor",
+                        "Matched signature $raw.",
+                        7,
+                    )
+                "hanwha" in n || "wisenet" in n ->
+                    Hint("camera", "a Hanwha Vision / Wisenet camera", "Matched signature $raw.", 7)
+                n == "uniview" ->
+                    Hint("camera", "a Uniview / UNV camera", "Matched signature $raw.", 7)
+                n == "rhombus" ->
+                    Hint("camera", "a Rhombus cloud camera", "Matched signature $raw.", 7)
+                n == "meshcore" ->
+                    Hint("mesh", "a MeshCore LoRa companion radio", "Matched signature $raw.", 7)
+                "gotenna" in n ->
+                    Hint("mesh", "a goTenna Mesh or Pro radio", "Matched signature $raw.", 7)
+                n == "sensecap" ->
+                    Hint("mesh", "a SenseCAP LoRaWAN / Helium gateway", "Matched signature $raw.", 7)
+                "wisgate" in n || n == "rak wisgate" ->
+                    Hint("mesh", "a RAK WisGate LoRaWAN gateway", "Matched signature $raw.", 7)
+                n == "ghostesp" ->
+                    Hint("pentest", "a GhostESP ESP32 audit board", "Matched signature $raw.", 7)
+                n == "bruce" ->
+                    Hint("pentest", "a Bruce ESP32 pentest board", "Matched signature $raw.", 7)
                 "chipolo" in n || "pebblebee" in n || "moto tag" in n ->
                     Hint("tag", "a finder tag", "Matched signature $raw.", 7)
                 "airpods" in n ->

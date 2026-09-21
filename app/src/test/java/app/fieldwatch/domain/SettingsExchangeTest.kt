@@ -38,7 +38,7 @@ class SettingsExchangeTest {
         hiddenPresetIds: Set<String> = emptySet(),
         fleets: List<Fleet> = stockFleets,
     ) = PersistedConfig(
-        version = 68,
+        version = 72,
         fleets = fleets,
         filter = filter,
         presets = presets,

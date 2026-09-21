@@ -825,6 +825,38 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V68
         }
+        if (version < CATALOG_V69) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V69.mapNotNull { catalog[it] }.filter { it.id !in have }
+            fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            version = CATALOG_V69
+        }
+        if (version < CATALOG_V70) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V70.mapNotNull { catalog[it] }.filter { it.id !in have }
+            fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            val watched = watchlist.mapNotNull { it.fleetId }.toSet()
+            val watchExtras = DefaultCatalog.defaultWatchlist().filter { it.fleetId !in watched }
+            if (watchExtras.isNotEmpty()) watchlist = watchlist + watchExtras
+            version = CATALOG_V70
+        }
+        if (version < CATALOG_V71) {
+            val watched = watchlist.mapNotNull { it.fleetId }.toSet()
+            val watchExtras = DefaultCatalog.defaultWatchlist().filter { it.fleetId !in watched }
+            if (watchExtras.isNotEmpty()) watchlist = watchlist + watchExtras
+            version = CATALOG_V71
+        }
+        if (version < CATALOG_V72) {
+            val accessControl = setOf(
+                "fleet-seos", "fleet-salto", "fleet-dormakaba", "fleet-paxton",
+            )
+            fleets = fleets.map { fleet ->
+                if (!fleet.builtIn || fleet.id !in accessControl) return@map fleet
+                val stock = catalog[fleet.id] ?: return@map fleet
+                fleet.copy(kind = stock.kind, colorIndex = stock.colorIndex)
+            }
+            version = CATALOG_V72
+        }
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
             .distinctBy { it.id }
         val fleetsChanged = fleets != cfg.fleets
@@ -856,7 +888,7 @@ class ConfigStore(context: Context) {
     private fun seed(): PersistedConfig {
         val fleets = DefaultCatalog.fleets()
         return PersistedConfig(
-            version = CATALOG_V68,
+            version = CATALOG_V72,
             fleets = fleets,
             filter = FilterState(),
             presets = FilterEngine().defaultPresets(fleets),
@@ -933,6 +965,10 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V66 = 66
         private const val CATALOG_V67 = 67
         private const val CATALOG_V68 = 68
+        private const val CATALOG_V69 = 69
+        private const val CATALOG_V70 = 70
+        private const val CATALOG_V71 = 71
+        private const val CATALOG_V72 = 72
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1212,6 +1248,21 @@ class ConfigStore(context: Context) {
             "fleet-omron",
             "fleet-withings",
             "fleet-dexcom",
+        )
+        private val ADDED_IN_V69 = listOf(
+            "fleet-bluetoad",
+        )
+        private val ADDED_IN_V70 = listOf(
+            "fleet-bliptrack",
+            "fleet-hanwha-wisenet",
+            "fleet-uniview",
+            "fleet-rhombus",
+            "fleet-meshcore",
+            "fleet-gotenna",
+            "fleet-sensecap",
+            "fleet-rak-wisgate",
+            "fleet-ghostesp",
+            "fleet-bruce",
         )
     }
 }

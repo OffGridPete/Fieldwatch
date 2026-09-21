@@ -1022,7 +1022,7 @@ def story():
             "Online place names, Watchlist alerts, Beep, Voice on watched signature (What to say: Class + signature), and Jump to new watched detection. Stock bookmarks (alert on a new match) "
             "are Extra attention rows: Axon, WatchGuard Video, Ray-Ban / Meta glasses, "
             "Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, "
-            "Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua); "
+            "Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus); "
             "plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). "
             "Privacy mode, the shade notification, and the TAK / CoT feed stay off. "
             "Chip colors follow class (§9.5)."
@@ -1412,7 +1412,7 @@ def story():
             "on Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, "
             "Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, "
             "Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR "
-            "(Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua — those rows also ship with the bookmark on). A “!” mark on the "
+            "(Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus — those rows also ship with the bookmark on). A “!” mark on the "
             "Live display row means open detail and read that card. Pattern match, not identity, not "
             "a skimmer detector, not a safety finding. You can put Extra attention on any "
             "signature you edit."
@@ -1770,7 +1770,7 @@ def story():
         table(
             ["Chip", "Ships", "Who is selected"],
             [
-                ["Extra attention", "On", "Any matched signature whose Extra attention text is not empty (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua). Pin is usually heard-here (your GPS)."],
+                ["Extra attention", "On", "Any matched signature whose Extra attention text is not empty (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus). Pin is usually heard-here (your GPS)."],
                 ["Payload location", "On", "Any radio with a sticky advertised lat/lon from a decode map. Stock Remote ID is the reason this defaults on: that row has no Extra attention mark, so without this chip it would never publish. Custom maps with the same field ids are included."],
                 ["Watchlist", "Off", "Bookmarked signatures, and Named radios whose Alert is on. Named radios with Alert off (label only) stay off the feed."],
                 ["All signatures", "Off", "Every labeled radio. A plaza will flood ATAK. Use it for a short sit, not a walk."],
@@ -2372,7 +2372,7 @@ def story():
         P(
             "<b>Signature classes</b> group stock (and custom) rows into Finder tags, Retail beacons, "
             "Signage, Wearables, Surveillance, Drones, Pentest, Public safety, Vehicle, Glasses, Audio, Cameras, Thermostats, "
-            "Locks, Health, Home IoT, ISP / routers, Mesh, Phones / PCs, and Other. Each signature has one "
+            "Access control, Health, Home IoT, ISP / routers, Mesh, Phones / PCs, and Other. Each signature has one "
             "class, set in the editor. Public safety is Axon / WatchGuard Video (body-worn and in-car) "
             "plus public-safety vehicle APs (Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc). "
             "Many of those radios are used in law enforcement; they are not exclusive to it. "
@@ -2726,20 +2726,20 @@ def story():
                 ["Retail beacons", "iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
                 ["Signage", "Retail LED sign, Electronic shelf label"],
                 ["Wearables", "Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note"],
-                ["Surveillance", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, UniFi Protect, ASSA ABLOY, SALTO, dormakaba, Paxton"],
+                ["Surveillance", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack"],
                 ["Drones", "Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
-                ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Hobby BLE serial"],
+                ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Public safety", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc. Used in law enforcement, not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit."],
                 ["Vehicle", "Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, GM hotspot, Audi MMI, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, PeopleNet, Samsara, AUMOVIO, Winegard, Goodyear TPMS, Schrader TPMS, Pacific TPMS, Huf, FOBO TPMS"],
                 ["Glasses", "Ray-Ban / Meta glasses, Snap Spectacles"],
                 ["Audio", "Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Cameras", "Wyze, Ring, Arlo, eufy Security, Nest, Tapo, Reolink, GoPro, Osmo, Insta360"],
                 ["Thermostats", "Nest Thermostat, ecobee, Sensi, Honeywell Home"],
-                ["Locks", "August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset"],
+                ["Access control", "August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton"],
                 ["Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
                 ["Home IoT", "Nest Weave, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, Samsung appliance, EcoWater, Amazon, Logitech, HP, Epson, LG webOS TV, Roku, Nespresso, RadiaCode, Ruuvi, Blue Maestro, SensorPush, SnapAV"],
                 ["ISP / routers", "UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Ruijie, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR, TP-Link, ASUS, Linksys, Eero, Google Wifi, Huawei, Plume, D-Link, DWnet, Belkin, Xfinity, Spectrum, AT&amp;T, Verizon, Starlink, GL.iNet, MikroTik, EnGenius, Zyxel, Peplink, OpenWrt, Arris, T-Mobile, HUMAX, Sagemcom, Arcadyan, Askey, Calix, Nokia, AirTies, Tenda, WAVLINK, Sercomm, Luxul, CenturyLink, Adtran, Cambium, TRENDnet, Cudy, Vantiva, Hitron, Actiontec, Buffalo, Grandstream, Inseego, Franklin, Synology"],
-                ["Mesh", "Meshtastic, Helium"],
+                ["Mesh", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Phones / PCs", "Apple Device, Fast Pair, Google, Microsoft Device, Phone hotspot"],
                 ["Other", "Unknown Signature"],
             ],
@@ -2749,15 +2749,15 @@ def story():
         table(
             ["Color", "Class", "Stock signatures"],
             [
-                ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Hobby BLE serial"],
-                ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, UniFi Protect, ASSA ABLOY, SALTO, dormakaba, Paxton, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
+                ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
+                ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
                 ["Purple", "Phones / Find My tags", "Apple Device, Apple AirTags, Chipolo, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
                 ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
-                ["Green", "Mesh / LoRa", "Meshtastic, Helium"],
+                ["Green", "Mesh / LoRa", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Orange", "Glasses and audio (same chip color; class splits them)", "Ray-Ban / Meta glasses, Snap Spectacles, Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO TPMS"],
                 ["Blue", "Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
-                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / catch-all", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris, Unknown Signature"],
+                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control / catch-all", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris, Unknown Signature"],
             ],
             [0.95 * inch, 1.7 * inch, 3.85 * inch],
         ),
@@ -2775,13 +2775,13 @@ def story():
         P(
             "The stock catalog fills Extra attention on Hobby BLE serial, Axon, WatchGuard Video, "
             "Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, "
-            "Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, "
+            "Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, "
             "Utility Inc, and the roadside / public camera + ALPR rows: Flock Safety Cameras, Penguin, "
             "Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, "
-            "Axis, Hikvision, Dahua. Those rows ship with the bookmark on, so a new match beeps. "
+            "Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus. Those rows ship with the bookmark on, so a new match beeps. "
             "That is body-cam, Meta / Snap glasses, recording wearables, pentest kit, "
             "public-safety vehicle APs, and public cameras / plate readers — not Tesla, not headphones, "
-            "not UniFi Protect, not access-control locks. Flock LiteOn / Espressif OUIs can be noisy; unbookmark that row if it is. The Public safety rows "
+            "not UniFi Protect, not BlueTOAD Spectra, not BlipTrack, not access-control locks. Flock LiteOn / Espressif OUIs can be noisy; unbookmark that row if it is. The Public safety rows "
             "are used in law enforcement; they are not exclusive to it (government, municipal, and other "
             "corporate fleets likely run some of the same kit). Unbookmark any row you do not want to hear."
         ),
@@ -2910,7 +2910,7 @@ def story():
             "Seos / Yale*) — not Apple FCB2. August (0x01D1 / FE24). Schlage / Allegion (0x013B / FCF4). "
             "Nuki (a92ee* services). SALTO (0x0199). dormakaba (0x0C64). Paxton (0x0196). Lockly names. "
             "Kevo / Unikey (0x015E). Master Lock (0x014B). igloohome (0x05BA). Tedee (0x0725). Kwikset names. "
-            "Commercial rows are amber; home locks are silver."
+            "Access control class (silver), not Surveillance."
         ),
         P(
             "<b>Smart thermostats (BLE).</b> ecobee (company 0x07D6). Nest Thermostat (Nest Labs 0x01B5; "
@@ -3152,7 +3152,7 @@ def story():
         ),
         bullets([
             "Device: open detail → bookmark icon to be notified when that radio appears. Prefills a name (advertised name or type guess). Settings → Named radios lists those MACs: rename, Alert on/off, remove one, Clear all. Signature watches are not on that list. A rotated BLE address stays until you delete it.",
-            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir).",
+            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir).",
             "Master switch: Settings → Watchlist alerts. Off suppresses beep, voice, vibration, flash, and jump. Beep and Voice are independent (pip, spoken phrase, or both). Jump works with any of those. Settings → System notification (off by default) posts a silent shade card; skip it in the field.",
         ]),
         P("10.2 Beep, voice, flash, and optional shade card", "h2"),
@@ -3696,7 +3696,7 @@ def story():
         ),
         P("<b>Setup.</b>", "body_left"),
         numbered([
-            "Tap preset Trackers, or Filters → Show only plus the class chips (Cameras, Drones, Surveillance, Locks, Pentest, …). Matching stays on; the Live display just thins.",
+            "Tap preset Trackers, or Filters → Show only plus the class chips (Cameras, Drones, Surveillance, Access control, Pentest, …). Matching stays on; the Live display just thins.",
             "If a family is local false positives, hide it on Filters (Hide these for a class, or Hide selected for one family), or mute noisy rules inside the editor (LiteOn OUIs on Flock — §7.6).",
             "Bookmark the signature if you want a beep when a new match appears.",
             "Radar or Hybrid for “how close”; list for triage; detail for the decode.",
@@ -3741,7 +3741,7 @@ def story():
             "drive. Experimental observation only. See §7.6.1 and the Notice page.",
             "warn",
         ),
-        P("<b>Setup.</b> Preset Surveillance (or enable Flock / Raven / the camera names you care about, then Signatures only). High performance. Walk the block. Roadside / public camera + ALPR rows (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua) beep and get Extra attention “!” — the card says what that family is used for. When a chip appears, look with your eyes, then write what you saw — not what the chip said.", "body_left"),
+        P("<b>Setup.</b> Preset Surveillance (or enable Flock / Raven / the camera names you care about, then Signatures only). High performance. Walk the block. Roadside / public camera + ALPR rows (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) beep and get Extra attention “!” — the card says what that family is used for. When a chip appears, look with your eyes, then write what you saw — not what the chip said.", "body_left"),
         P(
             "<b>Honest limits.</b> Newer poles are often cellular-first and RF-quiet on Wi-Fi/BLE; no chip does not mean no camera. Fieldwatch cannot hear LTE, cannot see associated clients, and cannot promiscuously capture. IEEE B4:1E:52 plus a Flock-* SSID is high confidence; LiteOn / Espressif / Raspberry Pi OUIs are low unless a name or UUID corroborates. Phone GPS is where <i>you</i> were, not where the pole is. Full limits: §7.6.1.",
             "body_left",
@@ -4199,7 +4199,7 @@ def story():
             ["vendor_ie (log)", "Last CSV column / JSON field on new Wi-Fi rows: pipe-separated vendor-IE OUIs, up to eight. Empty on BLE and on older 17-column rows. Signature candidates uses product IEs; WPA/RSN/P2P/Qualcomm chip IEs are logged but not clustered. §11.2, §11.5."],
             ["Alerted (list)", "Phosphor notification pip on a Live display row (list, hybrid, timeline, By class) after a watchlist alert this session. Lasts until you leave Fieldwatch. Distinct from Extra attention “!” and from the one-second flash. Newest alert ranks by the same event. On radar the same radios keep a phosphor ring after the ping. §5.3, §5.4, §6.1."],
             ["Notes (signature)", "Editor field on a signature. Shows on radio detail as a quiet Notes card for matching radios, and in Share / AI Export. Stock copy is what the family is and how it is typically used — not the match recipe (company IDs, UUIDs). Not Extra attention: no Live “!”, not amber, not Debrief. Dual-chip radios list each family. §5.5, §9.3."],
-            ["Extra attention", "Optional field on a signature, separate from Notes. If it is not empty, a match gets a “!” on the Live display, an amber Extra attention card on detail, and a line in Debrief / AI Export (amber PDF callout). Empty = no mark. The “!” is its own chip, not the decode hexagon and not the phosphor alerted bell. Stock fills it on Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua) — those rows also ship with the bookmark on. Pattern match, not identity, not a safety finding. §5.5, §9.3, §9.5, §12.14."],
+            ["Extra attention", "Optional field on a signature, separate from Notes. If it is not empty, a match gets a “!” on the Live display, an amber Extra attention card on detail, and a line in Debrief / AI Export (amber PDF callout). Empty = no mark. The “!” is its own chip, not the decode hexagon and not the phosphor alerted bell. Stock fills it on Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) — those rows also ship with the bookmark on. Pattern match, not identity, not a safety finding. §5.5, §9.3, §9.5, §12.14."],
             ["Hobby BLE serial", "Catalog signature (on). BLE advertised names for cheap UART modules (HMSoft, JDY, CC41, AT-09, BT05, ESP32 BLE). Not Classic HC-05/HC-06. Extra attention cautions that the same boards have been used in some pump/ATM overlays; look with your eyes if it is loud next to a card reader. Not proof. Turn the row off if those names are local noise."],
             ["Axon", "Catalog signature (on). IEEE OUI 00:25:DF plus Axon Body / Fleet / Dock names. Extra attention: body-worn, in-car, dock, or TASER. Public safety class — used in law enforcement, not exclusive to it. Not that officer. Quiet LTE units will not appear."],
             ["WatchGuard Video", "Catalog signature (on). IEEE OUI 00:1D:96 (WatchGuard Video, not the firewall company). Extra attention: body-worn / in-car. Now Motorola. Public safety class — used in law enforcement, not exclusive to it."],
@@ -4217,7 +4217,7 @@ def story():
             ["Display (Live display)", "Tune / chevron on the Live display. How the list looks for this mission: View, Sort, Brief hold, Title line, Subtitle line, bars, signature names, Frequency, first/last. View includes By class (outline of the filtered set). The circle on each row is a class glyph, not radio kind — that is the Wi-Fi / Bluetooth icon on the subtitle. Filters hide radios; Display hides fields. Not on Settings. §5.3, §6.5."],
             ["Sort (Display)", "Order of the list, hybrid, and timeline. Strongest signal; Strongest averaged over 30 s (the default); Newest heard; Newest alert; Newest arrival; New at bottom; Name A–Z (Title line); Signatures first. Does not hide radios. Radar still plots by RSSI radius. §5.3."],
             ["Preset (Filters)", "Chip at the top of Filters. A tap replaces the whole filter, not Display. Short stock set: All traffic, Wi-Fi only, BLE only, Strong signal, Moving with you, Trackers, Hide trackers, Hide phones — plus chips you saved. Class Show only (Cameras, Drones, …) is the chips further down; Save current as… if you want that sit as a preset. Show-only presets imply Signatures only (switch dimmed). Long-press any chip to delete it. Stock chips you remove stay gone until Restore default signatures &amp; presets. Reset filter clears this tab; it is not undo. §8.4."],
-            ["Signature class", "Bucket on every signature: Finder tags, Retail beacons, Signage, Wearables, Surveillance, Drones, Pentest, Public safety, Vehicle, Glasses, Audio, Cameras, Thermostats, Locks, Health, Home IoT, ISP / routers, Mesh, Phones / PCs, Other. Public safety is Axon / WatchGuard Video and public-safety vehicle APs (Cradlepoint, AirLink, Compex, Novatel, Utility Inc). Those radios are used in law enforcement; they are not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit. Health is clinic / home-medical BLE (Honeywell Xenon HC scanners, Omron cuffs, Withings scales, Dexcom). Cameras is consumer / action cameras, not poles (Surveillance) and not Axon. Glasses is Meta / Snap. Audio is AirPods / Sony / Bose / JBL / Sonos. Color is the Live display chip; class is the filter. Custom rows default to Other. An old Body-worn class folded into Wearables. §8.3, §9.5."],
+            ["Signature class", "Bucket on every signature: Finder tags, Retail beacons, Signage, Wearables, Surveillance, Drones, Pentest, Public safety, Vehicle, Glasses, Audio, Cameras, Thermostats, Access control, Health, Home IoT, ISP / routers, Mesh, Phones / PCs, Other. Public safety is Axon / WatchGuard Video and public-safety vehicle APs (Cradlepoint, AirLink, Compex, Novatel, Utility Inc). Those radios are used in law enforcement; they are not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit. Health is clinic / home-medical BLE (Honeywell Xenon HC scanners, Omron cuffs, Withings scales, Dexcom). Cameras is consumer / action cameras, not poles (Surveillance) and not Axon. Access control is door locks and readers (August / Schlage and ASSA ABLOY / SALTO / dormakaba / Paxton), not cameras. Glasses is Meta / Snap. Audio is AirPods / Sony / Bose / JBL / Sonos. Color is the Live display chip; class is the filter. Custom rows default to Other. An old Body-worn class folded into Wearables. The Locks class label is now Access control; the stored value is still LOCK. §8.3, §9.5."],
             ["Signature pack", "JSON file from Settings → Export signatures (fieldwatch-signatures-YYYYMMDD.json). Stock plus your edits. No logs, GPS, filters, or watchlist. Import skips the same id or the same match rules, merges extra rules onto a stock row, and renames a colliding name to “Name (imported)”. Restore defaults still wipes customs. A settings pack is a different file. §5.7, §9.3."],
             ["Settings pack", "JSON file from Settings → Export settings (fieldwatch-settings-YYYYMMDD.json). Settings switches, the current filter, filter presets, named radios, and signature watches. Not the catalog, logs, or GPS. Import replaces those setup fields; the catalog stays. First-run disclaimer is not overwritten. Factory-reset / new-phone backup. §5.7."],
             ["Show only / Hide these", "Filters → signature classes. Show only keeps radios matching the class chips you pick (unmatched stay hidden; Signatures only is implied and the switch is dimmed). Hide these drops those classes and leaves unmatched. Live display only — matching, log, and Debrief still see them. Show only with no class picked leaves the Live display unchanged. §8.1–8.4."],
@@ -4426,18 +4426,18 @@ def story():
             ["Dexcom", "BLE Dexcom*", "G6 / G7 glucose sensors. Pattern match, not a patient. Health class."],
             ["Haiku Fan", "BLE UUID E0FC1000-1FB1-4168-96DF-B3F057A86E01; names Haiku Fan / Mammoth Fan", "Big Ass Fans. Custom 128-bit service."],
             ["Tuya", "BLE company 0x07D0; UUID FD50; names TUYA*", "Plugs / lights / cameras / sensors. Not two-letter TY. Decode fields: bound flag and protocol version (UUID bytes encrypted). §9.6."],
-            ["ASSA ABLOY", "BLE 0x012E / HID 0x0124 / Yale 0x0BDE; UUID FCBF; Seos UUID 00009800-…; names Seos / Yale*", "Locks, readers, Seos credentials. Phones on HID Mobile Access can hit Seos. Not Apple FCB2."],
+            ["ASSA ABLOY", "BLE 0x012E / HID 0x0124 / Yale 0x0BDE; UUID FCBF; Seos UUID 00009800-…; names Seos / Yale*", "Access control class. Locks, readers, Seos credentials. Phones on HID Mobile Access can hit Seos. Not Apple FCB2."],
             ["August", "BLE company 0x01D1; UUID FE24; names August*", "August Home locks. Field L40A33A. Not ASSA 0x012E."],
             ["Schlage", "BLE Allegion 0x013B; UUID FCF4; names SCHLAGE*", "Encode and other Allegion BLE."],
             ["Nuki", "Custom UUIDs a92ee000–a92ee300 / a92ae200; names Nuki*", "Keyturner / Ultra / Opener. No SIG company ID."],
-            ["SALTO", "BLE company 0x0199; names SALTO*", "Commercial access."],
-            ["dormakaba", "BLE company 0x0C64; names dormakaba* / Saflok* / Oracode*", "Hotel / commercial locks."],
+            ["SALTO", "BLE company 0x0199; names SALTO*", "Access control class. Commercial lock or reader."],
+            ["dormakaba", "BLE company 0x0C64; names dormakaba* / Saflok* / Oracode*", "Access control class. Hotel / commercial locks."],
             ["Lockly", "BLE names LOCKLY*", "Name only. Not Nordic 0x0059."],
             ["Kevo", "BLE Unikey 0x015E; names Unikey* / Kevo*", "Kwikset Kevo."],
             ["Master Lock", "BLE company 0x014B; names Master Lock*", "Bluetooth padlocks. Not a bare Master substring."],
             ["igloohome", "BLE company 0x05BA; names igloohome*", "Keyboxes / locks. Not a bare igloo."],
             ["Tedee", "BLE company 0x0725; names Tedee*", "Retrofit locks."],
-            ["Paxton", "BLE company 0x0196; names Paxton* / Net2*", "Readers / access."],
+            ["Paxton", "BLE company 0x0196; names Paxton* / Net2*", "Access control class. Net2 door reader or access panel."],
             ["Kwikset", "BLE names Kwikset*", "Not Spectrum Brands 0x0356. Kevo is the Unikey row."],
             ["myQ", "BLE company 0x0878 (Chamberlain); UUID 26D91A37-…; names MyQ-*", "Garage door hubs."],
             ["Hatch", "BLE company 0x0434; OUI C8:FA:9C; names Hatch Rest* / Restore* / Mini*", "Hatch Baby sound machines. Not 180A/180F. Home IoT."],
@@ -4483,6 +4483,17 @@ def story():
             ["Meshtastic", "Meshtastic / Meshtastic_*; UUID 6ba1b218…", "LoRa mesh nodes. Strong name + service UUID."],
             ["Helium", "Helium / Helium*", "LoRaWAN / Helium hotspot names."],
             ["Genetec AutoVu", "Genetec, AutoVu. Extra attention filled. Stock bookmark.", "Municipal / parking ALPR. Name-only. Beeps on a new match."],
+            ["BlueTOAD Spectra", "IEEE OUI 00:14:7B (Iteris); names BlueTOAD* / Vantage Velocity / Spectra CV / TrafficCast / VantageARGUS / BlueARGUS. No Extra attention. Not a stock bookmark.", "Iteris roadside Bluetooth travel-time reader (Vantage Velocity, now Spectra / Spectra CV). Samples passing phones and in-car Bluetooth; matching at two points gives speed. Quiet / Ethernet-only cabinets and 5.9 GHz C-V2X will not appear. Iteris OUI can also hit other Iteris roadside kit. Pattern match, not that cabinet."],
+            ["BlipTrack", "IEEE OUI 00:0E:A5 (BLIP Systems); names BlipTrack* / BLIP Systems. No Extra attention. Not a stock bookmark.", "Roadside Bluetooth/Wi-Fi travel-time sensor. Same job as BlueTOAD. Quiet / Ethernet-only cabinets may not advertise. Pattern match, not that cabinet."],
+            ["Hanwha Wisenet", "IEEE OUI 00:09:18 (Samsung Techwin); names Wisenet* / *_WISENET / Hanwha*. Extra attention filled. Stock bookmark.", "Hanwha Vision / Wisenet cameras. Commercial CCTV and some public poles. Setup SSID is the stronger hit. Beeps on a new match."],
+            ["Uniview", "IEEE Zhejiang Uniview OUIs 14:BA:88 / 48:EA:63 / 6C:F1:7E / 88:26:3F / C4:79:05; names Uniview* / UNV-* / Uniarch*. Extra attention filled. Stock bookmark.", "Uniview / UNV cameras. Commercial CCTV and some public poles. Beeps on a new match."],
+            ["Rhombus", "IEEE OUI CC:47:BD; names Rhombus*. Extra attention filled. Stock bookmark.", "Rhombus cloud cameras. BLE often only while unregistered or offline. Beeps on a new match."],
+            ["MeshCore", "BLE names MeshCore / MeshCore_*. No Extra attention.", "MeshCore LoRa companion. Not Nordic UART UUID 6E400001 (every ESP32 serial board)."],
+            ["goTenna", "BLE UUID 1276aaee-df5e-11e6-bf01-fe55135034f3; names goTenna*. No Extra attention.", "goTenna Mesh or Pro companion. The UHF mesh is inaudible. Pro is sold to agencies. Pattern match, not that operator."],
+            ["SenseCAP", "Wi-Fi SenseCAP / SenseCAP_*. No Extra attention.", "Seeed SenseCAP LoRaWAN / Helium gateway setup AP. Quiet on Ethernet. Helium-named units can also hit Helium."],
+            ["RAK WisGate", "Wi-Fi RAK7* / RAK7268* / WisGate*. No Extra attention.", "RAKwireless WisGate LoRaWAN gateway setup AP. Quiet on Ethernet."],
+            ["GhostESP", "Wi-Fi GhostNet / GhostNet*. Extra attention filled. Stock bookmark.", "GhostESP ESP32 audit firmware default AP. Same boards are DIY. Not proof of an attack. Beeps on a new match."],
+            ["Bruce", "Wi-Fi BruceNet / BruceNet*. Extra attention filled. Stock bookmark.", "Bruce ESP32 pentest firmware default AP. Evil-portal SSIDs look like ordinary Wi-Fi and miss. Not proof of an attack. Beeps on a new match."],
             ["Rekor", "Rekor / Rekor*. Extra attention filled. Stock bookmark.", "Highway / transit ALPR. Name-only. Beeps on a new match."],
             ["Axon", "OUI 00:25:DF (Axon Enterprise); names Axon Body / Fleet / Dock / BWCDEVICE / Axon*; UUID 0xFE6C (Axon Signal). Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). Body-worn, in-car, dock, or TASER. Body 3/4 often advertise BLE on the public OUI. Not that officer. Not Axon Networks 00:58:28. ZTE Axon phones can hit the name. Beeps on a new match."],
             ["WatchGuard Video", "OUI 00:1D:96; names WatchGuard / VISTA WiFi / VISTA XLT. Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). WatchGuard Video (now Motorola) body-worn / in-car. Not WatchGuard firewall 00:01:21. Patrol units may stay quiet. Beeps on a new match."],
@@ -4572,7 +4583,7 @@ def story():
             ["I deleted a preset but the Live display still looks the same", "Delete removes the snapshot, not the filter that is on.", "Expected. Apply another chip or tap Reset filter to change what the Live display shows."],
             ["Cannot find Title line / Subtitle line / Frequency under RSSI", "Display is collapsed (chevron up), or you are looking on Settings.", "Live display → tap the tune / chevron (top right). Title and Subtitle are dropdowns under Brief hold. Frequency is a switch; channel · MHz sit under the RSSI, not on the identity line."],
             ["List still shows “Apple, Inc. · AirTag…”", "Display → Subtitle is Name + type, which uses the same type guess as detail.", "IEEE vendor is on the detail page. To stop seeing the guess, set Subtitle to Advertised name or None."],
-            ["A “!” on a Live display row", "A matched signature has Extra attention filled (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua).", "Open detail and read Extra attention. Pattern match, not identity. Meta company IDs also match Quest. Fieldy / Plaud Note are recording wearables, not proof someone is recording you. Camera / ALPR rows are roadside or public CCTV / plate readers, not that pole. Hide that family on Filters if it is local noise. Not the decode hexagon and not the phosphor alerted bell."],
+            ["A “!” on a Live display row", "A matched signature has Extra attention filled (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus).", "Open detail and read Extra attention. Pattern match, not identity. Meta company IDs also match Quest. Fieldy / Plaud Note are recording wearables, not proof someone is recording you. Camera / ALPR rows are roadside or public CCTV / plate readers, not that pole. Hide that family on Filters if it is local noise. Not the decode hexagon and not the phosphor alerted bell."],
             ["A bell on a Live display row", "That radio already fired a watchlist alert this session (beep / voice / flash).", "Expected. It stays until you leave Fieldwatch. Extra attention is the red “!”. Newest alert sorts by the same event. Radar keeps a phosphor ring on that blip after the ping."],
             ["Hexagon on a signature chip, no Decoded fields on detail", "The hexagon means that signature has a map, not that this advertisement parsed. Govee lights share the Govee name with hygrometers; lights usually only send a name.", "Open detail: a note means the map did not fit this packet. Hygrometers are H5074/H5075 (0xEC88) or H510x (0x0001). Display → Signature names off hides the hexagon. To drop a dummy map: Signatures → row → Decode fields → Remove decode map. §5.4, §9.6."],
             ["Phones / PCs is a wall of Fast Pair", "Those are mostly already-paired account-key ads (buds or phones on an account), not someone pairing.", "Filters → Hide Fast Pair account-key. Pairing-mode still shows (chip Fast Pair pairing). Hide selected Fast Pair if you want none of them. Pocket Androids without Fast Pair stay unmatched; Apple Device is the loud Continuity crowd. §9.5."],
