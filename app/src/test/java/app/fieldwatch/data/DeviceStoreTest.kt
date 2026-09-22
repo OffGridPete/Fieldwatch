@@ -227,6 +227,59 @@ class DeviceStoreTest {
         assertTrue("fleet-cisco" in published.fleetIds)
     }
 
+    @Test
+    fun quietTwinRandomizedMacIsFlaggedAsRotation() {
+        val store = DeviceStore()
+        val t0 = 1_000_000L
+        store.ingestBatch(listOf(rotBle("C2:11:22:33:44:55", at = t0)), fleets, 30)
+        store.ingestBatch(listOf(rotBle("C6:AA:BB:CC:DD:EE", at = t0 + 60_000L)), fleets, 30)
+        val rotated = store.find("BLE:C6:AA:BB:CC:DD:EE")!!
+        assertEquals("C2:11:22:33:44:55", rotated.rotationOf)
+        val first = store.find("BLE:C2:11:22:33:44:55")!!
+        assertEquals(null, first.rotationOf)
+    }
+
+    @Test
+    fun loudTwinIsNotFlaggedAsRotation() {
+        // Two identical units advertising at once — predecessor is not silent.
+        val store = DeviceStore()
+        val t0 = 1_000_000L
+        store.ingestBatch(listOf(rotBle("C2:11:22:33:44:55", at = t0)), fleets, 30)
+        store.ingestBatch(listOf(rotBle("C6:AA:BB:CC:DD:EE", at = t0 + 5_000L)), fleets, 30)
+        assertEquals(null, store.find("BLE:C6:AA:BB:CC:DD:EE")!!.rotationOf)
+    }
+
+    @Test
+    fun differentPayloadIsNotARotation() {
+        val store = DeviceStore()
+        val t0 = 1_000_000L
+        store.ingestBatch(listOf(rotBle("C2:11:22:33:44:55", at = t0, mfg = "1219AABB")), fleets, 30)
+        store.ingestBatch(listOf(rotBle("C6:AA:BB:CC:DD:EE", at = t0 + 60_000L, mfg = "0F8201CC")), fleets, 30)
+        assertEquals(null, store.find("BLE:C6:AA:BB:CC:DD:EE")!!.rotationOf)
+    }
+
+    private fun rotBle(
+        mac: String,
+        at: Long,
+        mfg: String = "1219AABB",
+        name: String = "",
+    ) = Observation(
+        kind = RadioKind.BLE,
+        mac = mac,
+        name = name,
+        rssi = -60,
+        channel = 0,
+        frequencyMhz = 0,
+        hiddenSsid = false,
+        serviceUuids = emptyList(),
+        manufacturerId = 0x004C,
+        manufacturerDataHex = mfg,
+        rawHex = "",
+        extras = "",
+        at = at,
+        facts = RadioFacts(mfgRecords = listOf(app.fieldwatch.domain.MfgRecord(0x004C, mfg))),
+    )
+
     private fun wifi(
         mac: String,
         name: String = "",

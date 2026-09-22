@@ -72,6 +72,9 @@ object DeviceDetailText {
             },
         )
         line("Address", DeviceExplain.addressExplain(device))
+        device.rotationOf?.let {
+            line("Possible rotation", "same payload fingerprint as $it earlier — likely the same radio on a new address")
+        }
         vendorLine(device)?.let { line("Who made it", it.replace('\n', ' ')) }
             ?: line("OUI (vendor prefix)", "${device.oui} — no IEEE match; randomized addresses usually have none")
         if (device.hiddenSsid) {

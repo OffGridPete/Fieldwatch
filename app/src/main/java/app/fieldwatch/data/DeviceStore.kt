@@ -3,6 +3,7 @@ package app.fieldwatch.data
 import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.OuiLookup
 import app.fieldwatch.domain.PresenceSpan
+import app.fieldwatch.domain.Rotation
 import app.fieldwatch.domain.RssiSample
 import app.fieldwatch.domain.ScanStats
 import app.fieldwatch.domain.Sighting
@@ -167,11 +168,27 @@ class DeviceStore(
                 fastPairPairing = existing.fastPairPairing || FastPair.pairingAdvertised(observation.facts),
             )
         }
-        live[key] = merged
+        val stamped = if (existing == null) {
+            merged.copy(rotationOf = rotationPredecessor(merged, now))
+        } else merged
+        live[key] = stamped
         if (observation.kind == app.fieldwatch.domain.RadioKind.WIFI && observation.fresh) {
             lastWifiBatchAt = System.currentTimeMillis()
         }
-        return merged
+        return stamped
+    }
+
+    /**
+     * A new randomized BLE address whose payload fingerprint matches a quiet
+     * twin is probably the same radio after a MAC rotation.
+     */
+    private fun rotationPredecessor(device: Sighting, now: Long): String? {
+        val fp = Rotation.fingerprint(device) ?: return null
+        return live.values.asSequence()
+            .filter { it.key != device.key && Rotation.fingerprint(it) == fp }
+            .filter { now - it.lastSeen >= Rotation.PREDECESSOR_SILENT_MS }
+            .maxByOrNull { it.lastSeen }
+            ?.mac
     }
 
     private fun relabel(touched: Collection<Sighting>, fleets: List<Fleet>) {

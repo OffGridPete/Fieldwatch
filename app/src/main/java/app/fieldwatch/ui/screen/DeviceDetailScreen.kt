@@ -294,6 +294,12 @@ fun DeviceDetailScreen(
                     },
                 )
                 Meta("Address", DeviceExplain.addressExplain(device))
+                device.rotationOf?.let {
+                    Meta(
+                        "Possible rotation",
+                        "Same payload fingerprint as ${MacUtil.screenMac(it, demoMode)} earlier — likely the same radio on a new address. A hint, not proof.",
+                    )
+                }
                 vendorLine(device)?.let { Meta("Who made it", it) }
                     ?: Meta("OUI (vendor prefix)", "${device.oui} — no IEEE match; randomized addresses usually have none")
                 if (device.hiddenSsid) {

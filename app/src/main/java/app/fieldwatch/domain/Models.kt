@@ -670,6 +670,8 @@ data class Sighting(
     /** Sticky Remote ID Basic ID / Self ID. TAK keys the aircraft on uas_id when present. */
     val payloadUasId: String? = null,
     val payloadSelfId: String? = null,
+    /** MAC of an earlier randomized BLE address with the same payload fingerprint. */
+    val rotationOf: String? = null,
 ) {
     val displayName: String
         get() = name.ifBlank { if (hiddenSsid) "<hidden>" else mac }
