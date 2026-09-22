@@ -19,6 +19,7 @@ import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.fieldwatch.domain.GeoExport
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
 import app.fieldwatch.ui.FieldwatchUi
@@ -52,6 +54,8 @@ fun ReportsScreen(
     var renameDraft by remember { mutableStateOf("") }
     var deleteSitId by remember { mutableStateOf<String?>(null) }
     var confirmDeleteAll by remember { mutableStateOf(false) }
+    var compareSits by remember { mutableStateOf(false) }
+    val sitDiff by vm.sitDiff.collectAsState()
     Scaffold(
         contentWindowInsets = NestedTabInsets,
         topBar = { NestedTopBar("Reports") },
@@ -173,6 +177,19 @@ fun ReportsScreen(
                         enabled = !exporting,
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Delete all sits") }
+                }
+                val sitChoices = state.sit.closed + listOfNotNull(state.sit.open)
+                if (sitChoices.size >= 2) {
+                    FieldwatchActionButton(
+                        onClick = { compareSits = true },
+                        enabled = !exporting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Compare two sits") }
+                    Text(
+                        "Radios that arrived or left between two windows — by MAC, so randomized addresses will not stitch.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
 
@@ -389,6 +406,97 @@ fun ReportsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmDeleteAll = false }) { Text("Cancel") }
+            },
+        )
+    }
+    if (compareSits) {
+        val choices = state.sit.closed + listOfNotNull(state.sit.open)
+        var pickA by remember { mutableStateOf<String?>(choices.getOrNull(1)?.id ?: choices.first().id) }
+        var pickB by remember { mutableStateOf<String?>(choices.first().id) }
+        AlertDialog(
+            onDismissRequest = { compareSits = false },
+            title = { Text("Compare two sits") },
+            text = {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        "Earlier sit (A)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    choices.forEach { s ->
+                        SitChoiceRow(
+                            selected = pickA == s.id,
+                            enabled = true,
+                            title = s.name + if (s.open) " (running)" else "",
+                            subtitle = Sit.defaultName(s.startAt) + " · " + Sit.fmtDuration(s.durationMs()) + " · ${s.radioCount} radios",
+                            onSelect = { pickA = s.id },
+                        )
+                    }
+                    Text(
+                        "Later sit (B)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    choices.forEach { s ->
+                        SitChoiceRow(
+                            selected = pickB == s.id,
+                            enabled = true,
+                            title = s.name + if (s.open) " (running)" else "",
+                            subtitle = Sit.defaultName(s.startAt) + " · " + Sit.fmtDuration(s.durationMs()) + " · ${s.radioCount} radios",
+                            onSelect = { pickB = s.id },
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        compareSits = false
+                        vm.startSitDiff(pickA!!, pickB!!)
+                    },
+                    enabled = pickA != null && pickB != null && pickA != pickB,
+                ) { Text("Compare") }
+            },
+            dismissButton = {
+                TextButton(onClick = { compareSits = false }) { Text("Cancel") }
+            },
+        )
+    }
+    if (sitDiff.loading || sitDiff.result != null || sitDiff.error != null) {
+        AlertDialog(
+            onDismissRequest = vm::closeSitDiff,
+            title = { Text("Sit diff") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    when {
+                        sitDiff.loading -> Text(
+                            "Comparing…",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        sitDiff.error != null -> Text(
+                            sitDiff.error!!,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                        else -> Text(
+                            SitDiff.toText(sitDiff.result!!, state.fleets),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = vm::shareSitDiff,
+                    enabled = sitDiff.result != null,
+                ) { Text("Share") }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::closeSitDiff) { Text("Close") }
             },
         )
     }

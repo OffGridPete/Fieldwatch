@@ -205,6 +205,17 @@ class SitStore(
         }
     }
 
+    /** Full snapshot for one sit — live session or saved file. Null if gone. */
+    suspend fun sitFile(id: String): SitFile? {
+        synchronized(lock) {
+            val session = open
+            if (session != null && session.summary.id == id) {
+                return session.snapshot()
+            }
+        }
+        return mutex.withLock { readFile(id) }
+    }
+
     fun select(id: String?) {
         synchronized(lock) {
             selectedId = when {

@@ -62,6 +62,7 @@ import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.toSighting
 import app.fieldwatch.domain.DebriefWindow
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitUi
 import app.fieldwatch.radio.RadioPermissions
 import kotlinx.coroutines.Dispatchers
@@ -81,6 +82,12 @@ import java.util.UUID
 data class CandidatesUi(
     val loading: Boolean = false,
     val report: CandidateReport? = null,
+    val error: String? = null,
+)
+
+data class SitDiffUi(
+    val loading: Boolean = false,
+    val result: SitDiff.Result? = null,
     val error: String? = null,
 )
 
@@ -675,6 +682,43 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun selectSit(id: String?) {
         app.sits.select(id)
+    }
+
+    private val _sitDiff = MutableStateFlow(SitDiffUi())
+    val sitDiff: StateFlow<SitDiffUi> = _sitDiff
+
+    fun startSitDiff(aId: String, bId: String) {
+        if (_sitDiff.value.loading) return
+        viewModelScope.launch {
+            _sitDiff.value = SitDiffUi(loading = true)
+            runCatching {
+                val a = app.sits.sitFile(aId) ?: error("First sit is gone")
+                val b = app.sits.sitFile(bId) ?: error("Second sit is gone")
+                withContext(Dispatchers.Default) { SitDiff.diff(a, b) }
+            }.onSuccess { result ->
+                _sitDiff.value = SitDiffUi(result = result)
+            }.onFailure { err ->
+                _sitDiff.value = SitDiffUi(error = err.message ?: "Could not compare sits")
+            }
+        }
+    }
+
+    fun closeSitDiff() {
+        _sitDiff.value = SitDiffUi()
+    }
+
+    fun shareSitDiff() {
+        val result = _sitDiff.value.result ?: return
+        if (_export.value.active) return
+        val text = SitDiff.toText(result, app.config.fleets)
+        _export.value = ExportUi(
+            share = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch sit diff — ${result.a.name} vs ${result.b.name}")
+                putExtra(Intent.EXTRA_TEXT, text)
+            },
+            shareTitle = "Sit diff",
+        )
     }
 
     private fun publishSitNotice() {
