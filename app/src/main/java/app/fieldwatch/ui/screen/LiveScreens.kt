@@ -902,7 +902,7 @@ private fun RadarView(
                     emptyHint ?: "No devices match the current filter"
                 } else {
                     val zoomBit = if (zoom > 1.04f) {
-                        " · ×${"%.1f".format(zoom)} · double-tap reset"
+                        " · ×${"%.1f".format(java.util.Locale.US, zoom)} · double-tap reset"
                     } else {
                         " · pinch to zoom"
                     }

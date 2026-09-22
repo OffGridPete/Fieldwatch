@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package app.fieldwatch.domain
 
 import kotlinx.serialization.EncodeDefault

@@ -85,6 +85,8 @@ class WifiRadio(
         awaitingScan.set(false)
     }
 
+    // startScan() is deprecated since API 28 but remains the only way to request a scan.
+    @Suppress("DEPRECATION")
     @SuppressLint("MissingPermission")
     fun requestScan(minIntervalMs: Long = 30_000L, unthrottled: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
@@ -217,15 +219,8 @@ class WifiRadio(
             ies.forEach { ie ->
                 val id = runCatching { ie.id }.getOrDefault(-1)
                 val raw = runCatching { ie.bytes }.getOrNull() ?: return@forEach
-                val bytes = when (raw) {
-                    is ByteArray -> raw
-                    is java.nio.ByteBuffer -> {
-                        val copy = ByteArray(raw.remaining())
-                        raw.duplicate().get(copy)
-                        copy
-                    }
-                    else -> return@forEach
-                }
+                val bytes = ByteArray(raw.remaining())
+                raw.duplicate().get(bytes)
                 if (id != 221 || bytes.size < 3) return@forEach
                 found += "%02X:%02X:%02X".format(
                     bytes[0].toInt() and 0xFF,
@@ -248,6 +243,7 @@ class WifiRadio(
 
 private fun ScanResult.ssidClean(): String {
     val raw = if (Build.VERSION.SDK_INT >= 33) {
+        @Suppress("DEPRECATION")
         wifiSsid?.toString()?.trim('"') ?: SSID
     } else {
         @Suppress("DEPRECATION")

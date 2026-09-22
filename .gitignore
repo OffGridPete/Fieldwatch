@@ -27,3 +27,7 @@ research/
 scripts/.lookup-cache/
 
 # Machine JDK path belongs in JAVA_HOME, not the tree
+
+# AI context file (local only — do not publish)
+AGENTS.md
+CLAUDE.md

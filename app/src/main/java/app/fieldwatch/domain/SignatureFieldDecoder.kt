@@ -1,5 +1,6 @@
 package app.fieldwatch.domain
 
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 data class DecodedFieldValue(
@@ -246,7 +247,7 @@ object SignatureFieldDecoder {
     private fun formatNumber(n: Double): String {
         if (!n.isFinite()) return n.toString()
         if (n == n.toLong().toDouble()) return n.toLong().toString()
-        var s = "%.6f".format(n)
+        var s = "%.6f".format(Locale.US, n)
         s = s.trimEnd('0').trimEnd('.')
         return s
     }
