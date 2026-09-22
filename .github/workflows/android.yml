@@ -19,6 +19,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Check generated catalog is fresh
+        run: |
+          python3 tools/gen_default_catalog.py
+          git diff --exit-code app/src/main/java/app/fieldwatch/domain/GeneratedCatalog.kt
+
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
 

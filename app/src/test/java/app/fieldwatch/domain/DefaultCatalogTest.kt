@@ -4,8 +4,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class DefaultCatalogTest {
+
+    /**
+     * The JSON in dist/ is the single source of truth; GeneratedCatalog.kt is
+     * produced from it by tools/gen_default_catalog.py. This pins them together.
+     */
+    @Test
+    fun compiledCatalogMatchesStockJson() {
+        val json = File("../dist/fieldwatch-signatures.json")
+        assertTrue("stock JSON missing: ${json.absolutePath}", json.isFile)
+        val pack = SignatureExchange.parse(json.readText())
+        assertEquals(
+            pack.fleets.sortedBy { it.name.lowercase() },
+            DefaultCatalog.fleets(),
+        )
+    }
+
     @Test
     fun stockNotesDoNotSayShipsOn() {
         DefaultCatalog.fleets().forEach { fleet ->
