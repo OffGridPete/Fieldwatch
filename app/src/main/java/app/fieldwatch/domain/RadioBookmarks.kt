@@ -4,6 +4,7 @@ import java.util.UUID
 
 object RadioBookmarks {
     const val MAX_NAME = 22
+    const val MAX_NOTE = 240
 
     fun radios(watchlist: List<WatchTarget>): List<WatchTarget> =
         watchlist.filter { it.deviceKey != null }
@@ -48,6 +49,33 @@ object RadioBookmarks {
     }
 
     fun clip(name: String): String = name.trim().take(MAX_NAME).ifBlank { "Radio" }
+
+    fun clipNote(note: String): String = note.trim().take(MAX_NOTE)
+
+    fun noteFor(watchlist: List<WatchTarget>, deviceKey: String): String =
+        watchlist.firstOrNull { it.deviceKey == deviceKey }?.note.orEmpty()
+
+    /** A note-only row is allowed: label stays empty, alert stays off. */
+    fun setNote(watchlist: List<WatchTarget>, deviceKey: String, note: String): List<WatchTarget> {
+        val clipped = clipNote(note)
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (i >= 0) {
+            val next = watchlist[i].copy(note = clipped)
+            // A row with no name, no alert, no note is inert — drop it.
+            if (next.label.isBlank() && !next.alert && next.note.isBlank()) {
+                return watchlist.filterIndexed { idx, _ -> idx != i }
+            }
+            return watchlist.mapIndexed { idx, row -> if (idx == i) next else row }
+        }
+        if (clipped.isEmpty()) return watchlist
+        return watchlist + WatchTarget(
+            id = UUID.randomUUID().toString(),
+            deviceKey = deviceKey,
+            label = "",
+            alert = false,
+            note = clipped,
+        )
+    }
 
     fun rename(watchlist: List<WatchTarget>, id: String, name: String): List<WatchTarget> {
         val label = clip(name)

@@ -84,6 +84,52 @@ class RadioBookmarksTest {
     }
 
     @Test
+    fun setNoteCreatesQuietRowForUnknownRadio() {
+        val next = RadioBookmarks.setNote(listOf(fleet), "BLE:AA:BB:CC:DD:EE:FF", "followed me two blocks")
+        val row = next.single { it.deviceKey == "BLE:AA:BB:CC:DD:EE:FF" }
+        assertEquals("followed me two blocks", row.note)
+        assertEquals("", row.label)
+        assertEquals(false, row.alert)
+        // A note-only row is not a named radio and not an alert.
+        assertEquals(emptySet<String>(), RadioBookmarks.namedKeys(next))
+        assertEquals(emptySet<String>(), RadioBookmarks.alertDeviceKeys(next))
+    }
+
+    @Test
+    fun setNoteOnExistingRowKeepsLabelAndAlert() {
+        val next = RadioBookmarks.setNote(listOf(fleet, radio), "BLE:AA:BB:CC:DD:EE:FF", "near door")
+        val row = next.single { it.id == "r1" }
+        assertEquals("van tag", row.label)
+        assertEquals(true, row.alert)
+        assertEquals("near door", row.note)
+        assertEquals(fleet, next.single { it.fleetId != null })
+    }
+
+    @Test
+    fun setNoteTrimsClipsAndClears() {
+        val key = "BLE:AA:BB:CC:DD:EE:FF"
+        val withNote = RadioBookmarks.setNote(emptyList(), key, "  porch cam, third visit  ")
+        assertEquals("porch cam, third visit", RadioBookmarks.noteFor(withNote, key))
+        val cleared = RadioBookmarks.setNote(withNote, key, "   ")
+        assertEquals("", RadioBookmarks.noteFor(cleared, key))
+        // Clearing the only content of a note-only row drops the row entirely.
+        assertEquals(0, RadioBookmarks.radios(cleared).size)
+        // Blank note on an unknown radio does not create a row.
+        assertEquals(0, RadioBookmarks.radios(RadioBookmarks.setNote(emptyList(), key, "  ")).size)
+        val long = RadioBookmarks.setNote(emptyList(), key, "x".repeat(500))
+        assertEquals(RadioBookmarks.MAX_NOTE, RadioBookmarks.noteFor(long, key).length)
+    }
+
+    @Test
+    fun upsertNameKeepsExistingNote() {
+        val withNote = RadioBookmarks.setNote(emptyList(), "BLE:AA:BB:CC:DD:EE:FF", "doorway")
+        val named = RadioBookmarks.upsertName(withNote, "BLE:AA:BB:CC:DD:EE:FF", "Porch cam")
+        val row = named.single { it.deviceKey != null }
+        assertEquals("Porch cam", row.label)
+        assertEquals("doorway", row.note)
+    }
+
+    @Test
     fun suggestLabelPrefersAdvertisedName() {
         val named = ble(name = "Tile")
         assertEquals("Tile", RadioBookmarks.suggestLabel(named))

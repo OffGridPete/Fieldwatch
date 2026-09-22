@@ -904,6 +904,17 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun watchLabelFor(deviceKey: String): String? =
         app.config.watchlist.firstOrNull { it.deviceKey == deviceKey }?.label?.trim()?.takeIf { it.isNotEmpty() }
 
+    fun radioNoteFor(deviceKey: String): String =
+        RadioBookmarks.noteFor(app.config.watchlist, deviceKey)
+
+    fun saveRadioNote(device: Sighting, note: String) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setNote(cfg.watchlist, device.key, note))
+            }
+        }
+    }
+
     fun toggleWatchFleet(fleet: Fleet) {
         viewModelScope.launch {
             app.config.update { cfg ->
@@ -1467,6 +1478,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         device, names, settings, places, attentionNotes = attention,
                         signatureNotes = notes,
                         fleets = app.config.fleets,
+                        operatorNote = radioNoteFor(device.key),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
@@ -1509,6 +1521,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     val raw = DeviceDetailText.build(
                         device, names, attentionNotes = attention, signatureNotes = notes,
                         fleets = app.config.fleets,
+                        operatorNote = radioNoteFor(device.key),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacIn(raw, device.mac, settings.demoMode),

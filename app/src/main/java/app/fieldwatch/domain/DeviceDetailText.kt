@@ -17,6 +17,7 @@ object DeviceDetailText {
         attentionNotes: List<Pair<String, String>> = emptyList(),
         signatureNotes: List<Pair<String, String>> = emptyList(),
         fleets: List<Fleet> = emptyList(),
+        operatorNote: String? = null,
     ): String {
         val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
         val iso = SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US)
@@ -42,6 +43,7 @@ object DeviceDetailText {
         out.append(title).append('\n')
         line("MAC", device.mac)
         if (device.name.isNotBlank()) line("Advertised name", device.name)
+        operatorNote?.trim()?.takeIf { it.isNotEmpty() }?.let { line("Your note", it) }
 
         out.append('\n')
         out.append("What this looks like: ").append(guess.headline).append('\n')

@@ -486,6 +486,8 @@ data class WatchTarget(
     val notify: Boolean = true,
     /** Device-key rows only. False = named radio, no pip/voice/flash. Missing JSON = on. */
     val alert: Boolean = true,
+    /** Device-key rows only. Free-text operator note. Missing JSON = empty. */
+    val note: String = "",
 )
 
 @Serializable

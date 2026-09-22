@@ -210,6 +210,68 @@ fun DeviceDetailScreen(
                 }
             }
 
+            var noteDraft by remember(device.key) {
+                mutableStateOf(vm.radioNoteFor(device.key))
+            }
+            var lastSavedNote by remember(device.key) {
+                mutableStateOf(vm.radioNoteFor(device.key))
+            }
+            var editingNote by remember(device.key) { mutableStateOf(false) }
+            val noteIsSaved = noteDraft.trim() == lastSavedNote.trim()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Note",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        lastSavedNote.ifBlank { "No note" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (lastSavedNote.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                IconButton(onClick = { editingNote = !editingNote }) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        if (editingNote) "Hide note" else "Edit note",
+                    )
+                }
+            }
+            if (editingNote) {
+                FieldwatchOutlinedField(
+                    value = noteDraft,
+                    onValueChange = { noteDraft = it.take(RadioBookmarks.MAX_NOTE) },
+                    label = "Your note",
+                    singleLine = false,
+                    minLines = 2,
+                    supportingText = "Free text for you — included in Share and AI Export. Not an alert.",
+                )
+                FieldwatchActionButton(
+                    onClick = {
+                        vm.saveRadioNote(device, noteDraft)
+                        noteDraft = RadioBookmarks.clipNote(noteDraft)
+                        lastSavedNote = RadioBookmarks.clipNote(noteDraft)
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                if (lastSavedNote.isBlank()) "Note cleared" else "Note saved",
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !noteIsSaved,
+                ) {
+                    if (noteIsSaved) {
+                        Icon(Icons.Outlined.Check, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.padding(4.dp))
+                        Text("Saved")
+                    } else {
+                        Text("Save note")
+                    }
+                }
+            }
+
             val guess = DeviceExplain.guess(device, device.fleetIds.map { vm.fleetName(it) })
             StickyHeight(device.key to "guess") { GuessCard(guess) }
             val attention = vm.attentionNotesFor(device)
