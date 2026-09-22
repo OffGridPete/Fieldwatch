@@ -488,6 +488,7 @@ data class WatchTarget(
 
 @Serializable
 data class AppSettings(
+    /** Kept in settings packs. The UI is always dark; Night mode is the red overlay. */
     val darkTheme: Boolean = true,
     val keepScreenOn: Boolean = true,
     val intensity: ScanIntensity = ScanIntensity.PERFORMANCE,
@@ -520,7 +521,8 @@ data class AppSettings(
     val listSubtitleLine: ListLine = ListLine.NAME_AND_TYPE,
     /** Brief hold seconds (0 = Off). Linger only; does not decay RSSI. */
     val decaySec: Int = 10,
-    val scanControlsExpanded: Boolean = true,
+    /** Live Tune / Display panel. Always starts collapsed; not restored from last session. */
+    val scanControlsExpanded: Boolean = false,
     /** Unused after catalog v5; kept so old JSON still decodes. Source of truth is FilterState.arrivalsOnly. */
     val arrivalsOnly: Boolean = false,
     val arrivalHoldSec: Int = 30,
@@ -558,7 +560,7 @@ data class AppSettings(
     /** Every labeled signature. Noisy. Off by default. */
     val takAllSignatures: Boolean = false,
     /**
-     * Red-on-black field display. Off by default. Overrides Dark theme while on.
+     * Red-on-black field display. Off by default. The rest of the UI is always dark.
      * Phone brightness is unchanged.
      */
     val nightMode: Boolean = false,

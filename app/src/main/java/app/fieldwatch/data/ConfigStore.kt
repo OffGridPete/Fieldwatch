@@ -887,6 +887,8 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V72
         }
+        if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
+        if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
             .distinctBy { it.id }
         val fleetsChanged = fleets != cfg.fleets

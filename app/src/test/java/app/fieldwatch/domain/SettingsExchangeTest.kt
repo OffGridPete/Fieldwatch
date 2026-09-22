@@ -53,6 +53,7 @@ class SettingsExchangeTest {
             disclaimerAccepted = false,
             disclaimerRev = 0,
             nightMode = true,
+            darkTheme = false,
             demoMode = true,
             keepScreenOn = false,
             takEnabled = true,
@@ -115,6 +116,7 @@ class SettingsExchangeTest {
         assertEquals(stockPresets.size + 1, result.presets)
         assertTrue(result.summary().contains("1 named radio"))
         assertTrue(next.settings.nightMode)
+        assertTrue(next.settings.darkTheme)
         assertTrue(next.settings.demoMode)
         assertEquals("192.168.0.9", next.settings.takHost)
         assertTrue(next.settings.disclaimerAccepted)

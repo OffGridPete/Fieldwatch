@@ -460,7 +460,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.2")
+    c.drawString(48, 108, "Version 1.1.3")
     c.drawString(48, 94, "21 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -501,7 +501,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.2  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.3  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1608,12 +1608,12 @@ def story():
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
         ),
         bullets([
-            "<b>Appearance</b> — Dark theme. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
+            "<b>Appearance</b> — The display is always dark. Night mode (off by default): red-on-black field display. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names and optional alerts: rename, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Share log with tagging on contains operator coordinates.",
             "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
-            "<b>Night mode</b> — Off by default. Red-on-black field display (cockpit / sit). Text, chips, switches, RSSI, and Hunt marks become shades of red so green and blue do not dump into a dark eye. Background stays dark. Phone brightness is unchanged. Overrides Dark theme while this is on. Restore defaults turns it off. Fig. 8.",
+            "<b>Night mode</b> — Off by default. Red-on-black field display (cockpit / sit). Text, chips, switches, RSSI, and Hunt marks become shades of red so green and blue do not dump into a dark eye. Background stays dark. Phone brightness is unchanged. Restore defaults turns it off. Fig. 8.",
         ]),
         figure_wrap(
             "fig-settings-night.png",
@@ -4133,7 +4133,7 @@ def story():
             "Start High performance (§4.5). Drop to Balanced once the picture is stable if you need the battery. Battery saver is overnight / bag carry — you will miss short BLE bursts.",
             "<b>Keep screen on</b> (Settings, on by default) holds the display while Fieldwatch is in front so Samsung does not park BLE on screen-off. Turn it off when you pocket the phone.",
             "<b>Allow background usage</b> opens Fieldwatch’s Battery page (that switch). <b>Unrestricted battery</b> opens the same page; select Unrestricted. Some phones (Samsung among them) do not open onto that choice — tap Allow background usage to click through and select it. Background usage lets the scan run when the app is not in front; Unrestricted stops the OEM freezing it to save battery. Fieldwatch’s switches follow those Android grants. They do not keep the screen on and do not lift Wi-Fi or BLE scan quotas. Samsung: also do not sleep Fieldwatch under Background usage limits. §4.5.3.",
-            "Dark theme is default; it does not save much on LCDs.",
+            "The display is always dark. Night mode is the red field overlay.",
             "A cheap USB battery pack is more useful than arguing with the saver slider if you need low-latency BLE all day.",
         ]),
         P("13.3 Crowded plazas", "h2"),
@@ -4192,7 +4192,7 @@ def story():
             ["Named radios", "Settings list of one-MAC custom names and optional alerts (detail Save name, or the bookmark icon). Rename, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. §5.5, §5.7, §8.1, §10.1."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
-            ["Night mode", "Settings switch under TAK / CoT, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Background stays dark. Overrides Dark theme while on. Phone brightness is unchanged. Fig. 8, §5.7."],
+            ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Background stays dark. Phone brightness is unchanged. Fig. 8, §5.7."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID Location. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. GPS tagging can be off."],
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
@@ -4618,7 +4618,7 @@ def story():
             ["Hunt went Quiet / Gone", "No ads for ~8 s, or the BLE address rotated off the Live display.", "Wait. If Gone, back to the Live display and pick the new row if it is still the same family. Randomized MACs do not stitch."],
             ["Where you were has coords but no street", "Online place names is off, or on with no internet / no geocoder.", "Expected. Stays still print lat/lon. Distance does not need internet. Turn the switch off if you want no lookup attempt."],
             ["Last fix or Debrief shows “masked” instead of lat/lon", "Privacy mode is on.", "Expected. Settings → Privacy mode hides GPS coordinates on the screen and in sit reports. Street names are omitted too. The log still has lat/lon. A TAK / CoT feed is paused. Turn Privacy mode off when you need the pin or the overlay."],
-            ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Night mode Off. Dark theme stays as you left it. Restore defaults also turns Night mode off. Fig. 8."],
+            ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Appearance → Night mode Off. Restore defaults also turns Night mode off. Fig. 8."],
             ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 2); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
@@ -4655,8 +4655,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.2 (versionCode 12), field build of 21 September 2026"],
-                ["Document version", "1.1.2"],
+                ["Software version", "1.1.3 (versionCode 13), field build of 21 September 2026"],
+                ["Document version", "1.1.3"],
                 ["Document date", "20 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

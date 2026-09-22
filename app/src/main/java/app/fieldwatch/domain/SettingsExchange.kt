@@ -103,6 +103,8 @@ object SettingsExchange {
                 disclaimerAccepted = local.settings.disclaimerAccepted,
                 disclaimerRev = local.settings.disclaimerRev,
                 liveTourDone = local.settings.liveTourDone,
+                darkTheme = true,
+                scanControlsExpanded = false,
             ),
             filter = pack.filter,
             presets = pack.presets,

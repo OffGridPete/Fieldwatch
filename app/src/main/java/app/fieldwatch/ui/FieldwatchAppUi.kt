@@ -10,11 +10,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,8 +24,10 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -38,6 +42,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CellTower
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Tune
@@ -62,7 +67,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -83,6 +88,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -92,6 +99,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -121,7 +129,7 @@ import app.fieldwatch.ui.theme.FieldwatchTheme
 fun FieldwatchRoot(vm: FieldwatchViewModel, onRequestPermissions: () -> Unit) {
     val state by vm.ui.collectAsStateWithLifecycle()
     FieldwatchTheme(
-        darkTheme = state.settings.darkTheme,
+        darkTheme = true,
         nightMode = state.settings.nightMode,
     ) {
         if (!state.settings.disclaimerOk()) {
@@ -363,6 +371,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
         topBar = {
             if (route != "detail" && route != "hunt") {
                 TopAppBar(
+                    expandedHeight = 52.dp,
                     title = {
                         val screenW = LocalConfiguration.current.screenWidthDp.dp
                         val actionW = if (route == "live") 56.dp else 16.dp
@@ -389,6 +398,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                     state.displayPaused -> "FIELDWATCH  ·  PAUSED"
                                     else -> "FIELDWATCH"
                                 },
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp,
                                 maxLines = 1,
@@ -458,7 +468,20 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onStartOverFollow = vm::resetFollowSession,
                         )
                     }
-                    NavigationBar {
+                    Surface(
+                        color = NavigationBarDefaults.containerColor,
+                        tonalElevation = NavigationBarDefaults.Elevation,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.navigationBars),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 1.dp)
+                                .height(48.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                         FieldwatchNavTab(
                             weight = 1f,
                             selected = route == "live",
@@ -514,6 +537,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             icon = { Icon(Icons.Outlined.Settings, null) },
                             label = "Settings",
                         )
+                        }
                     }
                 }
             }
@@ -529,13 +553,26 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             popExitTransition = { ExitTransition.None },
         ) {
             composable("live") {
-                Column(Modifier.fillMaxSize()) {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    LivePane(
+                        state = state,
+                        vm = vm,
+                        onOpen = {
+                            vm.select(it)
+                            nav.navigate("detail")
+                        },
+                    )
                     AnimatedVisibility(
                         visible = state.settings.scanControlsExpanded,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically(),
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .heightIn(max = maxHeight),
                     ) {
                         ViewPicker(
+                            maxHeight = maxHeight,
                             mode = state.settings.viewMode,
                             sort = state.settings.strengthSort,
                             listSort = state.settings.listSort,
@@ -559,14 +596,6 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onChangeSubtitleLine = vm::setListSubtitleLine,
                         )
                     }
-                    LivePane(
-                        state = state,
-                        vm = vm,
-                        onOpen = {
-                            vm.select(it)
-                            nav.navigate("detail")
-                        },
-                    )
                 }
             }
             composable("fleets") {
@@ -724,13 +753,13 @@ private fun RowScope.FieldwatchNavTab(
         Modifier
             .weight(weight)
             .clickable(onClick = onClick)
-            .padding(horizontal = 2.dp, vertical = 6.dp),
+            .padding(horizontal = 2.dp, vertical = 1.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         CompositionLocalProvider(LocalContentColor provides color) {
             Box(
-                Modifier.height(32.dp),
+                Modifier.height(22.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(Modifier.onGloballyPositioned { onBounds(it.boundsInRoot()) }) {
@@ -739,7 +768,7 @@ private fun RowScope.FieldwatchNavTab(
             }
             Text(
                 label,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = color,
                 maxLines = 1,
                 softWrap = false,
@@ -751,6 +780,7 @@ private fun RowScope.FieldwatchNavTab(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ViewPicker(
+    maxHeight: Dp,
     mode: ViewMode,
     sort: StrengthSort,
     listSort: ListSort,
@@ -789,16 +819,25 @@ private fun ViewPicker(
         ListSort.SIGNATURES -> "Signatures first"
     }
     val decayLabel = if (decaySec <= 0) "Off" else "Hold ${decaySec}s"
+    val scroll = rememberScrollState()
+    val panelMax = (maxHeight - 8.dp).coerceAtLeast(140.dp)
+    val surfaceColor = MaterialTheme.colorScheme.surface
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .heightIn(max = panelMax),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
+        color = surfaceColor,
+        tonalElevation = 3.dp,
+        shadowElevation = 8.dp,
     ) {
+        Box {
         Column(
-            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            Modifier
+                .verticalScroll(scroll)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(bottom = if (scroll.canScrollForward) 20.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
@@ -900,6 +939,28 @@ private fun ViewPicker(
             OptionSwitch("Signature names", showFleet, onToggleFleet)
             OptionSwitch("Frequency", showFrequency, onToggleFrequency)
             OptionSwitch("First / last seen", showSeenTimes, onToggleSeenTimes)
+        }
+        if (scroll.canScrollForward) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(28.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, surfaceColor),
+                        ),
+                    ),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Icon(
+                    Icons.Outlined.ExpandMore,
+                    contentDescription = "More display options below",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
         }
     }
 }

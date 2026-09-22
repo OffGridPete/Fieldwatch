@@ -116,9 +116,16 @@ fun SettingsScreen(
         ) {
             SectionCard("Appearance") {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Dark theme", Modifier.weight(1f))
-                FieldwatchSwitch(settings.darkTheme, { on -> vm.updateSettings { it.copy(darkTheme = on) } })
+                Text("Night mode", Modifier.weight(1f))
+                FieldwatchSwitch(settings.nightMode, { on -> vm.updateSettings { it.copy(nightMode = on) } })
             }
+            Text(
+                "Off by default. Red-on-black field display so chips, text, and signal marks " +
+                    "do not dump green or blue into a dark sit. Background stays dark. " +
+                    "Phone brightness is unchanged.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Keep screen on", Modifier.weight(1f))
                 FieldwatchSwitch(settings.keepScreenOn, { on -> vm.updateSettings { it.copy(keepScreenOn = on) } })
@@ -475,20 +482,6 @@ fun SettingsScreen(
             }
             }
 
-            SectionCard("Night mode") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Night mode", Modifier.weight(1f))
-                FieldwatchSwitch(settings.nightMode, { on -> vm.updateSettings { it.copy(nightMode = on) } })
-            }
-            Text(
-                "Off by default. Red-on-black field display so chips, text, and signal marks " +
-                    "do not dump green or blue into a dark sit. Background stays dark. " +
-                    "Phone brightness is unchanged. Overrides Dark theme while this is on.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            }
-
             SectionCard("Logging") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Write detections to disk", Modifier.weight(1f))
@@ -660,7 +653,7 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(24.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f))
             CreditFooter()
         }
