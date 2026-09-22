@@ -1,74 +1,47 @@
 package app.fieldwatch.ui
 
 import android.app.Application
-import android.content.ClipData
-import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import app.fieldwatch.BuildConfig
 import app.fieldwatch.FieldwatchApp
 import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.attentionNotes
 import app.fieldwatch.domain.signatureNotes
 import app.fieldwatch.domain.detectionPolicy
-import app.fieldwatch.data.CatalogRemote
-import app.fieldwatch.data.DebriefPdf
-import app.fieldwatch.data.PlaceLookup
-import app.fieldwatch.domain.DeviceDetailPrompt
-import app.fieldwatch.domain.DeviceDetailText
-import app.fieldwatch.domain.DebriefDoc
-import app.fieldwatch.domain.DebriefPlaces
-import app.fieldwatch.domain.DebriefPrompt
-import app.fieldwatch.domain.DebriefReport
 import app.fieldwatch.domain.DefaultCatalog
 import app.fieldwatch.domain.DISCLAIMER_REV
 import app.fieldwatch.domain.disclaimerOk
 import app.fieldwatch.domain.FilterEngine
-import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.ClassOutline
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterPreset
 import app.fieldwatch.domain.FilterState
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.GeoExport
-import app.fieldwatch.domain.Hunt
-import app.fieldwatch.domain.HuntCue
 import app.fieldwatch.domain.FamilyVerdict
 import app.fieldwatch.domain.LogRadio
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.GpsSample
-import app.fieldwatch.domain.RssiSample
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.SignatureCandidate
 import app.fieldwatch.domain.SignatureCandidates
 import app.fieldwatch.domain.SignatureFamilyHint
-import app.fieldwatch.domain.CandidateReport
 
 import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
-import app.fieldwatch.domain.SettingsExchange
-import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.TakFeedStatus
 import app.fieldwatch.domain.ListLine
-import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.domain.WatchTarget
-import app.fieldwatch.domain.toSighting
-import app.fieldwatch.domain.DebriefWindow
-import app.fieldwatch.domain.Sit
-import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitUi
 import app.fieldwatch.radio.RadioPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -77,40 +50,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
 import java.util.UUID
-
-data class CandidatesUi(
-    val loading: Boolean = false,
-    val report: CandidateReport? = null,
-    val error: String? = null,
-)
-
-data class SitDiffUi(
-    val loading: Boolean = false,
-    val result: SitDiff.Result? = null,
-    val error: String? = null,
-)
 
 private data class FamilyLogSnap(
     val radios: List<LogRadio> = emptyList(),
     val loaded: Boolean = false,
-)
-
-data class ExportUi(
-    val active: Boolean = false,
-    val progress: Float = 0f,
-    /** True: spinning wait (Debrief / AI Export). False: determinate bar (log). */
-    val spinner: Boolean = false,
-    val message: String = "",
-    val share: Intent? = null,
-    val shareTitle: String = "Export Fieldwatch logs",
-    val error: String? = null,
-    val errorTitle: String? = null,
-    val cleared: Boolean = false,
-    val saved: Boolean = false,
-    val noticeTitle: String? = null,
-    val noticeMessage: String? = null,
 )
 
 data class FieldwatchUi(
@@ -146,10 +90,6 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private val selectedKey = MutableStateFlow<String?>(null)
     private val draft = MutableStateFlow<Fleet?>(null)
     private var draftFromCandidates = false
-    private val _export = MutableStateFlow(ExportUi())
-    val export: StateFlow<ExportUi> = _export
-    private val _candidates = MutableStateFlow(CandidatesUi())
-    val candidates: StateFlow<CandidatesUi> = _candidates
     private val _liveFocus = MutableStateFlow(0)
     val liveFocus: StateFlow<Int> = _liveFocus
     private val flashUntil = HashMap<String, Long>()
@@ -162,6 +102,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val alertedKeys: StateFlow<Set<String>> = _alertedKeys
     private val clock = MutableStateFlow(System.currentTimeMillis())
     private val displayPaused = MutableStateFlow(false)
+    private val exports = ExportCoordinator(app, viewModelScope, signatures)
+    private val reports = ReportsCoordinator(app, viewModelScope, exports)
+    private val huntCtl = HuntController(app, clock, viewModelScope)
+    val export: StateFlow<ExportUi> = exports.state
+    val candidates: StateFlow<CandidatesUi> = reports.candidates
+    val sitDiff: StateFlow<SitDiffUi> = reports.sitDiff
     private val heldSelected = MutableStateFlow<Sighting?>(null)
     private val familyLog = MutableStateFlow(FamilyLogSnap())
     val familyHint: StateFlow<SignatureFamilyHint?> = combine(
@@ -179,10 +125,6 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         hint
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    private val huntKey = MutableStateFlow<String?>(null)
-    private val huntStartedAt = MutableStateFlow(0L)
-    private val huntPeakRssi = MutableStateFlow(-127)
-    private val huntSamples = MutableStateFlow<List<RssiSample>>(emptyList())
     private val _outlineOpenClasses = MutableStateFlow<Set<String>>(emptySet())
     val outlineOpenClasses: StateFlow<Set<String>> = _outlineOpenClasses
     private val _outlineOpenSigs = MutableStateFlow<Set<String>>(emptySet())
@@ -346,30 +288,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         FieldwatchUi(settings = app.config.settings),
     )
 
-    val hunt: StateFlow<HuntUi> = combine(
-        combine(huntKey, huntStartedAt, huntPeakRssi, huntSamples) { key, started, peak, samples ->
-            arrayOf(key, started, peak, samples)
-        },
-        app.devices.devices,
-        clock,
-    ) { bits, devices, now ->
-        val key = bits[0] as String?
-        val started = bits[1] as Long
-        val peak = bits[2] as Int
-        @Suppress("UNCHECKED_CAST")
-        val samples = bits[3] as List<RssiSample>
-        if (key == null) return@combine HuntUi()
-        val device = devices.firstOrNull { it.key == key }
-        HuntUi(
-            active = true,
-            device = device,
-            title = device?.listTitle() ?: "Hunt",
-            cue = Hunt.cue(samples, now, device?.lastSeen, device == null && started > 0L),
-            peakRssi = peak,
-            samples = samples,
-            lastSeen = device?.lastSeen ?: 0L,
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HuntUi())
+    val hunt: StateFlow<HuntUi> = huntCtl.hunt
 
     init {
         viewModelScope.launch {
@@ -394,18 +313,6 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 runCatching { app.logs.readRadios() }
                     .onSuccess { radios -> familyLog.value = FamilyLogSnap(radios, loaded = true) }
                     .onFailure { familyLog.value = familyLog.value.copy(loaded = true) }
-            }
-        }
-        viewModelScope.launch {
-            combine(app.devices.devices, huntKey) { devices, key ->
-                key to devices.firstOrNull { it.key == key }
-            }.collect { (key, device) ->
-                if (key == null || device == null) return@collect
-                val last = huntSamples.value.lastOrNull()
-                if (last != null && device.lastSeen <= last.at) return@collect
-                val sample = RssiSample(device.lastSeen, device.rssi)
-                huntSamples.update { (it + sample).takeLast(120) }
-                if (device.rssi > huntPeakRssi.value) huntPeakRssi.value = device.rssi
             }
         }
         viewModelScope.launch {
@@ -482,31 +389,13 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         selectedKey.value = device.key
     }
 
-    fun startHunt(device: Sighting) {
-        val now = System.currentTimeMillis()
-        huntKey.value = device.key
-        huntStartedAt.value = now
-        huntPeakRssi.value = device.rssi
-        huntSamples.value = listOf(RssiSample(now, device.rssi))
-    }
+    fun startHunt(device: Sighting) = huntCtl.startHunt(device)
 
-    fun resetHunt() {
-        val key = huntKey.value ?: return
-        val live = app.devices.devices.value.firstOrNull { it.key == key } ?: return
-        startHunt(live)
-    }
+    fun resetHunt() = huntCtl.resetHunt()
 
-    fun stopHunt() {
-        huntKey.value = null
-        huntSamples.value = emptyList()
-        huntPeakRssi.value = -127
-        huntStartedAt.value = 0L
-    }
+    fun stopHunt() = huntCtl.stopHunt()
 
-    fun huntTick(beepOn: Boolean, vibrateOn: Boolean) {
-        if (!beepOn && !vibrateOn) return
-        app.alerter.huntTick(beepOn, vibrateOn)
-    }
+    fun huntTick(beepOn: Boolean, vibrateOn: Boolean) = huntCtl.huntTick(beepOn, vibrateOn)
 
     fun setViewMode(mode: ViewMode) {
         viewModelScope.launch {
@@ -652,81 +541,25 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         displayPaused.value = !displayPaused.value
     }
 
-    fun defaultSitName(): String = Sit.defaultName(System.currentTimeMillis())
+    fun defaultSitName(): String = reports.defaultSitName()
 
-    fun startSit(name: String) {
-        viewModelScope.launch {
-            val heard = app.devices.devices.value.filter { !it.gone }
-            app.sits.start(name, heard, app.config.fleets, app.config.watchlist)
-            publishSitNotice()
-        }
-    }
+    fun startSit(name: String) = reports.startSit(name)
 
-    fun endSit() {
-        viewModelScope.launch {
-            app.sits.end(app.config.fleets)
-            publishSitNotice()
-        }
-    }
+    fun endSit() = reports.endSit()
 
-    fun renameSit(id: String, name: String) {
-        viewModelScope.launch { app.sits.rename(id, name) }
-    }
+    fun renameSit(id: String, name: String) = reports.renameSit(id, name)
 
-    fun deleteSit(id: String) {
-        viewModelScope.launch { app.sits.delete(id) }
-    }
+    fun deleteSit(id: String) = reports.deleteSit(id)
 
-    fun deleteAllSits() {
-        viewModelScope.launch { app.sits.deleteAllClosed() }
-    }
+    fun deleteAllSits() = reports.deleteAllSits()
 
-    fun selectSit(id: String?) {
-        app.sits.select(id)
-    }
+    fun selectSit(id: String?) = reports.selectSit(id)
 
-    private val _sitDiff = MutableStateFlow(SitDiffUi())
-    val sitDiff: StateFlow<SitDiffUi> = _sitDiff
+    fun startSitDiff(aId: String, bId: String) = reports.startSitDiff(aId, bId)
 
-    fun startSitDiff(aId: String, bId: String) {
-        if (_sitDiff.value.loading) return
-        viewModelScope.launch {
-            _sitDiff.value = SitDiffUi(loading = true)
-            runCatching {
-                val a = app.sits.sitFile(aId) ?: error("First sit is gone")
-                val b = app.sits.sitFile(bId) ?: error("Second sit is gone")
-                withContext(Dispatchers.Default) { SitDiff.diff(a, b) }
-            }.onSuccess { result ->
-                _sitDiff.value = SitDiffUi(result = result)
-            }.onFailure { err ->
-                _sitDiff.value = SitDiffUi(error = err.message ?: "Could not compare sits")
-            }
-        }
-    }
+    fun closeSitDiff() = reports.closeSitDiff()
 
-    fun closeSitDiff() {
-        _sitDiff.value = SitDiffUi()
-    }
-
-    fun shareSitDiff() {
-        val result = _sitDiff.value.result ?: return
-        if (_export.value.active) return
-        val text = SitDiff.toText(result, app.config.fleets)
-        _export.value = ExportUi(
-            share = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch sit diff — ${result.a.name} vs ${result.b.name}")
-                putExtra(Intent.EXTRA_TEXT, text)
-            },
-            shareTitle = "Sit diff",
-        )
-    }
-
-    private fun publishSitNotice() {
-        val notice = app.sits.ui.value.notice ?: return
-        _export.value = ExportUi(noticeTitle = "Sits", noticeMessage = notice)
-        app.sits.consumeNotice()
-    }
+    fun shareSitDiff() = reports.shareSitDiff()
 
     fun updateFilter(transform: (FilterState) -> FilterState) {
         viewModelScope.launch {
@@ -826,22 +659,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         return hit
     }
 
-    fun startSignatureCandidates() {
-        if (_candidates.value.loading) return
-        viewModelScope.launch {
-            _candidates.value = CandidatesUi(loading = true)
-            runCatching {
-                val radios = app.logs.readRadios()
-                withContext(Dispatchers.Default) {
-                    SignatureCandidates.analyze(radios, app.config.fleets)
-                }
-            }.onSuccess { report ->
-                _candidates.value = CandidatesUi(report = report)
-            }.onFailure { err ->
-                _candidates.value = CandidatesUi(error = err.message ?: "Could not read the log")
-            }
-        }
-    }
+    fun startSignatureCandidates() = reports.startSignatureCandidates()
 
     fun beginNewFleet() {
         draftFromCandidates = false
@@ -992,675 +810,51 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun suggestedSignaturesName(): String {
-        val stamp = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
-            .format(java.util.Date())
-        return "fieldwatch-signatures-$stamp.json"
-    }
+    fun suggestedSignaturesName(): String = exports.suggestedSignaturesName()
 
-    private fun signaturePackJson(): String {
-        val cfg = app.config.config.value
-        return SignatureExchange.encode(
-            SignatureExchange.pack(
-                fleets = cfg.fleets,
-                catalogVersion = cfg.version,
-                appVersion = BuildConfig.VERSION_NAME,
-                exportedAt = java.time.Instant.now().toString(),
-            ),
-        )
-    }
+    fun startSignatureShare() = exports.startSignatureShare()
 
-    fun startSignatureShare() {
-        viewModelScope.launch {
-            runCatching {
-                val json = withContext(Dispatchers.Default) { signaturePackJson() }
-                val dir = File(app.cacheDir, "signatures").apply { mkdirs() }
-                val file = File(dir, suggestedSignaturesName())
-                withContext(Dispatchers.IO) { file.writeText(json) }
-                val uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "application/json"
-                    clipData = ClipData.newRawUri("signatures", uri)
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch signatures")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(share = intent, shareTitle = "Fieldwatch signatures")
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not export signatures",
-                    errorTitle = "Could not export signatures",
-                )
-            }
-        }
-    }
+    fun saveSignaturesToUri(uri: Uri) = exports.saveSignaturesToUri(uri)
 
-    fun saveSignaturesToUri(uri: Uri) {
-        viewModelScope.launch {
-            runCatching {
-                val json = withContext(Dispatchers.Default) { signaturePackJson() }
-                withContext(Dispatchers.IO) {
-                    app.contentResolver.openOutputStream(uri)?.use { out ->
-                        out.write(json.toByteArray(Charsets.UTF_8))
-                    } ?: error("Could not write to the location you picked.")
-                }
-            }.onSuccess {
-                _export.value = ExportUi(
-                    noticeTitle = "Signatures saved",
-                    noticeMessage = "The pack was written to the folder you picked. Share it with another Fieldwatch or keep it as a backup before Restore defaults.",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not save signatures",
-                    errorTitle = "Could not save signatures",
-                )
-            }
-        }
-    }
+    fun updateStockCatalogFromGitHub() = exports.updateStockCatalogFromGitHub()
 
-    fun updateStockCatalogFromGitHub() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            if (!PlaceLookup.online(app)) {
-                _export.value = ExportUi(
-                    errorTitle = "No internet",
-                    error = "No internet. Use Import signatures from a file.",
-                )
-                return@launch
-            }
-            _export.value = ExportUi(
-                active = true,
-                spinner = true,
-                message = "Updating stock catalog…",
-            )
-            runCatching {
-                val text = withContext(Dispatchers.IO) {
-                    CatalogRemote.fetch(
-                        userAgent = "Fieldwatch/${BuildConfig.VERSION_NAME}",
-                    )
-                }
-                val pack = SignatureExchange.parse(text)
-                val result = app.config.overlayStockCatalog(pack)
-                result.error?.let { throw IllegalStateException(it) }
-                if (!result.alreadyLatest) {
-                    app.devices.refresh(
-                        app.config.fleets,
-                        app.config.settings.staleSec,
-                        policy = app.config.settings.detectionPolicy(),
-                        decaySec = app.config.settings.decaySec,
-                    )
-                }
-                result
-            }.onSuccess { result ->
-                _export.value = if (result.alreadyLatest) {
-                    ExportUi(
-                        noticeTitle = "Already on the latest catalog",
-                        noticeMessage = "Already on catalog ${result.catalogVersion}. Nothing to update.",
-                    )
-                } else {
-                    val bits = mutableListOf<String>()
-                    if (result.updated > 0) bits += "updated ${result.updated}"
-                    if (result.added > 0) bits += "added ${result.added}"
-                    val change = if (bits.isEmpty()) "No stock rows changed."
-                    else bits.joinToString(" · ").replaceFirstChar { it.uppercase() } + "."
-                    ExportUi(
-                        noticeTitle = "Catalog updated",
-                        noticeMessage = "Stock catalog is now ${result.catalogVersion}. $change " +
-                            "Bookmarks and Settings were not changed.",
-                    )
-                }
-            }.onFailure { err ->
-                val msg = err.message.orEmpty()
-                val access = msg.contains("HTTP", ignoreCase = true) ||
-                    msg.contains("Unable to resolve", ignoreCase = true) ||
-                    msg.contains("failed to connect", ignoreCase = true) ||
-                    msg.contains("timeout", ignoreCase = true) ||
-                    msg.contains("GitHub", ignoreCase = true)
-                _export.value = if (access) {
-                    ExportUi(
-                        errorTitle = "Could not reach GitHub",
-                        error = "Could not reach the catalog on GitHub. Try again later, or use Import signatures from a file.",
-                    )
-                } else {
-                    ExportUi(
-                        errorTitle = "Could not import catalog",
-                        error = err.message ?: "Could not import catalog.",
-                    )
-                }
-            }
-        }
-    }
+    fun importSignaturesFromUri(uri: Uri) = exports.importSignaturesFromUri(uri)
 
-    fun importSignaturesFromUri(uri: Uri) {
-        viewModelScope.launch {
-            runCatching {
-                val text = withContext(Dispatchers.IO) {
-                    app.contentResolver.openInputStream(uri)?.use {
-                        it.readBytes().toString(Charsets.UTF_8)
-                    } ?: error("Could not read that file.")
-                }
-                val pack = SignatureExchange.parse(text)
-                val result = app.config.importFleets(pack.fleets)
-                if (result.error != null) error(result.error)
-                app.devices.refresh(
-                    app.config.fleets,
-                    app.config.settings.staleSec,
-                    policy = app.config.settings.detectionPolicy(),
-                    decaySec = app.config.settings.decaySec,
-                )
-                result.summary()
-            }.onSuccess { summary ->
-                _export.value = ExportUi(
-                    noticeTitle = "Signatures imported",
-                    noticeMessage = summary,
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not import signatures",
-                    errorTitle = "Could not import signatures",
-                )
-            }
-        }
-    }
+    fun suggestedSettingsName(): String = exports.suggestedSettingsName()
 
-    fun suggestedSettingsName(): String {
-        val stamp = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
-            .format(java.util.Date())
-        return "fieldwatch-settings-$stamp.json"
-    }
+    fun startSettingsShare() = exports.startSettingsShare()
 
-    private fun settingsPackJson(): String {
-        val cfg = app.config.config.value
-        return SettingsExchange.encode(
-            SettingsExchange.pack(
-                settings = cfg.settings,
-                filter = cfg.filter,
-                presets = cfg.presets,
-                watchlist = cfg.watchlist,
-                hiddenPresetIds = cfg.hiddenPresetIds,
-                appVersion = BuildConfig.VERSION_NAME,
-                exportedAt = java.time.Instant.now().toString(),
-            ),
-        )
-    }
+    fun saveSettingsToUri(uri: Uri) = exports.saveSettingsToUri(uri)
 
-    fun startSettingsShare() {
-        viewModelScope.launch {
-            runCatching {
-                val json = withContext(Dispatchers.Default) { settingsPackJson() }
-                val dir = File(app.cacheDir, "settings").apply { mkdirs() }
-                val file = File(dir, suggestedSettingsName())
-                withContext(Dispatchers.IO) { file.writeText(json) }
-                val uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "application/json"
-                    clipData = ClipData.newRawUri("settings", uri)
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch settings")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(share = intent, shareTitle = "Fieldwatch settings")
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not export settings",
-                    errorTitle = "Could not export settings",
-                )
-            }
-        }
-    }
+    fun importSettingsFromUri(uri: Uri) = exports.importSettingsFromUri(uri)
 
-    fun saveSettingsToUri(uri: Uri) {
-        viewModelScope.launch {
-            runCatching {
-                val json = withContext(Dispatchers.Default) { settingsPackJson() }
-                withContext(Dispatchers.IO) {
-                    app.contentResolver.openOutputStream(uri)?.use { out ->
-                        out.write(json.toByteArray(Charsets.UTF_8))
-                    } ?: error("Could not write to the location you picked.")
-                }
-            }.onSuccess {
-                _export.value = ExportUi(
-                    noticeTitle = "Settings saved",
-                    noticeMessage = "The pack was written to the folder you picked. Keep it for a factory reset or a new phone. Import settings on the new install. Signatures are a separate pack.",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not save settings",
-                    errorTitle = "Could not save settings",
-                )
-            }
-        }
-    }
+    fun suggestedExportName(): String = exports.suggestedExportName()
 
-    fun importSettingsFromUri(uri: Uri) {
-        viewModelScope.launch {
-            runCatching {
-                val text = withContext(Dispatchers.IO) {
-                    app.contentResolver.openInputStream(uri)?.use {
-                        it.readBytes().toString(Charsets.UTF_8)
-                    } ?: error("Could not read that file.")
-                }
-                val pack = SettingsExchange.parse(text)
-                val prev = app.config.settings
-                val result = app.config.importSettings(pack)
-                if (result.error != null) error(result.error)
-                val next = app.config.settings
-                app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
-                if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
-                if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
-                    app.startScanning()
-                }
-                app.devices.refresh(
-                    app.config.fleets,
-                    next.staleSec,
-                    policy = next.detectionPolicy(),
-                    decaySec = next.decaySec,
-                )
-                if (next.alertVoice) app.alerter.prepareVoice()
-                result.summary()
-            }.onSuccess { summary ->
-                _export.value = ExportUi(
-                    noticeTitle = "Settings imported",
-                    noticeMessage = summary,
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(
-                    error = err.message ?: "Could not import settings",
-                    errorTitle = "Could not import settings",
-                )
-            }
-        }
-    }
+    fun exportMime(): String = exports.exportMime()
 
-    fun suggestedExportName(): String = app.logs.suggestedExportName()
+    fun startFieldDebriefPdf() = exports.startFieldDebriefPdf()
 
-    fun exportMime(): String = app.logs.exportMime()
+    fun startFieldDebrief() = exports.startFieldDebrief()
 
-    fun startFieldDebriefPdf() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = busy("Writing debrief PDF…")
-            runCatching {
-                val doc = fieldDebriefDoc { msg ->
-                    _export.value = busy(msg)
-                }
-                val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
-                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
-                    .format(java.util.Date())
-                val file = File(dir, "fieldwatch-debrief-$stamp.pdf")
-                withContext(Dispatchers.Default) { DebriefPdf.write(doc, file) }
-                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "application/pdf"
-                    clipData = ClipData.newRawUri("debrief", uri)
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(
-                    active = false,
-                    progress = 1f,
-                    share = intent,
-                    shareTitle = "Debrief PDF",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not write debrief PDF")
-            }
-        }
-    }
+    fun startGeoExport(format: GeoExport.Format) = exports.startGeoExport(format)
 
-    fun startFieldDebrief() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = busy("Writing debrief…")
-            runCatching {
-                val doc = fieldDebriefDoc { msg ->
-                    _export.value = busy(msg)
-                }
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
-                    putExtra(Intent.EXTRA_TEXT, doc.toPlainText())
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(
-                    active = false,
-                    progress = 1f,
-                    share = intent,
-                    shareTitle = "Debrief",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not write debrief")
-            }
-        }
-    }
+    fun startAiExport() = exports.startAiExport()
 
-    fun startGeoExport(format: GeoExport.Format) {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = busy("Reading log…")
-            runCatching {
-                val radios = app.logs.readRadios()
-                if (radios.none { it.hasPosition }) {
-                    _export.value = ExportUi(
-                        noticeTitle = "No GPS points yet",
-                        noticeMessage = "Map exports pin each radio where this phone heard it. Turn on Settings → Tag location, scan a while, then try again.",
-                    )
-                    return@launch
-                }
-                _export.value = busy("Matching signatures…")
-                val fleets = app.config.fleets
-                val names = withContext(Dispatchers.Default) {
-                    signatures.match(radios.map { it.toSighting() }, fleets)
-                        .mapValues { (_, ids) -> ids.map { id -> fleetName(id) }.sorted() }
-                }
-                _export.value = busy("Writing ${format.label}…")
-                val text = withContext(Dispatchers.Default) {
-                    GeoExport.render(
-                        format = format,
-                        radios = radios,
-                        names = names,
-                        appVersion = BuildConfig.VERSION_NAME,
-                        deviceInfo = "model=${Build.MODEL},release=${Build.VERSION.RELEASE}," +
-                            "device=${Build.DEVICE},display=${Build.DISPLAY}," +
-                            "board=${Build.BOARD},brand=${Build.BRAND}",
-                    )
-                }
-                val dir = File(app.cacheDir, "export").apply { mkdirs() }
-                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
-                    .format(java.util.Date())
-                val file = File(dir, GeoExport.suggestedName(format, stamp))
-                withContext(Dispatchers.IO) { file.writeText(text) }
-                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = format.mime
-                    clipData = ClipData.newRawUri(format.label, uri)
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch ${format.label} export")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(
-                    active = false,
-                    progress = 1f,
-                    share = intent,
-                    shareTitle = "${format.label} export",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not write ${format.label} export")
-            }
-        }
-    }
+    fun startDeviceDetailAiExport(device: Sighting) = exports.startDeviceDetailAiExport(device)
 
-    private fun busy(message: String) = ExportUi(active = true, spinner = true, message = message)
+    fun startDeviceDetailShare(device: Sighting) = exports.startDeviceDetailShare(device)
 
-    private fun debriefSubject(doc: DebriefDoc): String =
-        if (doc.heading.startsWith("FIELDWATCH SIT")) doc.heading else "Fieldwatch field debrief — last 15 minutes"
+    fun startExport() = exports.startExport()
 
-    private suspend fun fieldDebriefDoc(onLookup: (String) -> Unit): DebriefDoc {
-        val settings = app.config.settings
-        val fleets = app.config.fleets
-        val now = System.currentTimeMillis()
-        val source = app.sits.debriefSource(now)
-        val devices = source?.devices ?: app.devices.devices.value
-        val path = source?.operatorPath ?: app.operatorPathCopy()
-        val window = source?.let { DebriefWindow(it.startAt, it.endAt, it.name) }
-        val places = if (settings.demoMode) {
-            DebriefPlaces.Off
-        } else if (settings.onlineLookup) {
-            onLookup("Looking up place names…")
-            val found = PlaceLookup.lookup(app, path, devices, now, onProgress = onLookup)
-            onLookup("Writing debrief…")
-            found
-        } else {
-            DebriefPlaces.Off
-        }
-        return withContext(Dispatchers.Default) {
-            DebriefReport.document(
-                devices = devices,
-                fleets = fleets,
-                settings = settings,
-                operatorPath = path,
-                now = now,
-                places = places,
-                window = window,
-            ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
-        }
-    }
+    fun startSaveToUri(uri: Uri) = exports.startSaveToUri(uri)
 
-    fun startAiExport() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = busy("Building AI export prompt…")
-            runCatching {
-                val settings = app.config.settings
-                val fleets = app.config.fleets
-                val now = System.currentTimeMillis()
-                val source = app.sits.debriefSource(now)
-                val devices = source?.devices ?: app.devices.devices.value
-                val path = source?.operatorPath ?: app.operatorPathCopy()
-                val window = source?.let { DebriefWindow(it.startAt, it.endAt, it.name) }
-                val places = if (settings.demoMode) {
-                    DebriefPlaces.Off
-                } else if (settings.onlineLookup) {
-                    _export.value = busy("Looking up place names…")
-                    val found = PlaceLookup.lookup(app, path, devices, now) { msg ->
-                        _export.value = busy(msg)
-                    }
-                    _export.value = busy("Building AI export prompt…")
-                    found
-                } else {
-                    DebriefPlaces.Off
-                }
-                val text = withContext(Dispatchers.Default) {
-                    val raw = DebriefPrompt.build(
-                        devices = devices,
-                        fleets = fleets,
-                        settings = settings,
-                        now = now,
-                        operatorPath = path,
-                        places = places,
-                        window = window,
-                    )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),
-                        settings.demoMode,
-                    )
-                    if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
-                    } else {
-                        masked
-                    }
-                }
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(
-                        Intent.EXTRA_SUBJECT,
-                        if (window != null) "Fieldwatch AI export — sit ${window.sitName}"
-                        else "Fieldwatch AI export — last 15 minutes",
-                    )
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(
-                    active = false,
-                    progress = 1f,
-                    share = intent,
-                    shareTitle = "AI Export",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not build AI export")
-            }
-        }
-    }
+    fun clearLogs() = exports.clearLogs()
 
-    fun startDeviceDetailAiExport(device: Sighting) {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = busy("Building AI export prompt…")
-            runCatching {
-                val settings = app.config.settings
-                val names = device.fleetIds.map { fleetName(it) }
-                val attention = attentionNotesFor(device)
-                val notes = signatureNotesFor(device)
-                val places = if (settings.demoMode) {
-                    DebriefPlaces.Off
-                } else if (settings.onlineLookup && (settings.tagLocation || device.latitude != null)) {
-                    _export.value = busy("Looking up place names…")
-                    val found = PlaceLookup.lookup(app, app.operatorPathCopy(), listOf(device), System.currentTimeMillis()) { msg ->
-                        _export.value = busy(msg)
-                    }
-                    _export.value = busy("Building AI export prompt…")
-                    found
-                } else {
-                    DebriefPlaces.Off
-                }
-                val text = withContext(Dispatchers.Default) {
-                    val raw = DeviceDetailPrompt.build(
-                        device, names, settings, places, attentionNotes = attention,
-                        signatureNotes = notes,
-                        fleets = app.config.fleets,
-                        operatorNote = radioNoteFor(device.key),
-                    )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
-                        settings.demoMode,
-                    )
-                    if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
-                    } else {
-                        masked
-                    }
-                }
-                val title = MacUtil.redactMacIn(device.listTitle(names), device.mac, settings.demoMode)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch AI export — $title")
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(
-                    active = false,
-                    progress = 1f,
-                    share = intent,
-                    shareTitle = "AI Export",
-                )
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not build AI export")
-            }
-        }
-    }
+    fun consumeShare() = exports.consumeShare()
 
-    fun startDeviceDetailShare(device: Sighting) {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            runCatching {
-                val settings = app.config.settings
-                val names = device.fleetIds.map { fleetName(it) }
-                val attention = attentionNotesFor(device)
-                val notes = signatureNotesFor(device)
-                val text = withContext(Dispatchers.Default) {
-                    val raw = DeviceDetailText.build(
-                        device, names, attentionNotes = attention, signatureNotes = notes,
-                        fleets = app.config.fleets,
-                        operatorNote = radioNoteFor(device.key),
-                    )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
-                        settings.demoMode,
-                    )
-                    if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
-                    } else {
-                        masked
-                    }
-                }
-                val title = MacUtil.redactMacIn(device.listTitle(names), device.mac, settings.demoMode)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch device detail — $title")
-                    putExtra(Intent.EXTRA_TEXT, text)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(share = intent, shareTitle = "Device detail")
-            }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: "Could not share device detail")
-            }
-        }
-    }
+    fun consumeExportNotice() = exports.consumeExportNotice()
 
-    fun startExport() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            runExport("Logging paused · preparing file…") {
-                val file = app.logs.exportBundle(::reportCopy)
-                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
-                Intent(Intent.ACTION_SEND).apply {
-                    type = app.logs.exportMime()
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch log export")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            }.onSuccess { intent ->
-                _export.value = ExportUi(active = false, progress = 1f, share = intent)
-            }
-        }
-    }
-
-    fun startSaveToUri(uri: Uri) {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            runExport("Logging paused · saving to the location you picked…") {
-                app.logs.exportToUri(app.contentResolver, uri, ::reportCopy)
-            }.onSuccess {
-                _export.value = ExportUi(active = false, progress = 1f, saved = true)
-            }
-        }
-    }
-
-    fun clearLogs() {
-        if (_export.value.active) return
-        viewModelScope.launch {
-            _export.value = ExportUi(active = true, progress = 0f, message = "Clearing log…")
-            runCatching { app.logs.clear() }
-                .onSuccess { count ->
-                    app.devices.bumpLogs(count)
-                    _export.value = ExportUi(cleared = true, message = "Log cleared")
-                }
-                .onFailure { err ->
-                    _export.value = ExportUi(error = err.message ?: "Could not clear log")
-                }
-        }
-    }
-
-    fun consumeShare() {
-        _export.value = _export.value.copy(share = null)
-    }
-
-    fun consumeExportNotice() {
-        _export.value = ExportUi()
-    }
-
-    private fun reportCopy(copied: Long, total: Long) {
-        val pct = (copied.toFloat() / total.toFloat()).coerceIn(0f, 1f)
-        _export.value = ExportUi(
-            active = true,
-            progress = pct,
-            message = "Copying ${(copied / 1024)} KB of ${(total / 1024)} KB",
-        )
-    }
-
-    private suspend fun <T> runExport(startMessage: String, block: suspend () -> T): Result<T> {
-        _export.value = ExportUi(active = true, progress = 0f, message = startMessage)
-        return runCatching { block() }.onFailure { err ->
-            _export.value = ExportUi(active = false, error = err.message ?: "Export failed")
-        }
-    }
-
-    fun logBytes(): Long = app.logs.totalBytes()
+    fun logBytes(): Long = exports.logBytes()
 
     fun fleetName(id: String): String = app.config.fleets.firstOrNull { it.id == id }?.name ?: id
 
@@ -1708,14 +902,4 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 data class BeepSnap(
     val seq: Int = 0,
     val key: String = "",
-)
-
-data class HuntUi(
-    val active: Boolean = false,
-    val device: Sighting? = null,
-    val title: String = "",
-    val cue: HuntCue = HuntCue.WAITING,
-    val peakRssi: Int = -127,
-    val samples: List<RssiSample> = emptyList(),
-    val lastSeen: Long = 0L,
 )
