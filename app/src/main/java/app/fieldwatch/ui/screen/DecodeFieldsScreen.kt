@@ -20,6 +20,8 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.FieldwatchDropdownField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -544,13 +546,12 @@ private fun CompactField(
     modifier: Modifier = Modifier,
     keyboard: KeyboardType = KeyboardType.Text,
 ) {
-    OutlinedTextField(
+    FieldwatchOutlinedField(
         value,
         onChange,
-        label = { Text(label) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        label,
         modifier = modifier,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
     )
 }
 
@@ -565,15 +566,7 @@ private fun WhenOpMenu(op: DecodeWhenOp, modifier: Modifier, onChange: (DecodeWh
         DecodeWhenOp.LEN -> "length"
     }
     ExposedDropdownMenuBox(open, { open = it }, modifier) {
-        OutlinedTextField(
-            value = label,
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text("When") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(open) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-        )
+        FieldwatchDropdownField("When", label, open)
         ExposedDropdownMenu(open, { open = false }) {
             DropdownMenuItem(text = { Text("equals") }, onClick = { onChange(DecodeWhenOp.EQ); open = false })
             DropdownMenuItem(text = { Text("not equals") }, onClick = { onChange(DecodeWhenOp.NEQ); open = false })
@@ -599,15 +592,7 @@ private fun List<Pair<String, String>>.toEnumMap(): Map<String, String>? {
 private fun TypeMenu(type: DecodeType, modifier: Modifier, onChange: (DecodeType) -> Unit) {
     var open by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(open, { open = it }, modifier) {
-        OutlinedTextField(
-            value = type.name.lowercase(),
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text("Type") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(open) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-        )
+        FieldwatchDropdownField("Type", type.name.lowercase(), open)
         ExposedDropdownMenu(open, { open = false }) {
             DecodeType.entries.forEach { t ->
                 DropdownMenuItem(
@@ -624,15 +609,7 @@ private fun TypeMenu(type: DecodeType, modifier: Modifier, onChange: (DecodeType
 private fun EndianMenu(endian: DecodeEndian, modifier: Modifier, onChange: (DecodeEndian) -> Unit) {
     var open by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(open, { open = it }, modifier) {
-        OutlinedTextField(
-            value = if (endian == DecodeEndian.BE) "BE" else "LE",
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text("Endian") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(open) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-        )
+        FieldwatchDropdownField("Endian", if (endian == DecodeEndian.BE) "BE" else "LE", open)
         ExposedDropdownMenu(open, { open = false }) {
             DropdownMenuItem(text = { Text("little") }, onClick = { onChange(DecodeEndian.LE); open = false })
             DropdownMenuItem(text = { Text("big") }, onClick = { onChange(DecodeEndian.BE); open = false })

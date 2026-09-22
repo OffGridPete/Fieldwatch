@@ -25,7 +25,7 @@ import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
@@ -160,12 +160,10 @@ fun RadioBookmarksScreen(
             onDismissRequest = { renameId = null },
             title = { Text("Custom name") },
             text = {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     value = draft,
                     onValueChange = { draft = it.take(RadioBookmarks.MAX_NAME) },
-                    label = { Text("Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    label = "Name",
                 )
             },
             confirmButton = {

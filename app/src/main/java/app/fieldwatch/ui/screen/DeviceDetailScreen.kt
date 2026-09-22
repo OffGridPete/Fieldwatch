@@ -30,7 +30,7 @@ import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -182,15 +182,11 @@ fun DeviceDetailScreen(
                 }
             }
             if (editingName && !randomMac) {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     value = nameDraft,
                     onValueChange = { nameDraft = it.take(RadioBookmarks.MAX_NAME) },
-                    label = { Text("Custom name") },
-                    supportingText = {
-                        Text("Shows on Live. Bookmark (top-right) is the alert; this does not turn it on.")
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    label = "Custom name",
+                    supportingText = "Shows on Live. Bookmark (top-right) is the alert; this does not turn it on.",
                 )
                 FieldwatchActionButton(
                     onClick = {

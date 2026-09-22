@@ -15,7 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.OutlinedTextField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -276,12 +276,10 @@ fun ReportsScreen(
             title = { Text("Start sit") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
+                    FieldwatchOutlinedField(
                         value = sitNameDraft,
                         onValueChange = { sitNameDraft = it.take(Sit.NAME_MAX) },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        label = "Name",
                     )
                     Text(
                         "Debrief and AI Export use this window until you end it. The Live list is unchanged.",
@@ -314,12 +312,10 @@ fun ReportsScreen(
             onDismissRequest = { renameSitId = null },
             title = { Text("Rename sit") },
             text = {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     value = renameDraft,
                     onValueChange = { renameDraft = it.take(Sit.NAME_MAX) },
-                    label = { Text("Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    label = "Name",
                 )
             },
             confirmButton = {

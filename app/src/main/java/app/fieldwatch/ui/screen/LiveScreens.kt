@@ -35,7 +35,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -206,12 +206,10 @@ fun LivePane(
                 onDismissRequest = { renameSit = false },
                 title = { Text("Rename sit") },
                 text = {
-                    OutlinedTextField(
+                    FieldwatchOutlinedField(
                         value = renameDraft,
                         onValueChange = { renameDraft = it.take(Sit.NAME_MAX) },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        label = "Name",
                     )
                 },
                 confirmButton = {

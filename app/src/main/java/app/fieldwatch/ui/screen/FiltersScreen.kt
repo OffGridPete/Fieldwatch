@@ -23,7 +23,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Scaffold
 import app.fieldwatch.ui.component.FieldwatchSlider
 import androidx.compose.material3.Surface
@@ -111,10 +111,10 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     presetName,
                     { presetName = it },
-                    label = { Text("Save current as…") },
+                    "Save current as…",
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(onClick = {
@@ -473,17 +473,15 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 valueRange = -100f..-30f,
             )
 
-            OutlinedTextField(
+            FieldwatchOutlinedField(
                 filter.nameQuery,
                 { value -> vm.updateFilter { it.copy(nameQuery = value) } },
-                label = { Text("Name / MAC contains") },
-                modifier = Modifier.fillMaxWidth(),
+                "Name / MAC contains",
             )
-            OutlinedTextField(
+            FieldwatchOutlinedField(
                 filter.ouiQuery,
                 { value -> vm.updateFilter { it.copy(ouiQuery = value) } },
-                label = { Text("OUI / vendor contains") },
-                modifier = Modifier.fillMaxWidth(),
+                "OUI / vendor contains",
             )
 
             Text("Extra filter logic", style = MaterialTheme.typography.labelLarge)

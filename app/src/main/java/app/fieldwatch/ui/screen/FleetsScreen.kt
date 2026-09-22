@@ -38,6 +38,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.FieldwatchDropdownField
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -347,45 +349,29 @@ fun FleetEditor(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SectionCard("Identity") {
-            OutlinedTextField(fleet.name, { fleet = fleet.copy(name = it) }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(
+            FieldwatchOutlinedField(fleet.name, { fleet = fleet.copy(name = it) }, "Name")
+            FieldwatchOutlinedField(
                 fleet.notes,
                 { fleet = fleet.copy(notes = it) },
-                label = { Text("Notes") },
-                supportingText = {
-                    Text("Shows on radio detail for matching radios, and in Share / AI Export. Not Extra attention — no Live “!” and not the amber card.")
-                },
+                "Notes",
+                supportingText = "Shows on radio detail for matching radios, and in Share / AI Export. Not Extra attention — no Live “!” and not the amber card.",
+                singleLine = false,
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            FieldwatchOutlinedField(
                 fleet.attentionNote,
                 { fleet = fleet.copy(attentionNote = it) },
-                label = { Text("Extra attention") },
-                supportingText = {
-                    Text(
-                        "Optional. If this is not empty, matching radios get a “!” on Live, this amber card on detail, and a line in Debrief. Separate from Notes above.",
-                    )
-                },
+                "Extra attention",
+                supportingText = "Optional. If this is not empty, matching radios get a “!” on Live, this amber card on detail, and a line in Debrief. Separate from Notes above.",
+                singleLine = false,
                 minLines = 3,
-                modifier = Modifier.fillMaxWidth(),
             )
             }
 
             SectionCard("Matching") {
             var classMenu by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(classMenu, { classMenu = it }) {
-                OutlinedTextField(
-                    value = fleet.kind.label(),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Class") },
-                    supportingText = {
-                        Text("Filters → Show only / Hide these. Trackers / Hide trackers / Hide phones presets pick a class.")
-                    },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(classMenu) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                )
+                FieldwatchDropdownField("Class", fleet.kind.label(), classMenu)
                 ExposedDropdownMenu(classMenu, { classMenu = false }) {
                     SignatureClass.visible.sortedBy { it.label().lowercase() }.forEach { kind ->
                         DropdownMenuItem(
@@ -398,6 +384,11 @@ fun FleetEditor(
                     }
                 }
             }
+            Text(
+                "Filters → Show only / Hide these. Trackers / Hide trackers / Hide phones presets pick a class.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Match any rule (OR)", Modifier.weight(1f))
                 FieldwatchSwitch(fleet.matchAny, { fleet = fleet.copy(matchAny = it) })
@@ -410,17 +401,15 @@ fun FleetEditor(
                 Text("Sequential MACs", Modifier.weight(1f))
                 FieldwatchSwitch(fleet.sequentialMac, { fleet = fleet.copy(sequentialMac = it) })
             }
-            OutlinedTextField(
+            FieldwatchOutlinedField(
                 fleet.minPeers.toString(),
                 { fleet = fleet.copy(minPeers = it.toIntOrNull() ?: 0) },
-                label = { Text("Min peers (0 = off)") },
-                modifier = Modifier.fillMaxWidth(),
+                "Min peers (0 = off)",
             )
-            OutlinedTextField(
+            FieldwatchOutlinedField(
                 fleet.peerWindowSec.toString(),
                 { fleet = fleet.copy(peerWindowSec = it.toIntOrNull() ?: 60) },
-                label = { Text("Peer window (seconds)") },
-                modifier = Modifier.fillMaxWidth(),
+                "Peer window (seconds)",
             )
             }
 
@@ -586,15 +575,14 @@ private fun RuleEditor(rule: MatchRule, onChange: (MatchRule) -> Unit, onDelete:
                 rule.enabled,
                 { onChange(rule.copy(enabled = it)) },
             )
-            ExposedDropdownMenuBox(expanded, { expanded = it }, Modifier.weight(1f)) {
-                OutlinedTextField(
-                    value = ruleKindLabel(rule.kind),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Kind") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                )
+            ExposedDropdownMenuBox(
+                expanded,
+                { expanded = it },
+                Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 4.dp),
+            ) {
+                FieldwatchDropdownField("Kind", ruleKindLabel(rule.kind), expanded)
                 ExposedDropdownMenu(expanded, { expanded = false }) {
                     RuleKind.entries.forEach { kind ->
                         DropdownMenuItem(text = { Text(ruleKindLabel(kind)) }, onClick = {
@@ -606,41 +594,41 @@ private fun RuleEditor(rule: MatchRule, onChange: (MatchRule) -> Unit, onDelete:
             }
             IconButton(onClick = onDelete) { Icon(Icons.Outlined.Delete, "Delete rule") }
         }
+        Column(
+            Modifier.padding(top = 12.dp, start = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
         when (rule.kind) {
             RuleKind.OUI, RuleKind.MAC_PREFIX, RuleKind.NAME_CONTAINS, RuleKind.NAME_GLOB, RuleKind.SERVICE_UUID, RuleKind.VENDOR_IE_OUI -> {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     rule.text,
                     { onChange(rule.copy(text = it)) },
-                    label = { Text("Value") },
-                    modifier = Modifier.fillMaxWidth(),
+                    "Value",
                 )
             }
             RuleKind.MANUFACTURER_ID -> {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     if (rule.companyId == 0) "" else "0x%04X".format(rule.companyId),
                     {
                         val parsed = it.removePrefix("0x").removePrefix("0X").toIntOrNull(16) ?: 0
                         onChange(rule.copy(companyId = parsed))
                     },
-                    label = { Text("Company ID hex") },
-                    modifier = Modifier.fillMaxWidth(),
+                    "Company ID hex",
                 )
             }
             RuleKind.MANUFACTURER_DATA -> {
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     if (rule.companyId == 0) "" else "0x%04X".format(rule.companyId),
                     {
                         val parsed = it.removePrefix("0x").removePrefix("0X").toIntOrNull(16) ?: 0
                         onChange(rule.copy(companyId = parsed))
                     },
-                    label = { Text("Company ID hex") },
-                    modifier = Modifier.fillMaxWidth(),
+                    "Company ID hex",
                 )
-                OutlinedTextField(
+                FieldwatchOutlinedField(
                     rule.dataPrefixHex,
                     { onChange(rule.copy(dataPrefixHex = it)) },
-                    label = { Text("Data prefix hex") },
-                    modifier = Modifier.fillMaxWidth(),
+                    "Data prefix hex",
                 )
             }
             RuleKind.RADIO_KIND -> {
@@ -650,6 +638,7 @@ private fun RuleEditor(rule: MatchRule, onChange: (MatchRule) -> Unit, onDelete:
                 }
             }
             RuleKind.HIDDEN_SSID -> Text("Matches hidden SSIDs", style = MaterialTheme.typography.bodySmall)
+        }
         }
     }
 }

@@ -69,6 +69,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.NavigationBarDefaults
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.FieldwatchDropdownField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -564,6 +565,19 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     )
                     AnimatedVisibility(
                         visible = state.settings.scanControlsExpanded,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.55f))
+                                .clickable { vm.setScanControlsExpanded(false) },
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = state.settings.scanControlsExpanded,
                         enter = fadeIn() + expandVertically(),
                         exit = fadeOut() + shrinkVertically(),
                         modifier = Modifier
@@ -836,17 +850,18 @@ private fun ViewPicker(
         Column(
             Modifier
                 .verticalScroll(scroll)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 10.dp, vertical = 8.dp)
                 .padding(bottom = if (scroll.canScrollForward) 20.dp else 0.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 "Display",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            ExposedDropdownMenuBox(openView, { openView = it }, Modifier.fillMaxWidth()) {
-                CompactMenuField("View", viewLabel, openView)
+            val dropdownPad = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+            ExposedDropdownMenuBox(openView, { openView = it }, dropdownPad) {
+                FieldwatchDropdownField("View", viewLabel, openView)
                 ExposedDropdownMenu(openView, { openView = false }) {
                     ViewMode.entries.forEach { item ->
                         DropdownMenuItem(
@@ -856,8 +871,8 @@ private fun ViewPicker(
                     }
                 }
             }
-            ExposedDropdownMenuBox(openSort, { openSort = it }, Modifier.fillMaxWidth()) {
-                CompactMenuField("Sort", sortLabel, openSort)
+            ExposedDropdownMenuBox(openSort, { openSort = it }, dropdownPad) {
+                FieldwatchDropdownField("Sort", sortLabel, openSort)
                 ExposedDropdownMenu(openSort, { openSort = false }) {
                     DropdownMenuItem(
                         text = { Text("Strongest signal") },
@@ -893,8 +908,8 @@ private fun ViewPicker(
                     )
                 }
             }
-            ExposedDropdownMenuBox(openDecay, { openDecay = it }, Modifier.fillMaxWidth()) {
-                CompactMenuField("Brief hold", decayLabel, openDecay)
+            ExposedDropdownMenuBox(openDecay, { openDecay = it }, dropdownPad) {
+                FieldwatchDropdownField("Brief hold", decayLabel, openDecay)
                 ExposedDropdownMenu(openDecay, { openDecay = false }) {
                     DropdownMenuItem(
                         text = { Text("Off — Stale after only") },
@@ -908,8 +923,8 @@ private fun ViewPicker(
                     }
                 }
             }
-            ExposedDropdownMenuBox(openTitle, { openTitle = it }, Modifier.fillMaxWidth()) {
-                CompactMenuField("Title line", listLineLabel(titleLine), openTitle)
+            ExposedDropdownMenuBox(openTitle, { openTitle = it }, dropdownPad) {
+                FieldwatchDropdownField("Title line", listLineLabel(titleLine), openTitle)
                 ExposedDropdownMenu(openTitle, { openTitle = false }) {
                     listOf(ListLine.ADVERTISED_NAME, ListLine.NAME_AND_TYPE, ListLine.MAC).forEach { item ->
                         DropdownMenuItem(
@@ -919,8 +934,8 @@ private fun ViewPicker(
                     }
                 }
             }
-            ExposedDropdownMenuBox(openSubtitle, { openSubtitle = it }, Modifier.fillMaxWidth()) {
-                CompactMenuField("Subtitle line", listLineLabel(subtitleLine), openSubtitle)
+            ExposedDropdownMenuBox(openSubtitle, { openSubtitle = it }, dropdownPad) {
+                FieldwatchDropdownField("Subtitle line", listLineLabel(subtitleLine), openSubtitle)
                 ExposedDropdownMenu(openSubtitle, { openSubtitle = false }) {
                     listOf(
                         ListLine.ADVERTISED_NAME,
@@ -970,27 +985,6 @@ private fun listLineLabel(line: ListLine): String = when (line) {
     ListLine.NAME_AND_TYPE -> "Name + type"
     ListLine.MAC -> "MAC address"
     ListLine.NONE -> "None"
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ExposedDropdownMenuBoxScope.CompactMenuField(
-    label: String,
-    value: String,
-    expanded: Boolean,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        readOnly = true,
-        singleLine = true,
-        label = { Text(label) },
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-        textStyle = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier
-            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-            .fillMaxWidth(),
-    )
 }
 
 @Composable
@@ -1043,7 +1037,9 @@ private fun LiveSessionBar(
 @Composable
 private fun OptionSwitch(label: String, checked: Boolean, onToggle: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)

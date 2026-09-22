@@ -33,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import app.fieldwatch.ui.component.FieldwatchSlider
@@ -798,7 +799,7 @@ private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel, stat
         style = MaterialTheme.typography.bodySmall,
         color = muted,
     )
-    OutlinedTextField(
+    FieldwatchOutlinedField(
         value = hostText,
         onValueChange = { value ->
             hostText = value
@@ -807,30 +808,25 @@ private fun TakFeedSettings(settings: AppSettings, vm: FieldwatchViewModel, stat
                 vm.updateSettings { it.copy(takHost = trimmed) }
             }
         },
-        label = { Text("Host") },
-        placeholder = { Text(TakDefaults.HOST) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+        label = "Host",
+        placeholder = TakDefaults.HOST,
         enabled = !settings.demoMode,
     )
-    OutlinedTextField(
+    FieldwatchOutlinedField(
         value = portText,
         onValueChange = { value ->
             val filtered = value.filter { it.isDigit() }.take(5)
             portText = filtered
-            val n = filtered.toIntOrNull() ?: return@OutlinedTextField
-            if (n in 1..65_535) {
-                vm.updateSettings { it.copy(takPort = n) }
+            filtered.toIntOrNull()?.let { n ->
+                if (n in 1..65_535) {
+                    vm.updateSettings { it.copy(takPort = n) }
+                }
             }
         },
-        label = { Text("Port") },
-        placeholder = { Text(TakDefaults.PORT.toString()) },
-        supportingText = {
-            Text("UDP. ATAK CIV ${TakDefaults.PORT}. SA multicast ${TakDefaults.SA_PORT}. Not TCP 8087.")
-        },
-        singleLine = true,
+        label = "Port",
+        placeholder = TakDefaults.PORT.toString(),
+        supportingText = "UDP. ATAK CIV ${TakDefaults.PORT}. SA multicast ${TakDefaults.SA_PORT}. Not TCP 8087.",
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
         enabled = !settings.demoMode,
     )
     Text(takStatusLine(status), style = MaterialTheme.typography.bodySmall, color = muted)
