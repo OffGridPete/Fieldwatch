@@ -114,4 +114,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+    // Real org.json on the JVM test classpath; the android.jar bundled JSONObject is a stub.
+    testImplementation("org.json:json:20240303")
 }
