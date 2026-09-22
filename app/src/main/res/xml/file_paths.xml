@@ -4,4 +4,5 @@
     <cache-path name="debrief" path="debrief/" />
     <cache-path name="signatures" path="signatures/" />
     <cache-path name="settings" path="settings/" />
+    <cache-path name="export" path="export/" />
 </paths>

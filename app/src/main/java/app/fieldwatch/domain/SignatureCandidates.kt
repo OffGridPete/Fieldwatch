@@ -586,37 +586,6 @@ object SignatureCandidates {
         return false
     }
 
-    private fun LogRadio.toSighting(): Sighting = Sighting(
-        key = key,
-        kind = kind,
-        mac = mac,
-        name = name,
-        rssi = rssi,
-        rssiMin = rssi,
-        rssiMax = rssi,
-        channel = 0,
-        frequencyMhz = 0,
-        vendor = vendor,
-        randomized = randomized,
-        hiddenSsid = hiddenSsid,
-        serviceUuids = serviceUuids,
-        manufacturerId = manufacturerId,
-        manufacturerDataHex = manufacturerDataHex,
-        rawHex = manufacturerDataHex,
-        extras = "",
-        firstSeen = firstSeen,
-        lastSeen = lastSeen,
-        hitCount = hits,
-        fleetIds = emptySet(),
-        rssiHistory = emptyList(),
-        presence = emptyList(),
-        vendorIeOuis = vendorIeOuis,
-        facts = RadioFacts(
-            mfgRecords = manufacturerId?.let { listOf(MfgRecord(it, manufacturerDataHex)) } ?: emptyList(),
-            vendorIes = vendorIeOuis.map { VendorIeRecord(it, -1, "") },
-        ),
-    )
-
     private fun LogRadio.exampleLabel(): String {
         val n = name.trim()
         if (n.isNotEmpty() && !n.equals(mac, ignoreCase = true) && !hiddenSsid) return n

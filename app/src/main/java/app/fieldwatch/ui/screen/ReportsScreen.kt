@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.fieldwatch.domain.GeoExport
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
@@ -203,6 +204,35 @@ fun ReportsScreen(
             ) { Text("AI Export") }
             Text(
                 "Paste-ready prompt: the onboard Debrief plus working data, asking a chat for statistical analysis and depth the phone report cannot do.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            }
+
+            SectionCard("Map export") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FieldwatchActionButton(
+                    onClick = { vm.startGeoExport(GeoExport.Format.GPX) },
+                    enabled = !exporting,
+                    modifier = Modifier.weight(1f),
+                ) { Text("GPX") }
+                FieldwatchActionButton(
+                    onClick = { vm.startGeoExport(GeoExport.Format.KML) },
+                    enabled = !exporting,
+                    modifier = Modifier.weight(1f),
+                ) { Text("KML") }
+                FieldwatchActionButton(
+                    onClick = { vm.startGeoExport(GeoExport.Format.WIGLE) },
+                    enabled = !exporting,
+                    modifier = Modifier.weight(1f),
+                ) { Text("WiGLE CSV") }
+            }
+            Text(
+                "One pin per logged radio, where this phone heard it — not the radio's fix. Needs Settings → Tag location. GPX/KML open in map apps; WiGLE CSV uploads to wigle.net." +
+                    if (settings.demoMode) " Full MACs and coordinates, same as the log file." else "",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

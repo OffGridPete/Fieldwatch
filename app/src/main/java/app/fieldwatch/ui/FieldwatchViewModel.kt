@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,7 @@ import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterPreset
 import app.fieldwatch.domain.FilterState
 import app.fieldwatch.domain.Fleet
+import app.fieldwatch.domain.GeoExport
 import app.fieldwatch.domain.Hunt
 import app.fieldwatch.domain.HuntCue
 import app.fieldwatch.domain.FamilyVerdict
@@ -57,6 +59,7 @@ import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.domain.WatchTarget
+import app.fieldwatch.domain.toSighting
 import app.fieldwatch.domain.DebriefWindow
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitUi
@@ -1275,6 +1278,63 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }.onFailure { err ->
                 _export.value = ExportUi(error = err.message ?: "Could not write debrief")
+            }
+        }
+    }
+
+    fun startGeoExport(format: GeoExport.Format) {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            _export.value = busy("Reading log…")
+            runCatching {
+                val radios = app.logs.readRadios()
+                if (radios.none { it.hasPosition }) {
+                    _export.value = ExportUi(
+                        noticeTitle = "No GPS points yet",
+                        noticeMessage = "Map exports pin each radio where this phone heard it. Turn on Settings → Tag location, scan a while, then try again.",
+                    )
+                    return@launch
+                }
+                _export.value = busy("Matching signatures…")
+                val fleets = app.config.fleets
+                val names = withContext(Dispatchers.Default) {
+                    signatures.match(radios.map { it.toSighting() }, fleets)
+                        .mapValues { (_, ids) -> ids.map { id -> fleetName(id) }.sorted() }
+                }
+                _export.value = busy("Writing ${format.label}…")
+                val text = withContext(Dispatchers.Default) {
+                    GeoExport.render(
+                        format = format,
+                        radios = radios,
+                        names = names,
+                        appVersion = BuildConfig.VERSION_NAME,
+                        deviceInfo = "model=${Build.MODEL},release=${Build.VERSION.RELEASE}," +
+                            "device=${Build.DEVICE},display=${Build.DISPLAY}," +
+                            "board=${Build.BOARD},brand=${Build.BRAND}",
+                    )
+                }
+                val dir = File(app.cacheDir, "export").apply { mkdirs() }
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                    .format(java.util.Date())
+                val file = File(dir, GeoExport.suggestedName(format, stamp))
+                withContext(Dispatchers.IO) { file.writeText(text) }
+                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+                Intent(Intent.ACTION_SEND).apply {
+                    type = format.mime
+                    clipData = ClipData.newRawUri(format.label, uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch ${format.label} export")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(
+                    active = false,
+                    progress = 1f,
+                    share = intent,
+                    shareTitle = "${format.label} export",
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(error = err.message ?: "Could not write ${format.label} export")
             }
         }
     }

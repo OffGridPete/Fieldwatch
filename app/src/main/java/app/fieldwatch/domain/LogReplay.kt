@@ -19,9 +19,51 @@ data class LogRadio(
     val firstSeen: Long,
     val lastSeen: Long,
     val hits: Int,
+    val channel: Int = 0,
+    val frequencyMhz: Int = 0,
+    val security: String? = null,
+    /** This phone's position when the radio was last heard — not the radio's fix. */
+    val latitude: Double? = null,
+    val longitude: Double? = null,
 ) {
     val key: String get() = "${kind.name}:$mac"
+    val hasPosition: Boolean get() = latitude != null && longitude != null
 }
+
+/** Live-free view of a logged radio for signature matching and decoders. */
+fun LogRadio.toSighting(): Sighting = Sighting(
+    key = key,
+    kind = kind,
+    mac = mac,
+    name = name,
+    rssi = rssi,
+    rssiMin = rssi,
+    rssiMax = rssi,
+    channel = channel,
+    frequencyMhz = frequencyMhz,
+    vendor = vendor,
+    randomized = randomized,
+    hiddenSsid = hiddenSsid,
+    serviceUuids = serviceUuids,
+    manufacturerId = manufacturerId,
+    manufacturerDataHex = manufacturerDataHex,
+    rawHex = manufacturerDataHex,
+    extras = "",
+    firstSeen = firstSeen,
+    lastSeen = lastSeen,
+    hitCount = hits,
+    fleetIds = emptySet(),
+    rssiHistory = emptyList(),
+    presence = emptyList(),
+    latitude = latitude,
+    longitude = longitude,
+    vendorIeOuis = vendorIeOuis,
+    facts = RadioFacts(
+        mfgRecords = manufacturerId?.let { listOf(MfgRecord(it, manufacturerDataHex)) } ?: emptyList(),
+        vendorIes = vendorIeOuis.map { VendorIeRecord(it, -1, "") },
+        security = security,
+    ),
+)
 
 /** Parse rotating / exported Fieldwatch logs into unique radios. */
 object LogReplay {
@@ -93,6 +135,11 @@ object LogReplay {
                 firstSeen = ts,
                 lastSeen = ts,
                 hits = 1,
+                channel = col("channel").toIntOrNull() ?: 0,
+                frequencyMhz = col("freq").toIntOrNull() ?: 0,
+                security = col("sec").trim().ifBlank { null },
+                latitude = col("lat").toDoubleOrNull(),
+                longitude = col("lon").toDoubleOrNull(),
             ),
         )
     }
@@ -115,6 +162,8 @@ object LogReplay {
         }
         val ts = obj.optLong("ts", 0L)
         val rand = obj.optBoolean("rand", MacUtil.isRandomized(mac))
+        fun coord(key: String): Double? =
+            if (obj.has(key) && !obj.isNull(key)) obj.optDouble(key).takeIf { it.isFinite() } else null
         merge(
             acc,
             LogRadio(
@@ -132,6 +181,11 @@ object LogReplay {
                 firstSeen = ts,
                 lastSeen = ts,
                 hits = 1,
+                channel = obj.optInt("channel", 0),
+                frequencyMhz = obj.optInt("freq", 0),
+                security = str("sec").ifBlank { null },
+                latitude = coord("lat"),
+                longitude = coord("lon"),
             ),
         )
     }
@@ -155,11 +209,17 @@ object LogReplay {
             firstSeen = if (prev.firstSeen == 0L) row.firstSeen else minOf(prev.firstSeen, row.firstSeen),
             lastSeen = maxOf(prev.lastSeen, row.lastSeen),
             hits = prev.hits + row.hits,
+            channel = if (row.channel != 0) row.channel else prev.channel,
+            frequencyMhz = if (row.frequencyMhz != 0) row.frequencyMhz else prev.frequencyMhz,
+            security = row.security ?: prev.security,
+            latitude = row.latitude ?: prev.latitude,
+            longitude = row.longitude ?: prev.longitude,
         )
     }
 
     private val DEFAULT_CSV_HEADER = listOf(
         "timestamp", "iso", "kind", "mac", "name", "rssi", "channel", "freq",
-        "oui", "vendor", "fleets", "mfg", "uuids", "flags", "raw", "lat", "lon", "vendor_ie",
+        "oui", "vendor", "fleets", "mfg", "uuids", "flags", "raw", "lat", "lon",
+        "vendor_ie", "sec",
     )
 }

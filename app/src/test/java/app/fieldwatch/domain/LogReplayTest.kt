@@ -97,4 +97,49 @@ class LogReplayTest {
         val log = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:06","mfg":null}"""
         assertNull(LogReplay.parse(log).single().manufacturerId)
     }
+
+    @Test
+    fun csvRowsKeepPositionChannelAndSecurity() {
+        // New-format rows: "sec" is the trailing column added after vendor_ie.
+        val log = csvHeader.trimEnd('\n') + ",sec\n" +
+            "1000,iso,WIFI,00:11:22:33:44:55,CafeWiFi,-70,6,2437,,Cisco,,,,,,48.8566,2.3522,,RSN PSK CCMP\n" +
+            "2000,iso,WIFI,00:11:22:33:44:55,,,,,,,,,,,,,,\n"
+        val r = LogReplay.parse(log).single()
+        assertEquals(48.8566, r.latitude!!, 0.0001)
+        assertEquals(2.3522, r.longitude!!, 0.0001)
+        assertEquals(6, r.channel)
+        assertEquals(2437, r.frequencyMhz)
+        assertEquals("RSN PSK CCMP", r.security)
+        assertTrue(r.hasPosition)
+    }
+
+    @Test
+    fun jsonRowsKeepPositionAndSecurity() {
+        val log = """
+            {"ts":500,"kind":"WIFI","mac":"00:11:22:33:44:66","rssi":-60,"channel":11,"lat":48.85,"lon":2.35,"sec":"RSN SAE CCMP"}
+            {"ts":900,"kind":"WIFI","mac":"00:11:22:33:44:66","lat":null,"lon":null}
+        """.trimIndent()
+        val r = LogReplay.parse(log).single()
+        assertEquals(48.85, r.latitude!!, 0.001)
+        assertEquals(2.35, r.longitude!!, 0.001)
+        assertEquals(11, r.channel)
+        assertEquals("RSN SAE CCMP", r.security)
+        assertEquals(2, r.hits)
+    }
+
+    @Test
+    fun toSightingCarriesRadioFields() {
+        val r = LogReplay.parse(
+            csvHeader +
+                "1000,iso,WIFI,00:11:22:33:44:77,AP,-70,36,5180,,Acme,,,,,,48.1,2.1,,\n",
+        ).single()
+        val s = r.toSighting()
+        assertEquals(r.key, s.key)
+        assertEquals(36, s.channel)
+        assertEquals(5180, s.frequencyMhz)
+        assertEquals(48.1, s.latitude!!, 0.001)
+        assertEquals(r.rssi, s.rssiMin)
+        assertEquals(r.rssi, s.rssiMax)
+        assertEquals(r.hits, s.hitCount)
+    }
 }
