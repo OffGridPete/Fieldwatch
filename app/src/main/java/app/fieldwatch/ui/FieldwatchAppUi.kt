@@ -49,6 +49,7 @@ import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.AlertDialog
@@ -117,6 +118,7 @@ import app.fieldwatch.domain.disclaimerOk
 import app.fieldwatch.radio.RadioPermissions
 import app.fieldwatch.ui.screen.DeviceDetailScreen
 import app.fieldwatch.ui.screen.HuntScreen
+import app.fieldwatch.ui.screen.MapScreen
 import app.fieldwatch.ui.screen.FiltersScreen
 import app.fieldwatch.ui.screen.FleetsScreen
 import app.fieldwatch.ui.screen.LivePane
@@ -375,7 +377,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     expandedHeight = 52.dp,
                     title = {
                         val screenW = LocalConfiguration.current.screenWidthDp.dp
-                        val actionW = if (route == "live") 56.dp else 16.dp
+                        val actionW = if (route == "live") 104.dp else 48.dp
                         Column(
                             modifier = Modifier
                                 .widthIn(max = (screenW - 20.dp - actionW).coerceAtLeast(120.dp))
@@ -430,6 +432,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         }
                     },
                     actions = {
+                        IconButton(onClick = { nav.navigate("map") { launchSingleTop = true } }) {
+                            Icon(Icons.Outlined.Map, "Offline map")
+                        }
                         if (route == "live") {
                             IconButton(
                                 onClick = {
@@ -624,6 +629,17 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             composable("filters") { FiltersScreen(state, vm) }
+            composable("map") {
+                MapScreen(
+                    state = state,
+                    vm = vm,
+                    demoMode = state.settings.demoMode,
+                    onOpen = { key ->
+                        vm.select(key)
+                        nav.navigate("detail")
+                    },
+                )
+            }
             composable("reports") {
                 ReportsScreen(
                     state = state,

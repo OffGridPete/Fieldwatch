@@ -40,6 +40,7 @@ import app.fieldwatch.domain.FamilyVerdict
 import app.fieldwatch.domain.LogRadio
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.RssiSample
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.SignatureCandidate
@@ -1673,6 +1674,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun hasAttention(device: Sighting): Boolean =
         device.fleetIds.any { fleetAttentionNote(it).isNotBlank() }
+
+    /** Operator GPS track while scanning. Snapshot — the map re-reads on recomposition. */
+    fun operatorPath(): List<GpsSample> = app.operatorPathCopy()
 
     fun fleetHasDecode(id: String): Boolean =
         app.config.fleets.firstOrNull { it.id == id }?.decode != null
