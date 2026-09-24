@@ -1,7 +1,9 @@
 package app.fieldwatch.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RadioBookmarksTest {
@@ -90,6 +92,43 @@ class RadioBookmarksTest {
         val unnamed = ble(name = "")
         assertEquals("unnamed LE", RadioBookmarks.suggestLabel(unnamed))
     }
+
+    @Test
+    fun wifiLocalBitBssidCanTakeACustomName() {
+        val ap = wifi(mac = "02:0A:F5:86:56:DD", randomized = true)
+        assertTrue(RadioBookmarks.canSetCustomName(ap))
+        assertTrue(RadioBookmarks.customNameHint(ap).contains("BSSID"))
+        val burned = wifi(mac = "00:0A:F5:86:56:DD", randomized = false)
+        assertTrue(RadioBookmarks.canSetCustomName(burned))
+        val rotatingBle = ble(name = "tag")
+        assertFalse(RadioBookmarks.canSetCustomName(rotatingBle))
+    }
+
+    private fun wifi(mac: String, randomized: Boolean) = Sighting(
+        key = "WIFI:$mac",
+        kind = RadioKind.WIFI,
+        mac = mac,
+        name = "PS-CRADLEPOINT",
+        rssi = -50,
+        rssiMin = -50,
+        rssiMax = -50,
+        channel = 1,
+        frequencyMhz = 2412,
+        vendor = null,
+        randomized = randomized,
+        hiddenSsid = false,
+        serviceUuids = emptyList(),
+        manufacturerId = null,
+        manufacturerDataHex = "",
+        rawHex = "",
+        extras = "",
+        firstSeen = 1L,
+        lastSeen = 1L,
+        hitCount = 1,
+        fleetIds = emptySet(),
+        rssiHistory = emptyList(),
+        presence = emptyList(),
+    )
 
     private fun ble(name: String) = Sighting(
         key = "BLE:AA:BB:CC:DD:EE:FF",

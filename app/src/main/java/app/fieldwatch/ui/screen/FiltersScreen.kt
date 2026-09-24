@@ -332,8 +332,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             SectionCard("Signature classes") {
             Text(
                 "Live only — signatures still label, log, and can beep. " +
-                    "Trackers / Hide trackers / Hide phones presets pick a class here. " +
-                    "Cameras, Drones, and the rest are these chips — Show only, then Save current as… if you want a preset. " +
+                    "Cameras, Drones, Finder tags, and the rest are these chips — Show only, then Save current as… if you want a preset. " +
                     "Show only with no class picked leaves Live unchanged.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

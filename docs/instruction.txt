@@ -188,11 +188,12 @@ Max collection (battery is the cost) — full walk-through:
                each row looks. Presets at the top (two across): tap one to replace the
                whole filter. Save current as… keeps a named copy.
                  All traffic, Wi-Fi only, BLE only, Strong signal (−70 dBm),
-                 Moving with you, Trackers, Hide trackers, Hide phones.
-               Trackers = Show only Finder tags (BLE). Hide phones = Hide these
-               Phones / PCs. Cameras / Drones / Surveillance and the rest are
-               class chips further down — Show only, then Save current as… if
-               you want a named preset. Live only — matching always labels.
+                 Moving with you, Watched only.
+               Watched only = bookmarked signatures and Named radios with
+               Alert on. Cameras / Drones / Finder tags / Phones / PCs and the
+               rest are class chips further down — Show only, then Save
+               current as… if you want a named preset. Live only — matching
+               always labels.
                Moving with you sits under Radios to show;
                New detections only sits under it. Signatures only, Watched
                only, and Named radios only sit just above the class chips.
@@ -356,12 +357,12 @@ following are educated guesses, not legal findings.
   • Tap a Live row: Share as text, AI Export, or (BLE) Hunt to walk toward
     it by loudness. Body-block turn for a crude heading; walls/metal/floors
     change RSSI without a change in range. Not meters. Manual §12.8 / §12.13.
-  • Unknown tracker: Filters → Trackers, hide your own tags, and hold the
-    phone at likely hiding spots (each wheel, bumpers, cabin). If a row
-    jumps to the top, open Hunt and repeat. A quiet sweep does not mean
-    the area is clean. §12.8. If you want to know whether something stayed
-    with you, Reports → Debrief still has the last 15 minutes of that test,
-    even after you leave the Trackers filter.
+  • Unknown tracker: Filters → Show only Finder tags, hide your own tags,
+    and hold the phone at likely hiding spots (each wheel, bumpers, cabin).
+    If a row jumps to the top, open Hunt and repeat. A quiet sweep does not
+    mean the area is clean. §12.8. If you want to know whether something
+    stayed with you, Reports → Debrief still has the last 15 minutes of
+    that test, even after you leave the Finder-tags filter.
   • After ~15 minutes, or at each stop on a drive: Reports → Debrief
     (text) or Debrief (PDF). Keep those shares — each file is that
     window, not the whole trip. City RF can fill ~400 live radios in a

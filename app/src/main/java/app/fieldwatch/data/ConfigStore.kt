@@ -887,6 +887,30 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V72
         }
+        if (version < CATALOG_V73) {
+            fleets = fleets.filterNot { it.builtIn && it.id == "fleet-unknown" }
+            watchlist = watchlist.filterNot { it.fleetId == "fleet-unknown" }
+            version = CATALOG_V73
+        }
+        if (version < CATALOG_V74) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V74.mapNotNull { catalog[it] }.filter { it.id !in have }
+            fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            val watched = watchlist.mapNotNull { it.fleetId }.toSet()
+            val watchExtras = DefaultCatalog.defaultWatchlist().filter { it.fleetId !in watched }
+            if (watchExtras.isNotEmpty()) watchlist = watchlist + watchExtras
+            version = CATALOG_V74
+        }
+        if (version < CATALOG_V75) {
+            val stockPresets = FilterEngine().defaultPresets(fleets)
+            val stockNames = stockPresets.map { it.name.lowercase() }.toSet()
+            val stockFilters = stockPresets.map { it.filter }.toSet()
+            val custom = presets.filterNot { it.isBuiltIn() }.filterNot { saved ->
+                saved.name.lowercase() in stockNames || saved.filter in stockFilters
+            }
+            presets = stockPresets + custom
+            version = CATALOG_V75
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -931,7 +955,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 72
+        const val CATALOG_VERSION = 75
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1002,13 +1026,15 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V69 = 69
         private const val CATALOG_V70 = 70
         private const val CATALOG_V71 = 71
-        private const val CATALOG_V72 = CATALOG_VERSION
+        private const val CATALOG_V72 = 72
+        private const val CATALOG_V73 = 73
+        private const val CATALOG_V74 = 74
+        private const val CATALOG_V75 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
             "fleet-raven",
             "fleet-fs-ext-battery",
-            "fleet-unknown",
             "fleet-penguin",
             "fleet-pigvision",
         )
@@ -1297,6 +1323,22 @@ class ConfigStore(context: Context) {
             "fleet-rak-wisgate",
             "fleet-ghostesp",
             "fleet-bruce",
+        )
+        private val ADDED_IN_V74 = listOf(
+            "fleet-digital-ally",
+            "fleet-reveal-media",
+            "fleet-wolfcom",
+            "fleet-panasonic-ipro",
+            "fleet-limitless",
+            "fleet-bee",
+            "fleet-omi",
+            "fleet-friend-pendant",
+            "fleet-brilliant-frame",
+            "fleet-even-g1",
+            "fleet-hayden-ai",
+            "fleet-miovision",
+            "fleet-tattile",
+            "fleet-lvt",
         )
     }
 }

@@ -141,8 +141,7 @@ fun DeviceDetailScreen(
             var editingName by remember(device.key) { mutableStateOf(false) }
             val draftLabel = RadioBookmarks.clip(nameDraft)
             val nameIsSaved = lastSaved.isNotBlank() && draftLabel == lastSaved
-            val randomMac = device.randomized ||
-                device.facts.addressType.equals("Random", ignoreCase = true)
+            val canName = RadioBookmarks.canSetCustomName(device)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     if (device.name.isNotBlank()) {
@@ -172,7 +171,7 @@ fun DeviceDetailScreen(
                         )
                     }
                 }
-                if (!randomMac) {
+                if (canName) {
                     IconButton(onClick = { editingName = !editingName }) {
                         Icon(
                             Icons.Outlined.Edit,
@@ -181,12 +180,12 @@ fun DeviceDetailScreen(
                     }
                 }
             }
-            if (editingName && !randomMac) {
+            if (editingName && canName) {
                 FieldwatchOutlinedField(
                     value = nameDraft,
                     onValueChange = { nameDraft = it.take(RadioBookmarks.MAX_NAME) },
                     label = "Custom name",
-                    supportingText = "Shows on Live. Bookmark (top-right) is the alert; this does not turn it on.",
+                    supportingText = RadioBookmarks.customNameHint(device),
                 )
                 FieldwatchActionButton(
                     onClick = {

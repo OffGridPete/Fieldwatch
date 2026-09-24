@@ -1,5 +1,6 @@
 package app.fieldwatch.domain
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -9,6 +10,23 @@ class FilterEngineTest {
     private val labeled = ble("BLE:AA:BB:CC:DD:EE:FF")
     private val other = ble("BLE:11:22:33:44:55:66")
     private val signed = labeled.copy(fleetIds = setOf("fleet-airtag"))
+
+    @Test
+    fun stockPresetsMatchShortSetWithWatchedOnly() {
+        val presets = engine.defaultPresets()
+        assertEquals(
+            listOf("all", "wifi", "ble", "strong", "with-you", "watched"),
+            presets.map { it.id },
+        )
+        val watched = presets.single { it.id == "watched" }
+        assertEquals("Watched only", watched.name)
+        assertTrue(watched.filter.watchedOnly)
+        assertTrue(watched.filter.showWifi)
+        assertTrue(watched.filter.showBle)
+        assertEquals(-100, watched.filter.rssiMin)
+        assertTrue(watched.isBuiltIn())
+        assertTrue(FilterPreset("trackers", "Trackers", FilterState()).isBuiltIn())
+    }
 
     @Test
     fun customNamesOnlyKeepsLabeledKeys() {

@@ -236,6 +236,10 @@ object SignatureExchange {
                 updated++
             }
         }
+        val incomingIds = stockIn.map { it.id }.toSet()
+        if ("fleet-unknown" !in incomingIds) {
+            next.removeAll { it.builtIn && it.id == "fleet-unknown" }
+        }
         val sorted = next.sortedBy { it.name.lowercase() }
         return sorted to StockCatalogUpdateResult(added = added, updated = updated)
     }

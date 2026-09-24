@@ -49,6 +49,25 @@ object RadioBookmarks {
 
     fun clip(name: String): String = name.trim().take(MAX_NAME).ifBlank { "Radio" }
 
+    /**
+     * BLE privacy addresses rotate; a name would stick to a dead key.
+     * Wi-Fi local-bit BSSIDs (guest / mesh / vehicle APs) usually stay put.
+     */
+    fun canSetCustomName(device: Sighting): Boolean {
+        if (device.kind == RadioKind.WIFI) return true
+        if (device.facts.addressType.equals("Random", ignoreCase = true)) return false
+        return !device.randomized
+    }
+
+    fun customNameHint(device: Sighting): String {
+        val base = "Shows on Live. Bookmark (top-right) is the alert; this does not turn it on."
+        return if (device.kind == RadioKind.WIFI && device.randomized) {
+            "$base Pinned to this BSSID. Vehicle, mesh, and guest APs often keep a locally administered address."
+        } else {
+            base
+        }
+    }
+
     fun rename(watchlist: List<WatchTarget>, id: String, name: String): List<WatchTarget> {
         val label = clip(name)
         return watchlist.map { row ->

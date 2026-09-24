@@ -84,7 +84,6 @@ object DefaultCatalog {
         penguin(),
         pigvision(),
         fsExtBattery(),
-        unknownFleet(),
         appleDevice(),
         appleAudio(),
         microsoftDevice(),
@@ -266,14 +265,24 @@ object DefaultCatalog {
         rekor(),
         axon(),
         watchGuardVideo(),
+        digitalAlly(),
+        revealMedia(),
+        wolfcom(),
+        panasonicIpro(),
         avigilon(),
         axis(),
+        haydenAi(),
+        miovision(),
+        tattile(),
+        liveViewLvt(),
         unifi(),
         unifiAp(),
         unifiProtect(),
         hobbyBleSerial(),
         metaGlasses(),
         snapSpectacles(),
+        brilliantFrame(),
+        evenG1(),
         hak5Pineapple(),
         flipperZero(),
         pwnagotchi(),
@@ -288,6 +297,10 @@ object DefaultCatalog {
         ecoWater(),
         fieldy(),
         plaud(),
+        limitlessPendant(),
+        beePendant(),
+        omiPendant(),
+        friendPendant(),
         retailLedSign(),
         electronicShelfLabel(),
         honeywellXenonHc(),
@@ -536,23 +549,6 @@ object DefaultCatalog {
                 "90:35:EA",
             ).forEach { add(oui(it)) }
         },
-    )
-
-    private fun unknownFleet() = Fleet(
-        id = "fleet-unknown",
-        name = "Unknown Signature",
-        enabled = true,
-        colorIndex = Hue.HOME_CAM,
-        kind = SignatureClass.OTHER,
-        matchAny = true,
-        notes = "Generic hotspot or dev-board name (ESP_, ANDROID-, DIRECT-, UNIT-). Catch-all, not a product family. Hide it if those names are local noise.",
-        builtIn = true,
-        rules = listOf(
-            glob("ESP_*"),
-            name("ANDROID-"),
-            name("DIRECT-"),
-            name("UNIT-"),
-        ),
     )
 
     private fun appleDevice() = Fleet(
@@ -2602,6 +2598,83 @@ object DefaultCatalog {
         ),
     )
 
+    private fun digitalAlly() = Fleet(
+        id = "fleet-digital-ally",
+        name = "Digital Ally",
+        enabled = true,
+        colorIndex = Hue.LAW,
+        kind = SignatureClass.LAW_ENFORCEMENT,
+        matchAny = true,
+        notes = "Digital Ally body-worn or in-car camera (FirstVu / EVO). Quiet or LTE-only units will not appear.",
+        attentionNote = "Digital Ally body-worn or in-car (FirstVu / EVO family). IEEE OUI 00:23:BD is Digital Ally, Inc. — camera gear, not a chip vendor. Patrol units may stay on LTE and stay quiet. Pattern match, not that officer. Look with your eyes. Not identity.",
+        builtIn = true,
+        rules = listOf(
+            oui("00:23:BD"),
+            name("Digital Ally"),
+            glob("DigitalAlly*"),
+            name("FirstVu"),
+            glob("FirstVu*"),
+            name("EVO-HD"),
+            name("VuLink"),
+        ),
+    )
+
+    private fun revealMedia() = Fleet(
+        id = "fleet-reveal-media",
+        name = "Reveal Media",
+        enabled = true,
+        colorIndex = Hue.LAW,
+        kind = SignatureClass.LAW_ENFORCEMENT,
+        matchAny = true,
+        notes = "Reveal Media / BodyWorn camera. Common in UK and some US agencies. Quiet units will not appear.",
+        attentionNote = "Reveal Media body-worn camera (D-series / BodyWorn). Name-only when advertised. Patrol units may stay quiet. Pattern match, not that officer. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("Reveal Media"),
+            glob("Reveal D*"),
+            glob("Reveal-D*"),
+            name("BodyWorn"),
+            glob("BodyWorn*"),
+            glob("RS2-*"),
+        ),
+    )
+
+    private fun wolfcom() = Fleet(
+        id = "fleet-wolfcom",
+        name = "Wolfcom",
+        enabled = true,
+        colorIndex = Hue.LAW,
+        kind = SignatureClass.LAW_ENFORCEMENT,
+        matchAny = true,
+        notes = "Wolfcom body-worn or in-car camera. Quiet units will not appear.",
+        attentionNote = "Wolfcom body-worn or in-car camera. Name-only when advertised. Patrol units may stay quiet. Pattern match, not that officer. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("Wolfcom"),
+            glob("Wolfcom*"),
+            glob("WOLFCOM*"),
+        ),
+    )
+
+    private fun panasonicIpro() = Fleet(
+        id = "fleet-panasonic-ipro",
+        name = "Panasonic i-PRO",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Panasonic i-PRO camera or Arbitrator in-car system. Panasonic TVs and phones use other names.",
+        attentionNote = "Panasonic i-PRO camera or Arbitrator in-car video. Used on buildings and some patrol cars — video and sometimes plates. Name-only (i-PRO / Arbitrator). Not every Panasonic radio. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("i-PRO"),
+            glob("i-PRO*"),
+            glob("iPRO*"),
+            name("Arbitrator"),
+            glob("Arbitrator*"),
+        ),
+    )
+
     private fun avigilon() = Fleet(
         id = "fleet-avigilon",
         name = "Avigilon",
@@ -2633,6 +2706,73 @@ object DefaultCatalog {
             glob("Axis-*"),
             name("AXIS-"),
             name("Axis Camera"),
+        ),
+    )
+
+    private fun haydenAi() = Fleet(
+        id = "fleet-hayden-ai",
+        name = "Hayden AI",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Hayden AI bus- or vehicle-mounted camera used for parking and traffic enforcement.",
+        attentionNote = "Hayden AI cameras ride on buses and city vehicles — video and plates. Name-only when advertised. LTE-only units will not appear. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("Hayden AI"),
+            glob("HaydenAI*"),
+            glob("Hayden-AI*"),
+        ),
+    )
+
+    private fun miovision() = Fleet(
+        id = "fleet-miovision",
+        name = "Miovision",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Miovision intersection / traffic camera (SmartLink / Scout).",
+        attentionNote = "Miovision traffic cameras at intersections. Video and sometimes plates. Name-only when advertised. Many units are cellular-only and stay quiet. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("Miovision"),
+            glob("Miovision*"),
+        ),
+    )
+
+    private fun tattile() = Fleet(
+        id = "fleet-tattile",
+        name = "Tattile",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "Tattile ALPR camera, common on European roads and some US sites.",
+        attentionNote = "Tattile plate readers on roads and at gates. Name-only when advertised. Pattern match, not that camera. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("Tattile"),
+            glob("Tattile*"),
+        ),
+    )
+
+    private fun liveViewLvt() = Fleet(
+        id = "fleet-lvt",
+        name = "LVT LiveView",
+        enabled = true,
+        colorIndex = Hue.SURVEILLANCE,
+        kind = SignatureClass.SURVEILLANCE,
+        matchAny = true,
+        notes = "LiveView Technologies (LVT) solar surveillance trailer. Most units are cellular-only and will not appear.",
+        attentionNote = "LVT / LiveView solar camera trailer — parking lots, construction, some city parks. Video and sometimes plates. Most units use cellular and stay quiet on Wi-Fi/BLE. A LiveView or LVT- name is a pattern, not that trailer. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            name("LiveView"),
+            glob("LiveView*"),
+            glob("LVT-*"),
+            glob("LVT_*"),
         ),
     )
 
@@ -2752,6 +2892,39 @@ object DefaultCatalog {
             bleName("Snap Spectacles"),
             bleName("Spectacles"),
             bleGlob("Spectacles*"),
+        ),
+    )
+
+    private fun brilliantFrame() = Fleet(
+        id = "fleet-brilliant-frame",
+        name = "Brilliant Frame",
+        enabled = true,
+        colorIndex = Hue.GLASSES,
+        kind = SignatureClass.GLASSES,
+        matchAny = true,
+        notes = "Brilliant Labs Frame AR glasses.",
+        attentionNote = "Brilliant Labs Frame AR glasses. BLE service 7A230001. Not proof someone is recording. A miss is not a clean bill (off, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            uuid("7A230001-5475-A6A4-654C-576174636800"),
+            bleName("Brilliant Frame"),
+            bleGlob("Brilliant Frame*"),
+        ),
+    )
+
+    private fun evenG1() = Fleet(
+        id = "fleet-even-g1",
+        name = "Even G1",
+        enabled = true,
+        colorIndex = Hue.GLASSES,
+        kind = SignatureClass.GLASSES,
+        matchAny = true,
+        notes = "Even Realities G1 glasses. Name-only (Even G1). Nordic UART is too common to use as a rule.",
+        attentionNote = "Even Realities G1 glasses. Name-only when advertised (Even G1). Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            bleName("Even G1"),
+            bleGlob("Even G1*"),
         ),
     )
 
@@ -2998,6 +3171,76 @@ object DefaultCatalog {
         ),
     )
 
+    private fun limitlessPendant() = Fleet(
+        id = "fleet-limitless",
+        name = "Limitless Pendant",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Limitless / Rewind AI pendant — wearable conversation recorder.",
+        attentionNote = "Limitless Pendant wearable recorder. BLE service 632de001. It records conversations. Not proof someone is recording you. A miss is not a clean bill (off, paired and quiet, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            uuid("632DE001-604C-446B-A80F-7963E950F3FB"),
+            bleName("Limitless"),
+            bleGlob("Limitless*"),
+        ),
+    )
+
+    private fun beePendant() = Fleet(
+        id = "fleet-bee",
+        name = "Bee Pendant",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Bee Pioneer wearable recorder (now Amazon). Always-on audio capture.",
+        attentionNote = "Bee Pioneer wearable recorder (Amazon). BLE service 03d5d5c4. It records conversations. Not proof someone is recording you. A miss is not a clean bill (off, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            uuid("03D5D5C4-A86C-11EE-9D89-8F2089A49E7E"),
+            bleName("Bee Pioneer"),
+            bleGlob("Bee Pioneer*"),
+        ),
+    )
+
+    private fun omiPendant() = Fleet(
+        id = "fleet-omi",
+        name = "Omi",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Omi / OpenGlass wearable recorder or camera glasses. Arduino-default 19B10000 is too common to use as a rule.",
+        attentionNote = "Omi pendant or OpenGlass camera glasses. Name or BLE service 23ba7924. It can record audio (OpenGlass also has a camera). Not proof someone is recording you. A miss is not a clean bill (off, renamed, or a DIY board using other names). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            uuid("23BA7924-0000-1000-7450-346EAC492E92"),
+            bleGlob("Omi"),
+            bleGlob("Omi-*"),
+            bleName("OpenGlass"),
+            bleGlob("OpenGlass*"),
+        ),
+    )
+
+    private fun friendPendant() = Fleet(
+        id = "fleet-friend-pendant",
+        name = "Friend Pendant",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Friend AI necklace — wearable companion that listens.",
+        attentionNote = "Friend Pendant / necklace. BLE service 1a3fd0e7. It listens to conversations. Not proof someone is recording you. A miss is not a clean bill (off, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            uuid("1A3FD0E7-B1F3-AC9E-2E49-B647B2C4F8DA"),
+            bleName("Friend Pendant"),
+            bleGlob("Friend Pendant*"),
+        ),
+    )
+
     private fun retailLedSign() = Fleet(
         id = "fleet-retail-led-sign",
         name = "Retail LED sign",
@@ -3137,7 +3380,7 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Epson EcoTank or WorkForce printer (Wi-Fi Direct or BLE). DIRECT- names also hit Unknown Signature.",
+        notes = "Epson EcoTank or WorkForce printer (Wi-Fi Direct or BLE).",
         builtIn = true,
         rules = listOf(
             wifiGlob("*EPSON-ET-*"),

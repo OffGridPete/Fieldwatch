@@ -60,12 +60,6 @@ class FilterEngine {
     }
 
     fun defaultPresets(@Suppress("UNUSED_PARAMETER") fleets: List<Fleet> = emptyList()): List<FilterPreset> {
-        fun only(kind: SignatureClass, bleOnly: Boolean = false) = FilterState(
-            useClassFilter = true,
-            classes = setOf(kind),
-            showWifi = !bleOnly,
-            showBle = true,
-        )
         return listOf(
             FilterPreset("all", "All traffic", FilterState()),
             FilterPreset("wifi", "Wi-Fi only", FilterState(showBle = false)),
@@ -76,16 +70,10 @@ class FilterEngine {
                 "Moving with you",
                 FilterState(movingWithYou = true, showWifi = false),
             ),
-            FilterPreset("trackers", "Trackers", only(SignatureClass.FINDER, bleOnly = true)),
             FilterPreset(
-                "hide-trackers",
-                "Hide trackers",
-                FilterState(useClassFilter = true, excludeClasses = true, classes = setOf(SignatureClass.FINDER)),
-            ),
-            FilterPreset(
-                "hide-phones",
-                "Hide phones",
-                FilterState(useClassFilter = true, excludeClasses = true, classes = setOf(SignatureClass.PHONE)),
+                "watched",
+                "Watched only",
+                FilterState(watchedOnly = true),
             ),
         )
     }

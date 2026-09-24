@@ -385,7 +385,7 @@ fun FleetEditor(
                 }
             }
             Text(
-                "Filters → Show only / Hide these. Trackers / Hide trackers / Hide phones presets pick a class.",
+                "Filters → Show only / Hide these. Class sits (Finder tags, Cameras, …) are those chips — Save current as… if you want a preset.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

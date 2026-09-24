@@ -245,9 +245,10 @@ class SignatureExchangeTest {
         presets.forEach { preset ->
             assertTrue(preset.id, preset.isBuiltIn())
         }
-        assertEquals(8, presets.size)
-        assertEquals("hide-phones", presets.first { it.name == "Hide phones" }.id)
+        assertEquals(6, presets.size)
+        assertEquals("watched", presets.first { it.name == "Watched only" }.id)
         assertTrue(presets.none { it.id == "cameras" })
+        assertTrue(presets.none { it.id == "trackers" })
     }
 
     @Test
@@ -850,7 +851,6 @@ class SignatureExchangeTest {
             stock,
         )
         assertTrue("AndroidAP", "fleet-phone-hotspot" in hits.getValue(androidAp.key))
-        assertFalse("AndroidAP is not Unknown Signature", "fleet-unknown" in hits.getValue(androidAp.key))
         assertTrue("Galaxy space", "fleet-phone-hotspot" in hits.getValue(galaxy.key))
         assertTrue("Galaxy dash", "fleet-phone-hotspot" in hits.getValue(galaxyDash.key))
         assertTrue("Pixel", "fleet-phone-hotspot" in hits.getValue(pixel.key))
@@ -862,6 +862,59 @@ class SignatureExchangeTest {
         assertTrue("Huawei OUI renamed", "fleet-huawei" in hits.getValue(huaweiOui.key))
         assertTrue("Plume OUI renamed", "fleet-plume" in hits.getValue(plumeOui.key))
         assertTrue("SuperPod name", "fleet-plume" in hits.getValue(superPod.key))
+    }
+
+    @Test
+    fun ravenWifiDirectSsidHitsRavenOnly() {
+        val engine = SignatureEngine()
+        val raven = sighting(RadioKind.WIFI, "00:0A:F5:86:56:DD", "DIRECT-rR-Raven-607")
+        val genericDirect = sighting(RadioKind.WIFI, "02:11:22:33:44:55", "DIRECT-xy-LivingRoom")
+        val hits = engine.match(listOf(raven, genericDirect), stock)
+        assertTrue("Raven SSID", "fleet-raven" in hits.getValue(raven.key))
+        assertFalse("Raven is not Unknown", "fleet-unknown" in hits.getValue(raven.key))
+        assertFalse("generic DIRECT- is unmatched", "fleet-unknown" in hits.getValue(genericDirect.key))
+        assertTrue("generic DIRECT- has no stock family", hits.getValue(genericDirect.key).isEmpty())
+    }
+
+    @Test
+    fun digitalAllyOuiAndFirstVuNameHit() {
+        val engine = SignatureEngine()
+        val oui = sighting(RadioKind.BLE, "00:23:BD:11:22:33", "")
+        val named = sighting(RadioKind.WIFI, "02:11:22:33:44:55", "FirstVu-PRO")
+        val hits = engine.match(listOf(oui, named), stock)
+        assertTrue("Digital Ally OUI", "fleet-digital-ally" in hits.getValue(oui.key))
+        assertTrue("FirstVu name", "fleet-digital-ally" in hits.getValue(named.key))
+    }
+
+    @Test
+    fun pendantUuidsAndNamesHit() {
+        val engine = SignatureEngine()
+        val limitless = bleUuid("AA:BB:CC:DD:EE:01", "Limitless", "632DE001-604C-446B-A80F-7963E950F3FB")
+        val bee = bleUuid("AA:BB:CC:DD:EE:02", "Bee Pioneer", "03D5D5C4-A86C-11EE-9D89-8F2089A49E7E")
+        val friend = bleUuid("AA:BB:CC:DD:EE:03", "", "1A3FD0E7-B1F3-AC9E-2E49-B647B2C4F8DA")
+        val omi = bleUuid("AA:BB:CC:DD:EE:04", "Omi", "")
+        val naomi = bleUuid("AA:BB:CC:DD:EE:05", "Naomi", "")
+        val arduino = bleUuid("AA:BB:CC:DD:EE:06", "ESP32", "19B10000-E8F2-537E-4F6C-D104768A1214")
+        val hits = engine.match(listOf(limitless, bee, friend, omi, naomi, arduino), stock)
+        assertTrue("Limitless UUID", "fleet-limitless" in hits.getValue(limitless.key))
+        assertTrue("Bee UUID", "fleet-bee" in hits.getValue(bee.key))
+        assertTrue("Friend UUID", "fleet-friend-pendant" in hits.getValue(friend.key))
+        assertTrue("Omi name", "fleet-omi" in hits.getValue(omi.key))
+        assertFalse("Naomi is not Omi", "fleet-omi" in hits.getValue(naomi.key))
+        assertFalse("Arduino 19B10000 is not Omi", "fleet-omi" in hits.getValue(arduino.key))
+    }
+
+    @Test
+    fun overlayStockDropsRetiredUnknownSignature() {
+        val unknown = Fleet(
+            id = "fleet-unknown",
+            name = "Unknown Signature",
+            builtIn = true,
+            kind = SignatureClass.OTHER,
+            rules = listOf(MatchRule(RuleKind.NAME_CONTAINS, text = "DIRECT-")),
+        )
+        val (next, _) = SignatureExchange.overlayStock(listOf(unknown) + stock.take(3), stock.take(3))
+        assertFalse(next.any { it.id == "fleet-unknown" })
     }
 
     @Test
@@ -1070,6 +1123,32 @@ class SignatureExchangeTest {
         manufacturerDataHex = manufacturerDataHex,
         facts = if (manufacturerId == null) RadioFacts()
         else RadioFacts(mfgRecords = listOf(MfgRecord(manufacturerId, manufacturerDataHex))),
+    )
+
+    private fun bleUuid(mac: String, name: String, uuid: String) = Sighting(
+        key = "BLE:$mac",
+        kind = RadioKind.BLE,
+        mac = mac,
+        name = name,
+        rssi = -40,
+        rssiMin = -40,
+        rssiMax = -40,
+        channel = 0,
+        frequencyMhz = 0,
+        vendor = null,
+        randomized = true,
+        hiddenSsid = false,
+        serviceUuids = if (uuid.isBlank()) emptyList() else listOf(uuid),
+        manufacturerId = null,
+        manufacturerDataHex = "",
+        rawHex = "",
+        extras = "",
+        firstSeen = 1L,
+        lastSeen = 1L,
+        hitCount = 1,
+        fleetIds = emptySet(),
+        rssiHistory = emptyList(),
+        presence = emptyList(),
     )
 
     private fun sighting(

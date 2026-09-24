@@ -455,10 +455,11 @@ private val BuiltInPresetIds = setOf(
     "ble",
     "strong",
     "with-you",
+    "watched",
+    // Retired stock chips. Kept so an upgrade does not treat them as custom.
     "trackers",
     "hide-trackers",
     "hide-phones",
-    // Retired stock chips. Kept so an upgrade does not treat them as custom.
     "named",
     "surveillance",
     "drones",

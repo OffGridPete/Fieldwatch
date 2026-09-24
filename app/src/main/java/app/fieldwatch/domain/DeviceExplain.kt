@@ -23,7 +23,7 @@ object DeviceExplain {
             Hint(it.bucket, it.label, it.reason, it.weight)
         }
         hints += signatureHints(signatureNames)
-        if (device.kind == RadioKind.WIFI) hints += wifiHints(device)
+        if (device.kind == RadioKind.WIFI) hints += wifiHints(device, signatureNames)
 
         if (hints.isEmpty()) {
             return Guess(
@@ -126,14 +126,14 @@ object DeviceExplain {
     fun addressExplain(device: Sighting): String {
         val type = device.facts.addressType
         return when {
+            device.kind == RadioKind.WIFI && device.randomized ->
+                "Locally administered BSSID. Vehicle, mesh, and guest APs often keep this address. Not a rotating phone MAC."
             type.equals("Public", true) && !device.randomized ->
                 "Public factory address (stable, IEEE-assigned)."
             type.equals("Random", true) || device.randomized ->
                 "Random / privacy address. The MAC can change, so this is not a lasting identity."
             type.equals("Anonymous", true) ->
                 "Anonymous: the stack hid the address."
-            device.randomized ->
-                "Locally administered address (not a global IEEE identity)."
             else ->
                 listOfNotNull(type, "Universal IEEE address (stable OUI).").joinToString(" · ")
         }
@@ -300,6 +300,7 @@ object DeviceExplain {
 
     private fun signatureHints(names: List<String>): List<Hint> {
         return names.mapNotNull { raw ->
+            if (isGenericSignatureName(raw)) return@mapNotNull null
             val n = raw.lowercase()
             when {
                 "airtag" in n || "find my" in n ->
@@ -630,6 +631,41 @@ object DeviceExplain {
                         "Matched signature $raw.",
                         7,
                     )
+                "raven" in n || "shotspotter" in n || "soundthinking" in n ->
+                    Hint(
+                        "acoustic",
+                        "a Flock Raven or ShotSpotter acoustic gunshot sensor",
+                        "Matched signature $raw.",
+                        8,
+                    )
+                "digital ally" in n ->
+                    Hint("camera", "a Digital Ally body-worn or in-car camera", "Matched signature $raw.", 8)
+                "reveal media" in n || "bodyworn" in n ->
+                    Hint("camera", "a Reveal Media body-worn camera", "Matched signature $raw.", 8)
+                n == "wolfcom" ->
+                    Hint("camera", "a Wolfcom body-worn or in-car camera", "Matched signature $raw.", 8)
+                "i-pro" in n || "arbitrator" in n ->
+                    Hint("camera", "a Panasonic i-PRO camera or Arbitrator in-car system", "Matched signature $raw.", 8)
+                "limitless" in n ->
+                    Hint("wearable", "a Limitless Pendant conversation recorder", "Matched signature $raw.", 8)
+                n == "bee pendant" || "bee pioneer" in n ->
+                    Hint("wearable", "a Bee Pioneer wearable recorder", "Matched signature $raw.", 8)
+                n == "omi" || "openglass" in n ->
+                    Hint("wearable", "an Omi pendant or OpenGlass camera glasses", "Matched signature $raw.", 8)
+                "friend pendant" in n ->
+                    Hint("wearable", "a Friend Pendant necklace", "Matched signature $raw.", 8)
+                "brilliant frame" in n ->
+                    Hint("glasses", "Brilliant Labs Frame AR glasses", "Matched signature $raw.", 8)
+                n == "even g1" ->
+                    Hint("glasses", "Even Realities G1 glasses", "Matched signature $raw.", 8)
+                "hayden" in n ->
+                    Hint("camera", "a Hayden AI bus- or vehicle-mounted camera", "Matched signature $raw.", 8)
+                "miovision" in n ->
+                    Hint("camera", "a Miovision intersection traffic camera", "Matched signature $raw.", 8)
+                n == "tattile" ->
+                    Hint("camera", "a Tattile plate reader", "Matched signature $raw.", 8)
+                "lvt" in n || "liveview" in n ->
+                    Hint("camera", "an LVT / LiveView solar surveillance trailer", "Matched signature $raw.", 8)
                 "hanwha" in n || "wisenet" in n ->
                     Hint("camera", "a Hanwha Vision / Wisenet camera", "Matched signature $raw.", 7)
                 n == "uniview" ->
@@ -652,26 +688,41 @@ object DeviceExplain {
                     Hint("tag", "a finder tag", "Matched signature $raw.", 7)
                 "airpods" in n ->
                     Hint("audio-personal", "AirPods", "Matched signature $raw.", 8)
-                else -> Hint("named", raw, "Matched signature $raw.", 3)
+                else -> Hint("named", raw, "Matched signature $raw.", 7)
             }
         }
     }
 
-    private fun wifiHints(device: Sighting): List<Hint> {
+    private fun isGenericSignatureName(name: String): Boolean {
+        val n = name.trim()
+        return n.equals("Unknown Signature", ignoreCase = true) ||
+            n.equals("Unknown Fleet", ignoreCase = true)
+    }
+
+    private fun wifiHints(device: Sighting, signatureNames: List<String>): List<Hint> {
         val name = device.name
         val caps = (device.facts.capabilities ?: "").uppercase()
+        val specific = signatureNames.any { !isGenericSignatureName(it) }
         val out = ArrayList<Hint>(2)
         when {
             name.startsWith("DIRECT-", true) ->
-                out += Hint("wifi-direct", "a phone or TV using Wi-Fi Direct", "SSID starts with DIRECT-.", 6)
+                out += if (specific) {
+                    Hint("wifi-direct", "a Wi-Fi Direct access point", "SSID starts with DIRECT-.", 4)
+                } else {
+                    Hint("wifi-direct", "a phone or TV using Wi-Fi Direct", "SSID starts with DIRECT-.", 6)
+                }
             name.startsWith("ANDROID-", true) || name.contains("hotspot", true) ->
-                out += Hint("hotspot", "a phone hotspot", "SSID looks like a phone hotspot.", 6)
+                if (!specific) {
+                    out += Hint("hotspot", "a phone hotspot", "SSID looks like a phone hotspot.", 6)
+                }
             "MESH" in caps ->
                 out += Hint("mesh", "a mesh Wi-Fi node", "Capability list includes mesh.", 5)
             device.hiddenSsid ->
                 out += Hint("ap", "a hidden Wi-Fi access point", "SSID is hidden; the radio is still beaconing.", 4)
             else ->
-                out += Hint("ap", "a Wi-Fi access point", "Stock Android only reports beaconing APs.", 3)
+                if (!specific) {
+                    out += Hint("ap", "a Wi-Fi access point", "Stock Android only reports beaconing APs.", 3)
+                }
         }
         return out
     }

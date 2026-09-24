@@ -7,6 +7,12 @@ import org.junit.Test
 
 class DefaultCatalogTest {
     @Test
+    fun stockCatalogDoesNotShipUnknownSignature() {
+        assertFalse(DefaultCatalog.fleets().any { it.id == "fleet-unknown" })
+        assertFalse(DefaultCatalog.fleets().any { it.name.equals("Unknown Signature", ignoreCase = true) })
+    }
+
+    @Test
     fun stockNotesDoNotSayShipsOn() {
         DefaultCatalog.fleets().forEach { fleet ->
             assertFalse(
