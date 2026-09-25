@@ -190,6 +190,7 @@ data class SitUi(
     val memoryTight: Boolean = false,
     val closed: List<SitSummary> = emptyList(),
     val selectedId: String? = null,
+    val compareId: String? = null,
     val notice: String? = null,
 )
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
 import app.fieldwatch.ui.FieldwatchUi
@@ -65,7 +66,7 @@ fun ReportsScreen(
         ) {
             if (settings.demoMode) {
                 Text(
-                    "Privacy mode is on. MAC tails in Debrief, AI Export, and detail Share are **:**:**. GPS coordinates are masked. The log file still has full addresses and lat/lon.",
+                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file still has full addresses and lat/lon.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -202,10 +203,72 @@ fun ReportsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("AI Export") }
             Text(
-                "Paste-ready prompt: the onboard Debrief plus working data, asking a chat for statistical analysis and depth the phone report cannot do.",
+                "Paste-ready addendum: rates, RSSI bands, Extra attention and tracking IDs. Does not reprint Debrief inventories. One-radio AI Export is on detail.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            }
+
+            SectionCard("Compare sits") {
+                Text(
+                    compareThisCaption(state),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val thisSaved = SitDiff.thisSavedId(state.sit.open, state.sit.selectedId)
+                val choices = SitDiff.secondSitChoices(state.sit.closed, thisSaved)
+                if (choices.isEmpty()) {
+                    Text(
+                        "Save a second sit to compare. Start sit, then End sit. Last 15 minutes can be this sit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Text(
+                        "Second sit",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    choices.forEach { row ->
+                        val dur = Sit.fmtDuration(row.durationMs())
+                        SitChoiceRow(
+                            selected = state.sit.compareId == row.id,
+                            enabled = !exporting,
+                            title = row.name,
+                            subtitle = "${Sit.defaultName(row.startAt)} · $dur · ${row.radioCount} radios",
+                            onSelect = { vm.selectCompareSit(row.id) },
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FieldwatchActionButton(
+                        onClick = vm::startSitCompare,
+                        enabled = !exporting && state.sit.compareId != null,
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Compare (text)") }
+                    FieldwatchActionButton(
+                        onClick = vm::startSitComparePdf,
+                        enabled = !exporting && state.sit.compareId != null,
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Compare (PDF)") }
+                }
+                Text(
+                    "Same report, two formats. Presence only — only in this sit, only in the second, in both. Kind + MAC. Extra attention and Named radios are marked. Not a radio fix.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FieldwatchActionButton(
+                    onClick = vm::startSitCompareAiExport,
+                    enabled = !exporting && state.sit.compareId != null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("AI Export") }
+                Text(
+                    "Paste-ready addendum: overlap, exclusive Extra attention / Named radios, what another sit would shrink. Does not reprint the compare lists. Sit report AI Export stays this window only.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             SectionCard("Catalog") {
@@ -403,6 +466,18 @@ private fun SitChoiceRow(
             )
         }
     }
+}
+
+private fun compareThisCaption(state: FieldwatchUi): String {
+    val open = state.sit.open
+    if (open != null) {
+        return "This sit: ${open.name} — named window (up to ${Sit.RADIO_CAP}). Same as Debrief."
+    }
+    val selected = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
+    if (selected != null) {
+        return "This sit: ${selected.name} — named window (up to ${Sit.RADIO_CAP}). Same as Debrief."
+    }
+    return "This sit: last 15 minutes in memory (about 400 radios). Same as Debrief."
 }
 
 private fun sitReportCaption(state: FieldwatchUi): String {

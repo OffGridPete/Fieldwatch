@@ -7,6 +7,7 @@ import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitDebrief
+import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitFile
 import app.fieldwatch.domain.SitSession
 import app.fieldwatch.domain.SitSummary
@@ -43,6 +44,7 @@ class SitStore(
     private var open: SitSession? = null
     private var closed: List<SitSummary> = emptyList()
     private var selectedId: String? = null
+    private var compareId: String? = null
     private val _ui = MutableStateFlow(SitUi())
     val ui: StateFlow<SitUi> = _ui.asStateFlow()
 
@@ -77,6 +79,7 @@ class SitStore(
             }
             closed = closedAcc.sortedByDescending { it.startAt }
             pruneClosedLocked()
+            compareId = SitDiff.defaultSecondSitId(closed, SitDiff.thisSavedId(open?.summary, selectedId))
             publishLocked()
         }
     }
@@ -217,6 +220,17 @@ class SitStore(
         }
     }
 
+    fun selectCompare(id: String?) {
+        synchronized(lock) {
+            val thisSaved = SitDiff.thisSavedId(open?.summary, selectedId)
+            val choices = SitDiff.secondSitChoices(closed, thisSaved)
+            compareId = id?.takeIf { picked -> choices.any { it.id == picked } }
+            publishLocked()
+        }
+    }
+
+    fun sitFile(id: String): SitFile? = readFileBlocking(id)
+
     fun consumeNotice() {
         synchronized(lock) { publishLocked(notice = null) }
     }
@@ -292,6 +306,11 @@ class SitStore(
 
     private fun publishLocked(notice: String? = _ui.value.notice) {
         val session = open
+        val thisSaved = SitDiff.thisSavedId(session?.summary, selectedId)
+        val choices = SitDiff.secondSitChoices(closed, thisSaved)
+        if (compareId == null || choices.none { it.id == compareId }) {
+            compareId = SitDiff.defaultSecondSitId(closed, thisSaved)
+        }
         _ui.value = SitUi(
             open = session?.summary,
             radioCount = session?.radioCount ?: 0,
@@ -299,6 +318,7 @@ class SitStore(
             memoryTight = memoryTight,
             closed = closed,
             selectedId = selectedId,
+            compareId = compareId,
             notice = notice,
         )
     }

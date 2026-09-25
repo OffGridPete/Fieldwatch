@@ -19,7 +19,7 @@ object FieldwatchDisclaimer {
     const val LOCATION =
         "GPS stamps are this phone at hear-time, not the other radio, unless a decode map " +
             "advertises its own latitude/longitude (Remote ID Location). Sharing a Debrief, " +
-            "AI Export (sit or one radio), radio-detail Share as text, or log can take that " +
+            "sit compare, AI Export (sit or one radio), radio-detail Share as text, or log can take that " +
             "path off the device. A TAK/CoT feed, when you turn it on, sends markers onto " +
             "the LAN; that is on the operator."
 
@@ -68,6 +68,11 @@ object FieldwatchDisclaimer {
             "This sit report is from $source" +
             "Do not use it in any situation where safety is in question."
     }
+
+    fun compare(): String =
+        "$HOBBY\n\n$HYPOTHESES\n\n$LIABILITY\n\n$LOCATION\n\n" +
+            "This compare is two windows of radios this phone heard (kind + MAC). " +
+            "BLE rotation is a new row. Do not use it in any situation where safety is in question."
 
     fun experimentalMarkdown(): String = buildString {
         appendLine("## Disclaimer (repeat this in your answer)")

@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.5")
+    c.drawString(48, 108, "Version 1.1.6")
     c.drawString(48, 94, "24 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.5  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.6  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1593,7 +1593,7 @@ def story():
         ]),
         P("5.6 Reports tab", "h2"),
         P(
-            "Bottom bar, next to Settings. Named sits (optional), Debrief, AI Export, signature "
+            "Bottom bar, next to Settings. Named sits (optional), Debrief, Compare sits, AI Export, signature "
             "candidates, and the log. GPS tagging, Online place names, logging on/off, CSV vs JSONL, "
             "and rotate size stay on Settings. If you never start a sit, Debrief is still the last "
             "15 minutes in RAM — same as before.",
@@ -1619,7 +1619,9 @@ def story():
             "<b>While it runs.</b> Live title FIELDWATCH · SIT and a status banner. Debrief and AI Export use this window, not 15 minutes. Filters, Hunt, TAK, and the 400-radio Live list stay as they are. Start and End sit stay on Reports.",
             "<b>After End sit.</b> The sit appears in the radio list on Reports. Pick it for Debrief / AI Export, or leave Last 15 minutes selected. Rename / Delete sit under the list.",
             "<b>Debrief (text) / Debrief (PDF)</b> — Last 15 minutes in memory (about 400 radios; hard ceiling 900) unless a sit is running or you pick a saved sit. Same sit report, two formats. Opens with the hobby / as-is disclaimer (hypotheses, not identity; local law; not for safety). Not the rotating log. GPS following / planted-tracker assessment when tagging is on and you have moved. Radar vs list, Moving with you, Signatures only, and Hide selected do not change what Debrief sees. On a drive without a sit, a few kilometers of city RF can fill that cap — tap Debrief more than once (§11.4.1). Online place names can take several seconds; a spinner stays up and the line counts cells (1 of N) so it does not look locked.",
-            "<b>AI Export</b> — Sit-level paste-ready prompt (the open or selected sit, otherwise last 5/15 minutes). Includes the onboard Debrief verbatim, then working data, and asks a chat for statistical analysis and depth the phone report cannot do. Not a rewrite of Debrief. For a <i>single</i> radio, use AI Export on the device-detail page instead.",
+            "<b>Compare (text) / Compare (PDF)</b> — Separate report, not a Debrief mode. Same letter layout as Debrief, two formats. This sit is the same window Debrief uses (open sit, selected saved sit, or last 15 minutes). Second sit is a picker of the other saved sits (defaults to the next-newest). Only in this sit, only in the second, in both. Kind + MAC; BLE rotation is a new row. Extra attention and Named radios are marked. Last 15 minutes vs a named sit is not the same net (RAM ~400 vs sit 3000). Privacy mode masks MAC tails on the share text. Not a radio fix.",
+            "<b>Compare AI Export</b> — Paste-ready addendum for a chat. Embeds the onboard Compare, then overlap (both/union), Wi-Fi vs BLE in each bucket, RAND BLE among exclusives, and exclusive Extra attention / Named radios only. Instructs the model not to reprint the lists. Sit report AI Export stays this window.",
+            "<b>AI Export</b> — Sit-level paste-ready addendum (the open or selected sit, otherwise last 15 minutes with a 5-minute slice). Onboard Debrief verbatim, then rates, RSSI bands, Extra attention and finder-tag IDs — not a second inventory. Instructs the model not to reprint Debrief. For a <i>single</i> radio, use AI Export on the device-detail page instead.",
             "<b>Signature candidates</b> — Mines the rotating log for unmatched families that share a unique on-air ID. Create signature opens a draft (shared rule, no MAC pin). Save returns you to the list and re-runs it. Offline. §5.6.1, §11.5.",
             "<b>Share log / Save log to SD card / storage…</b> — Share uses the Android share sheet. Save uses the system picker (SD, Downloads, USB, Drive). Line and disk counts are shown here; logging must have been on for new rows.",
             "<b>Reset / clear log</b> — Bottom of Reports. Deletes rotated files on the phone. Does not reset New detections already-seen. Does not delete sits.",
@@ -3559,31 +3561,26 @@ def story():
             "Phone GPS ≠ pole or tag location."
         ),
         P(
-            "Reports → <b>AI Export</b> is a paste-ready prompt for a chat. "
-            "Same 5/15-minute window as Debrief, not the rotating log. "
-            "The prompt <b>includes the onboard Debrief verbatim</b> so the model has the same sit report you already filed, "
-            "then the working inventories and precomputed statistics. "
-            "The model is told <b>not to rewrite Debrief</b>. Its job is an addendum the phone cannot write: "
-            "rates and mixes (5 vs 15 min, RSSI bands, signature-family share, turnover), stress-test of tracking callouts, "
-            "depth on Extra attention hits, and what stock Android still cannot see. "
-            "Do not dump MAC lists into the answer."
+            "Reports → <b>AI Export</b> is a paste-ready addendum for a chat. "
+            "Same window as Debrief, not the rotating log. "
+            "The prompt <b>includes the onboard Debrief verbatim</b>, then a small working table: "
+            "5- vs 15-minute rates, RSSI bands, RAND BLE percent, Extra attention rows, and finder-tag-like radios for a tracking stress-test. "
+            "It does <b>not</b> paste a second Wi-Fi/BLE roster. "
+            "The model is told <b>not to rewrite Debrief</b>. Do not dump MAC lists into the answer."
         ),
         P("The prompt contains:", "body_left"),
         bullets([
-            "Opens with the same hobby / as-is disclaimer as first-run and Debrief (hypotheses, local law, not for safety) and instructs the model to repeat it.",
-            "Job: analyst addendum, not a second Debrief. Output headings are at the top of the paste so a size cap does not drop the instructions.",
-            "Onboard Debrief, verbatim (same 15-minute sit report as Debrief text/PDF).",
-            "Collection constraints (Wi-Fi = APs only; BLE advertisers; randomized MACs are not identity; signature/OUI matches are hypotheses; GPS is the operator phone; street names only if lookup ran).",
-            "Where you were and GPS co-travel (possible trackers with you / possible tail only; radios you passed are omitted).",
-            "Counts for 15 min and 5 min, plus precomputed statistics: randomized-BLE percent, arrivals per minute, persistent vs gone, RSSI bands for Wi-Fi and BLE, signature-family counts.",
-            "Channel utilization, mesh/hotspot flags, top-5 strongest unique (dwell + RSSI Δ), time-window co-location (±10 s of window start and now) — distinct from GPS co-travel.",
-            "Inventories for calculation: every signature hit, full Wi-Fi, hidden SSIDs, notable BLE with looks-like / payload, persistence, Extra attention, machine flags (Fast Pair pairing-mode, loud unnamed, high randomized BLE — not a tracker roster).",
-            "Required output: disclaimer; what Debrief already established (short); statistical picture with numbers; stays/path; tracking addendum (do not invent a tail); Extra attention depth; what onboard could not resolve; Fieldwatch next steps; a takeaway that adds one insight the onboard takeaway does not already say. No safety advice.",
+            "Opens with the same hobby / as-is disclaimer as first-run and Debrief and instructs the model to repeat it.",
+            "Job: analyst addendum, not a second Debrief. Five output headings, then a Takeaway that adds one number the onboard takeaway does not already say.",
+            "Onboard Debrief, verbatim (same sit report as Debrief text/PDF).",
+            "Hear-only constraints (APs only, BLE rotation, GPS is this phone, no invented tail, no safety advice).",
+            "Working table: 15- and 5-minute counts, RSSI bands, RAND percent, arrivals/min, persistent vs gone, signature-family counts, GPS path length/span, Extra attention IDs, finder-tag-like radios (not a tail list).",
+            "Required output: disclaimer; what Debrief already established; what the numbers add; Extra attention and tracking callouts from the working table; what Hunt / a second sit would shrink; Takeaway. No safety advice.",
         ]),
         P(
-            "The inventory is the same live map as Debrief (§11.4.1): about 400 radios, unnamed BLE "
-            "older than about three minutes already gone, 15-minute window. Share-sheet size is capped "
-            "(~90k characters). Treat the paste as operationally sensitive: neighbor SSIDs and MACs."
+            "The snapshot is the same live map as Debrief (§11.4.1): about 400 radios, unnamed BLE "
+            "older than about three minutes already gone, 15-minute window (or the named sit). Share-sheet size is capped "
+            "(~90k characters). Treat the paste as operationally sensitive."
         ),
         P(
             "Device detail has its own <b>AI Export</b> and <b>Share as text</b> (§5.5). Those are "
@@ -3742,7 +3739,7 @@ def story():
         P("<b>What you should see.</b> Only radios that were not in the already-seen set. BLE can show as new during the Wi-Fi learning window. After Mark seen, the next new row is the next arrival. A watchlist alert fires only if that row would actually appear on the Live display.", "body_left"),
         P("<b>What it is not.</b> Randomized BLE addresses look new on every rotation — an unnamed LE that “just arrived” may be a phone that changed MAC. Sitting Wi-Fi is hidden through the next scan on purpose. This filter does not identify who walked in; it tells you a radio the session had not already absorbed is now on the air.", "body_left"),
         P(
-            "<b>Write it down.</b> New detections only does not shrink Debrief or AI Export — those ignore the Live display filter. Use Debrief persistence / first-seen, or AI Export’s “first appeared in this window” table, to record arrivals. Share log if you need every written row later.",
+            "<b>Write it down.</b> New detections only does not shrink Debrief or AI Export — those ignore the Live display filter. Use Debrief persistence / first-seen, or the AI Export 5- vs 15-minute first-seen counts. Share log if you need every written row later.",
             "body_left",
         ),
         P("12.4 Find only this family", "h2"),
@@ -3760,7 +3757,7 @@ def story():
         P("<b>What you should see.</b> Unmatched consumer noise drops away. Chips on the remaining rows are the families still on the Live display. If the list is empty, nothing matching is in earshot — or you hid that family on Filters. Matching still labels; it does not go quiet.", "body_left"),
         P("<b>What it is not.</b> Signatures only does not search harder. It hides unmatched radios. Stock catalog rows (Ring, Nest, Hikvision, …) are mostly names — apartment cameras and coincidental SSIDs will label. Hide a family on Filters if that sit is noise. See §7.6.1 before treating a camera chip as a pole.", "body_left"),
         P(
-            "<b>Write it down.</b> Debrief “Signature hits” and camera/tracker flags. AI Export lists every signed radio in the window with looks-like / payload — useful when you want a second read on whether a family is local noise. Do not paste that into a public chat without redaction.",
+            "<b>Write it down.</b> Debrief “Signature hits” and camera/tracker flags. Sit AI Export gives family counts and Extra attention IDs, not a second signed roster. For one radio, use detail AI Export. Do not paste into a public chat without redaction.",
             "body_left",
         ),
         P("12.5 Get rid of the noise, keep the field", "h2"),
@@ -3948,7 +3945,7 @@ def story():
             [
                 ["Debrief (text)", "Sit report, plain text. Distance, Where you were, tracking assessment (last 15 min, ignores Live display view/filter), environment, inventories, actions, takeaway. Reports tab.", "After a walk: was something with me? Notes, Signal/SMS, a logbook. Same words as the PDF."],
                 ["Debrief (PDF)", "Same sit report, letter-size typeset (FIELDWATCH header, numbered sections, amber Possible trackers with you / Possible tail callouts when those lists are non-empty, amber Extra attention callout per special note, takeaway box). Tracking does not care which Live display view or filter was on.", "Hand to someone, file the sit, print. Easier to read than the text dump."],
-                ["AI Export (Reports)", "Sit-level analyst <i>prompt</i>: onboard Debrief verbatim, plus 5/15-minute working data and precomputed stats. Asks for an addendum (rates, mixes, tracking stress-test, Extra attention depth) — not a rewrite of Debrief.", "Paste into a chat when you want numbers and competing hypotheses the phone report cannot write. Not a legal memo."],
+                ["AI Export (Reports)", "Sit-level analyst <i>prompt</i>: onboard Debrief verbatim, plus a compact working table (5/15-minute rates, RSSI bands, Extra attention and finder-tag IDs). Asks for an addendum — not a rewrite, not a second roster.", "Paste into a chat when you want numbers and a stress-test of tracking callouts. Not a legal memo."],
                 ["Signature candidates", "Log miner on Reports. Re-matches the rotating log, lists unmatched families that share a unique on-air ID (2+ radios). Create signature is a draft with the shared rule, no MAC pin. Save returns to the list and re-runs it. Offline.", "After a sit with logging on: recurring unmatched globs / vendor IEs / OUIs worth a custom signature. Not every unknown radio. §5.6.1, §9.2.1, §11.5."],
                 ["Share log / Save", "Rotating CSV or JSONL of what was written to disk this session (including vendor_ie on new Wi-Fi rows). Reports tab, under the sit-report buttons.", "After-action file, spreadsheet, revisit correlation. Use this when you need rows the 15-minute memory already dropped."],
                 ["Share as text (detail)", "Plain dump of the open radio’s detail page.", "Notes, a ticket, or to keep one MAC/payload without the whole sit."],
@@ -3960,12 +3957,12 @@ def story():
         P("<b>How they pair with the playbooks</b>", "body_left"),
         bullets([
             "<b>§12.2 Followed?</b> Tag GPS, walk about 50 m, then Debrief. Read Possible trackers with you and Possible tail (the last 15 minutes in memory — Live display view and Moving with you do not change it). On a longer walk or drive, tap Debrief again at the next stop (§11.4.1) — a radio that stayed with you will still be there. AI Export if you want a chat to stress-test those callouts with rates and mixes — tell it not to rewrite Debrief, not to dismiss whole-sit radios as yours, and not to list radios you only passed.",
-            "<b>§12.3 New in the room?</b> Debrief persistence / first-seen, or AI Export arrival table. The New detections filter does not change the report.",
-            "<b>§12.4 / §12.7 Families and cameras.</b> Debrief signature hits. AI Export for every signed row plus payload decode. Keep §7.6.1 in the prompt for camera sits.",
+            "<b>§12.3 New in the room?</b> Debrief persistence / first-seen, or AI Export 5- vs 15-minute first-seen counts. The New detections filter does not change the report.",
+            "<b>§12.4 / §12.7 Families and cameras.</b> Debrief signature hits. Sit AI Export for Extra attention IDs and family counts; detail AI Export for one radio’s payload. Keep §7.6.1 in the prompt for camera sits.",
             "<b>§12.5 Hidden clutter.</b> Still in Debrief/AI Export/log. The Live display was quiet; the file was not.",
             "<b>§12.6 Own tag?</b> Debrief “Possible trackers with you” (yours or planted — account for it) vs “Possible tail.” Same verdicts in AI Export.",
             "<b>§12.8 Tracker hunt.</b> Filters → Show only Finder tags. If you do not know which row: dwell the phone at hide spots (car wheels, bumpers, cabin) until one pops to the top, then Hunt. Walk / body-block to narrow. Structures shadow. Not a clean bill.",
-            "<b>§12.9 SSID/OUI lead.</b> Debrief or AI Export Wi-Fi inventory for the sit; Share log to compare BSSIDs next visit. Signature candidates if the same unmatched glob or vendor IE keeps showing up.",
+            "<b>§12.9 SSID/OUI lead.</b> Debrief Wi-Fi inventory for the sit. Reports → Compare sits for this window vs a second saved sit (kind + MAC). Share log still compares BSSIDs if you want the file. Signature candidates if the same unmatched glob or vendor IE keeps showing up.",
             "<b>Catalog gap?</b> Open an unmatched radio: Signature family on detail is the one-radio check (Strong / Possible / This radio only). Logging on, then Reports → Signature candidates for the sit-wide list. Recurring unmatched name globs / vendor IEs / stable OUIs. Create signature, Save, then the Live display should label the next hear. Not a house SSID and not a chip-module OUI.",
             "<b>§12.14 Extra attention / pentest kit / card-reader caution.</b> Debrief Extra attention section and PDF amber callouts. Detail Share / AI Export quote EXTRA ATTENTION. Tell a chat “pattern, not a skimmer detector, not proof of an attack.”",
         ]),
@@ -4367,7 +4364,7 @@ def story():
             ["Online place names", "Settings switch, on by default. Debrief and AI Export reverse-geocode GPS stamps via the system geocoder when online. Offline: a note in the report/prompt, no error dialog. Turn off if you do not want streets of your path."],
             ["New at bottom", "Display → Sort. First-seen order, oldest at top; new radios append; gone radios drop. List follows the bottom unless you scroll up."],
             ["unnamed LE", "BLE Advertised name / Name + type when there is no advertised name and no useful decode. On the subtitle the Bluetooth icon already marks LE, so the body is unnamed (not “unnamed LE” twice). Title Advertised name still shows unnamed LE. The title is the MAC unless you change it."],
-            ["AI Export", "Two buttons. Reports: sit-level prompt (onboard Debrief + working data; asks a chat for statistical addendum, not a rewrite). Device detail: prompt about that one radio (dump + registry decode). Both paste into a chat, both open with the experimental disclaimer, both are hypotheses — not identity. Treat as sensitive."],
+            ["AI Export", "Three buttons. Reports sit: onboard Debrief + compact rates / Extra attention (addendum, not a roster). Reports Compare: overlap + exclusive Extra attention / Named. Device detail: that one radio (dump + registry decode). All paste into a chat, all open with the experimental disclaimer, all are hypotheses — not identity. Treat as sensitive."],
             ["Signature color (stock)", "Built-in rows share a palette by class: red pentest, amber cameras/ALPR/UniFi Protect/DJI, purple phones/Find My, cyan wearable trackers, green mesh, orange glasses and audio, teal public safety and vehicle, silver home IoT/ISP Wi-Fi (including UniFi AP)/retail signage/Unknown. Unmatched radios use RSSI color (≥−55 green, −55 to −70 amber, −70 to −85 orange, else red). Change any row. §9.5."],
             ["UniFi AP", "Wi-Fi-only catalog signature (ISP / routers). Factory SSIDs UniFi* / UAP-* / UBNT* plus Ubiquiti IEEE OUIs on the BSSID or a vendor IE. Virtual BSSIDs miss the MAC OUI but still hit on a Ubiquiti vendor IE. A separate UniFi row is name-only on either radio. UniFi Protect cameras stay Surveillance. §9.5, Appendix B."],
             ["Tag detections with GPS", "Settings switch, on by default. Current GPS/network updates while scanning; stamps each hear (detail, Moving with you, Debrief, log lat/lon, heard-here TAK pins). Last-known older than 30 s ignored. Operator phone at hear-time, not the other radio. Advertised TAK pins (Remote ID) do not need this. High-accuracy Location or the path stays 0. §5.7, §5.8."],
@@ -4783,8 +4780,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.5 (versionCode 15), field build of 24 September 2026"],
-                ["Document version", "1.1.5"],
+                ["Software version", "1.1.6 (versionCode 16), field build of 24 September 2026"],
+                ["Document version", "1.1.6"],
                 ["Document date", "24 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

@@ -59,6 +59,8 @@ import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.DebriefWindow
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SitDiff
+import app.fieldwatch.domain.SitDiffPrompt
 import app.fieldwatch.domain.SitUi
 import app.fieldwatch.radio.RadioPermissions
 import kotlinx.coroutines.Dispatchers
@@ -672,6 +674,156 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun selectSit(id: String?) {
         app.sits.select(id)
+    }
+
+    fun selectCompareSit(id: String?) {
+        app.sits.selectCompare(id)
+    }
+
+    fun startSitCompare() {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            _export.value = busy("Writing sit compare…")
+            runCatching {
+                val doc = sitCompareDoc()
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, compareSubject(doc))
+                    putExtra(Intent.EXTRA_TEXT, doc.toPlainText())
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(
+                    active = false,
+                    progress = 1f,
+                    share = intent,
+                    shareTitle = "Sit compare",
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(error = err.message ?: "Could not write sit compare")
+            }
+        }
+    }
+
+    fun startSitComparePdf() {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            _export.value = busy("Writing sit compare PDF…")
+            runCatching {
+                val doc = sitCompareDoc()
+                val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                    .format(java.util.Date())
+                val file = File(dir, "fieldwatch-sit-compare-$stamp.pdf")
+                withContext(Dispatchers.Default) { DebriefPdf.write(doc, file) }
+                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    clipData = ClipData.newRawUri("sit-compare", uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, compareSubject(doc))
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(
+                    active = false,
+                    progress = 1f,
+                    share = intent,
+                    shareTitle = "Sit compare PDF",
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(error = err.message ?: "Could not write sit compare PDF")
+            }
+        }
+    }
+
+    private fun compareSubject(doc: DebriefDoc): String =
+        if (doc.windowLine.isNotBlank()) "Fieldwatch sit compare — ${doc.windowLine}"
+        else "Fieldwatch sit compare"
+
+    fun startSitCompareAiExport() {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            _export.value = busy("Building compare AI export…")
+            runCatching {
+                val (thisSide, second) = compareSides()
+                val text = withContext(Dispatchers.Default) {
+                    SitDiffPrompt.build(thisSide, second, app.config.settings.demoMode)
+                }
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(
+                        Intent.EXTRA_SUBJECT,
+                        "Fieldwatch sit compare AI export — ${thisSide.name} vs ${second.name}",
+                    )
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(
+                    active = false,
+                    progress = 1f,
+                    share = intent,
+                    shareTitle = "Sit compare AI Export",
+                )
+            }.onFailure { err ->
+                _export.value = ExportUi(error = err.message ?: "Could not write compare AI export")
+            }
+        }
+    }
+
+    private suspend fun sitCompareDoc(): DebriefDoc {
+        val (thisSide, second) = compareSides()
+        val macs = (thisSide.radios + second.radios).map { it.mac }
+        return SitDiff.document(thisSide, second)
+            .withDemoMacs(macs, app.config.settings.demoMode)
+    }
+
+    private suspend fun compareSides(): Pair<SitDiff.Side, SitDiff.Side> {
+        val sit = app.sits.ui.value
+        val otherId = sit.compareId ?: error("Pick a second sit.")
+        val otherFile = withContext(Dispatchers.IO) { app.sits.sitFile(otherId) }
+            ?: error("Could not read that sit.")
+        val fleets = app.config.fleets
+        val namedKeys = RadioBookmarks.radios(app.config.watchlist)
+            .mapNotNull { it.deviceKey }
+            .toSet()
+        val thisSide = compareThisSide(sit, fleets, namedKeys)
+        val second = SitDiff.Side(
+            name = otherFile.summary.name,
+            ram = false,
+            radios = otherFile.radios.map { SitDiff.fromSitRadio(it, fleets, namedKeys) },
+        )
+        return thisSide to second
+    }
+
+    private suspend fun compareThisSide(
+        sit: SitUi,
+        fleets: List<Fleet>,
+        namedKeys: Set<String>,
+    ): SitDiff.Side {
+        val open = sit.open
+        if (open != null) {
+            val source = app.sits.debriefSource()
+            return SitDiff.Side(
+                name = open.name,
+                ram = false,
+                radios = source?.devices.orEmpty().map { SitDiff.fromSighting(it, fleets, namedKeys) },
+            )
+        }
+        val selected = sit.closed.firstOrNull { it.id == sit.selectedId }
+        if (selected != null) {
+            val file = withContext(Dispatchers.IO) { app.sits.sitFile(selected.id) }
+                ?: error("Could not read this sit.")
+            return SitDiff.Side(
+                name = selected.name,
+                ram = false,
+                radios = file.radios.map { SitDiff.fromSitRadio(it, fleets, namedKeys) },
+            )
+        }
+        return SitDiff.Side(
+            name = "Last 15 minutes",
+            ram = true,
+            radios = app.devices.devices.value.map { SitDiff.fromSighting(it, fleets, namedKeys) },
+        )
     }
 
     private fun publishSitNotice() {
