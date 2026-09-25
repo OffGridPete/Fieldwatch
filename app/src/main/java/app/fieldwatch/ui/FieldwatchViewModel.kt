@@ -28,8 +28,10 @@ import app.fieldwatch.domain.disclaimerOk
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.GeoExport
+import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.LogExportKind
 import app.fieldwatch.domain.LogExportRadios
+import app.fieldwatch.domain.SitExport
 import app.fieldwatch.domain.ClassOutline
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterPreset
@@ -150,6 +152,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val logExportKind: StateFlow<LogExportKind> = _logExportKind
     private val _logExportRadios = MutableStateFlow(LogExportRadios.BOTH)
     val logExportRadios: StateFlow<LogExportRadios> = _logExportRadios
+    private val _sitExportKind = MutableStateFlow(LogExportKind.LOG_CSV)
+    val sitExportKind: StateFlow<LogExportKind> = _sitExportKind
+    private val _sitExportRadios = MutableStateFlow(LogExportRadios.BOTH)
+    val sitExportRadios: StateFlow<LogExportRadios> = _sitExportRadios
     private val _sitPath = MutableStateFlow<SitPathPlot.Model?>(null)
     val sitPath: StateFlow<SitPathPlot.Model?> = _sitPath
     @Volatile private var pathRadios: List<Sighting> = emptyList()
@@ -1426,6 +1432,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         _logExportRadios.value = radios
     }
 
+    fun setSitExportKind(kind: LogExportKind) {
+        _sitExportKind.value = kind
+    }
+
+    fun setSitExportRadios(radios: LogExportRadios) {
+        _sitExportRadios.value = radios
+    }
+
     fun refreshSitPath() {
         viewModelScope.launch(Dispatchers.Default) {
             _sitPath.value = buildSitPath()
@@ -1771,6 +1785,133 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             }.onFailure { err ->
                 _export.value = ExportUi(error = err.message ?: "Could not share device detail")
             }
+        }
+    }
+
+    fun suggestedSitExportName(): String {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+            .format(java.util.Date())
+        return SitExport.suggestedName(_sitExportKind.value, sitExportWindow().name, stamp)
+    }
+
+    fun sitExportMime(): String = SitExport.mime(_sitExportKind.value)
+
+    fun startSitExport() {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            runExport("Preparing sit export…") {
+                val kind = _sitExportKind.value
+                val (file, sitName) = writeSitExport(kind)
+                val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+                Intent(Intent.ACTION_SEND).apply {
+                    type = SitExport.mime(kind)
+                    clipData = ClipData.newRawUri("sit-export", uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, SitExport.subject(kind, sitName))
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            }.onSuccess { intent ->
+                _export.value = ExportUi(active = false, progress = 1f, share = intent, shareTitle = "Sit export")
+            }
+        }
+    }
+
+    fun startSitSaveToUri(uri: Uri) {
+        if (_export.value.active) return
+        viewModelScope.launch {
+            runExport("Saving sit export…") {
+                val kind = _sitExportKind.value
+                val text = sitExportText(kind)
+                withContext(Dispatchers.IO) {
+                    app.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+                        ?: error("Could not open the selected location")
+                }
+            }.onSuccess {
+                _export.value = ExportUi(active = false, progress = 1f, saved = true)
+            }
+        }
+    }
+
+    private data class SitExportWindow(
+        val name: String,
+        val devices: List<Sighting>,
+        val path: List<GpsSample>,
+    )
+
+    private fun sitExportWindow(now: Long = System.currentTimeMillis()): SitExportWindow {
+        val source = app.sits.debriefSource(now)
+        if (source != null) {
+            return SitExportWindow(source.name, source.devices, source.operatorPath)
+        }
+        val start = now - DebriefPrompt.WINDOW_MS
+        return SitExportWindow(
+            "Last 15 minutes",
+            app.devices.devices.value.filter { it.lastSeen >= start || it.firstSeen >= start },
+            app.operatorPathCopy().filter { it.at >= start },
+        )
+    }
+
+    private suspend fun writeSitExport(kind: LogExportKind): Pair<File, String> {
+        val text = sitExportText(kind)
+        val win = sitExportWindow()
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+            .format(java.util.Date())
+        val dir = File(app.cacheDir, "export").apply { mkdirs() }
+        val file = File(dir, SitExport.suggestedName(kind, win.name, stamp))
+        withContext(Dispatchers.IO) {
+            file.writeText(text)
+            app.getExternalFilesDir(null)?.let { ext ->
+                runCatching { file.copyTo(File(ext, file.name), overwrite = true) }
+            }
+        }
+        return file to win.name
+    }
+
+    private suspend fun sitExportText(kind: LogExportKind): String {
+        publishExport(0.08f, "Gathering sit…")
+        val win = sitExportWindow()
+        val radios = _sitExportRadios.value
+        val custom = RadioBookmarks.labels(app.config.watchlist)
+        val notes = RadioBookmarks.notes(app.config.watchlist)
+        val fleets = app.config.fleets
+        val extra = win.devices.filter { it.attentionNotes(fleets).isNotEmpty() }.map { it.key }.toSet()
+        val rows = SitExport.rows(win.devices, radios)
+        if (kind == LogExportKind.LOG_CSV || kind == LogExportKind.LOG_JSONL) {
+            if (rows.isEmpty()) error(SitExport.emptyHint(kind, radios))
+            publishExport(0.4f, "Writing ${kind.label} · ${rows.size} radios")
+            return withContext(Dispatchers.Default) {
+                if (kind == LogExportKind.LOG_CSV) {
+                    SitExport.csv(win.devices, radios, custom, notes, extra)
+                } else {
+                    SitExport.jsonl(win.devices, radios, custom, notes, extra)
+                }
+            }
+        }
+        val pins = SitExport.mapRadios(win.devices, radios)
+        if (pins.isEmpty()) error(SitExport.emptyHint(kind, radios))
+        val fmt = GeoExport.formatOf(kind) ?: error("Pick a map format.")
+        val info = listOf(
+            "model=${android.os.Build.MODEL}",
+            "release=${android.os.Build.VERSION.RELEASE}",
+            "device=${android.os.Build.DEVICE}",
+        ).joinToString(",")
+        publishExport(0.45f, "Writing ${kind.label} · ${pins.size} pins")
+        return withContext(Dispatchers.Default) {
+            GeoExport.render(
+                fmt, pins, emptyMap(), BuildConfig.VERSION_NAME, info,
+                customNames = custom,
+                observerNotes = notes,
+                track = win.path,
+                onProgress = { done, total ->
+                    if (total <= 0) return@render
+                    if (done == total || done % 250 == 0) {
+                        val pct = 0.50f + 0.45f * done.toFloat() / total.toFloat()
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(pct, "Writing ${kind.label} · $done of $total")
+                        }
+                    }
+                },
+            )
         }
     }
 

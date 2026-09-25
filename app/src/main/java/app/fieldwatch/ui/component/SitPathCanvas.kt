@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.fieldwatch.domain.SitPathPlot
+import app.fieldwatch.ui.theme.Cyan
+import app.fieldwatch.ui.theme.LocalNightMode
+import app.fieldwatch.ui.theme.nightIf
 import kotlin.math.hypot
 
 @Composable
@@ -46,7 +49,7 @@ fun SitPathCanvas(
 ) {
     val track = MaterialTheme.colorScheme.onSurface
     val extra = MaterialTheme.colorScheme.error
-    val named = MaterialTheme.colorScheme.primary
+    val named = Cyan.nightIf(LocalNightMode.current)
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val surface = MaterialTheme.colorScheme.surface
     val outline = MaterialTheme.colorScheme.outline

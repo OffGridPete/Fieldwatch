@@ -252,6 +252,11 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     ) { uri ->
         uri?.let(vm::startSaveToUri)
     }
+    val sitSaveLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(vm.sitExportMime()),
+    ) { uri ->
+        uri?.let(vm::startSitSaveToUri)
+    }
     androidx.compose.runtime.LaunchedEffect(export.share) {
         export.share?.let { intent ->
             context.startActivity(Intent.createChooser(intent, export.shareTitle))
@@ -627,6 +632,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     vm = vm,
                     exporting = export.active,
                     onSaveToStorage = { saveLauncher.launch(vm.suggestedExportName()) },
+                    onSaveSitToStorage = { sitSaveLauncher.launch(vm.suggestedSitExportName()) },
                     onSignatureCandidates = {
                         vm.startSignatureCandidates()
                         nav.navigate("candidates")

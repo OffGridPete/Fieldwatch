@@ -45,6 +45,9 @@ import app.fieldwatch.ui.NestedTopBar
 import app.fieldwatch.ui.FieldwatchUi
 import app.fieldwatch.ui.FieldwatchViewModel
 import app.fieldwatch.ui.component.SectionCard
+import app.fieldwatch.ui.theme.Cyan
+import app.fieldwatch.ui.theme.LocalNightMode
+import app.fieldwatch.ui.theme.nightIf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +56,7 @@ fun ReportsScreen(
     vm: FieldwatchViewModel,
     exporting: Boolean,
     onSaveToStorage: () -> Unit,
+    onSaveSitToStorage: () -> Unit,
     onSignatureCandidates: () -> Unit,
     onOpenPathRadio: (String) -> Unit = {},
 ) {
@@ -78,7 +82,7 @@ fun ReportsScreen(
         ) {
             if (settings.demoMode) {
                 Text(
-                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file and GPX / KML / WiGLE exports still have full addresses and lat/lon.",
+                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file, sit export, and GPX / KML / WiGLE files still have full addresses and lat/lon.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -219,13 +223,27 @@ fun ReportsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Line = this phone", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("Red = Extra attention", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        Text("Blue = Named", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            "Line = this phone",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Red = Extra attention",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Text(
+                                "Blue = Named",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Cyan.nightIf(LocalNightMode.current),
+                            )
+                        }
                     }
                     if (model.dots.isEmpty()) {
                         Text(
@@ -326,6 +344,21 @@ fun ReportsScreen(
             )
             }
 
+            SectionCard("Sit export") {
+            val sitKind by vm.sitExportKind.collectAsStateWithLifecycle()
+            val sitRadios by vm.sitExportRadios.collectAsStateWithLifecycle()
+            ExportFormatBlock(
+                kind = sitKind,
+                radios = sitRadios,
+                exporting = exporting,
+                onKind = vm::setSitExportKind,
+                onRadios = vm::setSitExportRadios,
+                onShare = vm::startSitExport,
+                onSave = onSaveSitToStorage,
+                hint = "One row per unique radio in this sit (or last 15 minutes). Not the rotating log. GPX / KML include this phone’s path as a track plus hear-points. Fieldwatch does not upload. Privacy mode does not mask this file.",
+            )
+            }
+
             SectionCard("Compare sits") {
                 Text(
                     compareThisCaption(state),
@@ -401,7 +434,7 @@ fun ReportsScreen(
             )
             }
 
-            SectionCard("Log") {
+            SectionCard("Log export") {
             Text(
                 "${state.logLines} lines this session  ·  ${vm.logBytes() / 1024} KB on disk" +
                     if (settings.loggingEnabled) "" else "  ·  logging off",
@@ -409,63 +442,15 @@ fun ReportsScreen(
             )
             val logKind by vm.logExportKind.collectAsStateWithLifecycle()
             val logRadios by vm.logExportRadios.collectAsStateWithLifecycle()
-            var openFormat by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = openFormat,
-                onExpandedChange = { openFormat = it },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            ) {
-                FieldwatchDropdownField("Format", logKind.label, openFormat)
-                ExposedDropdownMenu(openFormat, { openFormat = false }) {
-                    LogExportKind.entries.forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item.label) },
-                            onClick = {
-                                vm.setLogExportKind(item)
-                                openFormat = false
-                            },
-                        )
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                LogExportRadios.entries.forEach { item ->
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .selectable(
-                                selected = logRadios == item,
-                                onClick = { vm.setLogExportRadios(item) },
-                                role = Role.RadioButton,
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(
-                            selected = logRadios == item,
-                            onClick = { vm.setLogExportRadios(item) },
-                            enabled = !exporting,
-                        )
-                        Text(item.label, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            FieldwatchActionButton(
-                onClick = vm::startExport,
-                enabled = !exporting,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Share") }
-            FieldwatchActionButton(
-                onClick = onSaveToStorage,
-                enabled = !exporting,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Save to SD card / storage…") }
-            Text(
-                "The rotating file is JSON lines. CSV is the same rows as a spreadsheet. GPX — GPS Exchange, KML — Google Earth, and WiGLE CSV — wigle.net are hear-points: where this phone was when it heard each radio, not a radio fix. Tag detections with GPS and logging on. Share uses the Android share sheet — Fieldwatch does not upload.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            ExportFormatBlock(
+                kind = logKind,
+                radios = logRadios,
+                exporting = exporting,
+                onKind = vm::setLogExportKind,
+                onRadios = vm::setLogExportRadios,
+                onShare = vm::startExport,
+                onSave = onSaveToStorage,
+                hint = "The rotating file is JSON lines. CSV is the same rows as a spreadsheet. GPX — GPS Exchange, KML — Google Earth, and WiGLE CSV — wigle.net are hear-points: where this phone was when it heard each radio, not a radio fix. Tag detections with GPS and logging on. Share uses the Android share sheet — Fieldwatch does not upload.",
             )
             FieldwatchActionButton(
                 onClick = { confirmClear = true },
@@ -640,6 +625,78 @@ private fun compareThisCaption(state: FieldwatchUi): String {
         return "This sit: ${selected.name} — named window (up to ${Sit.RADIO_CAP}). Same as Debrief."
     }
     return "This sit: last 15 minutes in memory (about 400 radios). Same as Debrief."
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExportFormatBlock(
+    kind: LogExportKind,
+    radios: LogExportRadios,
+    exporting: Boolean,
+    onKind: (LogExportKind) -> Unit,
+    onRadios: (LogExportRadios) -> Unit,
+    onShare: () -> Unit,
+    onSave: () -> Unit,
+    hint: String,
+) {
+    var openFormat by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = openFormat,
+        onExpandedChange = { openFormat = it },
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+    ) {
+        FieldwatchDropdownField("Format", kind.label, openFormat)
+        ExposedDropdownMenu(openFormat, { openFormat = false }) {
+            LogExportKind.entries.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item.label) },
+                    onClick = {
+                        onKind(item)
+                        openFormat = false
+                    },
+                )
+            }
+        }
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        LogExportRadios.entries.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .selectable(
+                        selected = radios == item,
+                        onClick = { onRadios(item) },
+                        role = Role.RadioButton,
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = radios == item,
+                    onClick = { onRadios(item) },
+                    enabled = !exporting,
+                )
+                Text(item.label, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+    FieldwatchActionButton(
+        onClick = onShare,
+        enabled = !exporting,
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text("Share") }
+    FieldwatchActionButton(
+        onClick = onSave,
+        enabled = !exporting,
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text("Save to SD card / storage…") }
+    Text(
+        hint,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 private fun sitReportCaption(state: FieldwatchUi): String {

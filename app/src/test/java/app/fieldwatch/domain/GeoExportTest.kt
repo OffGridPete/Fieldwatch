@@ -84,4 +84,27 @@ class GeoExportTest {
         assertTrue(lines[2].endsWith(",WIFI"))
         assertTrue(lines.any { it.startsWith("11:22:33:44:55:66,Tag,,") && it.endsWith(",BLE") })
     }
+
+    @Test
+    fun gpxAndKmlIncludeOperatorTrack() {
+        val path = listOf(
+            GpsSample(1_700_000_000_000L, 37.4419, -122.1430),
+            GpsSample(1_700_000_030_000L, 37.4425, -122.1435),
+        )
+        val gpx = GeoExport.render(
+            GeoExport.Format.GPX, listOf(cafe), emptyMap(), "1.1.7", "",
+            track = path,
+            observerNotes = mapOf(cafe.key to "lot B"),
+        )
+        assertTrue(gpx.contains("<trk>"))
+        assertTrue(gpx.contains("Operator path"))
+        assertTrue(gpx.contains("lat=\"37.442500\""))
+        assertTrue(gpx.contains("Observer: lot B"))
+        val kml = GeoExport.render(
+            GeoExport.Format.KML, listOf(cafe), emptyMap(), "1.1.7", "",
+            track = path,
+        )
+        assertTrue(kml.contains("<LineString>"))
+        assertTrue(kml.contains("-122.143500,37.442500"))
+    }
 }

@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.1.7 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.1.8 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  f488467d25bf973f5c117df7ac54fda22188c253e014ea53ddaa578845400efc
+  919eda14010804640b256e59715916da09f64016bfe733deee95bf2ad949c364
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
@@ -265,21 +265,22 @@ Max collection (battery is the cost) — full walk-through:
                  silver consumer cameras (Wyze / Ring / GoPro / Osmo / Insta360) / home IoT / ISP Wi-Fi / thermostats / Tuya / access control / retail signage / Unknown Signature
                Unmatched radios color by RSSI, not class. Full catalog:
                User Manual §9.5 and Appendix B.
-  Reports      Path (north-up sit track; also on Debrief / Compare PDF),
-               Debrief (text or PDF), Compare
-               (text or PDF), AI Export,
-               Signature candidates, Share / Save log (Format: CSV,
+  Reports      Path, Debrief, Sit export, Compare, AI Export,
+               Signature candidates, Log export (Format: CSV,
                JSON lines, GPX — GPS Exchange, KML — Google Earth,
                WiGLE CSV — wigle.net; Both / Wi-Fi only / BLE only).
                Reset / clear log.
-               The selected sit drives Path, Debrief, and Compare’s
-               this-sit side. Rotating file is JSON lines. CSV / GPX /
-               KML / WiGLE are Share/Save formats. GPX/KML/WiGLE pins
-               are where this phone heard each radio (Tag GPS).
-               Fieldwatch does not upload. Custom names replace advertised
-               names on Debrief / Compare / Path / GPX / KML (WiGLE keeps
-               the advertised SSID). Observer notes is a section after
-               Where you were (Debrief) or Windows (Compare).
+               The selected sit drives Path, Debrief, Sit export, and
+               Compare’s this-sit side.
+               Sit export vs Log export: Sit export is one row per unique
+               radio in that window (sit cap 3000 / last 15 min RAM ~400).
+               Logging can be off. GPX/KML include this phone’s path as a
+               track. Log export is the rotating session file — every hear
+               while logging was on. Clearing the log does not delete sits.
+               Fieldwatch does not upload. Custom names replace
+               advertised names on Debrief / Compare / Path / GPX / KML
+               (WiGLE keeps the advertised SSID). Observer notes is a
+               section after Where you were (Debrief) or Windows (Compare).
                Compare sits: this sit (same as Debrief) vs a second saved
                sit. Presence only — kind + MAC. Extra attention is marked.
                Last 15 minutes vs a named sit is not the same net
@@ -435,7 +436,7 @@ Live Display (Sort, Title/Subtitle, extras, §5.3),
 filter presets (§8.4), the stock catalog and class colors (§9.5, Appendix B),
 Decode fields (how to type a map §9.6.1–§9.6.5, stock maps §9.6.6),
 alerts / stock bookmarks / voice (§10.1–10.2.1), logging (JSON lines on disk; CSV / GPX / KML / WiGLE on Share: lat,lon, vendor_ie, §11.2–11.3),
-Signature candidates (§5.6.3, §11.5), Moving with you, New detections only,
+Signature candidates (§5.6.4, §11.5), Moving with you, New detections only,
 Field Playbooks, Debrief / AI Export (sit-level and one-radio on detail;
 RAM window and trip strategy §11.4.1).
 
