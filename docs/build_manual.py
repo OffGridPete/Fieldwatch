@@ -598,7 +598,7 @@ def story():
             "(hear-time) — not the other radio. "
             "There is no Fieldwatch server; stamps stay on the handset until you share them. Logs "
             "keep full coordinates even when Privacy mode masks the screen and sit reports. "
-            "Debrief, Share log, AI Export (sit or one radio), and radio-detail Share as text "
+            "Debrief, Log export, AI Export (sit or one radio), and radio-detail Share as text "
             "can take that path off the phone. A TAK / CoT feed, if you turn it on, sends "
             "markers (full MAC and coordinates) onto the LAN you configured; Privacy mode "
             "pauses that feed. Online place names use the system geocoder "
@@ -691,10 +691,9 @@ def story():
             "offline in the field."
         ),
         P(
-            "I wanted a modern interface that was easy to use; a display flexible enough that "
-            "I could customize a view for the job at hand; a filtering engine so I do not have "
-            "to look at everything; an extensible signature library so I can identify as many "
-            "radio sources as possible and add new ones on the fly; and reports of what was seen."
+            "I wanted a modern interface that was easy to use; a display I could tune for the job; "
+            "filters so I do not have to look at everything; a signature library I can extend on the fly; "
+            "and reports of what was seen."
         ),
         P(
             "I have been using it and iterating on it for a while, and it has been useful "
@@ -752,10 +751,10 @@ def story():
             "<b>MAC.</b> The radio address. Default first line of a Live display row (Display → Title). You can move it to the subtitle, or hide the second line. BLE phones often randomize it, so a “new” MAC can be the same physical gadget with a new name tag.",
             "<b>Signature.</b> A named pattern Fieldwatch looks for (AirTag, Flock, Tile, …). A chip on a row means the pattern hit — not that you have identified a person or a serial number. Signatures always label; Filters decide what the Live display shows.",
             "<b>Filter vs log.</b> Filters only change what the Live display shows. The rotating log, if logging is on, still writes what was heard. Hiding AirTags on the Live display does not delete them from the file.",
-            "<b>Debrief vs log.</b> Debrief is a sit report of radios still in memory (last 15 minutes, about 400) unless a named sit is running or selected — then it is that window. Share log is the file. On a drive without a sit, tap Debrief more than once — roadside clutter falls out of RAM; radios moving with you stay. §5.6, §11.4.1.",
+            "<b>Debrief vs log.</b> Debrief is the sit report of radios still in memory (last 15 minutes, about 400) unless a named sit is selected. Log export is the rotating session file. Sit export is the roster of that window. On a drive without a sit, tap Debrief more than once. §5.6, §11.4.1.",
             "<b>Stale / gone.</b> No packet for longer than Settings → Stale after (and Display → Brief hold). The row can stay on screen dimmed. It does not mean the gadget is powered off forever.",
             "<b>Watch / bookmark.</b> A pip and/or spoken phrase when that signature family or that one MAC appears. Voice can say the class, the signature name, or both (Settings → What to say). Detail bookmark is one radio; it does not auto-delete when the radio leaves (§5.5, §10.1–10.2.1).",
-            "<b>Sit.</b> One session of watching radios — a room, a walk, or a drive. Optional named sit (Reports → Start sit): Debrief and AI Export use that window, including radios the Live list has already dropped. If you never start one, Debrief is still the last 15 minutes in memory. Share log is the file. §5.6.",
+            "<b>Sit.</b> One session of watching radios — a room, a walk, or a drive. Reports → Start sit names the window. Path, Debrief, Sit export, Compare this-sit, and AI Export use it. If you never start one, those reports use last 15 minutes in memory. Log export is still the session file. §5.6.",
             "<b>Chip.</b> The colored signature name on a Live display row. A pattern hit, not identity.",
             "<b>OUI.</b> The first three bytes of a MAC, assigned to a vendor. The same module vendor shows up in many products, so an OUI-only match is a weak guess.",
         ]),
@@ -785,7 +784,7 @@ def story():
                 ["Field observation", "Walk or sit a location, watch live strength, and export a timestamped log for later review."],
                 ["Signature pattern recognition", "Define a signature from an observed radio and reuse it: OUI family, SSID glob, BLE UUID, or manufacturer payload."],
                 ["After-action review", "Use timeline, device history, and Reports → Log (CSV / JSON lines / GPX / KML / WiGLE) to reconstruct when an emitter appeared and faded."],
-                ["Field playbooks", "Chapter 12: followed on a walk, new arrival in a room, Hunt a BLE radio / vehicle sweep, one signature family, hide clutter, own kit vs a candidate tag, camera/ALPR sit, Extra attention (card-reader / pentest kit), then Debrief / AI Export / Share log."],
+                ["Field playbooks", "Chapter 12: followed on a walk, new arrival in a room, Hunt a BLE radio / vehicle sweep, one signature family, hide clutter, own kit vs a candidate tag, camera/ALPR sit, Extra attention (card-reader / pentest kit), then Debrief / AI Export / Log export."],
             ],
             [1.7 * inch, 4.8 * inch],
         ),
@@ -1023,10 +1022,10 @@ def story():
             "fig-tour.png",
             "Live tour — Tune, Pause, and the five tabs.",
             numbered([
-            "A <b>Disclaimer and license</b> page appears once. Read it. Check <b>I have read this and I agree</b>, then Continue. Scanning does not start until you do. It does not show again unless you clear app data. After permissions, Live shows a one-time overlay that points at Tune (Display — Radar, list, By class), Pause, Filters, Signatures, Reports, and Settings. Got it dismisses it. Settings → Show Live tour opens Live with the overlay again. The five tabs and Tune are §4.4.",
+            "A <b>Disclaimer and license</b> page appears once. Check <b>I have read this and I agree</b>, then Continue. Scanning starts after that. After permissions, Live shows a one-time overlay (Tune, Pause, the five tabs). Got it dismisses it. Settings → Show Live tour brings it back. The five tabs and Tune are §4.4.",
             "Grant the permission screen. Fieldwatch will not start radios until the required set is complete.",
             "A foreground notification <b>Fieldwatch scanning</b> appears. Leave it; dismissing via Stop ends collection.",
-            "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock signature catalog, presets, bookmarks, and Settings listed in the Appendix. Later launches reload that file. Restore default signatures &amp; presets writes it from the stock catalog again. Settings → Export signatures shares the catalog as JSON. Settings → Export settings shares switches, the current filter, presets, and named radios. Neither pack has logs or GPS (§5.7, §9.3).",
+            "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock catalog, presets, bookmarks, and Settings. Later launches reload that file. Settings → Export signatures / Export settings share the catalog and switches. Neither pack includes logs or GPS (§5.7, §9.3).",
             "The Live display opens on the last view mode (default: By class). Display ships with RSSI bars, Signature names, Frequency, and First / last seen on. The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
             "Turn on system Location and Bluetooth if either is off. The Live display header and Settings show radio hints (Wi-Fi next Ns, waiting on OS, BLE cycling). Keep screen on is enabled by default. If you will leave the app: Settings → Allow background usage, then Unrestricted battery. Some phones (Samsung among them) do not open onto Unrestricted — tap Allow background usage to click through and select it.",
             ]),
@@ -1064,7 +1063,7 @@ def story():
                 ["Live / Pause", "The picture of radios you are hearing now (radar, list, timeline, hybrid, or By class). Tap this tab again while you are already on it to <b>Pause</b> — the picture freezes; Wi-Fi and BLE keep scanning and the log still appends. Tap Live to run the list again. From another tab, this item only navigates here."],
                 ["Filters", "Which radios appear on Live. Presets (BLE only, Watched only, …), class Show only / Hide these, Show only selected / Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. Logging is unchanged."],
                 ["Signatures", "The pattern catalog — which radios get a name. Tap a row to edit. Bookmark a row to beep (and/or speak) when that family appears. Hide a family on Filters, not here."],
-                ["Reports", "Named sits, Debrief (text / PDF), AI Export, Signature candidates, Share log, Save log, Reset / clear log. Start and End sit live here."],
+                ["Reports", "Named sits, Path, Debrief, Sit export, Compare, AI Export, Signature candidates, Log export. Start and End sit live here."],
                 ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, watchlist voice, TAK / CoT, logging, catalog export / import, Update stock catalog from GitHub, Restore defaults, Show Live tour. Row layout is Live → Display, not here."],
                 ["Tune (top right on Live)", "The sliders icon. Opens <b>Display</b> over Live: View (Radar, Strength list, Timeline, Hybrid, By class), Sort, Brief hold, Title line, Subtitle line, then switches for RSSI bars, signature names, Frequency, first/last. This is how you change the picture — appearance, sorting, and which fields each row shows. Tap Tune again, or tap the dimmed list, to close it. Not on Settings. §5.3."],
             ],
@@ -1172,7 +1171,7 @@ def story():
             "<b>Faster Wi-Fi AP scans</b> (optional, off until you do this). For signed APs on a drive. (1) Settings → About phone → tap Build number until Developer options exist. (2) Settings → Developer options → <b>Wi-Fi scan throttling → Off</b>. (3) Fieldwatch → Settings → Faster Wi-Fi AP scans → On. About every 8 s AP batches instead of ~30 s. More battery and heat than High performance alone. Fieldwatch will not flip the switch while the OS is still throttling. Turn the Fieldwatch switch off when the drive is over. §7.1.1, §10.3.1.",
             "<b>Keep screen on</b> — on while you are looking at the Live display / Hunt.",
             "<b>Tag detections with GPS</b> — leave on if you want Moving with you, Debrief distance, or log lat/lon. High-accuracy Location. Path stays 0 until a live fix.",
-            "<b>Write to disk / logging</b> — leave on if you want Share log, Signature candidates, or a file after the 15-minute Debrief window. Turn off only if the plaza is so dense the UI feels late.",
+            "<b>Write to disk / logging</b> — leave on if you want Log export, Signature candidates, or a file after the 15-minute Debrief window. Turn off only if the plaza is so dense the UI feels late.",
             "<b>Stale after</b> — default 45 s is fine for a busy list. For slow tags, 90–120 s so they do not flicker to gone between advertisements.",
         ]),
         P("4.5.5 Check it is actually scanning", "h3"),
@@ -1199,30 +1198,25 @@ def story():
         P("5. App Navigation &amp; Interface Overview", "h1"),
         P(
             "This chapter maps the screens. If you have not launched the app yet, start with §4.4. "
-            "The first bottom tab is labeled <b>Live</b> on the phone; this book calls that screen the "
-            "<b>Live display</b> so it is not confused with live GPS, the in-memory radio set, or a recording. "
-            "The circle on a Live display row is a class glyph. AP (Wi-Fi access point) and LE (BLE advertiser) "
-            "are the two radio kinds (§1.1); on the Live display they are a small Wi-Fi or Bluetooth icon on the "
-            "subtitle — same meanings, not two-letter tags. RSSI is loudness at this "
-            "phone in dBm (closer to 0 is louder, not a distance). Filters change who the Live display shows; "
-            "Display (§5.3) changes how each row looks. The log still records. Pause freezes the "
-            "Live display while the radios keep running; Filters and Settings still update, and the "
-            "new filter applies when you run the Live display again."
+            "The first bottom tab is labeled <b>Live</b> on the phone. This book calls that screen the "
+            "<b>Live display</b> so it is not confused with live GPS or a recording. "
+            "The circle on each row is a class glyph. The two radio kinds are Wi-Fi access points and BLE advertisers "
+            "(§1.1); they show as a small Wi-Fi or Bluetooth icon on the subtitle. "
+            "RSSI is loudness at this phone in dBm (closer to 0 is louder). "
+            "Filters change who appears. Display (§5.3) changes how each row looks. "
+            "Pause freezes the picture; the radios keep scanning and the log still writes. "
+            "A new filter applies when you run the Live display again."
         ),
         P("5.1 Main layout", "h2"),
         figure_wrap(
             "fig-live.png",
             "Fig. 1 — Live display (hybrid).",
             "One screen, five tabs, and a device-detail page on top. "
-            "The bottom bar is Live, Filters, Signatures, Reports, Settings. Filters sits next to "
-            "the Live display because the next step from that picture is usually to trim it. Signatures is the "
-            "pattern catalog; Reports generates Path, Debrief, Compare sits, AI Export, and Share or Save log. "
-            "The top bar is always FIELDWATCH plus a live count line: three small icons with numbers "
-            "(Wi-Fi access points, BLE advertisers, and on-air signature matches — the same hub icon "
-            "as the Signatures tab). A radio hint may follow — Wi-Fi next 27s, Wi-Fi waiting on OS, "
-            "BLE cycling, or BLE parked · restarting — and is the first thing to ellipsize if the bar "
-            "is tight. The scan notification still spells the same three counts "
-            "(“N Wi-Fi · N BLE · N signatures”). Export lives on Reports (Path, Debrief, Compare, AI Export, Share / Save log), not on the Live display. "
+            "The bottom bar is Live, Filters, Signatures, Reports, Settings. "
+            "Signatures is the pattern catalog. Reports is Path, Debrief, Compare, Sit export, AI Export, and Log export. "
+            "The top bar is FIELDWATCH plus three live counts: Wi-Fi access points, BLE advertisers, and on-air signature matches "
+            "(the same hub icon as the Signatures tab). A radio hint may follow — Wi-Fi next 27s, waiting on OS, BLE cycling, or BLE parked. "
+            "The scan notification spells the same three counts. Exports live on Reports. "
             "Screenshots in this book use Privacy mode (MAC tails **:**:**) unless noted.",
         ),
         figure_wrap(
@@ -1237,7 +1231,7 @@ def story():
         table(
             ["Tab", "Function"],
             [
-                ["Live", "Live display — the on-screen picture: radar, list, timeline, hybrid, or By class. Not a recording. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log; Filters still apply when you run again); tap to run the list. From another tab, this item just navigates here. Double-tap FIELDWATCH to jump to the top. New detections only adds Mark seen / Reset seen above the tabs. Moving with you adds Start over. A running sit shows FIELDWATCH · SIT and a banner; start and end are on Reports."],
+                ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports."],
                 ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). Each row shows the class glyph, and a hexagon when that row has a Decode fields map (§9.6). Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). Bookmark = watch (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Sits (optional named window), Path, Debrief (text / PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Signature candidates mines the rotating log. GPS / place names / logging on-off stay on Settings."],
@@ -1611,12 +1605,11 @@ def story():
         P("5.6 Reports tab", "h2"),
         figure_wrap(
             "fig-reports.png",
-            "Fig. 6 — Reports → Sits. The selection drives Path, Debrief, and Compare’s this-sit side. Privacy mode banner on.",
-            "Bottom bar, next to Settings. Named sits (optional), Path, Debrief, Compare sits, AI Export, signature "
-            "candidates, and the log. GPS tagging, Online place names, logging on/off, and rotate size stay on Settings. "
-            "The rotating file is JSON lines; CSV and map formats are Share/Save projections on this tab. "
-            "The sit you select here drives Path, Debrief, and Compare’s this-sit side. "
-            "If you never start a sit, those reports stay the last 15 minutes in RAM.",
+            "Fig. 6 — Reports → Sits. The selection drives Path, Debrief, Sit export, and Compare’s this-sit side. Privacy mode banner on.",
+            "Bottom bar, next to Settings. Named sits (optional), Path, Debrief, Sit export, Compare sits, AI Export, "
+            "signature candidates, and Log export. GPS tagging, place names, logging on/off, and rotate size stay on Settings. "
+            "The sit you select here drives Path, Debrief, Sit export, and Compare’s this-sit side. "
+            "If you never start a sit, those reports use last 15 minutes in RAM.",
         ),
         P("Named sits", "h3"),
         figure_wrap(
@@ -1633,8 +1626,8 @@ def story():
             "<b>While it runs.</b> Live title FIELDWATCH · SIT and a status banner. Path, Debrief, Sit export, Compare’s this-sit side, and AI Export use this window, not 15 minutes. Filters, Hunt, TAK, and the 400-radio Live list stay as they are. Start and End sit stay on Reports.",
             "<b>After End sit.</b> The sit appears in the list on Reports. Pick it for Path / Debrief / Sit export / Compare this-sit, or leave Last 15 minutes selected. Rename / Delete sit under the list.",
             "<b>Path</b> — North-up plot of the selected sit (open, saved, or last 15 minutes). Full write-up: §5.6.1.",
-            "<b>Debrief (text) / Debrief (PDF)</b> — Last 15 minutes in memory (about 400 radios; hard ceiling 900) unless a sit is running or you pick a saved sit. Same sit report, two formats. Opens with the hobby / as-is disclaimer (hypotheses, not identity; local law; not for safety). Not the rotating log. Custom names from Named radios replace advertised SSIDs / LE names on radio lines. <b>Observer notes</b> is its own numbered section immediately after Where you were when any heard radio in the window has a note. GPS following / planted-tracker assessment when tagging is on and you have moved. Radar vs list, Moving with you, Signatures only, and Hide selected do not change what Debrief sees. On a drive without a sit, a few kilometers of city RF can fill that cap — tap Debrief more than once (§11.4.1). Online place names can take several seconds; a progress bar counts pages so it does not look locked. PDF: stay/transit lines and Label: kickers (Channel occupancy, Loudest APs, …) are bold; bullets and Path key numbers are structured. Letter-size operator-path figure when GPS tagging recorded a walk.",
-            "<b>Compare (text) / Compare (PDF)</b> — Separate report, not a Debrief mode. Same letter layout as Debrief, two formats. This sit is the same window Debrief uses (open sit, selected saved sit, or last 15 minutes). Second sit is a picker of the other saved sits (defaults to the next-newest). Only in this sit, only in the second, in both. Kind + MAC; BLE rotation is a new row. Extra attention is marked. Custom names replace advertised names. <b>Observer notes</b> is a numbered section after Windows (this sit / second sit / both on each row). Last 15 minutes vs a named sit is not the same net (RAM ~400 vs sit 3000). Privacy mode masks MAC tails on the share text. Not a radio fix. PDF overlays both operator paths when both walks have GPS (this sit solid, second sit dashed).",
+            "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit, or last 15 minutes in RAM (~400 radios, hard ceiling 900). Hobby / as-is disclaimer at the top. Custom names replace advertised names. Observer notes is its own section after Where you were. Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk.",
+            "<b>Compare (text) / Compare (PDF)</b> — This sit vs a second saved sit. Presence only: only here, only there, in both. Kind + MAC. Same window as Debrief. Observer notes after Windows. Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 3000). PDF overlays both walks when both have GPS.",
             "<b>Compare AI Export</b> — Paste-ready addendum for a chat. Embeds the onboard Compare, then overlap (both/union), Wi-Fi vs BLE in each bucket, RAND BLE among exclusives, exclusive Extra attention / Named radios, and Observer notes if any. Instructs the model not to reprint the lists. Sit report AI Export stays this window.",
             "<b>AI Export</b> — Sit-level paste-ready addendum (the open or selected sit, otherwise last 15 minutes with a 5-minute slice). Onboard Debrief verbatim, then rates, RSSI bands, Extra attention, finder-tag IDs, and Observer notes — not a second inventory. Instructs the model not to reprint Debrief. For a <i>single</i> radio, use AI Export on the device-detail page instead.",
             "<b>Sit export</b> — Own card under Sit report. Same Format chips as Log export, for a different file. Full write-up: §5.6.2.",
@@ -1647,10 +1640,9 @@ def story():
             "fig-path.png",
             "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and Named (blue) hear-points, scale bar. No map tiles.",
             "Reports → Path is a north-up plot of <b>this phone</b> for the sit you selected "
-            "(open sit, a saved sit, or last 15 minutes). It is a display, not a command — there is no "
-            "Open / Load map / Export on this card. No map tiles; airplane mode is fine. "
+            "(open sit, a saved sit, or last 15 minutes). No map tiles; airplane mode is fine. "
             "Tag detections with GPS must have been on, and the path must be about 10 m or more, "
-            "or the card says so. Start sit if you want a longer track than Live’s last 15 minutes. "
+            "or the card says so. Start sit for a longer track than Live’s last 15 minutes. "
             "Privacy mode still draws the line; coordinate text is masked.",
         ),
         P(
@@ -1675,14 +1667,11 @@ def story():
         figure_wrap(
             "fig-compare.png",
             "Fig. 6 — Reports → Compare sits. This sit is the same window as Debrief; pick a second saved sit.",
-            "A separate report, not a Debrief mode. Same letter layout as Debrief, two formats (text and PDF). "
-            "This sit is the same window Debrief uses (open sit, selected saved sit, or last 15 minutes). "
-            "Second sit is a picker of the other saved sits (defaults to the next-newest). "
-            "Only in this sit, only in the second, in both. Kind + MAC; BLE rotation is a new row. "
-            "Custom names replace advertised names. Observer notes is a numbered section after Windows. "
-            "Last 15 minutes vs a named sit is not the same net (RAM ~400 vs sit 3000). "
-            "Privacy mode masks MAC tails on the share text. Not a radio fix. "
-            "PDF overlays both operator paths when both walks have GPS (this sit solid, second sit dashed).",
+            "This sit versus a second saved sit. Same window as Debrief. Text and PDF, same letter layout. "
+            "Second sit defaults to the next-newest saved sit. Presence only: only here, only there, in both. Kind + MAC. "
+            "Custom names replace advertised names. Observer notes after Windows. "
+            "Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 3000). "
+            "PDF overlays both walks when both have GPS (this sit solid, second sit dashed).",
         ),
         P("5.6.2 Sit export", "h3"),
         P(
@@ -1786,7 +1775,7 @@ def story():
         bullets([
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
-            "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Share log with tagging on contains operator coordinates.",
+            "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
             "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Online place names in Debrief</b> — On by default. Reverse-geocodes GPS stamps for Debrief and AI Export when the phone has internet (install-time INTERNET; system geocoder; no Fieldwatch server). Offline: a note in the report, no error dialog. Turn off if you do not want streets of your path in those files. The generate buttons themselves are on Reports (§5.6).",
             "<b>Logging</b> — Write to disk, rotate size, Stale after slider (when a radio is marked gone). Line/disk counts. The rotating file is JSON lines. Format (CSV, JSON lines, GPX, KML, WiGLE) and radios (Both / Wi-Fi / BLE) are on Reports → Log. Share, Save, and Reset / clear log are on Reports.",
@@ -3499,7 +3488,7 @@ def story():
         P("Header row:", "body_left"),
         P("timestamp,iso,kind,mac,name,rssi,channel,freq,oui,vendor,fleets,mfg,uuids,flags,raw,lat,lon,vendor_ie", "mono"),
         P(
-            "Older files omit the last column. A Share log that concatenates mixed parts writes "
+            "Older files omit the last column. A Log export that concatenates mixed parts writes "
             "the 18-column header once; rows from before this feature have 17 fields, so "
             "<font face='Courier'>vendor_ie</font> reads empty and lat/lon stay in place."
         ),
@@ -3550,12 +3539,10 @@ def story():
             "warn",
         ),
         P(
-            "Reports has two Debrief buttons that share the same sit report and differ only in format. "
-            "Neither is a chat prompt. Both are built from the last 15 minutes in the live map "
-            "(about 400 radios; how that map fills and drops on a drive is §11.4.1), not the rotating "
-            "on-disk log, not from whatever Live display view is open, and not "
-            "from the current filter. Radar vs list, Moving with you, Signatures only, Hide selected, "
-            "and New detections only change the Live display only. Radios keep scanning while the share sheet opens. "
+            "Reports has two Debrief buttons. Same sit report, two formats. "
+            "Both are built from radios still in memory (last 15 minutes, about 400; §11.4.1), "
+            "or from the selected sit. Live view and Filters do not change that snapshot. "
+            "Radios keep scanning while the share sheet opens. "
             "Treat either share as operationally sensitive: neighbor SSIDs, MACs, and operator GPS when tagging is on."
         ),
         bullets([
@@ -3568,7 +3555,7 @@ def story():
             "Tap the button and Fieldwatch takes the radios still in memory plus the operator GPS path, "
             "then keeps those whose first or last hear is in the last 15 minutes. "
             "Filters and the Live display view (radar / list / timeline / hybrid) do not change that snapshot. "
-            "The rotating JSON lines file is a different file — that is Share log / Save log, and "
+            "The rotating JSON lines file is a different file — that is Log export, and "
             "that is what Signature candidates reads (§11.5)."
         ),
         P(
@@ -3598,7 +3585,7 @@ def story():
         bullets([
             "Tap Debrief (text or PDF) about every 10–15 minutes, or at each stop, and <b>keep those shares</b>. Each file is that window, not the whole drive.",
             "Do not wait until you get home to tap Debrief once. That last 15 minutes is the last few kilometers, not the departure neighborhood.",
-            "Leave logging on. Share log / Save log is the hour-long file. Debrief will never reconstruct it from RAM.",
+            "Leave logging on. Log export is the hour-long file. Debrief will never reconstruct it from RAM.",
             "You do not need to sit still. A rolling Debrief still writes distance, Where you were, and co-travel for radios that stayed with the car.",
             "A thin inventory of unnamed BLE after a highway run is normal. Check Possible trackers / Possible tail / Vehicle / Extra attention first — those are the rows that survived on purpose.",
         ]),
@@ -3767,7 +3754,7 @@ def story():
             "New Wi-Fi rows also store vendor_ie. "
             "If Location is not high-accuracy, the path can stay 0 m while you drive. "
             "That stamp is hear-time correlation, not a survey-grade track. "
-            "A Share log with tagging on contains operator coordinates — treat the file as sensitive."
+            "A Log export with tagging on contains operator coordinates — treat the file as sensitive."
         ),
     ]
 
@@ -3776,13 +3763,11 @@ def story():
         PageBreak(),
         P("12. Field Playbooks", "h1"),
         P(
-            "These are playbooks for a question you can actually ask the radios. Each one names "
-            "the controls, what the Live display should look like, and what you must not claim. "
-            "A signature chip means a pattern matched a public broadcast. It is not a person, "
-            "a vehicle, or a serial number. Confirm with RSSI trend, presence over time, and "
-            "your eyes. Filters and Display change only what the Live display shows; the log still records "
-            "everything. Debrief’s tracking section is always the last 15 minutes in memory, "
-            "not whatever view or filter you have on now."
+            "These are playbooks for a question you can ask the radios. Each one names "
+            "the controls, what the Live display should look like, and what a match can support. "
+            "A signature chip means a pattern matched a public broadcast. Confirm with RSSI trend, presence over time, and your eyes. "
+            "Filters and Display change only the picture; the log still records. "
+            "Debrief’s tracking section is the last 15 minutes in memory, whatever view or filter is on."
         ),
         P(
             "Run <b>one</b> playbook at a time until you can read the result. Stacking "
@@ -3797,7 +3782,7 @@ def story():
             "<b>Then narrow.</b> Apply the filter or signature set for the question. If the list goes empty, undo the last clause before assuming the area is clean.",
             "<b>Pause to inspect.</b> Open detail from the frozen row. What this looks like, flags, and payloads beat a glance at a chip.",
             "<b>Leave logging on</b> unless the plaza is melting the disk. You can always hide rows on the Live display and still have the file.",
-            "<b>Write the sit.</b> Filters and the Live display view change only what you see. Debrief and AI Export see the 15-minute memory (cap ~400; §11.4.1) — including whether a tracker-like radio stayed with you. On a drive, tap Debrief more than once; Share log is the full file. Which share to tap is §12.12.",
+            "<b>Write the sit.</b> Filters and the Live display view change only what you see. Debrief and AI Export see the 15-minute memory (cap ~400; §11.4.1) — including whether a tracker-like radio stayed with you. On a drive, tap Debrief more than once; Log export is the full file. Which share to tap is §12.12.",
         ]),
         P("12.2 Am I being followed?", "h2"),
         callout(
@@ -3848,7 +3833,7 @@ def story():
         P("<b>What you should see.</b> Only radios that were not in the already-seen set. BLE can show as new during the Wi-Fi learning window. After Mark seen, the next new row is the next arrival. A watchlist alert fires only if that row would actually appear on the Live display.", "body_left"),
         P("<b>What it is not.</b> Randomized BLE addresses look new on every rotation — an unnamed LE that “just arrived” may be a phone that changed MAC. Sitting Wi-Fi is hidden through the next scan on purpose. This filter does not identify who walked in; it tells you a radio the session had not already absorbed is now on the air.", "body_left"),
         P(
-            "<b>Write it down.</b> New detections only does not shrink Debrief or AI Export — those ignore the Live display filter. Use Debrief persistence / first-seen, or the AI Export 5- vs 15-minute first-seen counts. Share log if you need every written row later.",
+            "<b>Write it down.</b> New detections only does not shrink Debrief or AI Export — those ignore the Live display filter. Use Debrief persistence / first-seen, or the AI Export 5- vs 15-minute first-seen counts. Log export if you need every written row later.",
             "body_left",
         ),
         P("12.4 Find only this family", "h2"),
@@ -3883,7 +3868,7 @@ def story():
         P("<b>What you should see.</b> The rest of the field stays. Hidden classes drop off the Live display until you turn Hide these off. Class picks stay if you switch modes; Reset filter is what forgets them.", "body_left"),
         P("<b>What it is not.</b> Hiding Finder tags does not mean no AirTags are present — they are still matched and logged. Watchlist will not beep for a row the current Live display filter would keep off the list.", "body_left"),
         P(
-            "<b>Write it down.</b> Debrief and AI Export still list hidden families if they were in the live map. That is the point of the log: the Live display can be quiet; the file is not. Use Share log when you later need the clutter you hid.",
+            "<b>Write it down.</b> Debrief and AI Export still list hidden families if they were in the live map. That is the point of the log: the Live display can be quiet; the file is not. Use Log export when you later need the clutter you hid.",
             "body_left",
         ),
         P("12.6 Is this my own tag?", "h2"),
@@ -3986,7 +3971,7 @@ def story():
             "question was a planted tag that stayed with you, Reports → Debrief still has the "
             "last-15-minute tracking assessment (§12.2) — Hunt, Finder-tags filter, and radar vs "
             "list do not change that report. Sit-level AI Export lists Find My / Fast Pair flags. "
-            "Share log for a later spreadsheet of MACs (they will rotate).",
+            "Log export for a later spreadsheet of MACs (they will rotate).",
             "body_left",
         ),
         P("12.9 Follow an SSID or OUI lead", "h2"),
@@ -3995,7 +3980,7 @@ def story():
             "body_left",
         ),
         P(
-            "A BSSID that repeats across visits is a fixture. A randomized BLE MAC that repeats is probably the same session, not a long-lived identity. Debrief Wi-Fi inventory and AI Export’s full AP list are the sit snapshot; Share log is what you compare on the next visit.",
+            "A BSSID that repeats across visits is a fixture. A randomized BLE MAC that repeats is probably the same session, not a long-lived identity. Debrief Wi-Fi inventory and AI Export’s full AP list are the sit snapshot; Log export is what you compare on the next visit.",
             "body_left",
         ),
         P("12.10 Walk, sit, or drive", "h2"),
@@ -4009,10 +3994,10 @@ def story():
                 ["ATAK overlay (Remote ID / Extra attention)", "§5.8 configure, §12.15 sit. Settings → TAK / CoT feed. Extra attention + Payload location. Same Wi-Fi LAN. Privacy mode off."],
                 ["Long sit / parked vehicle", "Balanced or Saver. Timeline. RSSI floor −80 if unreadable. Logging on. Watchlist, not a stare."],
                 ["Drive, then arrive home", "Moving with you is BLE only — house APs stay off. If a bag tag still does not show, the path was too short or GPS only stamped at the destination."],
-                ["Long drive (several km)", "Do not wait for one Debrief at the end. Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). City RF can fill the ~400 live-set cap in a few kilometers. Radios moving with you stay in each report; roadside unnamed BLE will not. Share log is the hour-long file."],
+                ["Long drive (several km)", "Do not wait for one Debrief at the end. Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). City RF can fill the ~400 live-set cap in a few kilometers. Radios moving with you stay in each report; roadside unnamed BLE will not. Log export is the hour-long file."],
                 ["List too fast to tap", "Pause. Then detail. Resume. Or Display → Subtitle None so more of the list fits without Pause."],
                 ["Fit the row to the job", "§5.3. Display is look (Title/Subtitle, extras). Filters are who. Plaza: Subtitle None. Copy MAC: Title → MAC. Channel sit: Frequency on."],
-                ["Write the sit", "§12.12. Debrief (text or PDF) for a sit report; AI Export for a chat prompt; Share log for the file. Long drive: Debrief each stop (§11.4.1)."],
+                ["Write the sit", "§12.12. Debrief for a sit report; Sit export for that window’s roster; AI Export for a chat prompt; Log export for the session tape. Long drive: Debrief each stop (§11.4.1)."],
                 ["Walk toward one BLE / a tracker chip", "§12.8 (tracker) or §12.13 (Hunt page). Walk for Closer/Further; body-block turn for a candidate bearing. Not meters."],
                 ["Don’t know which tracker", "§12.8. Filters → Show only Finder tags, hide own kit, dwell the phone at each hide (wheels, bumpers, cabin). Top row → Hunt. Repeat. Not a clean bill."],
                 ["A “!” / card reader / pentest kit", "§12.14. Extra attention on Hobby BLE serial (not a skimmer detector) and Pineapple / Flipper / Pwnagotchi / Marauder / Porkchop. Open detail, look with your eyes. A miss is not a clean bill."],
@@ -4035,19 +4020,15 @@ def story():
         ]),
         P("12.12 After the sit — reports and AI Export", "h2"),
         P(
-            "Debrief, sit-level AI Export, Signature candidates, Share log, Save, and Reset / clear log are on the <b>Reports</b> tab. "
+            "Debrief, sit-level AI Export, Signature candidates, Log export, Save, and Reset / clear log are on the <b>Reports</b> tab. "
             "GPS tagging, Online place names, and logging on/off stay on Settings. "
             "Two more shares live on the <b>device-detail</b> page (§5.5): Share as text and AI Export for "
             "<i>that radio only</i>. Sit-level Debrief and AI Export are built from the last "
-            "15 minutes in the live map (about 400 radios; hard ceiling 900) — not from whatever "
-            "filter is on the Live display, not from radar vs list vs timeline vs hybrid, and not from the "
-            "rotating on-disk log. How that memory fills and drops on a drive is §11.4.1: tap "
-            "Debrief more than once; radios moving with you stay; roadside clutter does not. A planted-tracker "
-            "co-travel line is in that sit report whenever tagging was on and you moved, even if "
-            "Moving with you is off. Signature candidates is the opposite window: it reads the "
-            "rotating log for unmatched families (§5.6.4, §11.5). Radios keep scanning while the share sheet opens. "
-            "Treat every share as operationally sensitive: neighbor SSIDs, MACs, and — if tagging "
-            "or place names were on — your path and streets."
+            "15 minutes in the live map (about 400 radios; hard ceiling 900). Live view and Filters do not change it. "
+            "How that memory fills and drops on a drive is §11.4.1: tap Debrief more than once; radios moving with you stay. "
+            "A planted-tracker co-travel line is in that sit report whenever tagging was on and you moved. "
+            "Signature candidates reads the rotating log for unmatched families (§5.6.4, §11.5). "
+            "Radios keep scanning while the share sheet opens. Treat every share as operationally sensitive."
         ),
         table(
             ["Share", "What it is", "Use it when"],
@@ -4057,7 +4038,7 @@ def story():
                 ["Compare (text / PDF)", "Presence-only this sit vs a second saved sit. Kind + MAC. Observer notes after Windows. Custom names. Path overlay on the PDF when both walks have GPS.", "Two rooms, two days, or last 15 minutes vs a named sit (RAM ~400 vs sit 3000)."],
                 ["AI Export (Reports)", "Sit-level analyst <i>prompt</i>: onboard Debrief verbatim, plus a compact working table (5/15-minute rates, RSSI bands, Extra attention, Observer notes, finder-tag IDs). Asks for an addendum — not a rewrite, not a second roster.", "Paste into a chat when you want numbers and a stress-test of tracking callouts. Not a legal memo."],
                 ["Signature candidates", "Log miner on Reports. Re-matches the rotating log, lists unmatched families that share a unique on-air ID (2+ radios). Create signature is a draft with the shared rule, no MAC pin. Save returns to the list and re-runs it. Offline.", "After a sit with logging on: recurring unmatched globs / vendor IEs / OUIs worth a custom signature. Not every unknown radio. §5.6.4, §9.2.1, §11.5."],
-                ["Share log / Save", "Reports → Log. Format: Log file — CSV, Log file — JSON lines, GPX — GPS Exchange, KML — Google Earth, WiGLE CSV — wigle.net. Radios: Both / Wi-Fi only / BLE only. Rotating file is JSON lines. Map pins are this phone. Fieldwatch does not upload.", "After-action file, spreadsheet, Google Earth, or a WiGLE upload you start yourself. Rows the 15-minute memory already dropped."],
+                ["Log export", "Reports → Log export. Format: CSV, JSON lines, GPX, KML, WiGLE. Radios: Both / Wi-Fi / BLE. Rotating file is JSON lines. Map pins are this phone. Fieldwatch does not upload.", "After-action file, spreadsheet, Google Earth, or a WiGLE upload you start yourself."],
                 ["Sit export", "Reports → Sit export. Same Format chips as Log export. One row per unique radio in the selected sit (or last 15 minutes). Logging can be off. GPX/KML include the operator path. Not the rotating log.", "Take this walk’s roster to a spreadsheet or Google Earth without the whole day’s log."],
                 ["Share as text (detail)", "Plain dump of the open radio’s detail page.", "Notes, a ticket, or to keep one MAC/payload without the whole sit."],
                 ["AI Export (detail)", "Prompt about <b>one</b> radio: dump plus registry/format decode job. Same disclaimer as sit-level AI Export.", "“What is this AP / tag / chip?” Do not use it as a following test — that is Reports → Debrief after you move."],
@@ -4073,7 +4054,7 @@ def story():
             "<b>§12.5 Hidden clutter.</b> Still in Debrief/AI Export/log. The Live display was quiet; the file was not.",
             "<b>§12.6 Own tag?</b> Debrief “Possible trackers with you” (yours or planted — account for it) vs “Possible tail.” Same verdicts in AI Export.",
             "<b>§12.8 Tracker hunt.</b> Filters → Show only Finder tags. If you do not know which row: dwell the phone at hide spots (car wheels, bumpers, cabin) until one pops to the top, then Hunt. Walk / body-block to narrow. Structures shadow. Not a clean bill.",
-            "<b>§12.9 SSID/OUI lead.</b> Debrief Wi-Fi inventory for the sit. Reports → Compare sits for this window vs a second saved sit (kind + MAC). Share log still compares BSSIDs if you want the file. Signature candidates if the same unmatched glob or vendor IE keeps showing up.",
+            "<b>§12.9 SSID/OUI lead.</b> Debrief Wi-Fi inventory for the sit. Reports → Compare sits for this window vs a second saved sit (kind + MAC). Log export still compares BSSIDs if you want the file. Signature candidates if the same unmatched glob or vendor IE keeps showing up.",
             "<b>Catalog gap?</b> Open an unmatched radio: Signature family on detail is the one-radio check (Strong / Possible / This radio only). Logging on, then Reports → Signature candidates for the sit-wide list. Recurring unmatched name globs / vendor IEs / stable OUIs. Create signature, Save, then the Live display should label the next hear. Not a house SSID and not a chip-module OUI.",
             "<b>§12.14 Extra attention / pentest kit / card-reader caution.</b> Debrief Extra attention section and PDF amber callouts. Detail Share / AI Export quote EXTRA ATTENTION. Tell a chat “pattern, not a skimmer detector, not proof of an attack.”",
         ]),
@@ -4259,7 +4240,7 @@ def story():
             "body_left",
         ),
         P(
-            "<b>Write it down.</b> ATAK is the live overlay. Fieldwatch still has Debrief / Share log "
+            "<b>Write it down.</b> ATAK is the live overlay. Fieldwatch still has Debrief / Log export "
             "for the sit file. The CoT remarks are not a report. If you share a screen of the "
             "map, remember the MAC is full — Privacy mode was off to publish.",
             "body_left",
@@ -4490,7 +4471,7 @@ def story():
             ["iBeacon", "Apple manufacturer layout 0x02/0x15: UUID + major + minor + calibrated TX."],
             ["Appearance", "BLE GAP field: what the device claims to be (headphones, mouse, watch…). Used in the detail “What this looks like” guess."],
             ["New detections only", "Filters switch. Mark seen / Reset seen are on the Live display above the tabs while the filter is on. Already-seen grows only on first turn-on (plus the next Wi-Fi scan) or Mark seen. Reset seen clears it to zero. New radios stay while heard, then at least Brief hold after the last packet. Live display hint: New only · N hidden."],
-            ["Sit", "One session of watching radios — a room, a walk, or a drive. Debrief is a sit report of the last 15 minutes still in memory. Share log is the on-disk file. §11.4, Chapter 12."],
+            ["Sit", "One session of watching radios — a room, a walk, or a drive. Path, Debrief, Sit export, and Compare this-sit use the selected sit, or last 15 minutes in memory. Log export is the rotating session file. §5.6, §11.4."],
             ["Pipeline", "How a hear becomes a row: on the air → ScanService → catalog match → Live + Tune → watchlist / Hunt → log, sits, TAK. Fig. 20, Chapter 14."],
             ["Hear-time", "The moment Fieldwatch heard that packet. GPS on a detection is this phone at hear-time, not the other radio’s location."],
             ["Chip (signature)", "The colored signature name on a Live display row. A pattern hit, not identity. Display → Signature names hides chips without dropping the radio."],
@@ -4844,11 +4825,11 @@ def story():
             ["New signature labels half the cafe", "Rule too broad (OUI of a common chip, or RADIO_KIND in OR).", "Hide it on Filters, or delete a custom row. Tighten to MAC, name, UUID, or manufacturer data."],
             ["Create-from-device matches all BLE", "The signature includes a Radio kind rule with match-any.", "Delete that signature. Open detail → Create signature from device again and keep MAC, name, or UUID rules only. Do not add Radio kind alone."],
             ["Export share sheet empty / fails", "No log lines yet, or the viewer cannot take a content URI.", "Wait for a few observations. Share to Files or Drive, not to an app that rejects text/plain."],
-            ["Debrief looks empty / thin", "Live display has few radios in the last 15 minutes, unnamed BLE already evicted (~3 min), or a drive already filled the ~400 cap so earlier streets dropped.", "Scan a few minutes first. Text and PDF use the same memory snapshot, not the on-disk log. On a trip, tap Debrief every 10–15 min or at stops (§11.4.1) — radios moving with you stay in each file. Use Share log for the full hour."],
-            ["Cannot find Share log / Save to SD / Debrief / Signature candidates / clear log", "Those buttons are on the Reports tab.", "Bottom bar → Reports. Signature candidates is under Catalog. The one-radio version is Signature family on device detail. Settings still has GPS, Online place names, and logging on/off."],
+            ["Debrief looks empty / thin", "Live display has few radios in the last 15 minutes, unnamed BLE already evicted (~3 min), or a drive already filled the ~400 cap so earlier streets dropped.", "Scan a few minutes first. Text and PDF use the same memory snapshot, not the on-disk log. On a trip, tap Debrief every 10–15 min or at stops (§11.4.1) — radios moving with you stay in each file. Use Log export for the full hour."],
+            ["Cannot find Log export / Sit export / Debrief / Signature candidates", "Those buttons are on the Reports tab.", "Bottom bar → Reports. Sit export is under Sit report. Signature candidates is under Catalog. Settings still has GPS, place names, and logging on/off."],
             ["Cannot find Debrief / AI Export", "Those buttons are on the Reports tab.", "Bottom bar → Reports. Settings still has Tag GPS, Online place names, and logging on/off. One-radio AI Export is on the device-detail page, not Reports."],
             ["Signature candidates is empty", "Logging was off, the log is short, or leftover radios are randomized / house-like / one-off MACs.", "Logging on in Settings, sit a while, then tap Signature candidates again. A family needs two distinct radios sharing a unique ID. One loud unmatched MAC is Create from device, not a family."],
-            ["No vendor-IE families (Roku-class hidden APs)", "Older log rows have no vendor_ie column.", "Expected until new Wi-Fi packets are written after this build. Name globs and stable OUIs still mine from old parts. Share log of a new sit if you need IEs off-phone."],
+            ["No vendor-IE families (Roku-class hidden APs)", "Older log rows have no vendor_ie column.", "Expected until new Wi-Fi packets are written after this build. Name globs and stable OUIs still mine from old parts. Log export of a new sit if you need IEs off-phone."],
             ["I Saved a candidate but it is still on the list", "The draft did not match those radios (rule too tight, or you changed it), or Save did not finish.", "Open Signatures and confirm the row is there. Save from a candidate draft returns to the list and re-runs it; that family should drop if the new rule hits. Cancel leaves the list unchanged."],
             ["Detail AI Export vs Reports AI Export", "Two different prompts.", "Detail = this radio (what is it?). Reports = onboard Debrief plus working data, asking for a statistical addendum (not a rewrite). Do not treat a one-radio decode as a following test."],
             ["Hunt Reset / Back to detail are hard to reach", "The cue text grew and pushed the buttons off screen.", "Reset, Back, then Beep / Vibrate sit at the bottom of Hunt. Cue and hint stay a fixed height so the dBm number does not jump."],
