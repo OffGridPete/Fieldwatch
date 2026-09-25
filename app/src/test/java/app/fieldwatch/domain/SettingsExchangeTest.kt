@@ -71,6 +71,7 @@ class SettingsExchangeTest {
                 deviceKey = "BLE:C3:A6:A9:11:22:33",
                 label = "bag tag",
                 alert = true,
+                observerNotes = "in the bag",
             ),
             WatchTarget(
                 id = "watch-airtag",
@@ -91,6 +92,7 @@ class SettingsExchangeTest {
         val pack = SettingsExchange.parse(json)
         assertEquals(SettingsPack.FORMAT, pack.format)
         assertEquals(1, pack.watchlist.count { it.deviceKey == "BLE:C3:A6:A9:11:22:33" })
+        assertEquals("in the bag", pack.watchlist.single { it.deviceKey != null }.observerNotes)
         assertEquals("plaza -80", pack.presets.last().name)
         assertEquals(setOf("hide-phones"), pack.hiddenPresetIds)
         assertTrue(pack.filter.showBle)
@@ -125,6 +127,7 @@ class SettingsExchangeTest {
         assertEquals(setOf("hide-phones"), next.hiddenPresetIds)
         assertTrue(next.presets.any { it.id == "custom-plaza" })
         assertEquals("bag tag", next.watchlist.single { it.deviceKey != null }.label)
+        assertEquals("in the bag", next.watchlist.single { it.deviceKey != null }.observerNotes)
         assertTrue(next.fleets.any { it.id == "custom-keep-me" })
         assertEquals(local.fleets.size, next.fleets.size)
         assertEquals(setOf("BLE:AA:BB:CC:DD:EE:FF"), next.arrivalKnownKeys)

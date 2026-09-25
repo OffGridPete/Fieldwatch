@@ -58,10 +58,28 @@ class SitDiffTest {
         assertTrue(text.contains("ONLY IN SECOND SIT (1)"))
         assertTrue(text.contains("AA:AA:AA:AA:AA:04"))
         assertTrue(text.contains("IN BOTH (2)"))
-        assertTrue(text.contains("Named radio"))
+        assertTrue(text.contains("van"))
         assertTrue(text.contains("This sit: today"))
         assertTrue(text.contains("Second sit: last week"))
         assertFalse(text.contains("Last 15 minutes is the Live RAM set"))
+    }
+
+    @Test
+    fun observerNotesPrintOnExclusiveLine() {
+        val thisSit = SitDiff.Side(
+            name = "today",
+            ram = false,
+            radios = listOf(
+                radio("WIFI:AA:AA:AA:AA:AA:01", "van", named = true, observer = "fleet van, lot B"),
+            ),
+        )
+        val second = SitDiff.Side(name = "week", ram = false, radios = emptyList())
+        val text = SitDiff.report(thisSit, second, demoMode = false)
+        assertTrue(text.contains("OBSERVER NOTES"))
+        assertTrue(text.contains("van"))
+        assertTrue(text.contains("fleet van, lot B"))
+        assertTrue(text.contains("this sit"))
+        assertFalse(text.contains("Observer: fleet van, lot B"))
     }
 
     @Test
@@ -126,7 +144,7 @@ class SitDiffTest {
             rssiHistory = emptyList(),
             presence = emptyList(),
         )
-        val row = SitDiff.fromSighting(device, fleets, namedKeys = emptySet())
+        val row = SitDiff.fromSighting(device, fleets, customNames = emptyMap())
         assertTrue(row.extraAttention)
         assertEquals(listOf("Axon"), row.fleetNames)
         assertFalse(row.named)
@@ -187,6 +205,7 @@ class SitDiffTest {
         named: Boolean = false,
         ble: Boolean = false,
         rand: Boolean = false,
+        observer: String = "",
     ) = SitDiff.Radio(
         key = key,
         kind = if (ble) RadioKind.BLE else RadioKind.WIFI,
@@ -196,5 +215,6 @@ class SitDiffTest {
         named = named,
         fleetNames = if (extra) listOf("Axon") else emptyList(),
         randomized = rand,
+        observerNotes = observer,
     )
 }

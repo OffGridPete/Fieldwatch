@@ -11,12 +11,16 @@ object SitDiff {
         val named: Boolean,
         val fleetNames: List<String>,
         val randomized: Boolean = false,
+        val lat: Double? = null,
+        val lon: Double? = null,
+        val observerNotes: String = "",
     )
 
     data class Side(
         val name: String,
         val ram: Boolean,
         val radios: List<Radio>,
+        val path: List<GpsSample> = emptyList(),
     ) {
         val keys: Set<String> get() = radios.map { it.key }.toSet()
     }
@@ -37,31 +41,39 @@ object SitDiff {
     fun fromSighting(
         device: Sighting,
         fleets: List<Fleet>,
-        namedKeys: Set<String>,
+        customNames: Map<String, String>,
+        observerNotes: Map<String, String> = emptyMap(),
     ): Radio = Radio(
         key = device.key,
         kind = device.kind,
         mac = device.mac,
-        name = device.name,
+        name = device.reportName(customNames),
         extraAttention = device.attentionNotes(fleets).isNotEmpty(),
-        named = device.key in namedKeys,
+        named = device.key in customNames,
         fleetNames = device.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = device.randomized,
+        lat = device.gpsTrail.lastOrNull()?.lat ?: device.latitude,
+        lon = device.gpsTrail.lastOrNull()?.lon ?: device.longitude,
+        observerNotes = observerNotes[device.key].orEmpty(),
     )
 
     fun fromSitRadio(
         row: SitRadio,
         fleets: List<Fleet>,
-        namedKeys: Set<String>,
+        customNames: Map<String, String>,
+        observerNotes: Map<String, String> = emptyMap(),
     ): Radio = Radio(
         key = row.key,
         kind = row.kind,
         mac = row.mac,
-        name = row.name,
+        name = customNames[row.key]?.trim()?.takeIf { it.isNotEmpty() } ?: row.name.ifBlank { row.mac },
         extraAttention = row.extraAttention,
-        named = row.key in namedKeys,
+        named = row.key in customNames,
         fleetNames = row.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = row.randomized,
+        lat = row.gpsTrail.lastOrNull()?.lat,
+        lon = row.gpsTrail.lastOrNull()?.lon,
+        observerNotes = observerNotes[row.key].orEmpty(),
     )
 
     fun report(
@@ -104,6 +116,9 @@ object SitDiff {
                 append("Radios this phone heard. Kind + MAC. BLE rotation is a new row. Not a radio fix.")
             },
         )
+        observerNotesSection(thisSit, second)?.let { body ->
+            sections += DebriefSection(next(), "Observer notes", body)
+        }
         if (extraHits.isNotEmpty()) {
             sections += DebriefSection(
                 next(),
@@ -134,6 +149,56 @@ object SitDiff {
             heading = "FIELDWATCH SIT COMPARE",
             pdfKicker = "SIT COMPARE",
             pdfTitle = "Sit compare",
+            pathFigure = pathFigure(thisSit, second),
+        )
+    }
+
+    private fun pathFigure(
+        thisSit: Side,
+        second: Side,
+    ): SitPathPlot.Figure? {
+        val tracks = listOfNotNull(
+            thisSit.path.takeIf { it.size >= 2 }?.let {
+                SitPathPlot.FigureTrack(thisSit.name, it, secondary = false)
+            },
+            second.path.takeIf { it.size >= 2 }?.let {
+                SitPathPlot.FigureTrack(second.name, it, secondary = true)
+            },
+        )
+        if (tracks.isEmpty()) return null
+        val dots = (thisSit.radios + second.radios)
+            .filter { it.extraAttention || it.named }
+            .mapNotNull { r ->
+                val lat = r.lat ?: return@mapNotNull null
+                val lon = r.lon ?: return@mapNotNull null
+                SitPathPlot.Dot(
+                    key = r.key,
+                    lat = lat,
+                    lon = lon,
+                    label = r.name.ifBlank { r.mac },
+                    extraAttention = r.extraAttention,
+                    named = r.named,
+                    kind = r.kind,
+                    mac = r.mac,
+                    fleetNames = r.fleetNames,
+                    observerNotes = r.observerNotes,
+                )
+            }
+            .distinctBy { it.key }
+            .take(24)
+        val all = tracks.flatMap { it.samples }
+        val cap = if (tracks.size == 2) {
+            "Two walks on one north-up frame. Green = this sit. Slate = second sit. A number is a place on this phone's path; stacked radios share a number (Path key). Hear-points, not radio fixes."
+        } else {
+            "North-up. Line is this phone. A number is a place on this path; stacked radios share a number (Path key). Hear-points, not radio fixes."
+        }
+        return SitPathPlot.Figure(
+            kicker = if (tracks.size == 2) "OPERATOR PATHS" else "OPERATOR PATH",
+            tracks = tracks,
+            dots = dots,
+            lengthM = Geo.pathLengthM(all),
+            spanM = Geo.spanM(all),
+            caption = cap,
         )
     }
 
@@ -189,6 +254,34 @@ object SitDiff {
             append(name)
         }
         if (row.extraAttention) append("  Extra attention")
-        if (row.named) append("  Named radio")
+    }
+
+    private fun observerNotesSection(thisSit: Side, second: Side): String? {
+        fun where(key: String): String = when {
+            key in thisSit.keys && key in second.keys -> "both"
+            key in thisSit.keys -> "this sit"
+            else -> "second sit"
+        }
+        val rows = (thisSit.radios + second.radios)
+            .distinctBy { it.key }
+            .mapNotNull { r ->
+                val note = r.observerNotes.trim().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                r to note
+            }
+        if (rows.isEmpty()) return null
+        return buildString {
+            appendLine("Your captions on radios heard in either window. Same KIND+MAC as Named radios. Not catalog Notes.")
+            rows.sortedWith(
+                compareBy<Pair<Radio, String>> { where(it.first.key) }.thenBy { it.first.mac },
+            ).forEach { (r, note) ->
+                val kind = if (r.kind == RadioKind.WIFI) "WIFI" else "BLE"
+                val label = r.name.trim().takeIf { it.isNotEmpty() && !it.equals(r.mac, ignoreCase = true) }
+                append("  · $kind  ${r.mac}")
+                if (label != null) append("  ").append(label)
+                append("  ").append(where(r.key))
+                appendLine()
+                appendLine("    $note")
+            }
+        }.trimEnd()
     }
 }

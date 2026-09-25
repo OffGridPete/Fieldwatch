@@ -32,6 +32,7 @@ import java.util.Locale
 import app.fieldwatch.ui.component.DecodeGlyph
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -100,6 +101,7 @@ import app.fieldwatch.ui.component.RssiBar
 import app.fieldwatch.ui.component.Sparkline
 import app.fieldwatch.ui.component.TrendMark
 import app.fieldwatch.ui.component.rssiColor
+import app.fieldwatch.ui.theme.Cyan
 import app.fieldwatch.ui.theme.LocalNightMode
 import app.fieldwatch.ui.theme.PhosphorActive
 import app.fieldwatch.ui.theme.nightIf
@@ -1158,8 +1160,14 @@ fun DeviceRow(
                         style = compactLine(16.sp, 18.sp, FontWeight.SemiBold),
                     )
                     val attention = vm.hasAttention(device)
-                    if (attention || named || alerted) {
-                        FleetNameChips(device, vm, attention, showNames = named, alerted = alerted)
+                    val observed = vm.hasObserverNote(device)
+                    if (attention || observed || named || alerted) {
+                        FleetNameChips(
+                            device, vm, attention,
+                            showNames = named,
+                            alerted = alerted,
+                            observed = observed,
+                        )
                     }
                     if (showSub) {
                         val sub = listSubtitle(device, subtitleLine, names, demoMode, watch)
@@ -1235,6 +1243,7 @@ private fun FleetNameChips(
     attention: Boolean = false,
     showNames: Boolean = true,
     alerted: Boolean = false,
+    observed: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1261,6 +1270,22 @@ private fun FleetNameChips(
                             trim = LineHeightStyle.Trim.Both,
                         ),
                     ),
+                )
+            }
+        }
+        if (observed) {
+            val ink = Cyan.nightIf(LocalNightMode.current)
+            Surface(
+                shape = RoundedCornerShape(99.dp),
+                color = ink.copy(alpha = 0.22f),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Outlined.Notes,
+                    contentDescription = "Observer notes",
+                    modifier = Modifier
+                        .padding(horizontal = 5.dp, vertical = 1.dp)
+                        .size(11.dp),
+                    tint = ink,
                 )
             }
         }
@@ -1433,11 +1458,17 @@ private fun TimelineView(
                         )
                     }
                     val attention = vm.hasAttention(device)
+                    val observed = vm.hasObserverNote(device)
                     val showNames = showFleet && device.fleetIds.isNotEmpty()
                     val alerted = device.key in alertedKeys
-                    if (attention || showNames || alerted) {
+                    if (attention || observed || showNames || alerted) {
                         Spacer(Modifier.height(3.dp))
-                        FleetNameChips(device, vm, attention, showNames = showNames, alerted = alerted)
+                        FleetNameChips(
+                            device, vm, attention,
+                            showNames = showNames,
+                            alerted = alerted,
+                            observed = observed,
+                        )
                     }
                     Spacer(Modifier.height(6.dp))
                     PresenceTrack(device, now, window, color)

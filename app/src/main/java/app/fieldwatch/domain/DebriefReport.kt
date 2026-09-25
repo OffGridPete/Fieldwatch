@@ -68,6 +68,7 @@ data class DebriefDoc(
     val heading: String = "FIELDWATCH FIELD DEBRIEF",
     val pdfKicker: String = "FIELD DEBRIEF",
     val pdfTitle: String = "Field debrief",
+    val pathFigure: SitPathPlot.Figure? = null,
 ) {
     fun toPlainText(): String = buildString {
         appendLine(heading)
@@ -128,7 +129,9 @@ object DebriefReport {
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
         window: DebriefWindow? = null,
-    ): String = document(devices, fleets, settings, operatorPath, now, places, window).toPlainText()
+        customNames: Map<String, String> = emptyMap(),
+        observerNotes: Map<String, String> = emptyMap(),
+    ): String = document(devices, fleets, settings, operatorPath, now, places, window, customNames, observerNotes).toPlainText()
 
     fun document(
         devices: List<Sighting>,
@@ -138,6 +141,8 @@ object DebriefReport {
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
         window: DebriefWindow? = null,
+        customNames: Map<String, String> = emptyMap(),
+        observerNotes: Map<String, String> = emptyMap(),
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -184,7 +189,7 @@ object DebriefReport {
             }
             appendLine("Loudest APs:")
             wifi.take(12).forEach { d ->
-                appendLine("  · ${wifiLine(d, names, windowStart, now)}")
+                appendLine("  · ${wifiLine(d, names, windowStart, now, customNames)}")
                 d.attentionNotes(fleets).forEach { (sig, note) ->
                     appendLine("    extra attention ($sig): $note")
                 }
@@ -203,7 +208,7 @@ object DebriefReport {
                 appendLine("Notable BLE:")
                 notable.forEach { d ->
                     val guess = DeviceExplain.guess(d, d.fleetIds.map { names[it] ?: it })
-                    appendLine("  · ${bleLine(d, names, windowStart, now)}  |  ${guess.headline}")
+                    appendLine("  · ${bleLine(d, names, windowStart, now, customNames)}  |  ${guess.headline}")
                     d.attentionNotes(fleets).forEach { (sig, note) ->
                         appendLine("    extra attention ($sig): $note")
                     }
@@ -221,7 +226,7 @@ object DebriefReport {
                     .forEach { (sig, list) ->
                         appendLine("${list.size}× $sig")
                         list.sortedByDescending { it.rssi }.take(8).forEach {
-                            appendLine("  · ${it.displayName}  ${it.mac}  ${it.rssi} dBm")
+                            appendLine("  · ${it.reportName(customNames)}  ${it.mac}  ${it.rssi} dBm")
                         }
                         list.flatMap { it.attentionNotes(fleets) }.distinct().forEach { (name, note) ->
                             appendLine("  extra attention ($name): $note")
@@ -232,15 +237,15 @@ object DebriefReport {
         val persistBody = buildString {
             appendLine("Sat most of this window: ${persistent.size}")
             persistent.take(15).forEach {
-                appendLine("  · ${it.displayName}  ${it.mac}  dwell ${fmtDur(dwellMs(it, windowStart, now))}")
+                appendLine("  · ${it.reportName(customNames)}  ${it.mac}  dwell ${fmtDur(dwellMs(it, windowStart, now))}")
             }
             if (persistent.isEmpty()) appendLine("  · None.")
             appendLine("First seen in this window: ${arrived.size} (loudest 8 below)")
             arrived.sortedByDescending { it.rssi }.take(8).forEach {
-                appendLine("  · ${it.displayName}  ${it.mac}  ${it.rssi} dBm")
+                appendLine("  · ${it.reportName(customNames)}  ${it.mac}  ${it.rssi} dBm")
             }
         }
-        val flags = anomalyLines(inWin)
+        val flags = anomalyLines(inWin, customNames)
         val anomalyBody = if (flags.isEmpty()) {
             "No extra flags. Signature hits, Extra attention, and tracking callouts already cover named pattern matches."
         } else flags.joinToString("\n") { "  · $it" }
@@ -264,7 +269,10 @@ object DebriefReport {
         fun next() = (n++).toString()
         val sections = buildList {
             add(DebriefSection(next(), "Executive summary", execSummary(wifi, ble, named, hidden, randomized, pathSpan, pathLen, following, withYou, ownLikely, beaconsWithYou, wearablesWithYou, settings, places, win)))
-            add(DebriefSection(next(), "Where you were", whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd)))
+            add(DebriefSection(next(), "Where you were", whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd, customNames)))
+            observerNotesSection(inWin, customNames, observerNotes)?.let { body ->
+                add(DebriefSection(next(), "Observer notes", body))
+            }
             add(
                 DebriefSection(
                     next(),
@@ -283,6 +291,7 @@ object DebriefReport {
                                 "Fieldwatch cannot tell your own tag or phone from a tracker planted in the car, bag, or on you before you started. " +
                                 "Account for each MAC. Not a finding and not identity.",
                             wholeSit,
+                            customNames,
                         ),
                         alert = true,
                     ),
@@ -298,6 +307,7 @@ object DebriefReport {
                                 "That can mean someone started following you (their phone or tag), or a device was added during the trip. " +
                                 "Not a finding and not identity.",
                             following,
+                            customNames,
                         ),
                         alert = true,
                     ),
@@ -314,6 +324,7 @@ object DebriefReport {
                                 "If one did, account for it (a Target basket you pushed, your own test tag, a badge, or a short path that still overlaps a fixture). " +
                                 "Not the same as a Find My tail. Not a finding and not identity.",
                             beaconsWithYou,
+                            customNames,
                         ),
                         alert = true,
                     ),
@@ -329,6 +340,7 @@ object DebriefReport {
                                 "Watches and rings usually move with the person wearing them — often your own kit or someone walking with you. " +
                                 "They are not typically planted trackers. Account for each MAC. Not a finding and not identity.",
                             wearablesWithYou,
+                            customNames,
                         ),
                         alert = true,
                     ),
@@ -347,7 +359,7 @@ object DebriefReport {
                         buildString {
                             appendLine("Pattern match, not identity, not a skimmer detector, not a safety finding.")
                             attentionHits.forEach { (d, sig, note) ->
-                                appendLine("  · ${d.displayName}  ${d.mac}  ${d.rssi} dBm  [$sig]")
+                                appendLine("  · ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm  [$sig]")
                                 appendLine("    $note")
                             }
                         }.trimEnd(),
@@ -393,14 +405,43 @@ object DebriefReport {
             extraAttention = attentionHits.map { (d, sig, note) ->
                 ExtraAttentionHit(
                     signature = sig,
-                    radioLabel = "${d.displayName}  ${d.mac}  ${d.rssi} dBm",
+                    radioLabel = "${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm",
                     note = note,
                 )
             },
             heading = heading,
             pdfKicker = if (win.sitName != null) "SIT" else "FIELD DEBRIEF",
             pdfTitle = if (win.sitName != null) "Sit — ${win.sitName}" else "Field debrief",
+            pathFigure = pathFigure(win.sitName ?: "Last 15 minutes", path, inWin, fleets, customNames, observerNotes),
         )
+    }
+
+    private fun pathFigure(
+        title: String,
+        path: List<GpsSample>,
+        devices: List<Sighting>,
+        fleets: List<Fleet>,
+        customNames: Map<String, String>,
+        observerNotes: Map<String, String> = emptyMap(),
+    ): SitPathPlot.Figure? {
+        if (path.size < 2) return null
+        val dots = SitPathPlot.dotsFrom(
+            devices, fleets, namedKeys = customNames.keys, cap = 24,
+            customNames = customNames, observerNotes = observerNotes,
+        )
+        return SitPathPlot.Figure(
+            kicker = "OPERATOR PATH",
+            tracks = listOf(SitPathPlot.FigureTrack(title, path)),
+            dots = dots,
+            lengthM = Geo.pathLengthM(path),
+            spanM = Geo.spanM(path),
+            caption = "North-up. Line is this phone (${path.lengthM()}). A number is a place on this path; stacked radios share a number (Path key). Hear-points, not radio fixes.",
+        )
+    }
+
+    private fun List<GpsSample>.lengthM(): String {
+        val m = Geo.pathLengthM(this)
+        return if (m >= 1000) "${"%.1f".format(java.util.Locale.US, m / 1000)} km" else "${m.toInt()} m"
     }
 
     /**
@@ -415,6 +456,7 @@ object DebriefReport {
         now: Long = System.currentTimeMillis(),
         places: DebriefPlaces = DebriefPlaces.Off,
         window: DebriefWindow? = null,
+        customNames: Map<String, String> = emptyMap(),
     ): String = buildString {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -446,7 +488,7 @@ object DebriefReport {
                 if (places.attempted) places.note
                 else "off (Settings → Online place names in Debrief). No reverse-geocode this export.",
         )
-        append(whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd).trimEnd())
+        append(whereYouWere(settings, path, pathLen, pathSpan, inWin, names, places, windowEnd, customNames).trimEnd())
         appendLine()
         appendLine()
         if (path.size < 2 || pathSpan < MOVE_M) {
@@ -479,7 +521,7 @@ object DebriefReport {
                 rows.forEach { h ->
                     val d = h.device
                     appendLine(
-                        "- ${h.label}  ${d.displayName}  ${d.mac}  RSSI ${d.rssi} dBm " +
+                        "- ${h.label}  ${d.reportName(customNames)}  ${d.mac}  RSSI ${d.rssi} dBm " +
                             "(min ${d.rssiMin} / max ${d.rssiMax})  trail ${h.samples} fixes, span ${h.spanM.toInt()} m",
                     )
                     appendLine("  ${h.detail}")
@@ -730,13 +772,39 @@ object DebriefReport {
         }
     }
 
-    private fun trackerCallout(intro: String, rows: List<FollowHit>): String = buildString {
+    private fun observerNotesSection(
+        devices: List<Sighting>,
+        customNames: Map<String, String>,
+        observerNotes: Map<String, String>,
+    ): String? {
+        val hits = devices.mapNotNull { d ->
+            val note = observerNotes[d.key]?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+            d to note
+        }
+        if (hits.isEmpty()) return null
+        return buildString {
+            appendLine("Your captions on radios heard in this window. Same KIND+MAC as Named radios. Not catalog Notes.")
+            hits.sortedWith(
+                compareByDescending<Pair<Sighting, String>> { it.first.rssi }.thenBy { it.first.mac },
+            ).forEach { (d, note) ->
+                val kind = if (d.kind == RadioKind.WIFI) "WIFI" else "BLE"
+                appendLine("  · $kind  ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
+                appendLine("    $note")
+            }
+        }.trimEnd()
+    }
+
+    private fun trackerCallout(
+        intro: String,
+        rows: List<FollowHit>,
+        customNames: Map<String, String> = emptyMap(),
+    ): String = buildString {
         appendLine(intro)
         appendLine()
         rows.forEach { h ->
             val d = h.device
             appendLine("  • ${h.label}")
-            appendLine("    ${d.displayName}  ${d.mac}  RSSI ${d.rssi} dBm (min ${d.rssiMin} / max ${d.rssiMax})")
+            appendLine("    ${d.reportName(customNames)}  ${d.mac}  RSSI ${d.rssi} dBm (min ${d.rssiMin} / max ${d.rssiMax})")
             appendLine("    ${h.detail}")
         }
     }.trimEnd()
@@ -750,6 +818,7 @@ object DebriefReport {
         names: Map<String, String>,
         places: DebriefPlaces,
         now: Long,
+        customNames: Map<String, String> = emptyMap(),
     ): String = buildString {
         appendLine("Phone GPS at hear-time, not the other radio’s location and not a camera pole. Stays are clusters within about 40 m; hops between them are transit. Coordinates are not repeated on every Wi-Fi/BLE line.")
         if (!settings.tagLocation) {
@@ -789,7 +858,7 @@ object DebriefReport {
                 if (sigs.isNotEmpty()) append("  ·  ${sigs.take(6).joinToString(", ")}")
                 appendLine()
                 here.sortedByDescending { it.rssi }.take(4).forEach { d ->
-                    appendLine("   · ${d.displayName}  ${d.mac}  ${d.rssi} dBm")
+                    appendLine("   · ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
                 }
                 if (here.isEmpty()) appendLine("   · No GPS-stamped radios tied to this stay (tagging may have started after they were first heard).")
             } else {
@@ -841,8 +910,14 @@ object DebriefReport {
         return "$guess  (${ap} APs, ${ble.size} BLE, ${persistAp} persistent APs, traveled ${fmtDist(pathLen)}, span ${fmtDist(pathSpan)}.)"
     }
 
-    private fun wifiLine(d: Sighting, names: Map<String, String>, from: Long, now: Long): String = buildString {
-        append(d.displayName).append("  ").append(d.mac)
+    private fun wifiLine(
+        d: Sighting,
+        names: Map<String, String>,
+        from: Long,
+        now: Long,
+        customNames: Map<String, String> = emptyMap(),
+    ): String = buildString {
+        append(d.reportName(customNames)).append("  ").append(d.mac)
         d.vendor?.let { append("  ").append(it) }
         append("  ").append(d.rssi).append(" dBm")
         if (d.channel != 0) append("  ch ").append(d.channel)
@@ -851,22 +926,31 @@ object DebriefReport {
         append("  dwell ").append(fmtDur(dwellMs(d, from, now)))
     }
 
-    private fun bleLine(d: Sighting, names: Map<String, String>, from: Long, now: Long): String = buildString {
-        append(d.displayName).append("  ").append(d.mac)
+    private fun bleLine(
+        d: Sighting,
+        names: Map<String, String>,
+        from: Long,
+        now: Long,
+        customNames: Map<String, String> = emptyMap(),
+    ): String = buildString {
+        append(d.reportName(customNames)).append("  ").append(d.mac)
         if (d.randomized) append("  RAND")
         append("  ").append(d.rssi).append(" dBm")
         if (d.fleetIds.isNotEmpty()) append("  ").append(d.fleetIds.joinToString("+") { names[it] ?: it })
         append("  dwell ").append(fmtDur(dwellMs(d, from, now)))
     }
 
-    private fun anomalyLines(devices: List<Sighting>): List<String> {
+    private fun anomalyLines(
+        devices: List<Sighting>,
+        customNames: Map<String, String> = emptyMap(),
+    ): List<String> {
         val out = ArrayList<String>()
         val pairing = devices.filter { d ->
             d.facts.serviceData.any { it.uuid.contains("FE2C", true) && it.dataHex.length == 6 }
         }
         if (pairing.isNotEmpty()) {
             out += "Google Fast Pair in pairing mode: " +
-                pairing.joinToString { "${it.displayName} ${it.mac}" }
+                pairing.joinToString { "${it.reportName(customNames)} ${it.mac}" }
         }
         val loudUnknown = devices.filter {
             it.rssi >= -50 && it.fleetIds.isEmpty() && it.name.isBlank()

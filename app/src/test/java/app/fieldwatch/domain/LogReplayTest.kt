@@ -28,6 +28,61 @@ class LogReplayTest {
     }
 
     @Test
+    fun csvKeepsLastGpsFixAndChannel() {
+        fun row(
+            rssi: String,
+            ch: String,
+            freq: String,
+            lat: String,
+            lon: String,
+        ) = listOf(
+            "2000", "iso", "WIFI", "00:11:22:33:44:55", "Cafe", rssi, ch, freq,
+            "", "Acme", "", "", "", "", "", lat, lon, "",
+        ).joinToString(",")
+        val log = csvHeader +
+            row("-80", "1", "2412", "", "") + "\n" +
+            row("-70", "6", "2437", "37.5", "-122.1") + "\n"
+        val r = LogReplay.parse(log).single()
+        assertEquals(6, r.channel)
+        assertEquals(2437, r.frequencyMhz)
+        assertEquals(37.5, r.latitude!!, 0.0001)
+        assertEquals(-122.1, r.longitude!!, 0.0001)
+        assertTrue(r.hasPosition)
+    }
+
+    @Test
+    fun lineKindReadsCsvAndJson() {
+        val csv = listOf(
+            "2000", "iso", "BLE", "AA:BB:CC:DD:EE:01", "Tag", "-50", "0", "0",
+            "", "", "", "", "", "", "", "", "", "",
+        ).joinToString(",")
+        assertEquals(RadioKind.BLE, LogReplay.lineKind(csv, json = false))
+        assertEquals(RadioKind.WIFI, LogReplay.lineKind("""{"kind":"WIFI","mac":"00:11:22:33:44:55"}""", json = true))
+        assertTrue(LogExportRadios.WIFI.matches(RadioKind.WIFI))
+        assertTrue(!LogExportRadios.WIFI.matches(RadioKind.BLE))
+        assertTrue(LogExportRadios.BOTH.matches(RadioKind.BLE))
+    }
+
+    @Test
+    fun csvRoundTripToJsonlKeepsKindMacAndGps() {
+        val csv = listOf(
+            "2000", "iso", "WIFI", "00:11:22:33:44:55", "Cafe", "-70", "6", "2437",
+            "", "Acme", "", "4C", "", "RAND", "AB", "37.5", "-122.1", "",
+        ).joinToString(",")
+        val json = LogReplay.csvRowToJson(csv)!!
+        assertTrue(json.contains("\"kind\":\"WIFI\""))
+        assertTrue(json.contains("\"mac\":\"00:11:22:33:44:55\""))
+        assertTrue(json.contains("\"rand\":true"))
+        val back = LogReplay.jsonRowToCsv(json)!!
+        val cols = back.split(',')
+        assertEquals("WIFI", cols[2])
+        assertEquals("00:11:22:33:44:55", cols[3])
+        assertEquals("37.500000", cols[15])
+        assertEquals("-122.100000", cols[16])
+        assertTrue(cols[13].contains("RAND"))
+    }
+
+    @Test
     fun csvWithoutHeaderUsesDefaultLayout() {
         // A rotated part or a hand-cut excerpt has no header line.
         val log = "3000,iso,WIFI,00:11:22:33:44:55,CafeWiFi,-70,6,2437,,Cisco,,,,,,,\n"

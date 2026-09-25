@@ -2,6 +2,7 @@
 <paths>
     <files-path name="logs" path="logs/" />
     <cache-path name="debrief" path="debrief/" />
+    <cache-path name="export" path="export/" />
     <cache-path name="signatures" path="signatures/" />
     <cache-path name="settings" path="settings/" />
 </paths>

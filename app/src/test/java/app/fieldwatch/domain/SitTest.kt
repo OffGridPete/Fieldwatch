@@ -189,6 +189,31 @@ class SitTest {
     }
 
     @Test
+    fun debriefListsObserverNotesSection() {
+        val now = System.currentTimeMillis()
+        val van = radio("WIFI:AA:AA:AA:AA:AA:01", firstSeen = now - 60_000L, lastSeen = now)
+        val other = radio("WIFI:AA:AA:AA:AA:AA:02", firstSeen = now - 60_000L, lastSeen = now)
+        val doc = DebriefReport.document(
+            devices = listOf(van, other),
+            fleets = fleets,
+            settings = AppSettings(tagLocation = false),
+            operatorPath = emptyList(),
+            now = now,
+            customNames = mapOf(van.key to "fleet van"),
+            observerNotes = mapOf(van.key to "lot B north"),
+        )
+        val titles = doc.sections.map { it.title }
+        assertEquals("Where you were", titles[1])
+        assertEquals("Observer notes", titles[2])
+        val section = doc.sections.single { it.title == "Observer notes" }
+        assertTrue(section.body.contains("fleet van"))
+        assertTrue(section.body.contains("lot B north"))
+        assertTrue(section.body.contains("AA:AA:AA:AA:AA:01"))
+        assertFalse(section.body.contains("AA:AA:AA:AA:AA:02"))
+        assertFalse(doc.toPlainText().contains("Observer: lot B north"))
+    }
+
+    @Test
     fun rollingDebriefUnchangedWithoutSit() {
         val cam = radio("BLE:AA:AA:AA:AA:AA:01", firstSeen = 1L, lastSeen = System.currentTimeMillis())
         val doc = DebriefReport.document(

@@ -69,6 +69,7 @@ import app.fieldwatch.radio.BleAdParser
 import app.fieldwatch.ui.RadioKindMark
 import app.fieldwatch.ui.FieldwatchViewModel
 import app.fieldwatch.ui.theme.Amber
+import app.fieldwatch.ui.theme.Cyan
 import app.fieldwatch.ui.theme.LocalNightMode
 import app.fieldwatch.ui.theme.nightIf
 import app.fieldwatch.ui.component.PresenceTrack
@@ -104,7 +105,12 @@ fun DeviceDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(MacUtil.redactMacIn(device.listTitle(device.fleetIds.map { vm.fleetName(it) }), device.mac, demoMode), maxLines = 1) },
+                title = {
+                    val custom = vm.watchLabelFor(device.key)
+                    val title = custom?.takeIf { it.isNotBlank() }
+                        ?: device.listTitle(device.fleetIds.map { vm.fleetName(it) })
+                    Text(MacUtil.redactMacIn(title, device.mac, demoMode), maxLines = 1)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
@@ -144,7 +150,25 @@ fun DeviceDetailScreen(
             val canName = RadioBookmarks.canSetCustomName(device)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    if (device.name.isNotBlank()) {
+                    if (lastSaved.isNotBlank()) {
+                        Text(
+                            "Custom name",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(lastSaved, style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "Advertised",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        Text(
+                            device.name.ifBlank { "No advertised name" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else if (device.name.isNotBlank()) {
                         Text(
                             "Advertised name",
                             style = MaterialTheme.typography.labelSmall,
@@ -160,13 +184,6 @@ fun DeviceDetailScreen(
                         Text(
                             "No advertised name",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (lastSaved.isNotBlank()) {
-                        Text(
-                            "Custom name  $lastSaved",
-                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -207,6 +224,47 @@ fun DeviceDetailScreen(
                         Text("Save name")
                     }
                 }
+            }
+
+            var notesDraft by remember(device.key) {
+                mutableStateOf(vm.watchObserverNoteFor(device.key).orEmpty())
+            }
+            var lastSavedNotes by remember(device.key) {
+                mutableStateOf(vm.watchObserverNoteFor(device.key).orEmpty())
+            }
+            var editingNotes by remember(device.key) { mutableStateOf(false) }
+            val draftNotes = RadioBookmarks.clipNotes(notesDraft)
+            val notesIsSaved = draftNotes == lastSavedNotes
+            if (canName || lastSavedNotes.isNotBlank()) {
+                ObserverNotesCard(
+                    notes = lastSavedNotes,
+                    canEdit = canName,
+                    editing = editingNotes && canName,
+                    draft = notesDraft,
+                    onToggleEdit = { editingNotes = !editingNotes },
+                    onDraftChange = { notesDraft = it.take(RadioBookmarks.MAX_NOTES) },
+                    onSave = {
+                        vm.saveRadioNotes(device, notesDraft)
+                        notesDraft = draftNotes
+                        lastSavedNotes = draftNotes
+                        if (lastSaved.isBlank() && draftNotes.isNotBlank()) {
+                            val suggest = RadioBookmarks.suggestLabel(
+                                device,
+                                device.fleetIds.map { vm.fleetName(it) },
+                            )
+                            lastSaved = suggest
+                            nameDraft = suggest
+                        }
+                        editingNotes = false
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                if (draftNotes.isBlank()) "Observer notes cleared" else "Observer notes saved",
+                            )
+                        }
+                    },
+                    saveEnabled = !notesIsSaved,
+                    saved = notesIsSaved && lastSavedNotes.isNotBlank(),
+                )
             }
 
             val guess = DeviceExplain.guess(device, device.fleetIds.map { vm.fleetName(it) })
@@ -619,6 +677,83 @@ private fun SignatureNotesCard(notes: List<Pair<String, String>>) {
             notes.forEach { (name, note) ->
                 Text(name, style = MaterialTheme.typography.titleMedium)
                 Text(note, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ObserverNotesCard(
+    notes: String,
+    canEdit: Boolean,
+    editing: Boolean,
+    draft: String,
+    onToggleEdit: () -> Unit,
+    onDraftChange: (String) -> Unit,
+    onSave: () -> Unit,
+    saveEnabled: Boolean,
+    saved: Boolean,
+) {
+    val ink = Cyan.nightIf(LocalNightMode.current)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = ink.copy(alpha = 0.18f),
+        border = BorderStroke(1.5.dp, ink),
+    ) {
+        Column(
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Observer notes",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ink,
+                    modifier = Modifier.weight(1f),
+                )
+                if (canEdit) {
+                    IconButton(onClick = onToggleEdit) {
+                        Icon(
+                            Icons.Outlined.Edit,
+                            if (editing) "Hide observer notes" else "Observer notes",
+                        )
+                    }
+                }
+            }
+            if (!editing) {
+                if (notes.isNotBlank()) {
+                    Text(notes, style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Text(
+                        "No observer notes",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                FieldwatchOutlinedField(
+                    value = draft,
+                    onValueChange = onDraftChange,
+                    label = "Observer notes",
+                    singleLine = false,
+                    minLines = 3,
+                    supportingText = "${draft.trim().length}/${RadioBookmarks.MAX_NOTES}. ${RadioBookmarks.observerNotesHint()}",
+                )
+                FieldwatchActionButton(
+                    onClick = onSave,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = saveEnabled,
+                ) {
+                    if (saved) {
+                        Icon(Icons.Outlined.Check, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.padding(4.dp))
+                        Text("Saved")
+                    } else {
+                        Text("Save notes")
+                    }
+                }
             }
         }
     }

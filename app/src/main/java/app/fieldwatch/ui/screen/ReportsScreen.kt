@@ -1,5 +1,6 @@
 package app.fieldwatch.ui.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +11,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import app.fieldwatch.ui.component.FieldwatchActionButton
@@ -19,6 +22,7 @@ import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,8 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import app.fieldwatch.domain.MacUtil
+import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.LogExportKind
+import app.fieldwatch.domain.LogExportRadios
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitDiff
+import app.fieldwatch.ui.component.FieldwatchDropdownField
+import app.fieldwatch.ui.component.SitPathCanvas
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
 import app.fieldwatch.ui.FieldwatchUi
@@ -43,6 +54,7 @@ fun ReportsScreen(
     exporting: Boolean,
     onSaveToStorage: () -> Unit,
     onSignatureCandidates: () -> Unit,
+    onOpenPathRadio: (String) -> Unit = {},
 ) {
     val settings = state.settings
     var confirmClear by remember { mutableStateOf(false) }
@@ -66,7 +78,7 @@ fun ReportsScreen(
         ) {
             if (settings.demoMode) {
                 Text(
-                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file still has full addresses and lat/lon.",
+                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file and GPX / KML / WiGLE exports still have full addresses and lat/lon.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -74,7 +86,7 @@ fun ReportsScreen(
 
             SectionCard("Sits") {
                 Text(
-                    "A sit is a named window of radios heard here. Sit report below uses the open sit, a selected saved sit, or last 15 minutes if you never start one.",
+                    "A sit is a named window of radios heard here. The selection below drives Path, Debrief, and Compare’s this-sit side: open sit, a selected saved sit, or last 15 minutes if you never start one.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -101,9 +113,9 @@ fun ReportsScreen(
                     ) { Text("Start sit") }
                     Text(
                         if (state.sit.closed.isEmpty()) {
-                            "No sit running. Start sit here. Debrief below stays last 15 minutes until you do."
+                            "No sit running. Start sit here. Path and Debrief stay last 15 minutes until you do."
                         } else {
-                            "No sit running. Start sit here. Debrief below uses the selected report."
+                            "No sit running. Start sit here. Path and Debrief use the selected sit."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -122,7 +134,7 @@ fun ReportsScreen(
                         selected = state.sit.selectedId == null,
                         enabled = pickEnabled,
                         title = "Last 15 minutes",
-                        subtitle = "Debrief uses RAM, not a saved sit.",
+                        subtitle = "Path and Debrief use RAM, not a saved sit.",
                         onSelect = { vm.selectSit(null) },
                     )
                     state.sit.closed.forEach { row ->
@@ -142,7 +154,7 @@ fun ReportsScreen(
                     }
                     if (open != null) {
                         Text(
-                            "End sit to pick a saved one for Debrief.",
+                            "End sit to pick a saved one for Path and Debrief.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -173,6 +185,111 @@ fun ReportsScreen(
                         enabled = !exporting,
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Delete all sits") }
+                }
+            }
+
+            val pathModel by vm.sitPath.collectAsStateWithLifecycle()
+            LaunchedEffect(state.sit.selectedId, state.sit.open?.id) {
+                while (true) {
+                    vm.refreshSitPath()
+                    kotlinx.coroutines.delay(3_000L)
+                }
+            }
+            SectionCard("Path") {
+                Text(
+                    "North up. This phone. Extra attention and Named radios as dots — hear-points, not radio fixes. No map tiles; airplane mode is fine.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val model = pathModel
+                if (model == null || model.emptyHint != null) {
+                    Text(
+                        model?.emptyHint ?: "Tag detections with GPS and walk, or open a sit that recorded a path.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Text(
+                        "${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    SitPathCanvas(model, onOpenRadio = onOpenPathRadio)
+                    Text(
+                        "Stacked count: tap the number for names. Tap again to close. Isolated dots and the list still open the radio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Line = this phone", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Red = Extra attention", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        Text("Blue = Named", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                    if (model.dots.isEmpty()) {
+                        Text(
+                            "No Extra attention or Named radios with a GPS stamp on this path.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        model.dots.forEachIndexed { i, dot ->
+                            val mac = MacUtil.screenMac(dot.mac, settings.demoMode)
+                            val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
+                            val tag = if (dot.extraAttention) "Extra attention" else ""
+                            val fleets = dot.fleetNames.joinToString(" · ")
+                            val title = buildString {
+                                append("${i + 1}. $kind  ${dot.label}")
+                                if (dot.label != mac && mac.isNotBlank()) append("  $mac")
+                            }
+                            val sub = listOfNotNull(tag.ifBlank { null }, fleets.ifBlank { null }).joinToString(" · ")
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenPathRadio(dot.key) }
+                                    .padding(vertical = 4.dp),
+                            ) {
+                                Text(title, style = MaterialTheme.typography.bodyMedium)
+                                if (sub.isNotEmpty()) {
+                                    Text(
+                                        sub,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (dot.extraAttention) MaterialTheme.colorScheme.error
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                        val noted = model.dots.filter { it.observerNotes.trim().isNotEmpty() }
+                        if (noted.isNotEmpty()) {
+                            Text(
+                                "Observer notes",
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                            noted.forEach { dot ->
+                                val mac = MacUtil.screenMac(dot.mac, settings.demoMode)
+                                val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
+                                Column(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onOpenPathRadio(dot.key) }
+                                        .padding(vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        "$kind  ${dot.label}  $mac",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Text(
+                                        dot.observerNotes.trim(),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.tertiary,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -290,18 +407,63 @@ fun ReportsScreen(
                     if (settings.loggingEnabled) "" else "  ·  logging off",
                 style = MaterialTheme.typography.bodySmall,
             )
+            val logKind by vm.logExportKind.collectAsStateWithLifecycle()
+            val logRadios by vm.logExportRadios.collectAsStateWithLifecycle()
+            var openFormat by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = openFormat,
+                onExpandedChange = { openFormat = it },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            ) {
+                FieldwatchDropdownField("Format", logKind.label, openFormat)
+                ExposedDropdownMenu(openFormat, { openFormat = false }) {
+                    LogExportKind.entries.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.label) },
+                            onClick = {
+                                vm.setLogExportKind(item)
+                                openFormat = false
+                            },
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                LogExportRadios.entries.forEach { item ->
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .selectable(
+                                selected = logRadios == item,
+                                onClick = { vm.setLogExportRadios(item) },
+                                role = Role.RadioButton,
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = logRadios == item,
+                            onClick = { vm.setLogExportRadios(item) },
+                            enabled = !exporting,
+                        )
+                        Text(item.label, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             FieldwatchActionButton(
                 onClick = vm::startExport,
                 enabled = !exporting,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Share log") }
+            ) { Text("Share") }
             FieldwatchActionButton(
                 onClick = onSaveToStorage,
                 enabled = !exporting,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Save log to SD card / storage…") }
+            ) { Text("Save to SD card / storage…") }
             Text(
-                "Share uses the Android share sheet. Save opens the system picker (SD, Downloads, USB, Drive). Turn logging on in Settings if you need new rows.",
+                "The rotating file is JSON lines. CSV is the same rows as a spreadsheet. GPX — GPS Exchange, KML — Google Earth, and WiGLE CSV — wigle.net are hear-points: where this phone was when it heard each radio, not a radio fix. Tag detections with GPS and logging on. Share uses the Android share sheet — Fieldwatch does not upload.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -483,11 +645,11 @@ private fun compareThisCaption(state: FieldwatchUi): String {
 private fun sitReportCaption(state: FieldwatchUi): String {
     val open = state.sit.open
     if (open != null) {
-        return "This sit (${open.name}), not the last 15 minutes. GPS following test when tagging is on and you have moved. Not a legal finding."
+        return "This sit (${open.name}) — same window as Path. GPS following test when tagging is on and you have moved. Not a legal finding."
     }
     val selected = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
     if (selected != null) {
-        return "Sit: ${selected.name}. GPS following test when tagging is on and you have moved. Not a legal finding."
+        return "Sit: ${selected.name} — same window as Path. GPS following test when tagging is on and you have moved. Not a legal finding."
     }
-    return "Last 15 minutes in memory. Same report, two formats. GPS following test when tagging is on and you have moved. Not a legal finding."
+    return "Last 15 minutes in memory — same window as Path. Two formats. GPS following test when tagging is on and you have moved. Not a legal finding."
 }

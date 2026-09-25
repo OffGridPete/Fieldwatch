@@ -27,6 +27,9 @@ import app.fieldwatch.domain.DISCLAIMER_REV
 import app.fieldwatch.domain.disclaimerOk
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.Geo
+import app.fieldwatch.domain.GeoExport
+import app.fieldwatch.domain.LogExportKind
+import app.fieldwatch.domain.LogExportRadios
 import app.fieldwatch.domain.ClassOutline
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterPreset
@@ -61,11 +64,13 @@ import app.fieldwatch.domain.DebriefWindow
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitDiffPrompt
+import app.fieldwatch.domain.SitPathPlot
 import app.fieldwatch.domain.SitUi
 import app.fieldwatch.radio.RadioPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -141,6 +146,13 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val export: StateFlow<ExportUi> = _export
     private val _candidates = MutableStateFlow(CandidatesUi())
     val candidates: StateFlow<CandidatesUi> = _candidates
+    private val _logExportKind = MutableStateFlow(LogExportKind.LOG_CSV)
+    val logExportKind: StateFlow<LogExportKind> = _logExportKind
+    private val _logExportRadios = MutableStateFlow(LogExportRadios.BOTH)
+    val logExportRadios: StateFlow<LogExportRadios> = _logExportRadios
+    private val _sitPath = MutableStateFlow<SitPathPlot.Model?>(null)
+    val sitPath: StateFlow<SitPathPlot.Model?> = _sitPath
+    @Volatile private var pathRadios: List<Sighting> = emptyList()
     private val _liveFocus = MutableStateFlow(0)
     val liveFocus: StateFlow<Int> = _liveFocus
     private val flashUntil = HashMap<String, Long>()
@@ -378,6 +390,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     device != null -> heldSelected.value = device
                 }
             }
+        }
+        viewModelScope.launch {
+            app.sits.ui.collect { refreshSitPath() }
         }
         viewModelScope.launch {
             selectedKey.collect { key ->
@@ -683,9 +698,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitCompare() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Writing sit compare…")
+            publishExport(0.08f, "Writing sit compare…")
             runCatching {
                 val doc = sitCompareDoc()
+                publishExport(0.85f, "Writing sit compare…")
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_SUBJECT, compareSubject(doc))
@@ -707,14 +723,21 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitComparePdf() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Writing sit compare PDF…")
+            publishExport(0.06f, "Writing sit compare PDF…")
             runCatching {
                 val doc = sitCompareDoc()
+                publishExport(0.35f, "Laying out sit compare PDF…")
                 val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
                     .format(java.util.Date())
                 val file = File(dir, "fieldwatch-sit-compare-$stamp.pdf")
-                withContext(Dispatchers.Default) { DebriefPdf.write(doc, file) }
+                withContext(Dispatchers.Default) {
+                    DebriefPdf.write(doc, file) { p ->
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(0.35f + 0.6f * p, "Writing sit compare PDF…")
+                        }
+                    }
+                }
                 val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
                     type = "application/pdf"
@@ -743,9 +766,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitCompareAiExport() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Building compare AI export…")
+            publishExport(0.08f, "Building compare AI export…")
             runCatching {
                 val (thisSide, second) = compareSides()
+                publishExport(0.45f, "Building compare AI export…")
                 val text = withContext(Dispatchers.Default) {
                     SitDiffPrompt.build(thisSide, second, app.config.settings.demoMode)
                 }
@@ -783,14 +807,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val otherFile = withContext(Dispatchers.IO) { app.sits.sitFile(otherId) }
             ?: error("Could not read that sit.")
         val fleets = app.config.fleets
-        val namedKeys = RadioBookmarks.radios(app.config.watchlist)
-            .mapNotNull { it.deviceKey }
-            .toSet()
-        val thisSide = compareThisSide(sit, fleets, namedKeys)
+        val customNames = RadioBookmarks.labels(app.config.watchlist)
+        val observerNotes = RadioBookmarks.notes(app.config.watchlist)
+        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes)
         val second = SitDiff.Side(
             name = otherFile.summary.name,
             ram = false,
-            radios = otherFile.radios.map { SitDiff.fromSitRadio(it, fleets, namedKeys) },
+            radios = otherFile.radios.map { SitDiff.fromSitRadio(it, fleets, customNames, observerNotes) },
+            path = otherFile.operatorPath,
         )
         return thisSide to second
     }
@@ -798,7 +822,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private suspend fun compareThisSide(
         sit: SitUi,
         fleets: List<Fleet>,
-        namedKeys: Set<String>,
+        customNames: Map<String, String>,
+        observerNotes: Map<String, String>,
     ): SitDiff.Side {
         val open = sit.open
         if (open != null) {
@@ -806,7 +831,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             return SitDiff.Side(
                 name = open.name,
                 ram = false,
-                radios = source?.devices.orEmpty().map { SitDiff.fromSighting(it, fleets, namedKeys) },
+                radios = source?.devices.orEmpty().map { SitDiff.fromSighting(it, fleets, customNames, observerNotes) },
+                path = source?.operatorPath.orEmpty(),
             )
         }
         val selected = sit.closed.firstOrNull { it.id == sit.selectedId }
@@ -816,13 +842,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             return SitDiff.Side(
                 name = selected.name,
                 ram = false,
-                radios = file.radios.map { SitDiff.fromSitRadio(it, fleets, namedKeys) },
+                radios = file.radios.map { SitDiff.fromSitRadio(it, fleets, customNames, observerNotes) },
+                path = file.operatorPath,
             )
         }
+        val now = System.currentTimeMillis()
         return SitDiff.Side(
             name = "Last 15 minutes",
             ram = true,
-            radios = app.devices.devices.value.map { SitDiff.fromSighting(it, fleets, namedKeys) },
+            radios = app.devices.devices.value.map { SitDiff.fromSighting(it, fleets, customNames, observerNotes) },
+            path = app.operatorPathCopy().filter { it.at >= now - DebriefPrompt.WINDOW_MS },
         )
     }
 
@@ -1034,6 +1063,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    fun updateNamedRadio(id: String, name: String, notes: String) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.updateNamedRadio(cfg.watchlist, id, name, notes))
+            }
+        }
+    }
+
     fun removeRadioBookmark(id: String) {
         viewModelScope.launch {
             app.config.update { cfg ->
@@ -1052,6 +1089,20 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun watchLabelFor(deviceKey: String): String? =
         app.config.watchlist.firstOrNull { it.deviceKey == deviceKey }?.label?.trim()?.takeIf { it.isNotEmpty() }
+
+    fun watchObserverNoteFor(deviceKey: String): String? =
+        app.config.watchlist.firstOrNull { it.deviceKey == deviceKey }?.observerNotes?.trim()?.takeIf { it.isNotEmpty() }
+
+    fun saveRadioNotes(device: Sighting, notes: String) {
+        viewModelScope.launch {
+            val suggest = RadioBookmarks.suggestLabel(device, device.fleetIds.map { fleetName(it) })
+            app.config.update { cfg ->
+                cfg.copy(
+                    watchlist = RadioBookmarks.upsertNotes(cfg.watchlist, device.key, notes, suggest),
+                )
+            }
+        }
+    }
 
     fun toggleWatchFleet(fleet: Fleet) {
         viewModelScope.launch {
@@ -1367,23 +1418,114 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun suggestedExportName(): String = app.logs.suggestedExportName()
+    fun setLogExportKind(kind: LogExportKind) {
+        _logExportKind.value = kind
+    }
 
-    fun exportMime(): String = app.logs.exportMime()
+    fun setLogExportRadios(radios: LogExportRadios) {
+        _logExportRadios.value = radios
+    }
+
+    fun refreshSitPath() {
+        viewModelScope.launch(Dispatchers.Default) {
+            _sitPath.value = buildSitPath()
+        }
+    }
+
+    private fun buildSitPath(): SitPathPlot.Model {
+        val now = System.currentTimeMillis()
+        val source = app.sits.debriefSource(now)
+        val customNames = RadioBookmarks.labels(app.config.watchlist)
+        val namedKeys = customNames.keys
+        val fleets = app.config.fleets
+        val tagging = app.config.settings.tagLocation
+        if (source != null) {
+            val samples = source.operatorPath
+            val dots = SitPathPlot.dotsFrom(
+                source.devices, fleets, namedKeys, customNames = customNames,
+                observerNotes = RadioBookmarks.notes(app.config.watchlist),
+            )
+            val empty = when {
+                !tagging -> "Tag detections with GPS (Settings) to record a path."
+                samples.size < 2 -> "Walk with tagging on. Path needs about ${Sit.PATH_MIN_M.toInt()} m."
+                else -> null
+            }
+            pathRadios = source.devices
+            return SitPathPlot.Model(
+                samples = samples,
+                dots = if (samples.size >= 2) dots else emptyList(),
+                lengthM = Geo.pathLengthM(samples),
+                spanM = Geo.spanM(samples),
+                title = source.name,
+                emptyHint = empty,
+                live = app.sits.ui.value.open != null,
+            )
+        }
+        val start = now - DebriefPrompt.WINDOW_MS
+        val samples = app.operatorPathCopy().filter { it.at >= start }
+        val devices = app.devices.devices.value.filter { it.lastSeen >= start || it.firstSeen >= start }
+        val empty = when {
+            !tagging -> "Tag detections with GPS (Settings) to record a path."
+            samples.size < 2 -> "Last 15 minutes. Walk with tagging on, or Start sit to keep a longer path."
+            else -> null
+        }
+        pathRadios = devices
+        return SitPathPlot.Model(
+            samples = samples,
+            dots = if (samples.size >= 2) SitPathPlot.dotsFrom(
+                devices, fleets, namedKeys, customNames = customNames,
+                observerNotes = RadioBookmarks.notes(app.config.watchlist),
+            ) else emptyList(),
+            lengthM = Geo.pathLengthM(samples),
+            spanM = Geo.spanM(samples),
+            title = "Last 15 minutes",
+            emptyHint = empty,
+            live = true,
+        )
+    }
+
+    fun openPathRadio(key: String): Boolean {
+        val device = pathRadios.firstOrNull { it.key == key } ?: return false
+        select(device)
+        return true
+    }
+
+    fun suggestedExportName(): String {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+            .format(java.util.Date())
+        return when (val kind = _logExportKind.value) {
+            LogExportKind.LOG_CSV -> app.logs.suggestedExportName(asJsonl = false)
+            LogExportKind.LOG_JSONL -> app.logs.suggestedExportName(asJsonl = true)
+            LogExportKind.GPX, LogExportKind.KML, LogExportKind.WIGLE ->
+                GeoExport.suggestedName(GeoExport.formatOf(kind)!!, stamp)
+        }
+    }
+
+    fun exportMime(): String = when (_logExportKind.value) {
+        LogExportKind.LOG_CSV -> app.logs.exportMime(asJsonl = false)
+        LogExportKind.LOG_JSONL -> app.logs.exportMime(asJsonl = true)
+        LogExportKind.GPX, LogExportKind.KML, LogExportKind.WIGLE ->
+            GeoExport.formatOf(_logExportKind.value)!!.mime
+    }
 
     fun startFieldDebriefPdf() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Writing debrief PDF…")
+            publishExport(0.05f, "Writing debrief PDF…")
             runCatching {
-                val doc = fieldDebriefDoc { msg ->
-                    _export.value = busy(msg)
-                }
+                val doc = fieldDebriefDoc()
+                publishExport(0.4f, "Laying out debrief PDF…")
                 val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
                     .format(java.util.Date())
                 val file = File(dir, "fieldwatch-debrief-$stamp.pdf")
-                withContext(Dispatchers.Default) { DebriefPdf.write(doc, file) }
+                withContext(Dispatchers.Default) {
+                    DebriefPdf.write(doc, file) { p ->
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(0.4f + 0.55f * p, "Writing debrief PDF…")
+                        }
+                    }
+                }
                 val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
                     type = "application/pdf"
@@ -1408,11 +1550,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startFieldDebrief() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Writing debrief…")
+            publishExport(0.08f, "Writing debrief…")
             runCatching {
-                val doc = fieldDebriefDoc { msg ->
-                    _export.value = busy(msg)
-                }
+                val doc = fieldDebriefDoc()
+                publishExport(0.9f, "Writing debrief…")
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
@@ -1431,12 +1572,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private fun busy(message: String) = ExportUi(active = true, spinner = true, message = message)
-
     private fun debriefSubject(doc: DebriefDoc): String =
         if (doc.heading.startsWith("FIELDWATCH SIT")) doc.heading else "Fieldwatch field debrief — last 15 minutes"
 
-    private suspend fun fieldDebriefDoc(onLookup: (String) -> Unit): DebriefDoc {
+    private suspend fun fieldDebriefDoc(): DebriefDoc {
+        publishExport(0.08f, "Gathering sit…")
         val settings = app.config.settings
         val fleets = app.config.fleets
         val now = System.currentTimeMillis()
@@ -1447,13 +1587,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val places = if (settings.demoMode) {
             DebriefPlaces.Off
         } else if (settings.onlineLookup) {
-            onLookup("Looking up place names…")
-            val found = PlaceLookup.lookup(app, path, devices, now, onProgress = onLookup)
-            onLookup("Writing debrief…")
+            publishExport(0.14f, "Looking up place names…")
+            val found = PlaceLookup.lookup(app, path, devices, now, onProgress = { msg ->
+                kotlinx.coroutines.runBlocking { publishExport(0.18f, msg) }
+            })
             found
         } else {
             DebriefPlaces.Off
         }
+        publishExport(0.32f, "Building debrief…")
         return withContext(Dispatchers.Default) {
             DebriefReport.document(
                 devices = devices,
@@ -1463,6 +1605,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 now = now,
                 places = places,
                 window = window,
+                customNames = RadioBookmarks.labels(app.config.watchlist),
+                observerNotes = RadioBookmarks.notes(app.config.watchlist),
             ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
         }
     }
@@ -1470,7 +1614,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startAiExport() {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Building AI export prompt…")
+            publishExport(0.06f, "Building AI export prompt…")
             runCatching {
                 val settings = app.config.settings
                 val fleets = app.config.fleets
@@ -1482,15 +1626,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 val places = if (settings.demoMode) {
                     DebriefPlaces.Off
                 } else if (settings.onlineLookup) {
-                    _export.value = busy("Looking up place names…")
+                    publishExport(0.12f, "Looking up place names…")
                     val found = PlaceLookup.lookup(app, path, devices, now) { msg ->
-                        _export.value = busy(msg)
+                        kotlinx.coroutines.runBlocking { publishExport(0.16f, msg) }
                     }
-                    _export.value = busy("Building AI export prompt…")
+                    publishExport(0.35f, "Building AI export prompt…")
                     found
                 } else {
                     DebriefPlaces.Off
                 }
+                publishExport(0.4f, "Building AI export prompt…")
                 val text = withContext(Dispatchers.Default) {
                     val raw = DebriefPrompt.build(
                         devices = devices,
@@ -1500,6 +1645,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         operatorPath = path,
                         places = places,
                         window = window,
+                        customNames = RadioBookmarks.labels(app.config.watchlist),
+                        observerNotes = RadioBookmarks.notes(app.config.watchlist),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),
@@ -1536,7 +1683,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startDeviceDetailAiExport(device: Sighting) {
         if (_export.value.active) return
         viewModelScope.launch {
-            _export.value = busy("Building AI export prompt…")
+            publishExport(0.08f, "Building AI export prompt…")
             runCatching {
                 val settings = app.config.settings
                 val names = device.fleetIds.map { fleetName(it) }
@@ -1545,15 +1692,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 val places = if (settings.demoMode) {
                     DebriefPlaces.Off
                 } else if (settings.onlineLookup && (settings.tagLocation || device.latitude != null)) {
-                    _export.value = busy("Looking up place names…")
+                    publishExport(0.15f, "Looking up place names…")
                     val found = PlaceLookup.lookup(app, app.operatorPathCopy(), listOf(device), System.currentTimeMillis()) { msg ->
-                        _export.value = busy(msg)
+                        kotlinx.coroutines.runBlocking { publishExport(0.2f, msg) }
                     }
-                    _export.value = busy("Building AI export prompt…")
+                    publishExport(0.4f, "Building AI export prompt…")
                     found
                 } else {
                     DebriefPlaces.Off
                 }
+                publishExport(0.45f, "Building AI export prompt…")
                 val text = withContext(Dispatchers.Default) {
                     val raw = DeviceDetailPrompt.build(
                         device, names, settings, places, attentionNotes = attention,
@@ -1630,12 +1778,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         if (_export.value.active) return
         viewModelScope.launch {
             runExport("Logging paused · preparing file…") {
-                val file = app.logs.exportBundle(::reportCopy)
+                val kind = _logExportKind.value
+                val radios = _logExportRadios.value
+                val file = when (kind) {
+                    LogExportKind.LOG_CSV ->
+                        app.logs.exportBundle(asJsonl = false, radios = radios, onProgress = ::reportCopy)
+                    LogExportKind.LOG_JSONL ->
+                        app.logs.exportBundle(asJsonl = true, radios = radios, onProgress = ::reportCopy)
+                    LogExportKind.GPX, LogExportKind.KML, LogExportKind.WIGLE -> writeMapExport(kind, radios)
+                }
+                app.getExternalFilesDir(null)?.let { ext ->
+                    runCatching { file.copyTo(File(ext, file.name), overwrite = true) }
+                }
                 val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
-                    type = app.logs.exportMime()
+                    type = exportMime()
+                    clipData = ClipData.newRawUri("log-export", uri)
                     putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch log export")
+                    putExtra(Intent.EXTRA_SUBJECT, exportSubject(kind))
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }.onSuccess { intent ->
@@ -1648,10 +1808,93 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         if (_export.value.active) return
         viewModelScope.launch {
             runExport("Logging paused · saving to the location you picked…") {
-                app.logs.exportToUri(app.contentResolver, uri, ::reportCopy)
+                val kind = _logExportKind.value
+                val radios = _logExportRadios.value
+                when (kind) {
+                    LogExportKind.LOG_CSV ->
+                        app.logs.exportToUri(
+                            app.contentResolver, uri, asJsonl = false, radios = radios, onProgress = ::reportCopy,
+                        )
+                    LogExportKind.LOG_JSONL ->
+                        app.logs.exportToUri(
+                            app.contentResolver, uri, asJsonl = true, radios = radios, onProgress = ::reportCopy,
+                        )
+                    LogExportKind.GPX, LogExportKind.KML, LogExportKind.WIGLE -> {
+                        val text = mapExportText(kind, radios)
+                        withContext(Dispatchers.IO) {
+                            app.contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) }
+                                ?: error("Could not open the selected location")
+                        }
+                    }
+                }
             }.onSuccess {
                 _export.value = ExportUi(active = false, progress = 1f, saved = true)
             }
+        }
+    }
+
+    private fun exportSubject(kind: LogExportKind): String = when (kind) {
+        LogExportKind.LOG_CSV -> "Fieldwatch log (CSV)"
+        LogExportKind.LOG_JSONL -> "Fieldwatch log (JSON lines)"
+        LogExportKind.GPX -> "Fieldwatch GPX"
+        LogExportKind.KML -> "Fieldwatch KML"
+        LogExportKind.WIGLE -> "Fieldwatch WiGLE CSV"
+    }
+
+    private suspend fun writeMapExport(kind: LogExportKind, radios: LogExportRadios): File {
+        val text = mapExportText(kind, radios)
+        val fmt = GeoExport.formatOf(kind) ?: error("Pick a map format.")
+        val dir = File(app.cacheDir, "export").apply { mkdirs() }
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+            .format(java.util.Date())
+        val file = File(dir, GeoExport.suggestedName(fmt, stamp))
+        withContext(Dispatchers.IO) {
+            file.writeText(text)
+            app.getExternalFilesDir(null)?.let { ext ->
+                runCatching { file.copyTo(File(ext, file.name), overwrite = true) }
+            }
+        }
+        return file
+    }
+
+    private suspend fun mapExportText(kind: LogExportKind, radios: LogExportRadios): String {
+        val fmt = GeoExport.formatOf(kind) ?: error("Pick a map format.")
+        publishExport(0.02f, "Reading log…")
+        val pins = app.logs.readRadios { copied, total ->
+            val pct = 0.05f + 0.40f * copied.toFloat() / total.toFloat().coerceAtLeast(1f)
+            publishExport(pct, "Reading log · ${copied / 1024} KB of ${total / 1024} KB")
+        }.filter { it.hasPosition && radios.matches(it.kind) }
+        if (pins.isEmpty()) {
+            val which = when (radios) {
+                LogExportRadios.BOTH -> "radios"
+                LogExportRadios.WIFI -> "Wi-Fi radios"
+                LogExportRadios.BLE -> "BLE radios"
+            }
+            error("No GPS-tagged $which. Settings → Tag detections with GPS, logging on, then sit.")
+        }
+        val info = listOf(
+            "model=${android.os.Build.MODEL}",
+            "release=${android.os.Build.VERSION.RELEASE}",
+            "device=${android.os.Build.DEVICE}",
+            "display=${android.os.Build.DISPLAY}",
+            "board=${android.os.Build.BOARD}",
+            "brand=${android.os.Build.BRAND}",
+        ).joinToString(",")
+        publishExport(0.48f, "Writing ${kind.label} · ${pins.size} pins")
+        return withContext(Dispatchers.Default) {
+            GeoExport.render(
+                fmt, pins, emptyMap(), BuildConfig.VERSION_NAME, info,
+                customNames = RadioBookmarks.labels(app.config.watchlist),
+                onProgress = { done, total ->
+                    if (total <= 0) return@render
+                    if (done == total || done % 250 == 0) {
+                        val pct = 0.50f + 0.45f * done.toFloat() / total.toFloat()
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(pct, "Writing ${kind.label} · $done of $total")
+                        }
+                    }
+                },
+            )
         }
     }
 
@@ -1678,13 +1921,20 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         _export.value = ExportUi()
     }
 
-    private fun reportCopy(copied: Long, total: Long) {
+    private suspend fun reportCopy(copied: Long, total: Long) {
         val pct = (copied.toFloat() / total.toFloat()).coerceIn(0f, 1f)
-        _export.value = ExportUi(
-            active = true,
-            progress = pct,
-            message = "Copying ${(copied / 1024)} KB of ${(total / 1024)} KB",
-        )
+        publishExport(pct, "Writing ${(copied / 1024)} KB of ${(total / 1024)} KB")
+    }
+
+    private suspend fun publishExport(progress: Float, message: String) {
+        withContext(Dispatchers.Main.immediate) {
+            _export.value = ExportUi(
+                active = true,
+                progress = progress.coerceIn(0f, 1f),
+                message = message,
+            )
+        }
+        yield()
     }
 
     private suspend fun <T> runExport(startMessage: String, block: suspend () -> T): Result<T> {
@@ -1708,6 +1958,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun hasAttention(device: Sighting): Boolean =
         device.fleetIds.any { fleetAttentionNote(it).isNotBlank() }
+
+    fun hasObserverNote(device: Sighting): Boolean =
+        watchObserverNoteFor(device.key) != null
 
     fun fleetHasDecode(id: String): Boolean =
         app.config.fleets.firstOrNull { it.id == id }?.decode != null

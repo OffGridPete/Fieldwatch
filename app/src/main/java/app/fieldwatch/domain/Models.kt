@@ -485,6 +485,8 @@ data class WatchTarget(
     val notify: Boolean = true,
     /** Device-key rows only. False = named radio, no pip/voice/flash. Missing JSON = on. */
     val alert: Boolean = true,
+    /** Operator caption on this MAC. Empty = none. */
+    val observerNotes: String = "",
 )
 
 @Serializable
@@ -670,6 +672,13 @@ data class Sighting(
 ) {
     val displayName: String
         get() = name.ifBlank { if (hiddenSsid) "<hidden>" else mac }
+
+    /** Custom name from Named radios, else advertised / hidden / MAC. */
+    fun reportName(customNames: Map<String, String>): String {
+        val custom = customNames[key]?.trim()
+        if (!custom.isNullOrEmpty()) return custom
+        return displayName
+    }
 
     /**
      * Live first-line title. BLE does not repeat the MAC (that is the second line).

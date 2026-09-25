@@ -4,15 +4,32 @@ import java.util.UUID
 
 object RadioBookmarks {
     const val MAX_NAME = 22
+    const val MAX_NOTES = 280
 
     fun radios(watchlist: List<WatchTarget>): List<WatchTarget> =
         watchlist.filter { it.deviceKey != null }
 
-    fun namedKeys(watchlist: List<WatchTarget>): Set<String> =
+    fun namedKeys(watchlist: List<WatchTarget>): Set<String> = labels(watchlist).keys
+
+    /** Custom names keyed KIND:MAC. Blank labels omitted. */
+    fun labels(watchlist: List<WatchTarget>): Map<String, String> =
         watchlist.mapNotNull { row ->
             val key = row.deviceKey ?: return@mapNotNull null
-            if (row.label.isBlank()) null else key
-        }.toSet()
+            val label = row.label.trim()
+            if (label.isEmpty()) null else key to label
+        }.toMap()
+
+    fun notes(watchlist: List<WatchTarget>): Map<String, String> =
+        watchlist.mapNotNull { row ->
+            val key = row.deviceKey ?: return@mapNotNull null
+            val note = row.observerNotes.trim()
+            if (note.isEmpty()) null else key to note
+        }.toMap()
+
+    fun clipNotes(text: String): String = text.trim().take(MAX_NOTES)
+
+    fun observerNotesHint(): String =
+        "Pinned to this MAC. Shows on Debrief, Compare, Path, and AI Export. Does not turn Alert on."
 
     fun watchedFleetIds(watchlist: List<WatchTarget>): Set<String> =
         watchlist.mapNotNull { row ->
@@ -75,6 +92,20 @@ object RadioBookmarks {
         }
     }
 
+    fun setNotes(watchlist: List<WatchTarget>, id: String, notes: String): List<WatchTarget> {
+        val note = clipNotes(notes)
+        return watchlist.map { row ->
+            if (row.id == id && row.deviceKey != null) row.copy(observerNotes = note) else row
+        }
+    }
+
+    fun updateNamedRadio(
+        watchlist: List<WatchTarget>,
+        id: String,
+        name: String,
+        notes: String,
+    ): List<WatchTarget> = setNotes(rename(watchlist, id, name), id, notes)
+
     fun remove(watchlist: List<WatchTarget>, id: String): List<WatchTarget> =
         watchlist.filterNot { it.id == id && it.deviceKey != null }
 
@@ -117,6 +148,29 @@ object RadioBookmarks {
             deviceKey = deviceKey,
             label = label,
             alert = alertIfNew,
+        )
+    }
+
+    fun upsertNotes(
+        watchlist: List<WatchTarget>,
+        deviceKey: String,
+        notes: String,
+        suggestLabel: String,
+    ): List<WatchTarget> {
+        val note = clipNotes(notes)
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (i >= 0) {
+            return watchlist.mapIndexed { idx, row ->
+                if (idx == i) row.copy(observerNotes = note) else row
+            }
+        }
+        if (note.isEmpty()) return watchlist
+        return watchlist + WatchTarget(
+            id = UUID.randomUUID().toString(),
+            deviceKey = deviceKey,
+            label = clip(suggestLabel),
+            alert = false,
+            observerNotes = note,
         )
     }
 }

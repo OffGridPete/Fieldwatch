@@ -2,6 +2,7 @@ package app.fieldwatch.data
 
 import android.content.Context
 import app.fieldwatch.domain.Fleet
+import app.fieldwatch.domain.LogExportRadios
 import app.fieldwatch.domain.LogFormat
 import app.fieldwatch.domain.LogRadio
 import app.fieldwatch.domain.LogReplay
@@ -48,8 +49,8 @@ class LogStore(context: Context) {
     @Volatile
     private var enabled = true
 
-    fun configure(format: LogFormat, rotateKb: Int, loggingOn: Boolean = enabled) {
-        this.format = format
+    fun configure(@Suppress("UNUSED_PARAMETER") format: LogFormat, rotateKb: Int, loggingOn: Boolean = enabled) {
+        this.format = LogFormat.JSON
         this.rotateBytes = rotateKb.coerceAtLeast(64) * 1024
         enabled = loggingOn
     }
@@ -58,7 +59,7 @@ class LogStore(context: Context) {
         if (!enabled || paused.get()) return lines
         val gen = generation.get()
         val names = fleets.filter { it.id in device.fleetIds }.joinToString("+") { it.name }
-        val row = if (format == LogFormat.JSON) jsonLine(device, names) else csvLine(device, names)
+        val row = jsonLine(device, names)
         return mutex.withLock {
             if (paused.get() || generation.get() != gen) return@withLock lines
             withContext(Dispatchers.IO) {
@@ -76,10 +77,7 @@ class LogStore(context: Context) {
         }
     }
 
-    fun currentFile(): File {
-        val ext = if (format == LogFormat.JSON) "jsonl" else "csv"
-        return File(dir, "fieldwatch-%03d.%s".format(index, ext))
-    }
+    fun currentFile(): File = File(dir, "fieldwatch-%03d.jsonl".format(index))
 
     fun logParts(): List<File> = dir.listFiles()
         ?.filter { it.isFile && it.name.startsWith("fieldwatch-") && !it.name.contains("export") }
@@ -91,38 +89,58 @@ class LogStore(context: Context) {
     fun totalBytes(): Long = logParts().sumOf { it.length() }
 
     /** Unique radios from every rotating part. Re-match; ignore write-time fleets. */
-    suspend fun readRadios(): List<LogRadio> = mutex.withLock {
+    suspend fun readRadios(
+        onProgress: suspend (copied: Long, total: Long) -> Unit = { _, _ -> },
+    ): List<LogRadio> = mutex.withLock {
         withContext(Dispatchers.IO) {
             flushWriter()
+            val parts = logParts()
+            val total = parts.sumOf { it.length() }.coerceAtLeast(1L)
+            var copied = 0L
+            var lastEmit = 0L
             val acc = LinkedHashMap<String, LogRadio>()
-            logParts().forEach { file ->
+            onProgress(0L, total)
+            parts.forEach { file ->
                 if (!file.exists() || file.length() == 0L) return@forEach
                 val json = file.name.endsWith(".jsonl") || file.name.endsWith(".json")
-                file.bufferedReader(Charsets.UTF_8).useLines { lines ->
-                    LogReplay.ingest(lines, json, acc)
+                file.bufferedReader(Charsets.UTF_8).use { reader ->
+                    reader.lineSequence().forEach { line ->
+                        copied += line.length + 1L
+                        LogReplay.ingest(sequenceOf(line), json, acc)
+                        if (copied - lastEmit >= 48 * 1024) {
+                            lastEmit = copied
+                            onProgress(copied.coerceAtMost(total), total)
+                        }
+                    }
                 }
             }
+            onProgress(total, total)
             acc.values.toList()
         }
     }
 
-    fun exportExtension(): String = if (format == LogFormat.JSON) "jsonl" else "csv"
+    fun exportExtension(asJsonl: Boolean = false): String = if (asJsonl) "jsonl" else "csv"
 
-    fun exportMime(): String = if (format == LogFormat.JSON) "application/json" else "text/csv"
+    fun exportMime(asJsonl: Boolean = false): String =
+        if (asJsonl) "application/json" else "text/csv"
 
-    fun suggestedExportName(): String {
+    fun suggestedExportName(asJsonl: Boolean = false): String {
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        return "fieldwatch-log-$stamp.${exportExtension()}"
+        return "fieldwatch-log-$stamp.${exportExtension(asJsonl)}"
     }
 
-    suspend fun exportBundle(onProgress: (copied: Long, total: Long) -> Unit = { _, _ -> }): File =
+    suspend fun exportBundle(
+        asJsonl: Boolean = false,
+        radios: LogExportRadios = LogExportRadios.BOTH,
+        onProgress: suspend (copied: Long, total: Long) -> Unit = { _, _ -> },
+    ): File =
         withLoggingPaused {
             mutex.withLock {
                 withContext(Dispatchers.IO) {
                     flushWriter()
-                    val out = File(dir, "fieldwatch-export-${System.currentTimeMillis()}.${exportExtension()}")
+                    val out = File(dir, "fieldwatch-export-${System.currentTimeMillis()}.${exportExtension(asJsonl)}")
                     out.outputStream().buffered(64 * 1024).use { dest ->
-                        writeExport(dest, onProgress)
+                        writeExport(dest, asJsonl, radios, onProgress)
                     }
                     out
                 }
@@ -132,7 +150,9 @@ class LogStore(context: Context) {
     suspend fun exportToUri(
         resolver: ContentResolver,
         uri: Uri,
-        onProgress: (copied: Long, total: Long) -> Unit = { _, _ -> },
+        asJsonl: Boolean = false,
+        radios: LogExportRadios = LogExportRadios.BOTH,
+        onProgress: suspend (copied: Long, total: Long) -> Unit = { _, _ -> },
     ) = withLoggingPaused {
         mutex.withLock {
             withContext(Dispatchers.IO) {
@@ -140,7 +160,7 @@ class LogStore(context: Context) {
                 val stream = resolver.openOutputStream(uri)
                     ?: error("Could not open the selected location")
                 stream.buffered(64 * 1024).use { dest ->
-                    writeExport(dest, onProgress)
+                    writeExport(dest, asJsonl, radios, onProgress)
                 }
             }
         }
@@ -155,33 +175,53 @@ class LogStore(context: Context) {
         }
     }
 
-    private fun writeExport(dest: OutputStream, onProgress: (copied: Long, total: Long) -> Unit) {
+    private suspend fun writeExport(
+        dest: OutputStream,
+        asJsonl: Boolean,
+        radios: LogExportRadios,
+        onProgress: suspend (copied: Long, total: Long) -> Unit,
+    ) {
         val parts = logParts()
         val total = parts.sumOf { it.length() }.coerceAtLeast(1L)
         var copied = 0L
         var lastEmit = 0L
-        fun emit(force: Boolean = false) {
-            if (force || copied - lastEmit >= 256 * 1024) {
+        suspend fun emit(force: Boolean = false) {
+            if (force || copied - lastEmit >= 48 * 1024) {
                 lastEmit = copied
                 onProgress(copied.coerceAtMost(total), total)
             }
         }
         onProgress(0L, total)
-        if (format == LogFormat.CSV) dest.write(CSV_HEADER.toByteArray())
-        val buf = ByteArray(64 * 1024)
+        val writer = OutputStreamWriter(dest, Charsets.UTF_8)
+        if (!asJsonl) writer.write(CSV_HEADER)
         parts.forEach { src ->
-            src.inputStream().buffered(64 * 1024).use { input ->
-                if (format == LogFormat.CSV) skipCsvHeader(input)
-                while (true) {
-                    val n = input.read(buf)
-                    if (n <= 0) break
-                    dest.write(buf, 0, n)
-                    copied += n
+            if (!src.exists() || src.length() == 0L) return@forEach
+            val fromJson = src.name.endsWith(".jsonl") || src.name.endsWith(".json")
+            src.bufferedReader(Charsets.UTF_8).use { reader ->
+                var header = LogReplay.DEFAULT_CSV_HEADER
+                reader.lineSequence().forEach { raw ->
+                    val line = raw.trimEnd('\r')
+                    if (line.isBlank()) return@forEach
+                    copied += line.length + 1L
                     emit()
+                    if (!fromJson && line.startsWith("timestamp")) {
+                        header = line.split(',')
+                        return@forEach
+                    }
+                    val kind = LogReplay.lineKind(line, fromJson, header)
+                    if (kind == null || !radios.matches(kind)) return@forEach
+                    val out = when {
+                        asJsonl && fromJson -> line
+                        asJsonl && !fromJson -> LogReplay.csvRowToJson(line, header) ?: return@forEach
+                        !asJsonl && fromJson -> LogReplay.jsonRowToCsv(line) ?: return@forEach
+                        else -> line
+                    }
+                    writer.write(out)
+                    writer.write("\n")
                 }
             }
         }
-        dest.flush()
+        writer.flush()
         emit(force = true)
         onProgress(total, total)
     }
@@ -206,9 +246,7 @@ class LogStore(context: Context) {
         if (open != null && writerPath == path) return open
         closeWriter()
         val file = currentFile()
-        val create = !file.exists()
         val next = BufferedWriter(OutputStreamWriter(FileOutputStream(file, true), Charsets.UTF_8), 32 * 1024)
-        if (create && format == LogFormat.CSV) next.write(CSV_HEADER)
         writer = next
         writerPath = path
         return next

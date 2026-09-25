@@ -62,7 +62,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.AppSettings
-import app.fieldwatch.domain.LogFormat
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.TakDefaults
 import app.fieldwatch.domain.TakFeedStatus
@@ -497,21 +496,11 @@ fun SettingsScreen(
                 "Logging is on. New detections are appended to the rotating file.",
                 "Logging is off. Scanning still runs; nothing new is written until you turn this back on.",
             )
-            Text("File format", style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FieldwatchFilterChip(
-                    selected = settings.logFormat == LogFormat.CSV,
-                    onClick = { vm.updateSettings { it.copy(logFormat = LogFormat.CSV) } },
-                    enabled = settings.loggingEnabled,
-                    label = { Text("CSV") },
-                )
-                FieldwatchFilterChip(
-                    selected = settings.logFormat == LogFormat.JSON,
-                    onClick = { vm.updateSettings { it.copy(logFormat = LogFormat.JSON) } },
-                    enabled = settings.loggingEnabled,
-                    label = { Text("JSON lines") },
-                )
-            }
+            Text(
+                "The rotating file is JSON lines (one hear per line). Reports → Log → Format writes CSV, JSON lines, GPX, KML, or WiGLE when you Share or Save.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             var rotateDrag by remember { mutableIntStateOf(settings.logRotateKb) }
             var rotateDragging by remember { mutableStateOf(false) }
             LaunchedEffect(settings.logRotateKb) {

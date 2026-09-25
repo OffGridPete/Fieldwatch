@@ -52,6 +52,18 @@ class RadioBookmarksTest {
     }
 
     @Test
+    fun labelsMapsDeviceKeyToCustomName() {
+        val named = radio.copy(label = "porch cam")
+        val blank = radio.copy(id = "r2", deviceKey = "WIFI:00:11:22:33:44:55", label = "  ")
+        val map = RadioBookmarks.labels(listOf(fleet, named, blank))
+        assertEquals("porch cam", map["BLE:AA:BB:CC:DD:EE:FF"])
+        assertFalse(map.containsKey("WIFI:00:11:22:33:44:55"))
+        val device = ble(name = "Meshtastic_3480")
+        assertEquals("porch cam", device.reportName(map))
+        assertEquals("Meshtastic_3480", device.reportName(emptyMap()))
+    }
+
+    @Test
     fun namedKeysSkipsSignaturesAndBlankLabels() {
         val blank = radio.copy(id = "r2", deviceKey = "WIFI:00:11:22:33:44:55", label = "  ")
         assertEquals(
@@ -91,6 +103,34 @@ class RadioBookmarksTest {
         assertEquals("Tile", RadioBookmarks.suggestLabel(named))
         val unnamed = ble(name = "")
         assertEquals("unnamed LE", RadioBookmarks.suggestLabel(unnamed))
+    }
+
+    @Test
+    fun upsertNotesCreatesQuietNamedRadioAndClips() {
+        assertEquals("a".repeat(280), RadioBookmarks.clipNotes("a".repeat(300)))
+        assertEquals("lot B", RadioBookmarks.clipNotes("  lot B  "))
+        assertEquals(listOf(fleet), RadioBookmarks.upsertNotes(listOf(fleet), "WIFI:00:11:22:33:44:55", "  ", "van"))
+        val created = RadioBookmarks.upsertNotes(
+            listOf(fleet),
+            "WIFI:00:11:22:33:44:55",
+            "  fleet van  ",
+            "PS-CRADLEPOINT",
+        )
+        val row = created.single { it.deviceKey != null }
+        assertEquals("fleet van", row.observerNotes)
+        assertEquals("PS-CRADLEPOINT", row.label)
+        assertEquals(false, row.alert)
+        assertEquals("fleet van", RadioBookmarks.notes(created)["WIFI:00:11:22:33:44:55"])
+        val named = RadioBookmarks.upsertName(listOf(fleet), "WIFI:00:11:22:33:44:55", "van")
+        val noted = RadioBookmarks.upsertNotes(named, "WIFI:00:11:22:33:44:55", "lot B", "ignored")
+        val kept = noted.single { it.deviceKey != null }
+        assertEquals("van", kept.label)
+        assertEquals("lot B", kept.observerNotes)
+        assertEquals(false, kept.alert)
+        val edited = RadioBookmarks.updateNamedRadio(listOf(radio), "r1", "porch", "north lot")
+        assertEquals("porch", edited.single { it.id == "r1" }.label)
+        assertEquals("north lot", edited.single { it.id == "r1" }.observerNotes)
+        assertEquals("Apple AirTags", RadioBookmarks.updateNamedRadio(listOf(fleet), "f1", "x", "y").single().label)
     }
 
     @Test

@@ -87,7 +87,7 @@ fun RadioBookmarksScreen(
         ) {
             item {
                 Text(
-                    "One MAC each. Custom name shows on Live. Alert is optional (pip / voice / flash). Filters → Named radios only hides everything else. Signature watches stay on Signatures.",
+                    "One MAC each. Custom name shows on Live. Observer notes show on detail and reports. Alert is optional (pip / voice / flash). Filters → Named radios only hides everything else. Signature watches stay on Signatures.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -156,20 +156,31 @@ fun RadioBookmarksScreen(
     }
     if (renameTarget != null) {
         var draft by remember(renameTarget.id) { mutableStateOf(renameTarget.label) }
+        var notesDraft by remember(renameTarget.id) { mutableStateOf(renameTarget.observerNotes) }
         AlertDialog(
             onDismissRequest = { renameId = null },
-            title = { Text("Custom name") },
+            title = { Text("Named radio") },
             text = {
-                FieldwatchOutlinedField(
-                    value = draft,
-                    onValueChange = { draft = it.take(RadioBookmarks.MAX_NAME) },
-                    label = "Name",
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FieldwatchOutlinedField(
+                        value = draft,
+                        onValueChange = { draft = it.take(RadioBookmarks.MAX_NAME) },
+                        label = "Custom name",
+                    )
+                    FieldwatchOutlinedField(
+                        value = notesDraft,
+                        onValueChange = { notesDraft = it.take(RadioBookmarks.MAX_NOTES) },
+                        label = "Observer notes",
+                        singleLine = false,
+                        minLines = 3,
+                        supportingText = "${notesDraft.trim().length}/${RadioBookmarks.MAX_NOTES}",
+                    )
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        vm.renameRadioBookmark(renameTarget.id, draft)
+                        vm.updateNamedRadio(renameTarget.id, draft, notesDraft)
                         renameId = null
                     },
                 ) { Text("Save") }
@@ -224,6 +235,16 @@ private fun BookmarkCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                val obs = row.observerNotes.trim()
+                if (obs.isNotEmpty()) {
+                    Text(
+                        obs,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -237,7 +258,7 @@ private fun BookmarkCard(
                 FieldwatchSwitch(checked = row.alert, onCheckedChange = onAlert)
             }
             IconButton(onClick = onRename) {
-                Icon(Icons.Outlined.Edit, "Rename", modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.Edit, "Edit", modifier = Modifier.size(20.dp))
             }
             IconButton(onClick = onRemove) {
                 Icon(Icons.Outlined.Delete, "Remove", modifier = Modifier.size(20.dp))

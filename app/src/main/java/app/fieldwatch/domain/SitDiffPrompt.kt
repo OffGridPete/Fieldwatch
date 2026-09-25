@@ -42,7 +42,6 @@ object SitDiffPrompt {
             }
             row.fleetNames.filter { it.isNotBlank() }.forEach { append("  ").append(it) }
             if (row.extraAttention) append("  Extra attention")
-            if (row.named) append("  Named radio")
             if (row.kind == RadioKind.BLE && row.randomized) append("  RAND")
         }
         fun exclusive(keys: Set<String>, where: String, pred: (SitDiff.Radio) -> Boolean) =
@@ -76,7 +75,7 @@ object SitDiffPrompt {
             appendLine("Write complete sentences. Headings as below. Short bullets only for exclusive Extra attention / Named radios. No markdown tables. No code fences. No dump of the onboard lists.")
             appendLine()
             appendLine("1. **Disclaimer** — Repeat the experimental-use disclaimer first.")
-            appendLine("2. **What the onboard compare already established** — 3–5 sentences. Window names, counts, Extra attention exclusives if any. Do not reprint inventories.")
+            appendLine("2. **What the onboard compare already established** — 3–5 sentences. Window names, counts, Extra attention exclusives, Observer notes if any. Do not reprint inventories.")
             appendLine("3. **What the numbers add** — Overlap (both/union as a percent), Wi-Fi vs BLE in each bucket, how much exclusive BLE is RAND. Say whether this looks like fixtures, a different stall/hour, or a cap artifact. Confidence. Use the working table; do not invent rates.")
             appendLine("4. **Exclusive Extra attention and Named radios** — Full identifiers from the working table (complete MAC, name, signatures, which window). Pattern match, not identity. If none, say none.")
             appendLine("5. **What another sit or Hunt would shrink** — Concrete in-app next steps only (a third sit at the same stall, Hunt on one exclusive Extra attention row, Filters). No safety advice. No “call the police.”")
@@ -106,6 +105,24 @@ object SitDiffPrompt {
             appendLine("Exclusive Named radios:")
             if (namedRows.isEmpty()) appendLine("- None.")
             else namedRows.forEach { appendLine("- $it") }
+            appendLine()
+            appendLine("Observer notes:")
+            val observed = (thisSit.radios + second.radios)
+                .distinctBy { it.key }
+                .mapNotNull { r ->
+                    val note = r.observerNotes.trim().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                    r to note
+                }
+            if (observed.isEmpty()) appendLine("- None.")
+            else observed.forEach { (r, note) ->
+                val where = when {
+                    r.key in onlyThis -> "Only in this sit"
+                    r.key in onlySecond -> "Only in second sit"
+                    else -> "In both"
+                }
+                appendLine("- $where  ${line(r)}")
+                appendLine("  $note")
+            }
             appendLine()
             appendLine("## End of working data")
             appendLine("Write the addendum now, following **Your output** at the top. Do not rewrite the onboard Compare.")

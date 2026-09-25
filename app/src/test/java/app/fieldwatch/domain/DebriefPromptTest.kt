@@ -28,6 +28,7 @@ class DebriefPromptTest {
         assertTrue(text.contains("5 min:"))
         assertTrue(text.contains("15 min:"))
         assertTrue(text.contains("Extra attention:"))
+        assertTrue(text.contains("Observer notes:"))
         assertTrue(text.contains("Axon"))
         assertTrue(text.contains("Takeaway:"))
         assertFalse(text.contains("Full Wi-Fi inventory"))

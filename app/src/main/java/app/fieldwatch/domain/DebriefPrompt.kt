@@ -23,6 +23,8 @@ object DebriefPrompt {
         operatorPath: List<GpsSample> = emptyList(),
         places: DebriefPlaces = DebriefPlaces.Off,
         window: DebriefWindow? = null,
+        customNames: Map<String, String> = emptyMap(),
+        observerNotes: Map<String, String> = emptyMap(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -50,7 +52,7 @@ object DebriefPrompt {
         }.mapValues { it.value.size }.toList().sortedByDescending { it.second }
         val bleRssi = ble.map { it.rssi }
         val wifiRssi = wifi.map { it.rssi }
-        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win)
+        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win, customNames, observerNotes)
         val iso = utc(windowEnd)
         val start = utc(windowStart)
 
@@ -76,7 +78,7 @@ object DebriefPrompt {
             appendLine("Write complete sentences. Headings as below. Short bullets only for Extra attention and tracking rows from the working table. No markdown tables. No code fences. No dump of the onboard inventories.")
             appendLine()
             appendLine("1. **Disclaimer** — Repeat the experimental-use disclaimer first.")
-            appendLine("2. **What the onboard Debrief already established** — 3–5 sentences. Counts, distance, tracking callouts, Extra attention hits. Do not reprint inventories.")
+            appendLine("2. **What the onboard Debrief already established** — 3–5 sentences. Counts, distance, tracking callouts, Extra attention hits, Observer notes if any. Do not reprint inventories.")
             appendLine("3. **What the numbers add** — 5- vs 15-minute counts, RSSI bands, RAND BLE percent, arrivals per minute, persistent vs gone, signature-family mix. Say street vs dwelling vs retail vs vehicle, and 5-minute vs 15-minute change (denser, quieter, stable). Confidence. If GPS ran, path length/span from the working table — do not pin a radio to a stay.")
             appendLine("4. **Extra attention and tracking callouts** — Full identifiers from the working table (complete MAC, name, RSSI min/max, signatures, dwell). Stress-test onboard Possible trackers with you / Possible tail / Retail beacons / Wearables. Agree, qualify, or say the data are too thin. Pattern match, not identity. If none, say none.")
             appendLine("5. **What another sit or Hunt would shrink** — Concrete in-app next steps only (Hunt on one Extra attention row, a longer GPS path, Compare sits, Filters). No safety advice. No “call the police.”")
@@ -134,9 +136,24 @@ object DebriefPrompt {
                 appendLine("- None.")
             } else {
                 extraHits.forEach { (d, sig, note) ->
-                    append("- ").append(row(d, names, now, windowStart))
+                    append("- ").append(row(d, names, now, windowStart, customNames, observerNotes))
                     append(" | ").append(sig).append(": ").append(note)
                     appendLine()
+                }
+            }
+            appendLine()
+            appendLine("Observer notes:")
+            val observed = in15.mapNotNull { d ->
+                val note = observerNotes[d.key]?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                d to note
+            }
+            if (observed.isEmpty()) {
+                appendLine("- None.")
+            } else {
+                observed.sortedByDescending { it.first.rssi }.forEach { (d, note) ->
+                    append("- ").append(row(d, names, now, windowStart, customNames, emptyMap()))
+                    appendLine()
+                    appendLine("  $note")
                 }
             }
             appendLine()
@@ -145,7 +162,7 @@ object DebriefPrompt {
                 appendLine("- None.")
             } else {
                 finders.sortedByDescending { it.rssi }.take(20).forEach { d ->
-                    append("- ").append(row(d, names, now, windowStart))
+                    append("- ").append(row(d, names, now, windowStart, customNames, observerNotes))
                     append(" rssiMin=").append(d.rssiMin).append(" rssiMax=").append(d.rssiMax)
                     appendLine()
                 }
@@ -160,13 +177,21 @@ object DebriefPrompt {
 
     fun experimentalDisclaimerMarkdown(): String = FieldwatchDisclaimer.experimentalMarkdown()
 
-    private fun row(d: Sighting, names: Map<String, String>, now: Long, windowStart: Long): String = buildString {
+    private fun row(
+        d: Sighting,
+        names: Map<String, String>,
+        now: Long,
+        windowStart: Long,
+        customNames: Map<String, String> = emptyMap(),
+        observerNotes: Map<String, String> = emptyMap(),
+    ): String = buildString {
         append(if (d.kind == RadioKind.WIFI) "WIFI" else "BLE")
         append(" ").append(d.mac)
-        val label = d.displayName.trim()
+        val label = d.reportName(customNames).trim()
         if (label.isNotEmpty() && !label.equals(d.mac, ignoreCase = true)) {
             append("  ").append(label.take(32))
         }
+        observerNotes[d.key]?.let { append("  Observer: ").append(it.take(80)) }
         append(" rssi=").append(d.rssi).append("dBm")
         if (d.randomized) append(" RAND")
         if (d.fleetIds.isNotEmpty()) {

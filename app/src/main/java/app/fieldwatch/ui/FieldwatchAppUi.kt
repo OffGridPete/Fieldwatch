@@ -55,7 +55,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.CircularProgressIndicator
+
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -246,6 +246,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     val route = nav.currentBackStackEntryAsState().value?.destination?.route ?: "live"
     val context = LocalContext.current
     val export by vm.export.collectAsStateWithLifecycle()
+    val logKind by vm.logExportKind.collectAsStateWithLifecycle()
     val saveLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(vm.exportMime()),
     ) { uri ->
@@ -261,20 +262,25 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
         AlertDialog(
             onDismissRequest = { },
             title = {
+                val m = export.message.lowercase()
                 Text(
                     when {
-                        export.message.contains("AI export", ignoreCase = true) -> "AI Export"
-                        export.message.contains("PDF", ignoreCase = true) -> "Debrief PDF"
-                        export.message.contains("debrief", ignoreCase = true) -> "Debrief"
-                        else -> "Working on log"
+                        "sit compare" in m && "pdf" in m -> "Sit compare PDF"
+                        "sit compare" in m && "ai" in m -> "Sit compare AI Export"
+                        "sit compare" in m -> "Sit compare"
+                        "ai export" in m || "ai export" in m -> "AI Export"
+                        "pdf" in m -> "Debrief PDF"
+                        "debrief" in m -> "Debrief"
+                        else -> "Export"
                     },
                 )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(export.message.ifBlank { "Please wait…" })
-                    if (!export.message.contains("debrief", ignoreCase = true) &&
-                        !export.message.contains("AI export", ignoreCase = true)
+                    if ("debrief" !in export.message.lowercase() &&
+                        "ai export" !in export.message.lowercase() &&
+                        "sit compare" !in export.message.lowercase()
                     ) {
                         Text(
                             "Live logging is paused until this finishes. Scanning continues.",
@@ -282,24 +288,15 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    if (export.spinner) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .align(Alignment.CenterHorizontally),
-                            strokeWidth = 3.dp,
-                        )
-                    } else {
-                        LinearProgressIndicator(
-                            progress = { export.progress },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Text(
-                            "${(export.progress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontFamily = FontFamily.Monospace,
-                        )
-                    }
+                    LinearProgressIndicator(
+                        progress = { export.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "${(export.progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
                 }
             },
             confirmButton = { },
@@ -633,6 +630,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     onSignatureCandidates = {
                         vm.startSignatureCandidates()
                         nav.navigate("candidates")
+                    },
+                    onOpenPathRadio = { key ->
+                        if (vm.openPathRadio(key)) nav.navigate("detail")
                     },
                 )
             }
