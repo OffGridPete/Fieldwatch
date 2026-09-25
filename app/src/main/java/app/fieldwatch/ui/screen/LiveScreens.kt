@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import java.util.Locale
 import app.fieldwatch.ui.component.DecodeGlyph
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import androidx.compose.material.icons.Icons
@@ -902,7 +903,7 @@ private fun RadarView(
                     emptyHint ?: "No devices match the current filter"
                 } else {
                     val zoomBit = if (zoom > 1.04f) {
-                        " · ×${"%.1f".format(zoom)} · double-tap reset"
+                        " · ×${"%.1f".format(Locale.US, zoom)} · double-tap reset"
                     } else {
                         " · pinch to zoom"
                     }

@@ -13,6 +13,9 @@ object WifiIeParser {
         val channelFromDs: Int? = null,
     )
 
+    /** One raw information element: element id + payload bytes. */
+    class Ie(val id: Int, val bytes: ByteArray)
+
     fun parse(result: ScanResult): Parsed {
         if (Build.VERSION.SDK_INT < 30) {
             return Parsed(security = result.capabilities?.ifBlank { null })
@@ -20,13 +23,23 @@ object WifiIeParser {
         val ies = runCatching { result.informationElements }.getOrNull() ?: return Parsed(
             security = result.capabilities?.ifBlank { null },
         )
+        val raw = ies.mapNotNull { ie ->
+            val id = runCatching { ie.id }.getOrDefault(-1)
+            val bytes = ieBytes(ie) ?: return@mapNotNull null
+            Ie(id, bytes)
+        }
+        return parseIes(raw, result.capabilities)
+    }
+
+    /** Pure decode of a captured IE set — unit tests feed frames without a ScanResult. */
+    fun parseIes(ies: List<Ie>, capabilities: String?): Parsed {
         val rates = ArrayList<String>(16)
         val vendor = ArrayList<VendorIeRecord>(4)
         val sec = ArrayList<String>(4)
         var ds: Int? = null
         ies.forEach { ie ->
-            val id = runCatching { ie.id }.getOrDefault(-1)
-            val bytes = ieBytes(ie) ?: return@forEach
+            val id = ie.id
+            val bytes = ie.bytes
             when (id) {
                 1, 50 -> rates += decodeRates(bytes)
                 3 -> if (bytes.isNotEmpty()) ds = bytes[0].toInt() and 0xFF
@@ -46,7 +59,7 @@ object WifiIeParser {
                 }
             }
         }
-        val cap = result.capabilities.orEmpty()
+        val cap = capabilities.orEmpty()
         if (sec.isEmpty() && cap.isNotBlank()) sec += cap
         return Parsed(
             rates = rates.distinct().joinToString(" ").ifBlank { null },

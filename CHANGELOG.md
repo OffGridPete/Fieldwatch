@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## Unreleased
+
+- Decode field numbers and radar zoom use `Locale.US`, so French/German phones keep a period (`26.48 °C`, `×1.5`). Parser unit tests and GitHub Actions (`testDebugUnitTest` + debug APK) on push/PR.
+
 ## 1.1.5 — 24 September 2026
 
 - Detail “What this looks like” uses a matched catalog family instead of a generic SSID guess. A `DIRECT-rR-Raven-*` AP is a Raven / ShotSpotter sensor, not a phone or TV on Wi-Fi Direct.

@@ -10,8 +10,7 @@ This card
   Fieldwatch_User_Manual.pdf     user manual v1.1.5 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
-SHA-256 of Fieldwatch.apk:
-  14be096903163096af5b43b29e05d0a105c920e020f41a88aabd565727037c75
+f56640ba1df78c8552a56ace1b1a8b0f35e98a640790ca30b4740ef6fde5d3
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609

@@ -3,6 +3,7 @@ package app.fieldwatch.domain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class SignatureFieldDecoderTest {
     @Test
@@ -388,6 +389,17 @@ class SignatureFieldDecoderTest {
         assertEquals("26.48 °C", rows.display("temperature"))
         assertEquals("45.82 %", rows.display("humidity"))
         assertEquals("100 %", rows.display("battery"))
+    }
+
+    @Test
+    fun decodedFractionsStayPeriodOnFrenchLocale() {
+        val prev = Locale.getDefault()
+        Locale.setDefault(Locale.FRANCE)
+        try {
+            catalogGoveeH5074()
+        } finally {
+            Locale.setDefault(prev)
+        }
     }
 
     @Test

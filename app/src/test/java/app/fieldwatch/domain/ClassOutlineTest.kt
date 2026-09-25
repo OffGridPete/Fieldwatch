@@ -102,7 +102,7 @@ class ClassOutlineTest {
         val slices = ClassOutline.of(emptyList(), classBy)
         val labels = slices.dropLast(1).map { it.label() }
         assertEquals(labels.sortedBy { it.lowercase() }, labels)
-        assertEquals("Audio", labels.first())
+        assertEquals("Access control", labels.first())
         assertEquals("Wearables", labels.last())
         assertEquals("Unmatched", slices.last().label())
         assertTrue(labels.none { it == "Body-worn" })
