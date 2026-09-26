@@ -154,6 +154,73 @@ object Geo {
         return merged.take(10)
     }
 
+    /** ~150 km/h. Walking sits and city driving stay under this; a GPS glitch does not. */
+    const val SPIKE_MAX_SPEED_MPS = 42.0
+    const val SPIKE_MIN_HOP_M = 40.0
+    const val SPIKE_MIN_DT_MS = 800L
+
+    fun hopPlausible(
+        from: GpsSample,
+        lat: Double,
+        lon: Double,
+        at: Long,
+        maxSpeedMps: Double = SPIKE_MAX_SPEED_MPS,
+    ): Boolean {
+        val d = meters(from.lat, from.lon, lat, lon)
+        val dt = at - from.at
+        if (d <= SPIKE_MIN_HOP_M) return true
+        if (dt < SPIKE_MIN_DT_MS) return true
+        val mps = d / (dt / 1000.0).coerceAtLeast(0.001)
+        return mps <= maxSpeedMps
+    }
+
+    /**
+     * Drop GPS glitches: a point that shoots out and back, or a hop faster than
+     * [SPIKE_MAX_SPEED_MPS] over at least [SPIKE_MIN_DT_MS]. Existing sits clean
+     * up on Path; new samples are rejected in recordPath.
+     */
+    fun despikePath(samples: List<GpsSample>): List<GpsSample> {
+        if (samples.size < 2) return samples
+        var cur = samples
+        repeat(4) {
+            val next = despikeOnce(cur)
+            if (next.size == cur.size) return next
+            cur = next
+            if (cur.size < 2) return cur
+        }
+        return cur
+    }
+
+    private fun despikeOnce(samples: List<GpsSample>): List<GpsSample> {
+        if (samples.size < 2) return samples
+        val out = ArrayList<GpsSample>(samples.size)
+        out += samples.first()
+        var i = 1
+        while (i < samples.size) {
+            val prev = out.last()
+            val cur = samples[i]
+            val next = samples.getOrNull(i + 1)
+            if (next != null) {
+                val dAb = meters(prev.lat, prev.lon, cur.lat, cur.lon)
+                val dBc = meters(cur.lat, cur.lon, next.lat, next.lon)
+                val dAc = meters(prev.lat, prev.lon, next.lat, next.lon)
+                val spike = dAb > SPIKE_MIN_HOP_M && dBc > SPIKE_MIN_HOP_M &&
+                    dAc < dAb * 0.4 && dAc < dBc * 0.4
+                if (spike) {
+                    i++
+                    continue
+                }
+            }
+            if (!hopPlausible(prev, cur.lat, cur.lon, cur.at)) {
+                i++
+                continue
+            }
+            out += cur
+            i++
+        }
+        return if (out.size >= 2) out else samples.take(1) + samples.takeLast(1)
+    }
+
     fun append(trail: List<GpsSample>, at: Long, lat: Double, lon: Double, rssi: Int, cap: Int = 48): List<GpsSample> {
         val last = trail.lastOrNull()
         if (last != null) {
@@ -162,7 +229,26 @@ object Geo {
             if (d < 18.0 && at - last.at < 30_000L) return trail
         }
         val next = trail + GpsSample(at, lat, lon, rssi)
-        return if (next.size > cap) next.takeLast(cap) else next
+        return capSpread(next, cap)
+    }
+
+    /**
+     * Keep [cap] samples spread across the whole trail (first, last, and even
+     * steps). takeLast would only keep the end of a long sit.
+     */
+    fun capSpread(samples: List<GpsSample>, cap: Int): List<GpsSample> {
+        if (samples.size <= cap) return samples
+        if (cap <= 1) return listOf(samples.last())
+        if (cap == 2) return listOf(samples.first(), samples.last())
+        val lastIdx = samples.size - 1
+        val out = ArrayList<GpsSample>(cap)
+        for (i in 0 until cap) {
+            val idx = (i * lastIdx) / (cap - 1)
+            val s = samples[idx]
+            if (out.isEmpty() || out.last().at != s.at) out += s
+        }
+        if (out.last().at != samples.last().at) out += samples.last()
+        return out
     }
 }
 

@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.9")
-    c.drawString(48, 94, "25 September 2026")
+    c.drawString(48, 108, "Version 1.1.10")
+    c.drawString(48, 94, "26 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.9  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.10  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1646,14 +1646,15 @@ def story():
             "Privacy mode still draws the line; coordinate text is masked.",
         ),
         P(
-            "The line is this phone. Header counts stops and entire-route radios. "
-            "Red dots are Extra attention; blue dots are Named radios. "
+            "The line is this phone. Header counts stops. "
+            "Red dots are Extra attention; blue dots are bookmarked radios. "
             "Each KIND+MAC plots once, at the strongest RSSI hear-point. "
-            "A radio heard from near the start of the sit through near the end is listed as <b>Present for the entire route</b> (RSSI min–max on the row), not as a numbered stop. "
+            "Observer notes on a bookmarked radio list after the numbered roster. A custom name without a bookmark does not plot. "
             "Thick green on the line is a stay (~40 m, same as Debrief Where you were). Time ticks (HH:mm) sit along the path. "
             "When several radios stack at one place, the plot shows one number and a count badge. "
             "Tap that number for a single inset; tap again to close. Isolated dots and the roster open detail. "
-            "The distance scale sits under the plot. The route is inset so Start/End do not sit on the frame."
+            "The distance scale sits under the plot. The route is inset so Start/End do not sit on the frame. "
+            "GPS jumps that shoot out and back, or that imply more than about 150 km/h, are dropped from the trace."
         ),
         P(
             "Settings → <b>Online place names and maps</b> (on by default) also loads OpenStreetMap tiles under this trace when the phone has internet. "
@@ -1662,8 +1663,8 @@ def story():
             "Turn that switch off to keep streets out of Debrief/AI Export and maps off Path together."
         ),
         P(
-            "If any of those radios have Observer notes, an <b>Observer notes</b> list sits under the roster "
-            "(custom name, MAC, the note). Live list still shows only the cyan notes chip, not the text."
+            "Observer notes on a <b>bookmarked</b> radio list after the numbered roster "
+            "(plot number, custom name, MAC, the note). Live list still shows only the cyan notes chip, not the text."
         ),
         P(
             "Debrief PDF and Compare PDF include a letter-size operator-path figure of the same walk. "
@@ -4417,7 +4418,7 @@ def story():
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
             ["Reports", "Bottom tab. Sits (optional named window), Path, Debrief (text/PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Config for GPS, place names, and logging on/off stays on Settings. §5.6."],
             ["Sit (named)", "Optional window of watching, started from Reports → Start sit. Path, Debrief, Compare this-sit, and AI Export use that start/end instead of the last 15 minutes in RAM, and keep radios the Live list has dropped. One at a time. Live list, Filters, Hunt, TAK unchanged if you never start one. Not DF. §5.6."],
-            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and Named (blue) dots at strongest RSSI. Present for the entire route if first/last heard cover the sit. Thick green = stay. Time ticks. OSM tiles when Online place names and maps is on and the phone is online; otherwise the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
+            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and bookmarked (blue) dots at strongest RSSI. Observer notes only if that radio is bookmarked. Thick green = stay. Time ticks. OSM tiles when Online place names and maps is on and the phone is online; otherwise the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
             ["Sit export", "Reports card under Sit report. Same Format chips as Log export, different file: one row per unique radio in the selected sit (or last 15 minutes). Logging can be off. GPX/KML include the operator path as a track. Not the rotating log. Privacy mode does not mask the file. §5.6.2."],
             ["Log export", "Reports card. Share/Save of the rotating session file (JSON lines on disk; CSV / GPX / KML / WiGLE at export). One line per hear while logging was on. Needs Write to disk. Clearing the log does not delete sits. §5.6.3, §11.6."],
             ["Observer notes", "Optional 280-character field on a Named radio (same KIND+MAC as the custom name). Cyan block on detail; cyan notes chip on Live next to Extra attention “!”. Debrief lists them after Where you were; Compare after Windows. Path and AI Export list heard radios with the note. Not catalog Notes and not Extra attention gold. BLE privacy addresses hide the pencil. Settings backup includes the note. §5.5, §5.6."],
@@ -4890,9 +4891,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.9 (versionCode 19), field build of 25 September 2026"],
-                ["Document version", "1.1.9"],
-                ["Document date", "25 September 2026"],
+                ["Software version", "1.1.10 (versionCode 20), field build of 26 September 2026"],
+                ["Document version", "1.1.10"],
+                ["Document date", "26 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

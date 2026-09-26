@@ -136,9 +136,10 @@ fun SitPathCanvas(
                     color = track.copy(alpha = 0.85f),
                     style = Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
-                val stays = Geo.legs(model.samples).filter { it.stay }
+                val trace = if (lay.samples.size >= 2) lay.samples else model.samples
+                val stays = Geo.legs(trace).filter { it.stay }
                 for (i in 1 until lay.path.size) {
-                    val t = model.samples.getOrNull(i)?.at ?: continue
+                    val t = trace.getOrNull(i)?.at ?: continue
                     if (stays.none { t in it.startAt..it.endAt }) continue
                     drawLine(
                         PhosphorActive.copy(alpha = 0.9f),
@@ -152,13 +153,13 @@ fun SitPathCanvas(
                     val pt = lay.project(stay.lat, stay.lon)
                     drawCircle(PhosphorActive.copy(alpha = 0.22f), radius = 16f, center = Offset(pt.x, pt.y))
                 }
-                val dur = (model.samples.last().at - model.samples.first().at).coerceAtLeast(1L)
+                val dur = (trace.last().at - trace.first().at).coerceAtLeast(1L)
                 listOf(0.25, 0.5, 0.75).forEach { frac ->
-                    val want = model.samples.first().at + (dur * frac).toLong()
-                    val idx = model.samples.indices.minByOrNull { abs(model.samples[it].at - want) } ?: return@forEach
-                    if (idx == 0 || idx == model.samples.lastIndex) return@forEach
+                    val want = trace.first().at + (dur * frac).toLong()
+                    val idx = trace.indices.minByOrNull { abs(trace[it].at - want) } ?: return@forEach
+                    if (idx == 0 || idx == trace.lastIndex) return@forEach
                     val pt = lay.path.getOrNull(idx) ?: return@forEach
-                    val label = TIME_FMT.format(Date(model.samples[idx].at))
+                    val label = TIME_FMT.format(Date(trace[idx].at))
                     val measured = measurer.measure(label, labelStyle)
                     drawCircle(muted, radius = 3f, center = Offset(pt.x, pt.y))
                     drawText(
@@ -260,7 +261,11 @@ fun SitPathCanvas(
                             (if (tag.isNotEmpty()) " · $tag" else "") +
                             (if (obs.isNotEmpty()) " · Observer: $obs" else ""),
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (m.dot.extraAttention) extra else track,
+                        color = when {
+                            m.dot.extraAttention -> extra
+                            m.dot.named -> named
+                            else -> track
+                        },
                         modifier = Modifier
                             .clickable { onOpenRadio(m.dot.key) }
                             .padding(vertical = 2.dp),

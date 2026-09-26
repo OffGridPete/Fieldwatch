@@ -266,6 +266,9 @@ class FieldwatchApp : Application() {
     fun recordOperatorFix(lat: Double, lon: Double, at: Long = System.currentTimeMillis()) {
         synchronized(pathLock) {
             val last = operatorPath.lastOrNull()
+            if (last != null && !Geo.hopPlausible(last, lat, lon, at)) {
+                return
+            }
             if (last != null && Geo.meters(last.lat, last.lon, lat, lon) < 15.0) {
                 operatorPath[operatorPath.lastIndex] = GpsSample(at, lat, lon)
             } else {

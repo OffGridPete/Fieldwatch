@@ -25,6 +25,7 @@ object DebriefPrompt {
         window: DebriefWindow? = null,
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -52,7 +53,7 @@ object DebriefPrompt {
         }.mapValues { it.value.size }.toList().sortedByDescending { it.second }
         val bleRssi = ble.map { it.rssi }
         val wifiRssi = wifi.map { it.rssi }
-        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win, customNames, observerNotes)
+        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win, customNames, observerNotes, bookmarkedKeys)
         val iso = utc(windowEnd)
         val start = utc(windowStart)
 

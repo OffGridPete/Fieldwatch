@@ -9,6 +9,7 @@ object SitDiff {
         val name: String,
         val extraAttention: Boolean,
         val named: Boolean,
+        val bookmarked: Boolean = false,
         val fleetNames: List<String>,
         val randomized: Boolean = false,
         val lat: Double? = null,
@@ -46,6 +47,7 @@ object SitDiff {
         fleets: List<Fleet>,
         customNames: Map<String, String>,
         observerNotes: Map<String, String> = emptyMap(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): Radio = Radio(
         key = device.key,
         kind = device.kind,
@@ -53,6 +55,7 @@ object SitDiff {
         name = device.reportName(customNames),
         extraAttention = device.attentionNotes(fleets).isNotEmpty(),
         named = device.key in customNames,
+        bookmarked = device.key in bookmarkedKeys,
         fleetNames = device.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = device.randomized,
         lat = SitPathPlot.loudestFix(device)?.lat ?: device.latitude,
@@ -68,6 +71,7 @@ object SitDiff {
         fleets: List<Fleet>,
         customNames: Map<String, String>,
         observerNotes: Map<String, String> = emptyMap(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): Radio = Radio(
         key = row.key,
         kind = row.kind,
@@ -75,6 +79,7 @@ object SitDiff {
         name = customNames[row.key]?.trim()?.takeIf { it.isNotEmpty() } ?: row.name.ifBlank { row.mac },
         extraAttention = row.extraAttention,
         named = row.key in customNames,
+        bookmarked = row.key in bookmarkedKeys,
         fleetNames = row.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = row.randomized,
         lat = SitPathPlot.loudestFix(row.gpsTrail)?.lat,
@@ -167,43 +172,34 @@ object SitDiff {
         second: Side,
     ): SitPathPlot.Figure? {
         val tracks = listOfNotNull(
-            thisSit.path.takeIf { it.size >= 2 }?.let {
+            Geo.despikePath(thisSit.path).takeIf { it.size >= 2 }?.let {
                 SitPathPlot.FigureTrack(thisSit.name, it, secondary = false)
             },
-            second.path.takeIf { it.size >= 2 }?.let {
+            Geo.despikePath(second.path).takeIf { it.size >= 2 }?.let {
                 SitPathPlot.FigureTrack(second.name, it, secondary = true)
             },
         )
         if (tracks.isEmpty()) return null
         val points = ArrayList<SitPathPlot.Dot>()
-        val along = ArrayList<SitPathPlot.Dot>()
         (thisSit.radios + second.radios)
-            .filter { it.extraAttention || it.named }
+            .filter { it.extraAttention || it.bookmarked }
             .distinctBy { it.key }
             .forEach { r ->
                 val lat = r.lat ?: return@forEach
                 val lon = r.lon ?: return@forEach
-                val dot = SitPathPlot.Dot(
+                val notes = if (r.bookmarked) r.observerNotes else ""
+                points += SitPathPlot.Dot(
                     key = r.key,
                     lat = lat,
                     lon = lon,
                     label = r.name.ifBlank { r.mac },
                     extraAttention = r.extraAttention,
-                    named = r.named,
+                    named = r.bookmarked || r.named,
                     kind = r.kind,
                     mac = r.mac,
                     fleetNames = r.fleetNames,
-                    observerNotes = r.observerNotes,
+                    observerNotes = notes,
                 )
-                val walk = when {
-                    r.key in thisSit.keys -> thisSit.path
-                    else -> second.path
-                }
-                if (SitPathPlot.alongRoute(r.firstSeen, r.lastSeen, walk, hasFix = true)) {
-                    along += dot
-                } else {
-                    points += dot
-                }
             }
         val dots = points.take(24)
         val all = tracks.flatMap { it.samples }
@@ -219,7 +215,6 @@ object SitDiff {
             lengthM = Geo.pathLengthM(all),
             spanM = Geo.spanM(all),
             caption = cap,
-            alongRoute = along.take(24),
         )
     }
 

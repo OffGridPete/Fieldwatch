@@ -32,7 +32,6 @@ object SitPathPlot {
         val title: String,
         val emptyHint: String? = null,
         val live: Boolean = false,
-        val alongRoute: List<Dot> = emptyList(),
     )
 
     data class Pt(val x: Float, val y: Float)
@@ -47,6 +46,7 @@ object SitPathPlot {
         val plotTop: Float = 0f,
         val plotRight: Float = 0f,
         val plotBottom: Float = 0f,
+        val samples: List<GpsSample> = emptyList(),
     )
 
     data class FigureTrack(
@@ -62,7 +62,6 @@ object SitPathPlot {
         val lengthM: Double,
         val spanM: Double,
         val caption: String,
-        val alongRoute: List<Dot> = emptyList(),
     ) {
         val drawable: Boolean
             get() = tracks.any { it.samples.size >= 2 }
@@ -120,7 +119,9 @@ object SitPathPlot {
         pad: Float = 16f,
     ): Layout? {
         if (width <= pad * 2 || height <= pad * 2) return null
-        val pts = model.samples
+        val pts = Geo.despikePath(model.samples).let { cleaned ->
+            if (cleaned.size >= 2) cleaned else model.samples
+        }
         if (pts.size < 2) return null
         val lat0 = pts.map { it.lat }.average()
         val lon0 = pts.map { it.lon }.average()
@@ -175,6 +176,7 @@ object SitPathPlot {
             plotTop = pad,
             plotRight = width - pad,
             plotBottom = height - pad - 44f,
+            samples = pts,
         )
     }
 
@@ -193,7 +195,6 @@ object SitPathPlot {
 
     data class PlotRadios(
         val points: List<Dot>,
-        val alongRoute: List<Dot>,
     )
 
     fun dotsFrom(
@@ -203,56 +204,37 @@ object SitPathPlot {
         cap: Int = 48,
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
-        path: List<GpsSample> = emptyList(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): PlotRadios {
         val points = ArrayList<Dot>()
-        val along = ArrayList<Dot>()
         devices
-            .filter { it.attentionNotes(fleets).isNotEmpty() || it.key in namedKeys }
+            .filter {
+                it.attentionNotes(fleets).isNotEmpty() || it.key in bookmarkedKeys
+            }
             .groupBy { it.key }
             .forEach { (_, group) ->
                 val d = group.maxBy { it.rssi }
                 val fix = loudestFix(d) ?: return@forEach
-                val dot = Dot(
+                val bookmarked = d.key in bookmarkedKeys
+                val notes = if (bookmarked) observerNotes[d.key].orEmpty() else ""
+                points += Dot(
                     key = d.key,
                     lat = fix.lat,
                     lon = fix.lon,
                     label = d.reportName(customNames).ifBlank { d.mac },
                     extraAttention = d.attentionNotes(fleets).isNotEmpty(),
-                    named = d.key in namedKeys,
+                    named = bookmarked || d.key in namedKeys,
                     kind = d.kind,
                     mac = d.mac,
                     fleetNames = d.fleetIds.mapNotNull { id -> fleets.firstOrNull { it.id == id }?.name },
-                    observerNotes = observerNotes[d.key].orEmpty(),
+                    observerNotes = notes,
                     rssiMin = d.rssiMin,
                     rssiMax = d.rssiMax,
                 )
-                if (alongRoute(d.firstSeen, d.lastSeen, path, hasFix = true)) along += dot else points += dot
             }
-        fun take(rows: List<Dot>) =
-            rows.sortedWith(compareByDescending<Dot> { it.extraAttention }.thenBy { it.label }).take(cap)
-        return PlotRadios(take(points), take(along))
-    }
-
-    /**
-     * Heard from near the start of this sit through near the end (first/last vs operator path).
-     * Uses presence time, not the capped GPS trail (TRAIL_CAP 40 would fail a long drive).
-     */
-    fun alongRoute(
-        firstSeen: Long,
-        lastSeen: Long,
-        path: List<GpsSample>,
-        hasFix: Boolean,
-    ): Boolean {
-        if (!hasFix || path.size < 2) return false
-        val pathStart = path.first().at
-        val pathEnd = path.last().at
-        val pathDur = (pathEnd - pathStart).coerceAtLeast(1L)
-        if (pathDur < Sit.PATH_MIN_MS) return false
-        if ((lastSeen - firstSeen) < pathDur * 0.5) return false
-        if (firstSeen > pathStart + pathDur * 0.25) return false
-        if (lastSeen < pathEnd - pathDur * 0.25) return false
-        return true
+        return PlotRadios(
+            points.sortedWith(compareByDescending<Dot> { it.extraAttention }.thenBy { it.label }).take(cap),
+        )
     }
 
     /** One hear-point per radio: loudest GPS-trail sample. rssi 0 is treated as unset. */

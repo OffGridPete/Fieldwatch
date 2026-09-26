@@ -818,11 +818,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val fleets = app.config.fleets
         val customNames = RadioBookmarks.labels(app.config.watchlist)
         val observerNotes = RadioBookmarks.notes(app.config.watchlist)
-        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes)
+        val bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist)
+        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes, bookmarkedKeys)
         val second = SitDiff.Side(
             name = otherFile.summary.name,
             ram = false,
-            radios = otherFile.radios.map { SitDiff.fromSitRadio(it, fleets, customNames, observerNotes) },
+            radios = otherFile.radios.map {
+                SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys)
+            },
             path = otherFile.operatorPath,
         )
         return thisSide to second
@@ -833,6 +836,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         fleets: List<Fleet>,
         customNames: Map<String, String>,
         observerNotes: Map<String, String>,
+        bookmarkedKeys: Set<String>,
     ): SitDiff.Side {
         val open = sit.open
         if (open != null) {
@@ -840,7 +844,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             return SitDiff.Side(
                 name = open.name,
                 ram = false,
-                radios = source?.devices.orEmpty().map { SitDiff.fromSighting(it, fleets, customNames, observerNotes) },
+                radios = source?.devices.orEmpty().map {
+                    SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                },
                 path = source?.operatorPath.orEmpty(),
             )
         }
@@ -851,7 +857,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             return SitDiff.Side(
                 name = selected.name,
                 ram = false,
-                radios = file.radios.map { SitDiff.fromSitRadio(it, fleets, customNames, observerNotes) },
+                radios = file.radios.map {
+                    SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                },
                 path = file.operatorPath,
             )
         }
@@ -859,7 +867,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         return SitDiff.Side(
             name = "Last 15 minutes",
             ram = true,
-            radios = app.devices.devices.value.map { SitDiff.fromSighting(it, fleets, customNames, observerNotes) },
+            radios = app.devices.devices.value.map {
+                SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys)
+            },
             path = app.operatorPathCopy().filter { it.at >= now - DebriefPrompt.WINDOW_MS },
         )
     }
@@ -1468,14 +1478,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val source = app.sits.debriefSource(now)
         val customNames = RadioBookmarks.labels(app.config.watchlist)
         val namedKeys = customNames.keys
+        val bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist)
         val fleets = app.config.fleets
         val tagging = app.config.settings.tagLocation
         if (source != null) {
-            val samples = source.operatorPath
+            val samples = Geo.despikePath(source.operatorPath)
             val plot = SitPathPlot.dotsFrom(
                 source.devices, fleets, namedKeys, customNames = customNames,
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
-                path = samples,
+                bookmarkedKeys = bookmarkedKeys,
             )
             val empty = when {
                 !tagging -> "Tag detections with GPS (Settings) to record a path."
@@ -1491,11 +1502,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 title = source.name,
                 emptyHint = empty,
                 live = app.sits.ui.value.open != null,
-                alongRoute = if (samples.size >= 2) plot.alongRoute else emptyList(),
             )
         }
         val start = now - DebriefPrompt.WINDOW_MS
-        val samples = app.operatorPathCopy().filter { it.at >= start }
+        val samples = Geo.despikePath(app.operatorPathCopy().filter { it.at >= start })
         val devices = app.devices.devices.value.filter { it.lastSeen >= start || it.firstSeen >= start }
         val empty = when {
             !tagging -> "Tag detections with GPS (Settings) to record a path."
@@ -1507,10 +1517,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             SitPathPlot.dotsFrom(
                 devices, fleets, namedKeys, customNames = customNames,
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
-                path = samples,
+                bookmarkedKeys = bookmarkedKeys,
             )
         } else {
-            SitPathPlot.PlotRadios(emptyList(), emptyList())
+            SitPathPlot.PlotRadios(emptyList())
         }
         return SitPathPlot.Model(
             samples = samples,
@@ -1520,7 +1530,6 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             title = "Last 15 minutes",
             emptyHint = empty,
             live = true,
-            alongRoute = plot.alongRoute,
         )
     }
 
@@ -1647,6 +1656,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 window = window,
                 customNames = RadioBookmarks.labels(app.config.watchlist),
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
+                bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist),
             ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
         }
     }
@@ -1687,6 +1697,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         window = window,
                         customNames = RadioBookmarks.labels(app.config.watchlist),
                         observerNotes = RadioBookmarks.notes(app.config.watchlist),
+                        bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),

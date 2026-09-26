@@ -161,7 +161,7 @@ data class SitRadio(
         )
 
         fun trailSample(device: Sighting): List<GpsSample> {
-            val fromDevice = device.gpsTrail.takeLast(Sit.TRAIL_CAP)
+            val fromDevice = Geo.capSpread(device.gpsTrail, Sit.TRAIL_CAP)
             val pin = if (device.latitude != null && device.longitude != null) {
                 GpsSample(device.lastSeen, device.latitude, device.longitude, device.rssi)
             } else {
@@ -169,7 +169,7 @@ data class SitRadio(
             }
             if (pin == null) return fromDevice
             if (fromDevice.any { it.at == pin.at }) return fromDevice
-            return (fromDevice + pin).takeLast(Sit.TRAIL_CAP)
+            return Geo.capSpread(fromDevice + pin, Sit.TRAIL_CAP)
         }
     }
 }
@@ -302,6 +302,7 @@ class SitSession(
         if (!open) return false
         val last = path.lastOrNull()
         if (last != null) {
+            if (!Geo.hopPlausible(last, lat, lon, at)) return false
             val d = Geo.meters(last.lat, last.lon, lat, lon)
             val dt = at - last.at
             if (d < Sit.PATH_MIN_M && dt < Sit.PATH_MIN_MS) {
@@ -368,10 +369,12 @@ class SitSession(
 
     private fun merge(old: SitRadio, next: Sighting, fleets: List<Fleet>): SitRadio {
         val extra = old.extraAttention || next.attentionNotes(fleets).isNotEmpty()
-        val trail = (old.gpsTrail + SitRadio.trailSample(next))
-            .distinctBy { it.at }
-            .sortedBy { it.at }
-            .takeLast(Sit.TRAIL_CAP)
+        val trail = Geo.capSpread(
+            (old.gpsTrail + SitRadio.trailSample(next))
+                .distinctBy { it.at }
+                .sortedBy { it.at },
+            Sit.TRAIL_CAP,
+        )
         return old.copy(
             name = next.name.ifBlank { old.name },
             fleetIds = old.fleetIds + next.fleetIds,

@@ -202,7 +202,7 @@ fun ReportsScreen(
             }
             SectionCard("Path") {
                 Text(
-                    "North up. This phone. Extra attention and Named radios as dots — one hear-point each, at the strongest RSSI. A radio heard along most of this sit is listed as Present for the entire route, not as a stop. Thick green on the line is a stay. Time ticks along the path. Map tiles use Settings → Online place names and maps; offline or Privacy mode keeps this trace.",
+                    "North up. This phone. Extra attention and bookmarked radios as dots — one hear-point each, at the strongest RSSI. Thick green on the line is a stay. Time ticks along the path. Map tiles use Settings → Online place names and maps; offline or Privacy mode keeps this trace.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -216,14 +216,12 @@ fun ReportsScreen(
                 } else {
                     val pathTiles by vm.pathTiles.collectAsStateWithLifecycle()
                     val stopN = model.dots.size
-                    val entireN = model.alongRoute.size
                     Text(
                         buildString {
                             append("${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span")
-                            if (stopN > 0 || entireN > 0) {
+                            if (stopN > 0) {
                                 append(" · $stopN stop")
                                 if (stopN != 1) append("s")
-                                append(" · $entireN entire route")
                             }
                         },
                         style = MaterialTheme.typography.bodyMedium,
@@ -250,15 +248,15 @@ fun ReportsScreen(
                                 color = MaterialTheme.colorScheme.error,
                             )
                             Text(
-                                "Blue = Named",
+                                "Blue = Bookmarked",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Cyan.nightIf(LocalNightMode.current),
                             )
                         }
                     }
-                    if (model.dots.isEmpty() && model.alongRoute.isEmpty()) {
+                    if (model.dots.isEmpty()) {
                         Text(
-                            "No Extra attention or Named radios with a GPS stamp on this path.",
+                            "No Extra attention or bookmarked radios with a GPS stamp on this path.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -271,23 +269,7 @@ fun ReportsScreen(
                                 onOpen = { onOpenPathRadio(dot.key) },
                             )
                         }
-                        if (model.alongRoute.isNotEmpty()) {
-                            Text(
-                                "Present for the entire route",
-                                style = MaterialTheme.typography.titleSmall,
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
-                            model.alongRoute.forEach { dot ->
-                                PathRadioRow(
-                                    index = null,
-                                    dot = dot,
-                                    demoMode = settings.demoMode,
-                                    onOpen = { onOpenPathRadio(dot.key) },
-                                    alongRoute = true,
-                                )
-                            }
-                        }
-                        val noted = (model.dots + model.alongRoute).filter { it.observerNotes.trim().isNotEmpty() }
+                        val noted = model.dots.filter { it.observerNotes.trim().isNotEmpty() }
                         if (noted.isNotEmpty()) {
                             Text(
                                 "Observer notes",
@@ -295,6 +277,7 @@ fun ReportsScreen(
                                 modifier = Modifier.padding(top = 8.dp),
                             )
                             noted.forEach { dot ->
+                                val n = model.dots.indexOfFirst { it.key == dot.key }
                                 val mac = MacUtil.screenMac(dot.mac, settings.demoMode)
                                 val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
                                 Column(
@@ -304,13 +287,13 @@ fun ReportsScreen(
                                         .padding(vertical = 4.dp),
                                 ) {
                                     Text(
-                                        "$kind  ${dot.label}  $mac",
+                                        "${n + 1}. $kind  ${dot.label}  $mac",
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                     Text(
                                         dot.observerNotes.trim(),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.tertiary,
+                                        color = Cyan.nightIf(LocalNightMode.current),
                                     )
                                 }
                             }
@@ -629,7 +612,6 @@ private fun PathRadioRow(
     dot: SitPathPlot.Dot,
     demoMode: Boolean,
     onOpen: () -> Unit,
-    alongRoute: Boolean = false,
 ) {
     val mac = MacUtil.screenMac(dot.mac, demoMode)
     val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
@@ -640,13 +622,9 @@ private fun PathRadioRow(
         append("$kind  ${dot.label}")
         if (dot.label != mac && mac.isNotBlank()) append("  $mac")
     }
-    val rssi = if (alongRoute && (dot.rssiMin != 0 || dot.rssiMax != 0)) {
-        "${dot.rssiMax} to ${dot.rssiMin} dBm"
-    } else null
     val sub = listOfNotNull(
         tag.ifBlank { null },
         fleets.ifBlank { null },
-        rssi,
     ).joinToString(" · ")
     Column(
         Modifier

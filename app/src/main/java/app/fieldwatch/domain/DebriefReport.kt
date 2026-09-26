@@ -131,7 +131,8 @@ object DebriefReport {
         window: DebriefWindow? = null,
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
-    ): String = document(devices, fleets, settings, operatorPath, now, places, window, customNames, observerNotes).toPlainText()
+        bookmarkedKeys: Set<String> = emptySet(),
+    ): String = document(devices, fleets, settings, operatorPath, now, places, window, customNames, observerNotes, bookmarkedKeys).toPlainText()
 
     fun document(
         devices: List<Sighting>,
@@ -143,6 +144,7 @@ object DebriefReport {
         window: DebriefWindow? = null,
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -412,7 +414,7 @@ object DebriefReport {
             heading = heading,
             pdfKicker = if (win.sitName != null) "SIT" else "FIELD DEBRIEF",
             pdfTitle = if (win.sitName != null) "Sit — ${win.sitName}" else "Field debrief",
-            pathFigure = pathFigure(win.sitName ?: "Last 15 minutes", path, inWin, fleets, customNames, observerNotes),
+            pathFigure = pathFigure(win.sitName ?: "Last 15 minutes", path, inWin, fleets, customNames, observerNotes, bookmarkedKeys),
         )
     }
 
@@ -423,11 +425,14 @@ object DebriefReport {
         fleets: List<Fleet>,
         customNames: Map<String, String>,
         observerNotes: Map<String, String> = emptyMap(),
+        bookmarkedKeys: Set<String> = emptySet(),
     ): SitPathPlot.Figure? {
+        val path = Geo.despikePath(path)
         if (path.size < 2) return null
         val plot = SitPathPlot.dotsFrom(
             devices, fleets, namedKeys = customNames.keys, cap = 24,
-            customNames = customNames, observerNotes = observerNotes, path = path,
+            customNames = customNames, observerNotes = observerNotes,
+            bookmarkedKeys = bookmarkedKeys,
         )
         return SitPathPlot.Figure(
             kicker = "OPERATOR PATH",
@@ -435,8 +440,7 @@ object DebriefReport {
             dots = plot.points,
             lengthM = Geo.pathLengthM(path),
             spanM = Geo.spanM(path),
-            caption = "North-up. Line is this phone (${path.lengthM()}). A number is a place on this path; stacked radios share a number (Path key). Radios heard along the whole sit are in Present for the entire route, not as a stop.",
-            alongRoute = plot.alongRoute,
+            caption = "North-up. Line is this phone (${path.lengthM()}). A number is a place on this path; stacked radios share a number (Path key). Hear-points, not radio fixes.",
         )
     }
 

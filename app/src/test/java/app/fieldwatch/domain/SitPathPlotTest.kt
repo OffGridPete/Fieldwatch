@@ -1,6 +1,7 @@
 package app.fieldwatch.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -105,7 +106,6 @@ class SitPathPlotTest {
         val dots = SitPathPlot.dotsFrom(listOf(tagged), listOf(axon), namedKeys = emptySet())
         assertEquals(1, dots.points.size)
         assertTrue(dots.points[0].extraAttention)
-        assertTrue(dots.alongRoute.isEmpty())
         assertNotNull(SitPathPlot.layout(
             SitPathPlot.Model(
                 samples = listOf(
@@ -163,11 +163,10 @@ class SitPathPlotTest {
         assertEquals(1, dots.points.size)
         assertEquals(28.7810, dots.points[0].lat, 0.00001)
         assertEquals(-81.3710, dots.points[0].lon, 0.00001)
-        assertTrue(dots.alongRoute.isEmpty())
     }
 
     @Test
-    fun radioHeardAlongMostOfTheWalkIsAlongRouteNotAStop() {
+    fun extraAttentionAlongTheWalkIsStillANumberedStop() {
         val axon = Fleet(
             id = "fleet-axon",
             name = "Axon",
@@ -204,18 +203,20 @@ class SitPathPlotTest {
             presence = emptyList(),
             gpsTrail = listOf(
                 GpsSample(0L, 28.7800, -81.3700, -55),
+                GpsSample(15_000L, 28.7812, -81.3700, -48),
                 GpsSample(30_000L, 28.7825, -81.3700, -40),
+                GpsSample(45_000L, 28.7837, -81.3700, -46),
                 GpsSample(60_000L, 28.7850, -81.3700, -52),
             ),
         )
-        val dots = SitPathPlot.dotsFrom(listOf(tagged), listOf(axon), namedKeys = emptySet(), path = path)
-        assertTrue(dots.points.isEmpty())
-        assertEquals(1, dots.alongRoute.size)
-        assertEquals("van", dots.alongRoute[0].label)
+        val dots = SitPathPlot.dotsFrom(listOf(tagged), listOf(axon), namedKeys = emptySet())
+        assertEquals(1, dots.points.size)
+        assertEquals("van", dots.points[0].label)
+        assertTrue(dots.points[0].extraAttention)
     }
 
     @Test
-    fun longSitUsesFirstLastNotTruncatedTrail() {
+    fun bookmarkedRadioIsANumberedStop() {
         val axon = Fleet(
             id = "fleet-axon",
             name = "Axon",
@@ -249,17 +250,183 @@ class SitPathPlotTest {
             fleetIds = emptySet(),
             rssiHistory = emptyList(),
             presence = emptyList(),
+            gpsTrail = listOf(0, 5, 10, 15, 20).map { i ->
+                GpsSample(i * 60_000L, 28.7800 + i * 0.01, -81.3700, -50)
+            },
+        )
+        val dots = SitPathPlot.dotsFrom(
+            listOf(tagged), listOf(axon), namedKeys = setOf(tagged.key),
+            bookmarkedKeys = setOf(tagged.key),
+        )
+        assertEquals(1, dots.points.size)
+        assertEquals("Cybertruck", dots.points[0].label)
+        assertTrue(dots.points[0].named)
+    }
+
+    @Test
+    fun extraAttentionLeaveAndReturnIsAStop() {
+        val axon = Fleet(
+            id = "fleet-axon",
+            name = "Axon",
+            kind = SignatureClass.LAW_ENFORCEMENT,
+            attentionNote = "Body-worn.",
+        )
+        val path = (0..20).map { i ->
+            GpsSample(i * 60_000L, 28.7800 + i * 0.01, -81.3700)
+        }
+        val tagged = Sighting(
+            key = "WIFI:AA:AA:AA:AA:AA:03",
+            kind = RadioKind.WIFI,
+            mac = "AA:AA:AA:AA:AA:03",
+            name = "home AP",
+            rssi = -40,
+            rssiMin = -50,
+            rssiMax = -35,
+            channel = 6,
+            frequencyMhz = 2437,
+            vendor = null,
+            randomized = false,
+            hiddenSsid = false,
+            serviceUuids = emptyList(),
+            manufacturerId = null,
+            manufacturerDataHex = "",
+            rawHex = "",
+            extras = "",
+            firstSeen = 0L,
+            lastSeen = 20 * 60_000L,
+            hitCount = 12,
+            fleetIds = setOf("fleet-axon"),
+            rssiHistory = emptyList(),
+            presence = emptyList(),
             gpsTrail = listOf(
-                GpsSample(18 * 60_000L, 28.7980, -81.3700, -60),
-                GpsSample(19 * 60_000L, 28.7990, -81.3700, -50),
-                GpsSample(20 * 60_000L, 28.8000, -81.3700, -55),
+                GpsSample(0L, 28.7800, -81.3700, -40),
+                GpsSample(20 * 60_000L, 28.7800, -81.3700, -42),
+            ),
+        )
+        val dots = SitPathPlot.dotsFrom(listOf(tagged), listOf(axon), namedKeys = emptySet())
+        assertEquals(1, dots.points.size)
+        assertEquals("home AP", dots.points[0].label)
+        assertTrue(dots.points[0].extraAttention)
+    }
+
+    @Test
+    fun namedWithoutBookmarkIsNotPlotted() {
+        val path = listOf(
+            GpsSample(0L, 28.7800, -81.3700),
+            GpsSample(60_000L, 28.7850, -81.3700),
+        )
+        val tagged = Sighting(
+            key = "BLE:AA:AA:AA:AA:AA:05",
+            kind = RadioKind.BLE,
+            mac = "AA:AA:AA:AA:AA:05",
+            name = "tsTPMS",
+            rssi = -55,
+            rssiMin = -60,
+            rssiMax = -50,
+            channel = 0,
+            frequencyMhz = 2402,
+            vendor = null,
+            randomized = false,
+            hiddenSsid = false,
+            serviceUuids = emptyList(),
+            manufacturerId = null,
+            manufacturerDataHex = "",
+            rawHex = "",
+            extras = "",
+            firstSeen = 0L,
+            lastSeen = 60_000L,
+            hitCount = 8,
+            fleetIds = emptySet(),
+            rssiHistory = emptyList(),
+            presence = emptyList(),
+            gpsTrail = listOf(GpsSample(0L, 28.7800, -81.3700, -55)),
+        )
+        val dots = SitPathPlot.dotsFrom(
+            listOf(tagged),
+            fleets = emptyList(),
+            namedKeys = setOf(tagged.key),
+            observerNotes = mapOf(tagged.key to "Saw this at the gate."),
+        )
+        assertTrue(dots.points.isEmpty())
+    }
+
+    @Test
+    fun observerNotesPlotAsNumberedBlueStop() {
+        val path = listOf(
+            GpsSample(0L, 28.7800, -81.3700),
+            GpsSample(60_000L, 28.7850, -81.3700),
+        )
+        val tagged = Sighting(
+            key = "BLE:AA:AA:AA:AA:AA:04",
+            kind = RadioKind.BLE,
+            mac = "AA:AA:AA:AA:AA:04",
+            name = "iBeacon",
+            rssi = -55,
+            rssiMin = -60,
+            rssiMax = -50,
+            channel = 0,
+            frequencyMhz = 2402,
+            vendor = null,
+            randomized = false,
+            hiddenSsid = false,
+            serviceUuids = emptyList(),
+            manufacturerId = null,
+            manufacturerDataHex = "",
+            rawHex = "",
+            extras = "",
+            firstSeen = 0L,
+            lastSeen = 60_000L,
+            hitCount = 8,
+            fleetIds = emptySet(),
+            rssiHistory = emptyList(),
+            presence = emptyList(),
+            gpsTrail = listOf(
+                GpsSample(0L, 28.7800, -81.3700, -55),
+                GpsSample(30_000L, 28.7825, -81.3700, -50),
+                GpsSample(60_000L, 28.7850, -81.3700, -58),
             ),
         )
         val dots = SitPathPlot.dotsFrom(
-            listOf(tagged), listOf(axon), namedKeys = setOf(tagged.key), path = path,
+            listOf(tagged),
+            fleets = emptyList(),
+            namedKeys = emptySet(),
+            observerNotes = mapOf(tagged.key to "Mall door, same as last week."),
+            bookmarkedKeys = setOf(tagged.key),
         )
-        assertTrue(dots.points.isEmpty())
-        assertEquals(1, dots.alongRoute.size)
-        assertEquals("Cybertruck", dots.alongRoute[0].label)
+        assertEquals(1, dots.points.size)
+        assertTrue(dots.points[0].named)
+        assertFalse(dots.points[0].extraAttention)
+        assertEquals("Mall door, same as last week.", dots.points[0].observerNotes)
+    }
+
+    @Test
+    fun despikeDropsOutAndBackJump() {
+        val a = GpsSample(0L, 28.7800, -81.3700)
+        val spike = GpsSample(2_000L, 28.7950, -81.3700)
+        val c = GpsSample(4_000L, 28.7802, -81.3700)
+        val cleaned = Geo.despikePath(listOf(a, spike, c))
+        assertEquals(2, cleaned.size)
+        assertEquals(a.at, cleaned[0].at)
+        assertEquals(c.at, cleaned[1].at)
+    }
+
+    @Test
+    fun despikeKeepsHighwayHop() {
+        val a = GpsSample(0L, 28.7800, -81.3700)
+        val b = GpsSample(10_000L, 28.7827, -81.3700)
+        val cleaned = Geo.despikePath(listOf(a, b))
+        assertEquals(2, cleaned.size)
+    }
+
+    @Test
+    fun capSpreadKeepsFirstAndLast() {
+        val samples = (0 until 100).map { i ->
+            GpsSample(i * 1_000L, 28.78 + i * 0.001, -81.37)
+        }
+        val kept = Geo.capSpread(samples, 40)
+        assertEquals(40, kept.size)
+        assertEquals(samples.first().at, kept.first().at)
+        assertEquals(samples.last().at, kept.last().at)
+        assertTrue(kept.any { it.at in 20_000L..30_000L })
     }
 }
