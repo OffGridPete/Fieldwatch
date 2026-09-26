@@ -341,6 +341,12 @@ data class FleetDecode(
     val source: DecodeSource,
     val serviceUuid: String? = null,
     val companyId: Int? = null,
+    /**
+     * Prepend the two-byte little-endian company ID to manufacturer data
+     * before the field map runs. SYTPMS/BR stores status and battery there.
+     */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val includeCompanyId: Boolean = false,
     val fields: List<DecodeField> = emptyList(),
 )
 

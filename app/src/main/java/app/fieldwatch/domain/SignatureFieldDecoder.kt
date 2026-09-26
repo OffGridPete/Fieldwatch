@@ -65,7 +65,10 @@ object SignatureFieldDecoder {
                 }
                 val want = decode.companyId?.takeIf { it != 0 }
                 val chosen = if (want != null) records.filter { it.companyId == want } else records
-                chosen.map { it.dataHex }
+                chosen.map { rec ->
+                    if (decode.includeCompanyId) companyIdPrefix(rec.companyId) + rec.dataHex
+                    else rec.dataHex
+                }
             }
             DecodeSource.SERVICE_DATA -> {
                 val want = decode.serviceUuid?.let { uuidKey(it) } ?: return emptyList()
@@ -261,6 +264,9 @@ object SignatureFieldDecoder {
             else -> hex
         }
     }
+
+    private fun companyIdPrefix(companyId: Int): String =
+        "%02X%02X".format(companyId and 0xff, (companyId shr 8) and 0xff)
 
     private fun hexToBytes(hex: String): ByteArray? {
         val h = hex.filter { it.isLetterOrDigit() }

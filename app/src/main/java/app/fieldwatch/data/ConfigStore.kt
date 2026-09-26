@@ -911,6 +911,17 @@ class ConfigStore(context: Context) {
             presets = stockPresets + custom
             version = CATALOG_V75
         }
+        if (version < CATALOG_V76) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V76.mapNotNull { catalog[it] }.filter { it.id !in have }
+            fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            fleets = fleets.map { fleet ->
+                if (!fleet.builtIn || fleet.id !in TPMS_V76_REFRESH) return@map fleet
+                val stock = catalog[fleet.id] ?: return@map fleet
+                fleet.copy(decode = stock.decode, notes = stock.notes)
+            }
+            version = CATALOG_V76
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -955,7 +966,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 75
+        const val CATALOG_VERSION = 76
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1029,7 +1040,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V72 = 72
         private const val CATALOG_V73 = 73
         private const val CATALOG_V74 = 74
-        private const val CATALOG_V75 = CATALOG_VERSION
+        private const val CATALOG_V75 = 75
+        private const val CATALOG_V76 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1339,6 +1351,20 @@ class ConfigStore(context: Context) {
             "fleet-miovision",
             "fleet-tattile",
             "fleet-lvt",
+        )
+        private val ADDED_IN_V76 = listOf(
+            "fleet-tpms-ble",
+            "fleet-sytpms",
+            "fleet-tirecheck",
+            "fleet-tpms-service",
+        )
+        private val TPMS_V76_REFRESH = setOf(
+            "fleet-goodyear",
+            "fleet-schrader",
+            "fleet-pacific-tpms",
+            "fleet-huf",
+            "fleet-fobo",
+            "fleet-tesla-tstpms",
         )
     }
 }

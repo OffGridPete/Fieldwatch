@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## Unreleased
+
+- Stock catalog: BLE TPMS. Aftermarket valve-cap sensors (TPMS* / FBB0 / manufacturer data 80–83) decode pressure, temperature, battery, and alarm. SYTPMS / BR (name BR or UUID 27A5) decode gauge pressure, temperature, battery, and motion. Tesla tsTPMS decodes pressure / temperature / battery when the sensor is awake. New rows: TireCheck, Bluetooth TPMS service. FOBO also matches service 00EE. Not a bare Nokia 0x0001 match.
+
 ## 1.1.9 — 25 September 2026
 
 - Path: stays as thick green on the line, time ticks, header stop / entire-route counts, RSSI min–max on Present for the entire route. Each Extra attention / Named radio plots once at strongest RSSI. Entire-route uses first/last heard vs the sit window (not the 40-sample GPS trail).

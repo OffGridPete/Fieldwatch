@@ -44,6 +44,63 @@ class DefaultCatalogTest {
     }
 
     @Test
+    fun aftermarketTpmsMatchesPrefixAndNameNotBareNokia() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val cap = ble(
+            name = "TPMS1_A1B2",
+            manufacturerId = 0x0001,
+            manufacturerDataHex = "80EACA108A78E36D0000E60A00005B00",
+            serviceUuids = listOf("FBB0"),
+        )
+        val hits = engine.match(listOf(cap), stock).getValue(cap.key)
+        assertTrue("aftermarket TPMS", "fleet-tpms-ble" in hits)
+        assertFalse("not Tesla tsTPMS", "fleet-tesla-tstpms" in hits)
+
+        val nokia = ble(
+            name = "",
+            manufacturerId = 0x0001,
+            manufacturerDataHex = "010103215D64",
+        )
+        val nokiaHits = engine.match(listOf(nokia), stock).getValue(nokia.key)
+        assertFalse("bare Nokia 0x0001 is not aftermarket TPMS", "fleet-tpms-ble" in nokiaHits)
+
+        val teslaTire = ble(name = "tsTPMS")
+        val teslaHits = engine.match(listOf(teslaTire), stock).getValue(teslaTire.key)
+        assertTrue("Tesla tsTPMS", "fleet-tesla-tstpms" in teslaHits)
+        assertFalse("tsTPMS is not Aftermarket TPMS", "fleet-tpms-ble" in teslaHits)
+    }
+
+    @Test
+    fun sytpmsMatchesBrNameAndPressureUuidNotBrother() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val sensor = ble(name = "BR", serviceUuids = listOf("27A5"))
+        val hits = engine.match(listOf(sensor), stock).getValue(sensor.key)
+        assertTrue("SYTPMS", "fleet-sytpms" in hits)
+
+        val printer = ble(name = "Brother Printer")
+        val printerHits = engine.match(listOf(printer), stock).getValue(printer.key)
+        assertFalse("BR contains is not used", "fleet-sytpms" in printerHits)
+    }
+
+    @Test
+    fun foboMatchesServiceUuid() {
+        val stock = DefaultCatalog.fleets()
+        val sensor = ble(name = "", serviceUuids = listOf("00EE"))
+        val hits = SignatureEngine().match(listOf(sensor), stock).getValue(sensor.key)
+        assertTrue("FOBO", "fleet-fobo" in hits)
+    }
+
+    @Test
+    fun aftermarketTpmsDoesNotUseBareNokiaCompanyId() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-tpms-ble" }
+        assertFalse(fleet.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x0001 })
+        assertTrue(fleet.rules.any { it.kind == RuleKind.MANUFACTURER_DATA && it.companyId == 0x0001 })
+        assertTrue(fleet.decode != null)
+    }
+
+    @Test
     fun signatureNotesAreSeparateFromExtraAttention() {
         val oura = DefaultCatalog.fleets().single { it.id == "fleet-oura" }
         val axon = DefaultCatalog.fleets().single { it.id == "fleet-axon" }
@@ -69,11 +126,16 @@ class DefaultCatalogTest {
         assertFalse(dump.contains("EXTRA ATTENTION (${oura.name})"))
     }
 
-    private fun ble() = Sighting(
+    private fun ble(
+        name: String = "",
+        manufacturerId: Int? = null,
+        manufacturerDataHex: String = "",
+        serviceUuids: List<String> = emptyList(),
+    ) = Sighting(
         key = "BLE:AA:BB:CC:DD:EE:FF",
         kind = RadioKind.BLE,
         mac = "AA:BB:CC:DD:EE:FF",
-        name = "",
+        name = name,
         rssi = -50,
         rssiMin = -50,
         rssiMax = -50,
@@ -82,9 +144,9 @@ class DefaultCatalogTest {
         vendor = null,
         randomized = true,
         hiddenSsid = false,
-        serviceUuids = emptyList(),
-        manufacturerId = null,
-        manufacturerDataHex = "",
+        serviceUuids = serviceUuids,
+        manufacturerId = manufacturerId,
+        manufacturerDataHex = manufacturerDataHex,
         rawHex = "",
         extras = "",
         firstSeen = 1L,
@@ -93,5 +155,12 @@ class DefaultCatalogTest {
         fleetIds = emptySet(),
         rssiHistory = emptyList(),
         presence = emptyList(),
+        facts = RadioFacts(
+            mfgRecords = if (manufacturerId != null) {
+                listOf(MfgRecord(manufacturerId, manufacturerDataHex))
+            } else {
+                emptyList()
+            },
+        ),
     )
 }

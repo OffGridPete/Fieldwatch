@@ -77,6 +77,7 @@ fun DecodeFieldsScreen(
     var serviceUuid by remember { mutableStateOf(initial?.serviceUuid.orEmpty()) }
     var fields by remember { mutableStateOf(initial?.fields ?: emptyList()) }
     var confirmRemove by remember { mutableStateOf(false) }
+    val includeCompanyId = initial?.includeCompanyId == true
 
     fun currentDecode(): FleetDecode? {
         val cleaned = fields.filter { it.label.isNotBlank() && it.id.isNotBlank() }.map { it.normalized() }
@@ -85,6 +86,7 @@ fun DecodeFieldsScreen(
             source = source,
             serviceUuid = serviceUuid.trim().ifBlank { null },
             companyId = parseCompanyId(companyText),
+            includeCompanyId = includeCompanyId,
             fields = cleaned,
         )
     }

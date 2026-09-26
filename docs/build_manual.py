@@ -2885,7 +2885,7 @@ def story():
                 ["Drones", "Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
                 ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Public safety", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc. Used in law enforcement, not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit."],
-                ["Vehicle", "Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, GM hotspot, Audi MMI, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, PeopleNet, Samsara, AUMOVIO, Winegard, Goodyear TPMS, Schrader TPMS, Pacific TPMS, Huf, FOBO TPMS"],
+                ["Vehicle", "Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, GM hotspot, Audi MMI, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, PeopleNet, Samsara, AUMOVIO, Winegard, Goodyear TPMS, Schrader TPMS, Pacific TPMS, Huf, FOBO TPMS, Aftermarket TPMS, SYTPMS, TireCheck, TPMS service"],
                 ["Glasses", "Ray-Ban / Meta glasses, Snap Spectacles"],
                 ["Audio", "Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Cameras", "Wyze, Ring, Arlo, eufy Security, Nest, Tapo, Reolink, GoPro, Osmo, Insta360"],
@@ -2910,7 +2910,7 @@ def story():
                 ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
                 ["Green", "Mesh / LoRa", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Orange", "Glasses and audio (same chip color; class splits them)", "Ray-Ban / Meta glasses, Snap Spectacles, Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
-                ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO TPMS"],
+                ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO / Aftermarket / SYTPMS / TireCheck / TPMS service"],
                 ["Blue", "Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
                 ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris"],
             ],
@@ -3029,9 +3029,10 @@ def story():
             "Toyota 0x0977, Nissan 0x0BA6, Subaru 0x0A10, BMW 0x05EB, Volkswagen 0x011F / FE30/FE31, "
             "Porsche 0x0120, Jaguar Land Rover 0x020B, BYD 0x0C34, Chevrolet / GM hotspots, Mercedes 0x017C / MBUX*, "
             "Audi 0x010E / MMI, Motive, Samsara, and BLE TPMS (Goodyear 0x0B99, Schrader 0x0601, "
-            "Pacific Industrial 0x0E32, Huf 0x070A, FOBO / Salutica 0x0127). Tesla tsTPMS is the name "
-            "tsTPMS* only — company 0x022B stays on Tesla; UUID 0x1122 is not unique. Factory 315/433 MHz "
-            "valve-stem TPMS does not appear. Cheap kits that spoof Nokia 0x0001 are not cataloged. "
+            "Pacific Industrial 0x0E32, Huf 0x070A, FOBO / Salutica 0x0127 / UUID 00EE, TireCheck 0x0BA2, "
+            "SYTPMS name BR / UUID 0x27A5, Aftermarket TPMS* / UUID FBB0 / 0x0001 data 80–83, SIG service 0x1860). "
+            "Tesla tsTPMS is the name tsTPMS* only — company 0x022B stays on Tesla; UUID 0x1122 is not unique. "
+            "Factory 315/433 MHz valve-stem TPMS does not appear. A bare Nokia 0x0001 match is not cataloged. "
             "Kia / Volvo / Lucid / Polestar have no unique SIG company ID in this catalog. A miss is common: "
             "many cars never put that company ID in an advertisement, and Classic Bluetooth is invisible."
         ),
@@ -3261,6 +3262,9 @@ def story():
                 ["Nest Weave", "Service FEAF", "Weave device-identification block: vendor (Nest Labs / Yale), product (Protect / thermostat / cam / Guard / Detect when the enum hits), pairing, 64-bit Weave device id. A 2-byte FEAF payload is the product id alone."],
                 ["Tuya", "Mfr 0x07D0", "Bound flag and protocol version. UUID bytes stay encrypted."],
                 ["Tile", "Service FEED", "Rotating private id (8 bytes of hex). Not a serial and not a stable identity."],
+                ["Aftermarket TPMS", "Mfr 0x0001", "Valve-cap kits after the TPMS* / FBB0 / data 80–83 match: wheel, pressure kPa, temperature, battery, alarm. A bare Nokia 0x0001 radio does not hit this row."],
+                ["SYTPMS", "Mfr (7-byte BR blob)", "Bicycle / scooter BR sensors: gauge psi, temperature, battery volts, alarm / rotating / standing still."],
+                ["Tesla tsTPMS", "Mfr 0x022B", "Awake ads: pressure psi, temperature °F, battery mV. Sleep packets skip those fields. Identity is still the tsTPMS* name."],
             ],
             [1.35 * inch, 1.35 * inch, 3.8 * inch],
         ),
@@ -4529,7 +4533,7 @@ def story():
             ["Porsche", "Company 0x0120; BLE name Porsche; Wi-Fi Porsche_WLAN*", "Not Volkswagen 0x011F."],
             ["Jaguar Land Rover", "Company 0x020B; names Jaguar / Land Rover / Range Rover", "When that company ID is advertised."],
             ["BYD", "Company 0x0C34; BLE name BYD", "Pattern match, not a model."],
-            ["Tesla tsTPMS", "BLE names tsTPMS*", "Tesla BLE tire sensors. Not company 0x022B on this row and not UUID 0x1122. Vehicle class."],
+            ["Tesla tsTPMS", "BLE names tsTPMS*", "Tesla BLE tire sensors. Not company 0x022B on this row and not UUID 0x1122. Decode fields (awake ads): pressure, temperature, battery. Vehicle class."],
             ["Google", "Company 0x00E0; names Pixel / Chromecast", "Pixel / Chromecast. Fast Pair UUID FE2C is the Fast Pair row."],
             ["Fast Pair", "BLE UUID 0xFE2C", "Android phones and many buds/speakers. Pairing-mode 3-byte model ID (Live display: Fast Pair pairing / pair crumb) or a longer account-key filter (plaza noise). Filters → Hide Fast Pair account-key drops account-key-only chips. Hide selected Fast Pair drops both. Not a person. Not every unnamed LE. Phones / PCs class."],
             ["Sony", "Company 0x012D; names Sony / WH-1000 / WF-1000", "Headphones, TVs, cameras. Not Sony Ericsson 0x0056."],
@@ -4701,7 +4705,11 @@ def story():
             ["Schrader TPMS", "BLE company 0x0601", "AirCheck BLE / trailer / RV. Not Nokia 0x0001 clones. Vehicle class."],
             ["Pacific TPMS", "BLE company 0x0E32", "Pacific Industrial OEM TPMS. Vehicle class."],
             ["Huf", "BLE company 0x070A", "Huf Hülsbeck TPMS and vehicle access. Not only a valve stem. Vehicle class."],
-            ["FOBO TPMS", "BLE company 0x0127 (Salutica); names FOBO*", "Motorcycle / car aftermarket BLE TPMS. Vehicle class."],
+            ["FOBO TPMS", "BLE company 0x0127 (Salutica); UUID 00EE; names FOBO*", "Motorcycle / car aftermarket BLE TPMS. Vehicle class."],
+            ["Aftermarket TPMS", "BLE names TPMS*; UUID FBB0; manufacturer 0x0001 data 80/81/82/83", "Cheap valve-cap BLE TPMS (TPMS1 / FBB0 family). Not a bare Nokia 0x0001 match. Decode fields: wheel, pressure kPa, temperature, battery, alarm. Vehicle class. §9.6."],
+            ["SYTPMS", "BLE exact name BR; UUID 0x27A5", "SYTPMS / BR bicycle or scooter BLE TPMS. Decode fields: gauge psi, temperature, battery, motion. Vehicle class. §9.6."],
+            ["TireCheck", "BLE company 0x0BA2; names TireCheck*", "TireCheck BLE tire sensor. Vehicle class."],
+            ["TPMS service", "BLE UUID 0x1860 (SIG TPMS Service)", "Any sensor advertising the Bluetooth SIG Tire Pressure Monitoring System service. Vehicle class."],
             ["Ruuvi", "BLE company 0x0499; names Ruuvi*", "Broadcast temp / humidity / pressure / motion tags. Home IoT. Decode fields: Data Format 5 (RAWv2) and Format 3 humidity/pressure/accel/battery. Format 3 temperature is sign-magnitude, not a plain int. §9.6."],
             ["Blue Maestro", "BLE company 0x0133", "Tempo Disc temp / humidity loggers. Home IoT. Decode fields: battery, interval, logs, temperature, humidity. §9.6."],
             ["SensorPush", "BLE UUIDs EF090000-…090AA9 / …090AB0; names SensorPush*", "HT / HTP temp / humidity. Custom 128-bit services. Home IoT."],

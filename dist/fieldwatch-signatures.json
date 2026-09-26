@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 75,
+    "catalogVersion": 76,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -446,6 +446,212 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-tpms-ble",
+            "name": "Aftermarket TPMS",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TPMS*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FBB0",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 1,
+                    "dataPrefixHex": "80",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 1,
+                    "dataPrefixHex": "81",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 1,
+                    "dataPrefixHex": "82",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 1,
+                    "dataPrefixHex": "83",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Aftermarket BLE valve-cap tire sensor (TPMS1 / FBB0 family). Decoded fields can show wheel, pressure, temperature, battery, and alarm. Pattern match, not that vehicle.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "decode": {
+                "source": "manufacturerData",
+                "serviceUuid": null,
+                "companyId": 1,
+                "fields": [
+                    {
+                        "id": "wheel",
+                        "label": "Wheel",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "128": "1",
+                            "129": "2",
+                            "130": "3",
+                            "131": "4"
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "sensor_id",
+                        "label": "Sensor id",
+                        "offset": 1,
+                        "length": 5,
+                        "type": "hex",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "pressure",
+                        "label": "Pressure",
+                        "offset": 6,
+                        "length": null,
+                        "type": "u32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.001,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "kPa",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "temperature",
+                        "label": "Temperature",
+                        "offset": 10,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.01,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°C",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "battery",
+                        "label": "Battery",
+                        "offset": 14,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "%",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "alarm",
+                        "label": "Alarm",
+                        "offset": 15,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "ok",
+                            "1": "no pressure"
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 16,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    }
+                ]
+            }
         },
         {
             "id": "fleet-airlink",
@@ -24327,6 +24533,14 @@
                     "kind": "MANUFACTURER_ID",
                     "text": "",
                     "companyId": 295,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "00EE",
+                    "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
@@ -55528,6 +55742,182 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-sytpms",
+            "name": "SYTPMS",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "BR",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "27A5",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SYTPMS / BR bicycle or scooter BLE tire sensor. Decoded fields can show gauge pressure, temperature, battery, and motion. Pattern match, not that vehicle.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "decode": {
+                "source": "manufacturerData",
+                "serviceUuid": null,
+                "companyId": null,
+                "includeCompanyId": true,
+                "fields": [
+                    {
+                        "id": "alarm",
+                        "label": "Alarm",
+                        "offset": 0,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 7,
+                        "bitWidth": 1,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "ok",
+                            "1": "zero pressure"
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "rotating",
+                        "label": "Rotating",
+                        "offset": 0,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 6,
+                        "bitWidth": 1,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "no",
+                            "1": "yes"
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "still",
+                        "label": "Standing still",
+                        "offset": 0,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 5,
+                        "bitWidth": 1,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "no",
+                            "1": "yes"
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "battery",
+                        "label": "Battery",
+                        "offset": 1,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.1,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "V",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "temperature",
+                        "label": "Temperature",
+                        "offset": 2,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°C",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "pressure",
+                        "label": "Pressure",
+                        "offset": 3,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "be",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.1,
+                        "offsetAdd": -14.5,
+                        "modulo": null,
+                        "unit": "psi",
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 7,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "id": "fleet-tmobile",
             "name": "T-Mobile",
             "enabled": true,
@@ -56042,10 +56432,174 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Tesla BLE tire sensor. Pattern match, not that car. Phone-as-key stays on the Tesla row.",
+            "notes": "Tesla BLE tire sensor. Decoded fields can show pressure, temperature, and battery when the sensor is awake. Pattern match, not that car. Phone-as-key stays on the Tesla row.",
             "attentionNote": "",
             "builtIn": true,
-            "kind": "VEHICLE"
+            "kind": "VEHICLE",
+            "decode": {
+                "source": "manufacturerData",
+                "serviceUuid": null,
+                "companyId": 555,
+                "fields": [
+                    {
+                        "id": "mode",
+                        "label": "Mode",
+                        "offset": 2,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "sleep",
+                            "1": "sleep",
+                            "2": "sleep",
+                            "3": "sleep",
+                            "4": "sleep"
+                        },
+                        "when": null
+                    },
+                    {
+                        "id": "pressure",
+                        "label": "Pressure",
+                        "offset": 3,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.14285714285714285,
+                        "offsetAdd": -14.285714285714286,
+                        "modulo": null,
+                        "unit": "psi",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "neq",
+                            "valueHex": "00",
+                            "and": {
+                                "offset": 2,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "01",
+                                "and": {
+                                    "offset": 2,
+                                    "length": 1,
+                                    "op": "neq",
+                                    "valueHex": "02",
+                                    "and": {
+                                        "offset": 2,
+                                        "length": 1,
+                                        "op": "neq",
+                                        "valueHex": "03",
+                                        "and": {
+                                            "offset": 2,
+                                            "length": 1,
+                                            "op": "neq",
+                                            "valueHex": "04"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "id": "temperature",
+                        "label": "Temperature",
+                        "offset": 5,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": -1.0,
+                        "modulo": null,
+                        "unit": "°F",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "neq",
+                            "valueHex": "00",
+                            "and": {
+                                "offset": 2,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "01",
+                                "and": {
+                                    "offset": 2,
+                                    "length": 1,
+                                    "op": "neq",
+                                    "valueHex": "02",
+                                    "and": {
+                                        "offset": 2,
+                                        "length": 1,
+                                        "op": "neq",
+                                        "valueHex": "03",
+                                        "and": {
+                                            "offset": 2,
+                                            "length": 1,
+                                            "op": "neq",
+                                            "valueHex": "04"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "id": "battery",
+                        "label": "Battery",
+                        "offset": 6,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "mV",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "neq",
+                            "valueHex": "00",
+                            "and": {
+                                "offset": 2,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "01",
+                                "and": {
+                                    "offset": 2,
+                                    "length": 1,
+                                    "op": "neq",
+                                    "valueHex": "02",
+                                    "and": {
+                                        "offset": 2,
+                                        "length": 1,
+                                        "op": "neq",
+                                        "valueHex": "03",
+                                        "and": {
+                                            "offset": 2,
+                                            "length": 1,
+                                            "op": "neq",
+                                            "valueHex": "04"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
         },
         {
             "id": "fleet-tile",
@@ -56118,6 +56672,47 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-tirecheck",
+            "name": "TireCheck",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2978,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "TireCheck",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TireCheck*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "TireCheck BLE tire-pressure sensor. Pattern match, not that vehicle.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-toyota",
@@ -58336,6 +58931,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-tpms-service",
+            "name": "TPMS service",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "1860",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bluetooth SIG Tire Pressure Monitoring System service. Any sensor that advertises that standard service.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-trendnet",

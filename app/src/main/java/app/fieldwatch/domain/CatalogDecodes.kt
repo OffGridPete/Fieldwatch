@@ -271,6 +271,97 @@ internal object CatalogDecodes {
         ),
     )
 
+    /**
+     * Cheap valve-cap BLE TPMS (TPMS1 / FBB0 / TomTom 0x0001).
+     * 16 bytes after company ID: sensor, id, pressure kPa, temperature °C, battery, alarm.
+     * ra6070/BLE-TPMS and Theengs TPMS. Identity is name / FBB0 / data prefix 80–83,
+     * not a bare Nokia 0x0001 match.
+     */
+    val tpmsAftermarket: FleetDecode = FleetDecode(
+        source = DecodeSource.MANUFACTURER_DATA,
+        companyId = 0x0001,
+        fields = listOf(
+            u8(
+                "wheel", "Wheel", 0,
+                enumLabels = mapOf(
+                    "128" to "1",
+                    "129" to "2",
+                    "130" to "3",
+                    "131" to "4",
+                ),
+                gate = lenEq(16),
+            ),
+            hex("sensor_id", "Sensor id", 1, length = 5, gate = lenEq(16)),
+            u32le("pressure", "Pressure", 6, scale = 0.001, unit = "kPa", gate = lenEq(16)),
+            i32le("temperature", "Temperature", 10, scale = 0.01, unit = "°C", gate = lenEq(16)),
+            u8("battery", "Battery", 14, unit = "%", gate = lenEq(16)),
+            u8(
+                "alarm", "Alarm", 15,
+                enumLabels = mapOf("0" to "ok", "1" to "no pressure"),
+                gate = lenEq(16),
+            ),
+        ),
+    )
+
+    /**
+     * SYTPMS / BR bicycle-scooter sensors. 7-byte manufacturer blob
+     * SS BB TT PPPP CCCC — company ID is status+battery, so the map
+     * prepends those two bytes. andi38/TPMS, Theengs TPMSBR.
+     */
+    val sytpms: FleetDecode = FleetDecode(
+        source = DecodeSource.MANUFACTURER_DATA,
+        includeCompanyId = true,
+        fields = listOf(
+            bits(
+                "alarm", "Alarm", 0, bitOffset = 7, bitWidth = 1,
+                enumLabels = onOff("ok", "zero pressure"),
+                gate = lenEq(7),
+            ),
+            bits(
+                "rotating", "Rotating", 0, bitOffset = 6, bitWidth = 1,
+                enumLabels = onOff("no", "yes"),
+                gate = lenEq(7),
+            ),
+            bits(
+                "still", "Standing still", 0, bitOffset = 5, bitWidth = 1,
+                enumLabels = onOff("no", "yes"),
+                gate = lenEq(7),
+            ),
+            u8("battery", "Battery", 1, scale = 0.1, unit = "V", gate = lenEq(7)),
+            u8("temperature", "Temperature", 2, unit = "°C", gate = lenEq(7)),
+            u16be("pressure", "Pressure", 3, scale = 0.1, offsetAdd = -14.5, unit = "psi", gate = lenEq(7)),
+        ),
+    )
+
+    /**
+     * Tesla tsTPMS manufacturer 0x022B after the name match.
+     * Reverse-engineered (cunzulatu/Tesla_BLE_TPMS): type < 5 is sleep.
+     * Pressure (raw−100)/7 psi; temperature is °F minus 1.
+     */
+    val teslaTstpms: FleetDecode = FleetDecode(
+        source = DecodeSource.MANUFACTURER_DATA,
+        companyId = 0x022B,
+        fields = listOf(
+            u8(
+                "mode", "Mode", 2,
+                enumLabels = mapOf(
+                    "0" to "sleep",
+                    "1" to "sleep",
+                    "2" to "sleep",
+                    "3" to "sleep",
+                    "4" to "sleep",
+                ),
+            ),
+            u16le(
+                "pressure", "Pressure", 3,
+                scale = 1.0 / 7.0, offsetAdd = -100.0 / 7.0, unit = "psi",
+                gate = teslaAwake(),
+            ),
+            u8("temperature", "Temperature", 5, offsetAdd = -1.0, unit = "°F", gate = teslaAwake()),
+            u16le("battery", "Battery", 6, unit = "mV", gate = teslaAwake()),
+        ),
+    )
+
     private fun basicIdFields(): List<DecodeField> = listOf(
         bits(
             "id_type", "ID type", 3, bitOffset = 4, bitWidth = 4,
@@ -369,15 +460,22 @@ internal object CatalogDecodes {
     private fun eq(offset: Int, hex: String) =
         DecodeWhen(offset = offset, op = DecodeWhenOp.EQ, valueHex = hex)
 
+    private fun neq(offset: Int, hex: String, and: DecodeWhen? = null) =
+        DecodeWhen(offset = offset, op = DecodeWhenOp.NEQ, valueHex = hex, and = and)
+
+    /** Tesla tsTPMS type byte at offset 2: 0–4 sleep, 5+ live. */
+    private fun teslaAwake(): DecodeWhen =
+        neq(2, "00", neq(2, "01", neq(2, "02", neq(2, "03", neq(2, "04")))))
+
     private fun lenEq(n: Int, and: DecodeWhen? = null) =
         DecodeWhen(offset = 0, length = n, op = DecodeWhenOp.LEN, valueHex = "", and = and)
 
     private fun u8(
         id: String, label: String, offset: Int,
-        scale: Double? = null, unit: String? = null,
+        scale: Double? = null, offsetAdd: Double? = null, unit: String? = null,
         enumLabels: Map<String, String>? = null, gate: DecodeWhen? = null,
     ) = DecodeField(
-        id, label, offset, type = DecodeType.U8, scale = scale,
+        id, label, offset, type = DecodeType.U8, scale = scale, offsetAdd = offsetAdd,
         unit = unit, enumLabels = enumLabels, gate = gate,
     )
 
@@ -434,10 +532,18 @@ internal object CatalogDecodes {
 
     private fun i32le(
         id: String, label: String, offset: Int,
-        scale: Double? = null, unit: String? = null,
+        scale: Double? = null, unit: String? = null, gate: DecodeWhen? = null,
     ) = DecodeField(
         id, label, offset, type = DecodeType.I32, endian = DecodeEndian.LE,
-        scale = scale, unit = unit,
+        scale = scale, unit = unit, gate = gate,
+    )
+
+    private fun u32le(
+        id: String, label: String, offset: Int,
+        scale: Double? = null, unit: String? = null, gate: DecodeWhen? = null,
+    ) = DecodeField(
+        id, label, offset, type = DecodeType.U32, endian = DecodeEndian.LE,
+        scale = scale, unit = unit, gate = gate,
     )
 
     private fun utf8(id: String, label: String, offset: Int, length: Int) =

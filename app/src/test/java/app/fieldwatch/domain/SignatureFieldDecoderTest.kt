@@ -175,6 +175,22 @@ class SignatureFieldDecoderTest {
     }
 
     @Test
+    fun packRoundTripKeepsIncludeCompanyId() {
+        val fleet = Fleet(
+            id = "fleet-sytpms",
+            name = "SYTPMS",
+            decode = FleetDecode(
+                source = DecodeSource.MANUFACTURER_DATA,
+                includeCompanyId = true,
+                fields = listOf(DecodeField(id = "temp", label = "Temperature", offset = 2, type = DecodeType.U8)),
+            ),
+        )
+        val json = SignatureExchange.encode(SignatureExchange.pack(listOf(fleet), 0, "test", "now"))
+        val parsed = SignatureExchange.parse(json).fleets.single()
+        assertTrue(parsed.decode!!.includeCompanyId)
+    }
+
+    @Test
     fun packRoundTripKeepsDecode() {
         val fleet = Fleet(
             id = "fleet-ruuvi",
@@ -547,6 +563,68 @@ class SignatureFieldDecoderTest {
         assertTrue(byId.getValue("fleet-tile").decode != null)
         assertTrue(byId.getValue("fleet-fitbit").decode == null)
         assertTrue(byId.getValue("fleet-airtag").decode == null)
+        assertTrue(byId.getValue("fleet-tpms-ble").decode != null)
+        assertTrue(byId.getValue("fleet-sytpms").decode != null)
+        assertTrue(byId.getValue("fleet-tesla-tstpms").decode != null)
+        assertTrue(byId.getValue("fleet-goodyear").decode == null)
+        assertTrue(byId.getValue("fleet-fobo").decode == null)
+        assertTrue(byId.getValue("fleet-tirecheck").decode == null)
+    }
+
+    @Test
+    fun catalogAftermarketTpmsPressureTempBattery() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-tpms-ble" }
+        val rows = SignatureFieldDecoder.decodeSighting(
+            ble(0x0001, "80EACA108A78E36D0000E60A00005B00", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("1", rows.display("wheel"))
+        assertEquals("EA CA 10 8A 78", rows.display("sensor_id"))
+        assertEquals("28.131 kPa", rows.display("pressure"))
+        assertEquals("27.9 °C", rows.display("temperature"))
+        assertEquals("91 %", rows.display("battery"))
+        assertEquals("ok", rows.display("alarm"))
+    }
+
+    @Test
+    fun catalogSytpmsIncludesCompanyIdBytes() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-sytpms" }
+        val rows = SignatureFieldDecoder.decodeSighting(
+            ble(0x1E28, "1401558536", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("ok", rows.display("alarm"))
+        assertEquals("no", rows.display("rotating"))
+        assertEquals("yes", rows.display("still"))
+        assertEquals("3 V", rows.display("battery"))
+        assertEquals("20 °C", rows.display("temperature"))
+        assertEquals("19.6 psi", rows.display("pressure"))
+    }
+
+    @Test
+    fun catalogTeslaTstpmsAwakePressure() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-tesla-tstpms" }
+        val rows = SignatureFieldDecoder.decodeSighting(
+            ble(0x022B, "0000058A0147B80B", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("5", rows.display("mode"))
+        assertEquals("42 psi", rows.display("pressure"))
+        assertEquals("70 °F", rows.display("temperature"))
+        assertEquals("3000 mV", rows.display("battery"))
+    }
+
+    @Test
+    fun catalogTeslaTstpmsSleepSkipsSensors() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-tesla-tstpms" }
+        val rows = SignatureFieldDecoder.decodeSighting(
+            ble(0x022B, "0000008A0147B80B", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("sleep", rows.display("mode"))
+        assertTrue(rows.none { it.id == "pressure" })
+        assertTrue(rows.none { it.id == "temperature" })
+        assertTrue(rows.none { it.id == "battery" })
     }
 
     private fun List<DecodedFieldValue>.display(id: String): String =

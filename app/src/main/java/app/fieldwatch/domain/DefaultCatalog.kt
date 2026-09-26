@@ -226,6 +226,10 @@ object DefaultCatalog {
         pacificTpms(),
         hufTpms(),
         foboTpms(),
+        aftermarketTpms(),
+        sytpms(),
+        tireCheck(),
+        tpmsService(),
         ruuvi(),
         blueMaestro(),
         sensorPush(),
@@ -2176,8 +2180,75 @@ object DefaultCatalog {
         builtIn = true,
         rules = listOf(
             mfg(0x0127),
+            uuid("00EE"),
             bleName("FOBO"),
             bleGlob("FOBO*"),
+        ),
+    )
+
+    private fun aftermarketTpms() = Fleet(
+        id = "fleet-tpms-ble",
+        name = "Aftermarket TPMS",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Aftermarket BLE valve-cap tire sensor (TPMS1 / FBB0 family). Decoded fields can show wheel, pressure, temperature, battery, and alarm. Pattern match, not that vehicle.",
+        builtIn = true,
+        decode = CatalogDecodes.tpmsAftermarket,
+        rules = listOf(
+            bleGlob("TPMS*"),
+            uuid("FBB0"),
+            mfgData(0x0001, "80"),
+            mfgData(0x0001, "81"),
+            mfgData(0x0001, "82"),
+            mfgData(0x0001, "83"),
+        ),
+    )
+
+    private fun sytpms() = Fleet(
+        id = "fleet-sytpms",
+        name = "SYTPMS",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "SYTPMS / BR bicycle or scooter BLE tire sensor. Decoded fields can show gauge pressure, temperature, battery, and motion. Pattern match, not that vehicle.",
+        builtIn = true,
+        decode = CatalogDecodes.sytpms,
+        rules = listOf(
+            bleGlob("BR"),
+            uuid("27A5"),
+        ),
+    )
+
+    private fun tireCheck() = Fleet(
+        id = "fleet-tirecheck",
+        name = "TireCheck",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "TireCheck BLE tire-pressure sensor. Pattern match, not that vehicle.",
+        builtIn = true,
+        rules = listOf(
+            mfg(0x0BA2),
+            bleName("TireCheck"),
+            bleGlob("TireCheck*"),
+        ),
+    )
+
+    private fun tpmsService() = Fleet(
+        id = "fleet-tpms-service",
+        name = "TPMS service",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Bluetooth SIG Tire Pressure Monitoring System service. Any sensor that advertises that standard service.",
+        builtIn = true,
+        rules = listOf(
+            uuid("1860"),
         ),
     )
 
@@ -3293,8 +3364,9 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Tesla BLE tire sensor. Pattern match, not that car. Phone-as-key stays on the Tesla row.",
+        notes = "Tesla BLE tire sensor. Decoded fields can show pressure, temperature, and battery when the sensor is awake. Pattern match, not that car. Phone-as-key stays on the Tesla row.",
         builtIn = true,
+        decode = CatalogDecodes.teslaTstpms,
         rules = listOf(
             bleName("tsTPMS"),
             bleGlob("tsTPMS*"),
