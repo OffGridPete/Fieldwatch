@@ -113,6 +113,16 @@ class WifiIeParserTest {
     }
 
     @Test
+    fun vendorIeKeepsOpenDroneIdSizedPayload() {
+        val body = IntArray(30) { it }
+        val ie = ie(221, 0xFA, 0x0B, 0xBC, 0x0D, *body)
+        val p = WifiIeParser.parseIes(listOf(ie), "")
+        assertEquals("FA:0B:BC", p.vendorIes.single().oui)
+        assertEquals(0x0D, p.vendorIes.single().type)
+        assertEquals(60, p.vendorIes.single().dataHex.length)
+    }
+
+    @Test
     fun noIesNoCapabilitiesGivesNullSecurity() {
         assertNull(WifiIeParser.parseIes(emptyList(), null).security)
         assertNull(WifiIeParser.parseIes(emptyList(), "").security)

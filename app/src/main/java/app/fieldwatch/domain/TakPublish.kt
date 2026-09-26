@@ -373,6 +373,8 @@ object CotEvent {
         )
         val remarks = xmlEscape(remarks(device, fleets, advertised, pilot, watchlist))
         val hae = if (pilot) 9999999.0 else device.payloadAlt?.takeIf { it.isFinite() } ?: 9999999.0
+        val course = if (advertised && !pilot) device.payloadHeading?.takeIf { it.isFinite() } else null
+        val speed = if (advertised && !pilot) device.payloadSpeed?.takeIf { it.isFinite() && it >= 0 } else null
         val linkUid = when {
             pilot -> uid(device)
             advertised && TakPublish.pilotPin(device) != null -> pilotUid(device)
@@ -389,6 +391,8 @@ object CotEvent {
             lat = lat,
             lon = lon,
             hae = hae,
+            course = course,
+            speed = speed,
             callsign = callsign,
             remarks = remarks,
             group = group(device, fleets, advertised, pilot),
@@ -514,6 +518,8 @@ object CotEvent {
         lat: Double,
         lon: Double,
         hae: Double,
+        course: Double? = null,
+        speed: Double? = null,
         callsign: String,
         remarks: String,
         group: String,
@@ -537,6 +543,11 @@ object CotEvent {
             append("<__group name=\"$group\" role=\"$role\"/>")
             if (linkUid != null && linkType != null) {
                 append("<link uid=\"${xmlEscape(linkUid)}\" type=\"$linkType\" relation=\"p-p\"/>")
+            }
+            if (course != null || speed != null) {
+                val c = course ?: 0.0
+                val s = speed ?: 0.0
+                append("<track course=\"${fmt(c)}\" speed=\"${fmt(s)}\"/>")
             }
             append("<remarks>$remarks</remarks>")
             append("</detail>")

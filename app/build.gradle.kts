@@ -28,8 +28,8 @@ android {
         applicationId = "app.fieldwatch"
         minSdk = 29
         targetSdk = 35
-        versionCode = 22
-        versionName = "1.1.12"
+        versionCode = 23
+        versionName = "1.1.13"
         vectorDrawables.useSupportLibrary = true
     }
 

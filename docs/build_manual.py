@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.12")
+    c.drawString(48, 108, "Version 1.1.13")
     c.drawString(48, 94, "26 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.12  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.13  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1789,7 +1789,7 @@ def story():
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
-            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
+            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Location heading and speed go in the ATAK track when present. Wi-Fi Remote ID (vendor IE FA:0B:BC) can pin the aircraft the same way as BLE FFFA on Android 11+. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Online place names and maps</b> — On by default. One switch. Debrief and AI Export reverse-geocode GPS stamps (system geocoder). Reports → Path loads OpenStreetMap tiles under the trace (no Fieldwatch cloud, no API key). Offline, no geocoder, no tiles, or Privacy mode: Debrief uses coordinates only and Path stays the north-up plot — no error dialog. Turn off to keep streets and map tiles out of reports and Path together. Generate buttons are on Reports (§5.6, §5.6.1).",
             "<b>Logging</b> — Write to disk, rotate size, Stale after slider (when a radio is marked gone). Line/disk counts. The rotating file is JSON lines. Format (CSV, JSON lines, GPX, KML, WiGLE) and radios (Both / Wi-Fi / BLE) are on Reports → Log. Share, Save, and Reset / clear log are on Reports.",
             "<b>Allow background usage</b> — Switch. Opens Fieldwatch’s Battery page; turn on Allow background usage so the OS may run the scan when Fieldwatch is not in front. Follows that Android setting. Not Keep screen on.",
@@ -3257,7 +3257,7 @@ def story():
             ["Signature", "Source", "What detail can show"],
             [
                 ["Ruuvi", "Mfr 0x0499", "Format 5: temp / humidity / pressure / accel / battery / TX / movement / sequence / MAC in payload. Format 3: humidity / pressure / accel / battery (Format 3 temperature is sign-magnitude, not a plain int)."],
-                ["Remote ID", "Service FFFA", "Open Drone ID app code, counter, message type. Protocol 2: Basic ID, location (field ids latitude / longitude / alt_geo), Self ID, System (op_lat / op_lon = pilot, not the aircraft pin), Operator ID. TAK Payload location uses those ids. Not a tail number."],
+                ["Remote ID", "Service FFFA", "Open Drone ID app code, counter, message type. Protocol 0–2: Basic ID, location (latitude / longitude / alt_geo / heading), Self ID, System (op_lat / op_lon = pilot). TAK Payload location uses those ids plus track course/speed. Wi-Fi vendor IE FA:0B:BC type 0x0D decodes the same packed messages. Not a tail number."],
                 ["Blue Maestro", "Mfr 0x0133", "Tempo Disc battery, log interval, stored logs, temperature, humidity."],
                 ["GoPro", "Mfr 0xF202", "Schema, processor awake/asleep, Wi-Fi AP, pairing, model name, media offload."],
                 ["Osmo / DJI", "Mfr 0x08AA", "Model id (Osmo Action / Pocket / 360 and some aircraft). Osmo and DJI rows share the map; identity rules still split cameras from drones."],
@@ -4240,7 +4240,7 @@ def story():
             ["If this…", "Then…"],
             [
                 ["Nothing on the map", "Privacy mode, master off, wrong LAN, or no Extra attention / Remote ID on the air yet. Open the Live display and confirm a “!” or a Remote ID chip. Try unicast to the ATAK IP if multicast is filtered."],
-                ["Pins sit on me, not the drone", "That radio has no advertised lat/lon (or Payload location is off). Heard-here is working. Remote ID needs a Location message (protocol 2) on BLE FFFA."],
+                ["Pins sit on me, not the drone", "That radio has no advertised lat/lon (or Payload location is off). Heard-here is working. Remote ID needs a Location message on BLE FFFA or Wi-Fi vendor IE FA:0B:BC (Android 11+)."],
                 ["Heard-here pin stayed where I was louder", "Expected. Heard-here holds closest approach (louder RSSI), not the last hear. A keep-alive every ~10 s refreshes the same lat/lon. This is not DF."],
                 ["Drone pin is kilometers away", "Expected for advertised position. Fieldwatch did not DF it. The aircraft encoded that WGS84."],
                 ["Café APs filled the map", "All signatures is on. Turn it off. Extra attention + Payload location is the field default."],
@@ -4897,8 +4897,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.12 (versionCode 22), field build of 26 September 2026"],
-                ["Document version", "1.1.12"],
+                ["Software version", "1.1.13 (versionCode 23), field build of 26 September 2026"],
+                ["Document version", "1.1.13"],
                 ["Document date", "26 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.1.12 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.1.13 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  c86160f29de8a10d8dd4a845b172134f9dabb577f0694136556c0f6c07ecd5e7
+  832469f95ce3f1478f5bd30035b3e1e9f2c28b85a88f1997621d3475fb084fe5
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609

@@ -5,6 +5,8 @@ import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.RadioFacts
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.ServiceDataRecord
+import app.fieldwatch.domain.VendorIeRecord
+import app.fieldwatch.domain.toHexUpper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -159,6 +161,34 @@ class DeviceStoreTest {
     }
 
     @Test
+    fun wifiRemoteIdVendorIeSetsPayloadPin() {
+        val store = DeviceStore()
+        val mac = "AA:BB:CC:DD:EE:04"
+        val msg = locationWifiPayload()
+        store.ingestBatch(
+            listOf(
+                wifi(
+                    mac,
+                    name = "RID-WIFI",
+                    ies = listOf("FA:0B:BC"),
+                ).copy(
+                    facts = RadioFacts(
+                        vendorIes = listOf(VendorIeRecord("FA:0B:BC", 0x0D, msg)),
+                    ),
+                ),
+            ),
+            fleets,
+            30,
+        )
+        val device = store.find("WIFI:$mac")!!
+        assertTrue("fleet-remote-id" in device.fleetIds)
+        assertEquals(40.0, device.payloadLat!!, 1e-6)
+        assertEquals(-74.0, device.payloadLon!!, 1e-6)
+        assertEquals(90.0, device.payloadHeading!!, 1e-6)
+        assertEquals(10.0, device.payloadSpeed!!, 1e-6)
+    }
+
+    @Test
     fun radioHoldDoesNotResurrectAlreadyGone() {
         val now = 1_000_000L
         val linger = 15_000L
@@ -288,4 +318,23 @@ class DeviceStoreTest {
         at = System.currentTimeMillis(),
         facts = facts,
     )
+
+    private fun locationWifiPayload(): String {
+        val flags = 0x20
+        val lat = le32(400_000_000)
+        val lon = le32(-740_000_000)
+        val geo = le16(2200)
+        val height = le16(2100)
+        val msg = byteArrayOf(0x12, flags.toByte(), 90, 40, 4) + lat + lon + le16(0) + geo + height + ByteArray(6)
+        return "00" + msg.toHexUpper()
+    }
+
+    private fun le32(n: Int) = byteArrayOf(
+        (n and 0xFF).toByte(),
+        ((n shr 8) and 0xFF).toByte(),
+        ((n shr 16) and 0xFF).toByte(),
+        ((n shr 24) and 0xFF).toByte(),
+    )
+
+    private fun le16(n: Int) = byteArrayOf((n and 0xFF).toByte(), ((n shr 8) and 0xFF).toByte())
 }

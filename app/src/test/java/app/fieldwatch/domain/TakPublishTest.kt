@@ -238,6 +238,38 @@ class TakPublishTest {
     }
 
     @Test
+    fun cotXmlAddsTrackForAdvertisedAircraft() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadAlt = 100.0,
+            payloadHeading = 270.0,
+            payloadSpeed = 12.5,
+        )
+        val xml = CotEvent.xml(
+            device = drone,
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 40.0,
+            lon = -74.0,
+            advertised = true,
+            now = 0L,
+        )
+        assertTrue(xml.contains("<track course=\"270\" speed=\"12.5\"/>"))
+        val here = CotEvent.xml(
+            device = drone.copy(payloadHeading = 90.0, payloadSpeed = 5.0),
+            fleets = fleets,
+            watchlist = emptyList(),
+            lat = 1.0,
+            lon = 2.0,
+            advertised = false,
+            now = 0L,
+        )
+        assertFalse(here.contains("<track"))
+    }
+
+    @Test
     fun xmlEscapeAmpersandAndTags() {
         assertEquals("A &amp; &lt;B&gt; &quot;c&quot;", CotEvent.xmlEscape("A & <B> \"c\""))
         assertEquals("a&#10;b", CotEvent.xmlEscape("a\nb"))
@@ -485,6 +517,8 @@ class TakPublishTest {
         payloadOpLon: Double? = null,
         payloadUasId: String? = null,
         payloadSelfId: String? = null,
+        payloadHeading: Double? = null,
+        payloadSpeed: Double? = null,
         lat: Double? = null,
         lon: Double? = null,
         name: String = "",
@@ -521,6 +555,8 @@ class TakPublishTest {
         payloadOpLon = payloadOpLon,
         payloadUasId = payloadUasId,
         payloadSelfId = payloadSelfId,
+        payloadHeading = payloadHeading,
+        payloadSpeed = payloadSpeed,
     )
 
     private fun textField(id: String, text: String) = DecodedFieldValue(

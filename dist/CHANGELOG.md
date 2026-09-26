@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.13 — 26 September 2026
+
+- TAK / CoT: advertised Remote ID aircraft pins include ATAK track course and speed when the Location message has them. Wi-Fi Remote ID (vendor IE FA:0B:BC type 0x0D) decodes Location / Basic ID / System the same way as BLE FFFA, so Payload location can pin a Wi-Fi-only drone. Vendor IE payload is no longer truncated at 24 bytes.
+
 ## 1.1.12 — 26 September 2026
 
 - Google Find Hub tags (FEAA frames 40/41). Catalog 78. Eddystone UID/URL/TLM stay unmatched. Separated mode can hold a MAC about a day. GitHub update uses dist/fieldwatch-signatures-v2.json; 1.1.11 still reads the v1 pack (catalog 77).

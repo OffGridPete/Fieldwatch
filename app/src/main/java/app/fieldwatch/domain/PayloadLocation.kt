@@ -15,6 +15,9 @@ data class PayloadLocation(
     val opLon: Double? = null,
     val uasId: String? = null,
     val selfId: String? = null,
+    val headingDeg: Double? = null,
+    val speedMps: Double? = null,
+    val vspeedMps: Double? = null,
 ) {
     fun pin(): Pair<Double, Double>? =
         if (validCoord(lat, lon)) lat!! to lon!! else null
@@ -38,6 +41,9 @@ data class PayloadLocation(
             opLon = nextOp.second,
             uasId = uasId?.takeIf { it.isNotBlank() } ?: p.uasId,
             selfId = selfId?.takeIf { it.isNotBlank() } ?: p.selfId,
+            headingDeg = headingDeg?.takeIf { it.isFinite() } ?: p.headingDeg,
+            speedMps = speedMps?.takeIf { it.isFinite() } ?: p.speedMps,
+            vspeedMps = vspeedMps?.takeIf { it.isFinite() } ?: p.vspeedMps,
         )
     }
 
@@ -54,6 +60,9 @@ data class PayloadLocation(
         private val OP_LON_IDS = setOf("op_lon", "operator_lon")
         private val UAS_IDS = setOf("uas_id", "uasid", "serial")
         private val SELF_IDS = setOf("self_id", "selfid")
+        private val HEADING_IDS = setOf("heading", "course")
+        private val SPEED_IDS = setOf("speed", "hspeed")
+        private val VSPEED_IDS = setOf("vspeed", "vert_speed")
 
         fun fromDecoded(fields: List<DecodedFieldValue>): PayloadLocation {
             if (fields.isEmpty()) return PayloadLocation()
@@ -65,6 +74,9 @@ data class PayloadLocation(
                 opLon = num(fields, OP_LON_IDS),
                 uasId = text(fields, UAS_IDS),
                 selfId = text(fields, SELF_IDS),
+                headingDeg = num(fields, HEADING_IDS),
+                speedMps = num(fields, SPEED_IDS),
+                vspeedMps = num(fields, VSPEED_IDS),
             )
         }
 
@@ -76,30 +88,39 @@ data class PayloadLocation(
             opLon = device.payloadOpLon,
             uasId = device.payloadUasId,
             selfId = device.payloadSelfId,
+            headingDeg = device.payloadHeading,
+            speedMps = device.payloadSpeed,
+            vspeedMps = device.payloadVspeed,
         )
 
         fun applySticky(device: Sighting, fleets: List<Fleet>): Sighting {
-            if (device.kind != RadioKind.BLE) return device
             val decoded = if (device.fleetIds.isEmpty()) {
                 emptyList()
             } else {
                 SignatureFieldDecoder.decodeSighting(device, fleets)
             }
+            val fromBytes = OpenDroneId.fromFacts(device.facts)
             if (decoded.isEmpty() &&
+                fromBytes.lat == null &&
+                fromBytes.opLat == null &&
+                fromBytes.uasId == null &&
                 device.payloadLat == null &&
                 device.payloadOpLat == null &&
                 device.payloadUasId == null
             ) {
                 return device
             }
-            val next = fromDecoded(decoded).mergeSticky(fromSighting(device))
+            val next = fromBytes.mergeSticky(fromDecoded(decoded)).mergeSticky(fromSighting(device))
             if (next.lat == device.payloadLat &&
                 next.lon == device.payloadLon &&
                 next.alt == device.payloadAlt &&
                 next.opLat == device.payloadOpLat &&
                 next.opLon == device.payloadOpLon &&
                 next.uasId == device.payloadUasId &&
-                next.selfId == device.payloadSelfId
+                next.selfId == device.payloadSelfId &&
+                next.headingDeg == device.payloadHeading &&
+                next.speedMps == device.payloadSpeed &&
+                next.vspeedMps == device.payloadVspeed
             ) {
                 return device
             }
@@ -111,6 +132,9 @@ data class PayloadLocation(
                 payloadOpLon = next.opLon,
                 payloadUasId = next.uasId,
                 payloadSelfId = next.selfId,
+                payloadHeading = next.headingDeg,
+                payloadSpeed = next.speedMps,
+                payloadVspeed = next.vspeedMps,
             )
         }
 

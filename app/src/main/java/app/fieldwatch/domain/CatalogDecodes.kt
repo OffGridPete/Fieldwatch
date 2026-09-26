@@ -419,7 +419,7 @@ internal object CatalogDecodes {
                 "4" to "RID failure",
             ),
         ),
-        u8("heading", "Heading", 4, scale = 2.0, unit = "°", gate = neq(4, "FF")),
+        u8("heading", "Heading", 4, unit = "°", gate = neq(4, "FF")),
         i8("vspeed", "Vertical speed", 6, scale = 0.5, unit = "m/s"),
         i32le("latitude", "Latitude", 7, scale = 1e-7, unit = "°"),
         i32le("longitude", "Longitude", 11, scale = 1e-7, unit = "°"),

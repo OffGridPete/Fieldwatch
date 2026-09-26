@@ -51,7 +51,11 @@ object WifiIeParser {
                         bytes[2].toInt() and 0xFF,
                     )
                     val type = if (bytes.size > 3) bytes[3].toInt() and 0xFF else 0
-                    val payload = if (bytes.size > 4) bytes.copyOfRange(4, bytes.size.coerceAtMost(4 + 24)) else ByteArray(0)
+                    val payload = if (bytes.size > 4) {
+                        bytes.copyOfRange(4, bytes.size.coerceAtMost(4 + 200))
+                    } else {
+                        ByteArray(0)
+                    }
                     vendor += VendorIeRecord(oui, type, payload.toHexUpper())
                     if (oui == "00:50:F2" && type == 1) {
                         wpaSummary(bytes)?.let { sec += it }
