@@ -118,7 +118,19 @@ object AdvPayloadDecoder {
                         )
                     }
                 }
-                0xFEAA -> out += RoleHint("beacon", "an Eddystone beacon", "Eddystone service data.", 6)
+                0xFEAA -> {
+                    val frame = hexToBytes(sd.dataHex)?.firstOrNull()?.toInt()?.and(0xFF)
+                    when (frame) {
+                        0x40, 0x41 -> out += RoleHint(
+                            "tag",
+                            "a Google Find Hub tag",
+                            if (frame == 0x41) "Find Hub separated (unwanted-tracking) frame."
+                            else "Find Hub nearby frame.",
+                            8,
+                        )
+                        else -> out += RoleHint("beacon", "an Eddystone beacon", "Eddystone service data.", 6)
+                    }
+                }
             }
         }
         return out
@@ -537,6 +549,19 @@ object AdvPayloadDecoder {
             0x10 -> listOf(Field("Eddystone-URL", eddystoneUrl(bytes) ?: "${bytes.size} bytes"))
             0x20 -> listOf(Field("Eddystone-TLM", "telemetry (battery / temperature / advert count)"))
             0x30 -> listOf(Field("Eddystone-EID", "ephemeral ID (rotating)"))
+            0x40, 0x41 -> {
+                val mode = if (bytes[0].toInt() and 0xFF == 0x41) "separated (unwanted-tracking mode)" else "nearby / with owner"
+                val eidLen = when {
+                    bytes.size >= 33 -> 32
+                    bytes.size >= 21 -> 20
+                    else -> (bytes.size - 1).coerceAtLeast(0)
+                }
+                val eid = if (eidLen > 0) bytes.copyOfRange(1, 1 + eidLen).toHexUpper() else ""
+                listOf(
+                    Field("Find Hub", mode),
+                    Field("Find Hub EID", eid.ifBlank { "${bytes.size} bytes" }),
+                )
+            }
             else -> listOf(Field("Eddystone", "frame 0x%02X".format(bytes[0])))
         }
     }

@@ -216,6 +216,7 @@ enum class RuleKind {
     NAME_CONTAINS,
     NAME_GLOB,
     SERVICE_UUID,
+    SERVICE_DATA,
     MANUFACTURER_ID,
     MANUFACTURER_DATA,
     RADIO_KIND,
@@ -263,7 +264,7 @@ data class Fleet(
 
 fun MatchRule.couldMatchBle(): Boolean = when (kind) {
     RuleKind.HIDDEN_SSID, RuleKind.VENDOR_IE_OUI -> false
-    RuleKind.SERVICE_UUID, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA -> true
+    RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA -> true
     RuleKind.RADIO_KIND -> radio != RadioKind.WIFI
     else -> radio != RadioKind.WIFI
 }

@@ -4,9 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
-## Unreleased
+## 1.1.12 — 26 September 2026
 
-- Stock catalog 77 (Settings → Update stock catalog from GitHub): drop Espressif / Silicon Labs OUIs from Flock and FS Ext Battery (those boards are everywhere). Flock-family notes say current poles are often quiet on Wi-Fi and BLE. Axon adds TASER/Axon BLE UUIDs and company TASER International. Meta FEB7/FEB8, Snap FE45, new Vuzix row. Remote ID also matches Wi-Fi vendor IE FA:0B:BC; BLE decode covers protocol v0–v2 plus heading, vertical speed, and baro altitude. Google Find Hub still needs an app update (service-data prefix).
+- Google Find Hub tags (FEAA frames 40/41). Catalog 78. Eddystone UID/URL/TLM stay unmatched. Separated mode can hold a MAC about a day. GitHub update uses dist/fieldwatch-signatures-v2.json; 1.1.11 still reads the v1 pack (catalog 77).
+- Catalog 77 (already on GitHub for 1.1.11): Flock/FS Ext drop Espressif and Silicon Labs OUIs; Axon TASER/Axon UUIDs; Meta FEB7/FEB8, Snap FE45, Vuzix; Remote ID Wi-Fi FA:0B:BC and BLE v0–v2 location extras.
 
 ## 1.1.11 — 26 September 2026
 

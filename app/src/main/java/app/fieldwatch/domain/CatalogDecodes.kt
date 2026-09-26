@@ -334,6 +334,25 @@ internal object CatalogDecodes {
     )
 
     /**
+     * Google Find Hub Network on FEAA. Frame 0x40 nearby, 0x41 separated.
+     * Next 20 or 32 bytes are the rotating EID (not a serial).
+     */
+    val findHub: FleetDecode = FleetDecode(
+        source = DecodeSource.SERVICE_DATA,
+        serviceUuid = "FEAA",
+        fields = listOf(
+            u8(
+                "mode", "Mode", 0,
+                enumLabels = mapOf(
+                    "64" to "nearby",
+                    "65" to "separated",
+                ),
+            ),
+            hex("eid", "Ephemeral ID", 1, length = 20),
+        ),
+    )
+
+    /**
      * Tesla tsTPMS manufacturer 0x022B after the name match.
      * Reverse-engineered (cunzulatu/Tesla_BLE_TPMS): type < 5 is sleep.
      * Pressure (raw−100)/7 psi; temperature is °F minus 1.

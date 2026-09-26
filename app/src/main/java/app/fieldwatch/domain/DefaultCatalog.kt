@@ -188,6 +188,7 @@ object DefaultCatalog {
         glInet(),
         chipolo(),
         pebblebee(),
+        findHub(),
         verkada(),
         vigilant(),
         eufy(),
@@ -1457,6 +1458,22 @@ object DefaultCatalog {
             glob("Pebblebee*"),
             name("moto tag"),
             name("Moto Tag"),
+        ),
+    )
+
+    private fun findHub() = Fleet(
+        id = "fleet-find-hub",
+        name = "Google Find Hub",
+        enabled = true,
+        colorIndex = Hue.FIND_MY,
+        kind = SignatureClass.FINDER,
+        matchAny = true,
+        notes = "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). Nearby vs separated frames. Separated mode can hold a MAC about a day. Addresses otherwise rotate. Pattern match, not that bag.",
+        builtIn = true,
+        decode = CatalogDecodes.findHub,
+        rules = listOf(
+            svcData("FEAA", "40"),
+            svcData("FEAA", "41"),
         ),
     )
 
@@ -4505,6 +4522,8 @@ object DefaultCatalog {
         MatchRule(RuleKind.NAME_CONTAINS, text = text, radio = RadioKind.BLE)
     private fun bleGlob(pattern: String) =
         MatchRule(RuleKind.NAME_GLOB, text = pattern, radio = RadioKind.BLE)
+    private fun svcData(uuid: String, prefix: String) =
+        MatchRule(RuleKind.SERVICE_DATA, text = uuid, dataPrefixHex = prefix, radio = RadioKind.BLE)
     private fun wifiName(text: String) =
         MatchRule(RuleKind.NAME_CONTAINS, text = text, radio = RadioKind.WIFI)
     private fun wifiGlob(pattern: String) =

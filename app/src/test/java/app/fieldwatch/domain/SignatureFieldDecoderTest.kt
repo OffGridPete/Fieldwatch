@@ -337,6 +337,18 @@ class SignatureFieldDecoderTest {
     }
 
     @Test
+    fun catalogFindHubSeparatedMode() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-find-hub" }
+        val eid = "11".repeat(20)
+        val rows = SignatureFieldDecoder.decodeSighting(
+            bleService("FEAA", "41$eid" + "00", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("separated", rows.display("mode"))
+        assertEquals("11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11", rows.display("eid"))
+    }
+
+    @Test
     fun catalogBlueMaestroV23() {
         val fleet = DefaultCatalog.fleets().single { it.id == "fleet-bluemaestro" }
         val rows = SignatureFieldDecoder.decodeSighting(

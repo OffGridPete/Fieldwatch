@@ -73,6 +73,29 @@ class DefaultCatalogTest {
     }
 
     @Test
+    fun findHubMatchesSeparatedFrameNotEddystoneUid() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val eid = "11".repeat(20)
+        val hub = ble(
+            name = "",
+            serviceUuids = listOf("FEAA"),
+        ).copy(
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FEAA", "41$eid" + "00"))),
+        )
+        val uid = ble(
+            name = "",
+            serviceUuids = listOf("FEAA"),
+        ).copy(
+            facts = RadioFacts(
+                serviceData = listOf(ServiceDataRecord("FEAA", "00C5" + "11".repeat(10) + "22".repeat(6))),
+            ),
+        )
+        assertTrue("Find Hub", "fleet-find-hub" in engine.match(listOf(hub), stock).getValue(hub.key))
+        assertFalse("Eddystone-UID is not Find Hub", "fleet-find-hub" in engine.match(listOf(uid), stock).getValue(uid.key))
+    }
+
+    @Test
     fun aftermarketTpmsMatchesPrefixAndNameNotBareNokia() {
         val stock = DefaultCatalog.fleets()
         val engine = SignatureEngine()

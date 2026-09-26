@@ -209,7 +209,7 @@ class ConfigStore(context: Context) {
                             RuleKind.NAME_CONTAINS, RuleKind.NAME_GLOB -> s.detectSsidKeywords
                             RuleKind.OUI, RuleKind.MAC_PREFIX -> s.detectKnownOuis
                             RuleKind.VENDOR_IE_OUI -> s.detectVendorIes
-                            RuleKind.SERVICE_UUID, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA ->
+                            RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA ->
                                 if (fleet.id == "fleet-raven") s.detectBleRaven else true
                             else -> true
                         }
@@ -941,6 +941,12 @@ class ConfigStore(context: Context) {
             if (watchExtras.isNotEmpty()) watchlist = watchlist + watchExtras
             version = CATALOG_V77
         }
+        if (version < CATALOG_V78) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V78.mapNotNull { catalog[it] }.filter { it.id !in have }
+            fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            version = CATALOG_V78
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -985,7 +991,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 77
+        const val CATALOG_VERSION = 78
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1061,7 +1067,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V74 = 74
         private const val CATALOG_V75 = 75
         private const val CATALOG_V76 = 76
-        private const val CATALOG_V77 = CATALOG_VERSION
+        private const val CATALOG_V77 = 77
+        private const val CATALOG_V78 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1398,6 +1405,9 @@ class ConfigStore(context: Context) {
             "fleet-meta-glasses",
             "fleet-snap-spectacles",
             "fleet-axon",
+        )
+        private val ADDED_IN_V78 = listOf(
+            "fleet-find-hub",
         )
     }
 }

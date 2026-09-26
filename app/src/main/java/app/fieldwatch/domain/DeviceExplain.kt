@@ -306,8 +306,13 @@ object DeviceExplain {
             if (isGenericSignatureName(raw)) return@mapNotNull null
             val n = raw.lowercase()
             when {
-                "airtag" in n || "find my" in n ->
-                    Hint("tag", "an Apple AirTag / Find My tag", "Matched signature $raw.", 8)
+                "airtag" in n || n == "find my" || "find hub" in n ->
+                    Hint(
+                        "tag",
+                        if ("find hub" in n) "a Google Find Hub tag" else "an Apple AirTag / Find My tag",
+                        "Matched signature $raw.",
+                        8,
+                    )
                 "apple device" in n ->
                     Hint("phone", "an iPhone, iPad, or Mac", "Matched signature $raw.", 7)
                 "apple audio" in n ->

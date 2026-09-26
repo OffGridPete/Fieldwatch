@@ -631,6 +631,18 @@ private fun RuleEditor(rule: MatchRule, onChange: (MatchRule) -> Unit, onDelete:
                     "Data prefix hex",
                 )
             }
+            RuleKind.SERVICE_DATA -> {
+                FieldwatchOutlinedField(
+                    rule.text,
+                    { onChange(rule.copy(text = it)) },
+                    "Service UUID",
+                )
+                FieldwatchOutlinedField(
+                    rule.dataPrefixHex,
+                    { onChange(rule.copy(dataPrefixHex = it)) },
+                    "Data prefix hex",
+                )
+            }
             RuleKind.RADIO_KIND -> {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Wi-Fi", Modifier.padding(end = 8.dp))
@@ -649,6 +661,7 @@ private fun ruleKindLabel(kind: RuleKind): String = when (kind) {
     RuleKind.NAME_CONTAINS -> "Name contains"
     RuleKind.NAME_GLOB -> "Name glob"
     RuleKind.SERVICE_UUID -> "Service UUID"
+    RuleKind.SERVICE_DATA -> "Service data"
     RuleKind.MANUFACTURER_ID -> "Manufacturer ID"
     RuleKind.MANUFACTURER_DATA -> "Manufacturer data"
     RuleKind.RADIO_KIND -> "Radio kind"

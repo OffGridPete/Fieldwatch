@@ -6,7 +6,7 @@ import java.net.URL
 /** HTTPS GET of the stock signature pack on GitHub. No account. Fails to the caller. */
 object CatalogRemote {
     const val STOCK_PACK_URL =
-        "https://raw.githubusercontent.com/OffGridPete/Fieldwatch/main/dist/fieldwatch-signatures.json"
+        "https://raw.githubusercontent.com/OffGridPete/Fieldwatch/main/dist/fieldwatch-signatures-v2.json"
 
     fun fetch(
         url: String = STOCK_PACK_URL,

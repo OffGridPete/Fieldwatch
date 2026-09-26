@@ -93,6 +93,14 @@ class AdvPayloadDecoderTest {
     }
 
     @Test
+    fun findHubFrameIsNotEddystone() {
+        val eid = "11".repeat(20)
+        val fields = AdvPayloadDecoder.decodeService(ServiceDataRecord("FEAA", "41$eid" + "00"))
+        assertEquals("separated (unwanted-tracking mode)", fields.first { it.label == "Find Hub" }.value)
+        assertTrue(fields.none { it.label.startsWith("Eddystone") })
+    }
+
+    @Test
     fun eddystoneUrlExpandsSchemeAndSuffix() {
         // frame 10, tx C5, scheme 01 (https://www.), "example", 07 (.com)
         val bytes = "10" + "C5" + "01" + "example".toByteArray().toHexUpper() + "07"

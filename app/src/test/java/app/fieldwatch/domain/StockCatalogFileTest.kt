@@ -2,6 +2,7 @@ package app.fieldwatch.domain
 
 import app.fieldwatch.data.ConfigStore
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -41,9 +42,24 @@ class StockCatalogFileTest {
     private fun distPackFile(): File {
         val cwd = File(System.getProperty("user.dir")!!)
         val candidates = listOf(
-            File(cwd, "dist/fieldwatch-signatures.json"),
-            File(cwd.parentFile, "dist/fieldwatch-signatures.json"),
+            File(cwd, "dist/fieldwatch-signatures-v2.json"),
+            File(cwd.parentFile, "dist/fieldwatch-signatures-v2.json"),
         )
         return candidates.first { it.parentFile?.exists() == true }
+    }
+
+    @Test
+    fun legacyPackStaysOnCatalog77() {
+        val cwd = File(System.getProperty("user.dir")!!)
+        val legacy = listOf(
+            File(cwd, "dist/fieldwatch-signatures.json"),
+            File(cwd.parentFile, "dist/fieldwatch-signatures.json"),
+        ).first { it.parentFile?.exists() == true }
+        assertTrue("Keep dist/fieldwatch-signatures.json for 1.1.11 GitHub updates.", legacy.isFile)
+        val pack = SignatureExchange.parse(legacy.readText())
+        assertEquals(77, pack.catalogVersion)
+        assertFalse(pack.fleets.any { fleet ->
+            fleet.rules.any { it.kind == RuleKind.SERVICE_DATA }
+        })
     }
 }

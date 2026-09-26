@@ -217,7 +217,7 @@ class SignatureEngine {
     private fun ruleScope(rule: MatchRule): RadioKind? = when (rule.kind) {
         RuleKind.VENDOR_IE_OUI, RuleKind.HIDDEN_SSID -> RadioKind.WIFI
         RuleKind.RADIO_KIND -> rule.radio
-        RuleKind.SERVICE_UUID, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA ->
+        RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA ->
             rule.radio ?: RadioKind.BLE
         else -> rule.radio
     }
@@ -234,6 +234,11 @@ class SignatureEngine {
         RuleKind.MANUFACTURER_DATA -> {
             val prefix = hexOnly(rule.dataPrefixHex)
             if (prefix.isEmpty()) null else FastRule.MfgData(rule.companyId, prefix, rule.radio)
+        }
+        RuleKind.SERVICE_DATA -> {
+            val prefix = hexOnly(rule.dataPrefixHex)
+            if (rule.text.isBlank() || prefix.isEmpty()) null
+            else FastRule.SvcData(uuidAliases(rule.text), prefix, rule.radio)
         }
         RuleKind.RADIO_KIND -> FastRule.Radio(rule.radio)
         RuleKind.HIDDEN_SSID -> FastRule.Hidden
@@ -349,6 +354,15 @@ class SignatureEngine {
                     (rule.companyId == 0 || rec.companyId == rule.companyId) &&
                         hexOnly(rec.dataHex).startsWith(prefix)
                 }
+            }
+            RuleKind.SERVICE_DATA -> {
+                val prefix = hexOnly(rule.dataPrefixHex)
+                val want = uuidAliases(rule.text)
+                prefix.isNotEmpty() && want.isNotEmpty() &&
+                    device.facts.serviceData.any { rec ->
+                        uuidAliases(rec.uuid).any { it in want } &&
+                            hexOnly(rec.dataHex).startsWith(prefix)
+                    }
             }
             RuleKind.RADIO_KIND ->
                 rule.radio == null || device.kind == rule.radio
@@ -538,6 +552,16 @@ class SignatureEngine {
                 if (!radioOk(device, radio)) return false
                 return mfg(device).any { rec ->
                     (id == 0 || rec.companyId == id) && hexOnly(rec.dataHex).startsWith(prefix)
+                }
+            }
+        }
+
+        class SvcData(val aliases: Set<String>, val prefix: String, val radio: RadioKind?) : FastRule() {
+            override fun hits(device: Sighting): Boolean {
+                if (!radioOk(device, radio)) return false
+                return device.facts.serviceData.any { rec ->
+                    uuidAliases(rec.uuid).any { it in aliases } &&
+                        hexOnly(rec.dataHex).startsWith(prefix)
                 }
             }
         }
