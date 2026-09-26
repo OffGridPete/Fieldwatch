@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.8")
+    c.drawString(48, 108, "Version 1.1.9")
     c.drawString(48, 94, "25 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.8  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.9  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1011,7 +1011,7 @@ def story():
                 ["Notifications (13+)", "Persistent scan status and watchlist alerts."],
                 ["Vibrate", "Watchlist haptic."],
                 ["Foreground service (location + connected device)", "Keep both radios scanning when the UI is not in front."],
-                ["Internet (install-time)", "Online place names (Debrief and AI Export, system geocoder) and, if you turn it on, the TAK / CoT UDP feed (§5.8). Fieldwatch has no account and does not call a Fieldwatch server."],
+                ["Internet (install-time)", "Online place names and maps (Debrief/AI Export geocoder; Path OSM tiles) and, if you turn it on, the TAK / CoT UDP feed (§5.8). Fieldwatch has no account and does not call a Fieldwatch server."],
                 ["Ignore battery optimizations", "Optional. Requested from Settings so OEM killers do not freeze the service."],
             ],
             [2.1 * inch, 4.4 * inch],
@@ -1141,7 +1141,7 @@ def story():
         P(
             "Battery exemptions are not on that first screen. They are Settings → "
             "<b>Allow background usage</b> and <b>Unrestricted battery</b> (§4.5.3). Vibrate is install-time. Internet "
-            "is only for Online place names (on by default); Fieldwatch has no account."
+            "is for Online place names and maps (on by default); Fieldwatch has no account."
         ),
         P("4.5.3 Stop the OEM from parking the scan", "h3"),
         P(
@@ -1638,23 +1638,31 @@ def story():
         P("5.6.1 Path", "h3"),
         figure_wrap(
             "fig-path.png",
-            "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and Named (blue) hear-points, scale bar. No map tiles.",
+            "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and Named (blue) hear-points, scale bar.",
             "Reports → Path is a north-up plot of <b>this phone</b> for the sit you selected "
-            "(open sit, a saved sit, or last 15 minutes). No map tiles; airplane mode is fine. "
+            "(open sit, a saved sit, or last 15 minutes). "
             "Tag detections with GPS must have been on, and the path must be about 10 m or more, "
             "or the card says so. Start sit for a longer track than Live’s last 15 minutes. "
             "Privacy mode still draws the line; coordinate text is masked.",
         ),
         P(
-            "The line is this phone. Red dots are Extra attention radios; blue dots are Named radios. "
-            "Those dots are <b>hear-points</b> — where the phone was when it heard that MAC — not a "
-            "fix on the other radio. Isolated dots and the numbered roster under the plot open detail. "
+            "The line is this phone. Header counts stops and entire-route radios. "
+            "Red dots are Extra attention; blue dots are Named radios. "
+            "Each KIND+MAC plots once, at the strongest RSSI hear-point. "
+            "A radio heard from near the start of the sit through near the end is listed as <b>Present for the entire route</b> (RSSI min–max on the row), not as a numbered stop. "
+            "Thick green on the line is a stay (~40 m, same as Debrief Where you were). Time ticks (HH:mm) sit along the path. "
             "When several radios stack at one place, the plot shows one number and a count badge. "
-            "Tap that number for a single inset of the names (Extra attention / Named tags); tap again to close. "
-            "The distance scale sits under the plot, centered. A tall skinny walk is centered on the card."
+            "Tap that number for a single inset; tap again to close. Isolated dots and the roster open detail. "
+            "The distance scale sits under the plot. The route is inset so Start/End do not sit on the frame."
         ),
         P(
-            "If any of those dots have Observer notes, an <b>Observer notes</b> list sits under the roster "
+            "Settings → <b>Online place names and maps</b> (on by default) also loads OpenStreetMap tiles under this trace when the phone has internet. "
+            "Tiles fill the plot box, then clip; extra map shows around the route. "
+            "Offline, no tiles, or Privacy mode: the north-up plot only — no error dialog. Airplane mode is fine. "
+            "Turn that switch off to keep streets out of Debrief/AI Export and maps off Path together."
+        ),
+        P(
+            "If any of those radios have Observer notes, an <b>Observer notes</b> list sits under the roster "
             "(custom name, MAC, the note). Live list still shows only the cyan notes chip, not the text."
         ),
         P(
@@ -1777,7 +1785,7 @@ def story():
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
             "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
-            "<b>Online place names in Debrief</b> — On by default. Reverse-geocodes GPS stamps for Debrief and AI Export when the phone has internet (install-time INTERNET; system geocoder; no Fieldwatch server). Offline: a note in the report, no error dialog. Turn off if you do not want streets of your path in those files. The generate buttons themselves are on Reports (§5.6).",
+            "<b>Online place names and maps</b> — On by default. One switch. Debrief and AI Export reverse-geocode GPS stamps (system geocoder). Reports → Path loads OpenStreetMap tiles under the trace (no Fieldwatch cloud, no API key). Offline, no geocoder, no tiles, or Privacy mode: Debrief uses coordinates only and Path stays the north-up plot — no error dialog. Turn off to keep streets and map tiles out of reports and Path together. Generate buttons are on Reports (§5.6, §5.6.1).",
             "<b>Logging</b> — Write to disk, rotate size, Stale after slider (when a radio is marked gone). Line/disk counts. The rotating file is JSON lines. Format (CSV, JSON lines, GPX, KML, WiGLE) and radios (Both / Wi-Fi / BLE) are on Reports → Log. Share, Save, and Reset / clear log are on Reports.",
             "<b>Allow background usage</b> — Switch. Opens Fieldwatch’s Battery page; turn on Allow background usage so the OS may run the scan when Fieldwatch is not in front. Follows that Android setting. Not Keep screen on.",
             "<b>Unrestricted battery</b> — Switch. Opens the Battery page. Select Unrestricted (not Optimized). Some phones (Samsung among them) do not open onto that choice — tap Allow background usage (the words, not the switch) to click through and select Unrestricted. Fieldwatch follows that grant when you return.",
@@ -3642,8 +3650,8 @@ def story():
             "transits. Each stay lists UTC time, dwell, lat/lon (operator phone), optional street name, "
             "and the loud radios GPS-stamped at that stay. Sitting still is one stay. A walk to a new "
             "block becomes stay → transit → stay. Coordinates are not dumped on every AP/BLE line. "
-            "Settings → <b>Online place names</b> (on by default) reverse-geocodes stay centroids via the "
-            "system geocoder when the phone has internet. Offline: a note, coords still print, no error dialog. "
+            "Settings → <b>Online place names and maps</b> (on by default) reverse-geocodes stay centroids via the "
+            "system geocoder when the phone has internet, and loads map tiles on Reports → Path. Offline: a note, coords still print, Path stays the north-up trace, no error dialog. "
             "Phone GPS ≠ pole or tag location."
         ),
         P(
@@ -4059,7 +4067,7 @@ def story():
             "<b>§12.14 Extra attention / pentest kit / card-reader caution.</b> Debrief Extra attention section and PDF amber callouts. Detail Share / AI Export quote EXTRA ATTENTION. Tell a chat “pattern, not a skimmer detector, not proof of an attack.”",
         ]),
         P(
-            "<b>Online place names</b> (on by default) applies to both Debrief and AI Export. "
+            "<b>Online place names and maps</b> (on by default) applies to Debrief, AI Export, and Path tiles. "
             "Offline: a note, no error, no streets. Distance traveled does not need internet. "
             "Leave it off if you do not want addresses in a chat paste.",
             "body_left",
@@ -4405,7 +4413,7 @@ def story():
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
             ["Reports", "Bottom tab. Sits (optional named window), Path, Debrief (text/PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Config for GPS, place names, and logging on/off stays on Settings. §5.6."],
             ["Sit (named)", "Optional window of watching, started from Reports → Start sit. Path, Debrief, Compare this-sit, and AI Export use that start/end instead of the last 15 minutes in RAM, and keep radios the Live list has dropped. One at a time. Live list, Filters, Hunt, TAK unchanged if you never start one. Not DF. §5.6."],
-            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and Named (blue) dots are hear-points. Stacked counts tap for one inset. No map tiles. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
+            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and Named (blue) dots at strongest RSSI. Present for the entire route if first/last heard cover the sit. Thick green = stay. Time ticks. OSM tiles when Online place names and maps is on and the phone is online; otherwise the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
             ["Sit export", "Reports card under Sit report. Same Format chips as Log export, different file: one row per unique radio in the selected sit (or last 15 minutes). Logging can be off. GPX/KML include the operator path as a track. Not the rotating log. Privacy mode does not mask the file. §5.6.2."],
             ["Log export", "Reports card. Share/Save of the rotating session file (JSON lines on disk; CSV / GPX / KML / WiGLE at export). One line per hear while logging was on. Needs Write to disk. Clearing the log does not delete sits. §5.6.3, §11.6."],
             ["Observer notes", "Optional 280-character field on a Named radio (same KIND+MAC as the custom name). Cyan block on detail; cyan notes chip on Live next to Extra attention “!”. Debrief lists them after Where you were; Compare after Windows. Path and AI Export list heard radios with the note. Not catalog Notes and not Extra attention gold. BLE privacy addresses hide the pencil. Settings backup includes the note. §5.5, §5.6."],
@@ -4455,7 +4463,7 @@ def story():
             ["Debrief (text)", "Reports share of the field sit report as plain text. Opens with DISCLAIMER (hobby / as-is; hypotheses not identity; local law; 15-minute live set). Last 15 minutes in the live map (about 400 radios, not the log) unless a sit is selected. Ignores Live display view and Filters. Where you were, then Observer notes if any, tracking assessment, amber co-travel callouts. Custom names. Radios you passed are omitted. On a drive, tap more than once. §11.4.1."],
             ["Debrief (PDF)", "Same sit report, letter-size typeset PDF. Disclaimer at the top, then FIELDWATCH header, numbered sections (Observer notes after Where you were), bold stay/transit and Label: kickers, operator-path figure, amber co-travel callouts, takeaway. Same window as the text share. Long trip: tap more than once (§11.4.1). Share as application/pdf."],
             ["Compare sits", "Reports card under Sit report. This sit (open, selected, or last 15 minutes) vs a second saved sit. Presence only — only in this sit, only in the second, in both. Kind + MAC. Text, PDF, and AI Export. Observer notes after Windows. Not a radio fix. §5.6."],
-            ["Online place names", "Settings switch, on by default. Debrief and AI Export reverse-geocode GPS stamps via the system geocoder when online. Offline: a note in the report/prompt, no error dialog. Turn off if you do not want streets of your path."],
+            ["Online place names and maps", "Settings switch, on by default. Debrief and AI Export reverse-geocode GPS stamps via the system geocoder when online. Reports → Path loads OpenStreetMap tiles under the trace (fill the plot, clip, extra map around the route). Offline, no tiles, or Privacy mode: Debrief coordinates only, Path is the north-up trace — no error dialog. Turn off to keep streets and maps out together."],
             ["New at bottom", "Display → Sort. First-seen order, oldest at top; new radios append; gone radios drop. List follows the bottom unless you scroll up."],
             ["unnamed LE", "BLE Advertised name / Name + type when there is no advertised name and no useful decode. On the subtitle the Bluetooth icon already marks LE, so the body is unnamed (not “unnamed LE” twice). Title Advertised name still shows unnamed LE. The title is the MAC unless you change it."],
             ["AI Export", "Three buttons. Reports sit: onboard Debrief + compact rates / Extra attention / Observer notes (addendum, not a roster). Reports Compare: overlap + exclusive Extra attention / Named / Observer notes. Device detail: that one radio (dump + registry decode). All paste into a chat, all open with the experimental disclaimer, all are hypotheses — not identity. Treat as sensitive."],
@@ -4874,8 +4882,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.8 (versionCode 18), field build of 25 September 2026"],
-                ["Document version", "1.1.8"],
+                ["Software version", "1.1.9 (versionCode 19), field build of 25 September 2026"],
+                ["Document version", "1.1.9"],
                 ["Document date", "25 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

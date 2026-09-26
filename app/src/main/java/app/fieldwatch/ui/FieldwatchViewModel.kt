@@ -15,6 +15,7 @@ import app.fieldwatch.domain.signatureNotes
 import app.fieldwatch.domain.detectionPolicy
 import app.fieldwatch.data.CatalogRemote
 import app.fieldwatch.data.DebriefPdf
+import app.fieldwatch.data.PathTiles
 import app.fieldwatch.data.PlaceLookup
 import app.fieldwatch.domain.DeviceDetailPrompt
 import app.fieldwatch.domain.DeviceDetailText
@@ -158,6 +159,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val sitExportRadios: StateFlow<LogExportRadios> = _sitExportRadios
     private val _sitPath = MutableStateFlow<SitPathPlot.Model?>(null)
     val sitPath: StateFlow<SitPathPlot.Model?> = _sitPath
+    private val _pathTiles = MutableStateFlow<List<PathTiles.Tile>>(emptyList())
+    val pathTiles: StateFlow<List<PathTiles.Tile>> = _pathTiles
     @Volatile private var pathRadios: List<Sighting> = emptyList()
     private val _liveFocus = MutableStateFlow(0)
     val liveFocus: StateFlow<Int> = _liveFocus
@@ -1442,7 +1445,21 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun refreshSitPath() {
         viewModelScope.launch(Dispatchers.Default) {
-            _sitPath.value = buildSitPath()
+            val model = buildSitPath()
+            _sitPath.value = model
+            val settings = app.config.settings
+            if (model == null || model.samples.size < 2 || !settings.onlineLookup || settings.demoMode) {
+                _pathTiles.value = emptyList()
+                return@launch
+            }
+            val tiles = runCatching {
+                PathTiles.load(
+                    app, model.samples,
+                    privacy = settings.demoMode,
+                    onlineLookup = settings.onlineLookup,
+                )
+            }.getOrDefault(emptyList())
+            _pathTiles.value = tiles
         }
     }
 
@@ -1455,9 +1472,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val tagging = app.config.settings.tagLocation
         if (source != null) {
             val samples = source.operatorPath
-            val dots = SitPathPlot.dotsFrom(
+            val plot = SitPathPlot.dotsFrom(
                 source.devices, fleets, namedKeys, customNames = customNames,
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
+                path = samples,
             )
             val empty = when {
                 !tagging -> "Tag detections with GPS (Settings) to record a path."
@@ -1467,12 +1485,13 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             pathRadios = source.devices
             return SitPathPlot.Model(
                 samples = samples,
-                dots = if (samples.size >= 2) dots else emptyList(),
+                dots = if (samples.size >= 2) plot.points else emptyList(),
                 lengthM = Geo.pathLengthM(samples),
                 spanM = Geo.spanM(samples),
                 title = source.name,
                 emptyHint = empty,
                 live = app.sits.ui.value.open != null,
+                alongRoute = if (samples.size >= 2) plot.alongRoute else emptyList(),
             )
         }
         val start = now - DebriefPrompt.WINDOW_MS
@@ -1484,17 +1503,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             else -> null
         }
         pathRadios = devices
-        return SitPathPlot.Model(
-            samples = samples,
-            dots = if (samples.size >= 2) SitPathPlot.dotsFrom(
+        val plot = if (samples.size >= 2) {
+            SitPathPlot.dotsFrom(
                 devices, fleets, namedKeys, customNames = customNames,
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
-            ) else emptyList(),
+                path = samples,
+            )
+        } else {
+            SitPathPlot.PlotRadios(emptyList(), emptyList())
+        }
+        return SitPathPlot.Model(
+            samples = samples,
+            dots = plot.points,
             lengthM = Geo.pathLengthM(samples),
             spanM = Geo.spanM(samples),
             title = "Last 15 minutes",
             emptyHint = empty,
             live = true,
+            alongRoute = plot.alongRoute,
         )
     }
 

@@ -26,25 +26,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.fieldwatch.data.PathTiles
+import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.SitPathPlot
 import app.fieldwatch.ui.theme.Cyan
 import app.fieldwatch.ui.theme.LocalNightMode
+import app.fieldwatch.ui.theme.PhosphorActive
 import app.fieldwatch.ui.theme.nightIf
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.hypot
+import kotlin.math.roundToInt
 
 @Composable
 fun SitPathCanvas(
     model: SitPathPlot.Model,
     modifier: Modifier = Modifier,
+    tiles: List<PathTiles.Tile> = emptyList(),
     onOpenRadio: (String) -> Unit = {},
 ) {
     val track = MaterialTheme.colorScheme.onSurface
@@ -69,7 +81,7 @@ fun SitPathCanvas(
         modifier.then(
             Modifier
                 .fillMaxWidth()
-                .height(220.dp)
+                .height(240.dp)
                 .onSizeChanged { boxSize = it },
         ),
     ) {
@@ -96,6 +108,24 @@ fun SitPathCanvas(
                 },
         ) {
             val lay = layout ?: return@Canvas
+            clipRect(lay.plotLeft, lay.plotTop, lay.plotRight, lay.plotBottom) {
+                tiles.forEach { tile ->
+                    val nw = lay.project(tile.north, tile.west)
+                    val se = lay.project(tile.south, tile.east)
+                    val left = nw.x.roundToInt()
+                    val top = nw.y.roundToInt()
+                    val w = (se.x - nw.x).roundToInt().coerceAtLeast(1)
+                    val h = (se.y - nw.y).roundToInt().coerceAtLeast(1)
+                    runCatching {
+                        drawImage(
+                            tile.bitmap.asImageBitmap(),
+                            dstOffset = IntOffset(left, top),
+                            dstSize = IntSize(w, h),
+                            alpha = 0.55f,
+                        )
+                    }
+                }
+            }
             if (lay.path.size >= 2) {
                 val path = Path().apply {
                     moveTo(lay.path[0].x, lay.path[0].y)
@@ -106,6 +136,39 @@ fun SitPathCanvas(
                     color = track.copy(alpha = 0.85f),
                     style = Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
+                val stays = Geo.legs(model.samples).filter { it.stay }
+                for (i in 1 until lay.path.size) {
+                    val t = model.samples.getOrNull(i)?.at ?: continue
+                    if (stays.none { t in it.startAt..it.endAt }) continue
+                    drawLine(
+                        PhosphorActive.copy(alpha = 0.9f),
+                        Offset(lay.path[i - 1].x, lay.path[i - 1].y),
+                        Offset(lay.path[i].x, lay.path[i].y),
+                        strokeWidth = 9f,
+                        cap = StrokeCap.Round,
+                    )
+                }
+                stays.forEach { stay ->
+                    val pt = lay.project(stay.lat, stay.lon)
+                    drawCircle(PhosphorActive.copy(alpha = 0.22f), radius = 16f, center = Offset(pt.x, pt.y))
+                }
+                val dur = (model.samples.last().at - model.samples.first().at).coerceAtLeast(1L)
+                listOf(0.25, 0.5, 0.75).forEach { frac ->
+                    val want = model.samples.first().at + (dur * frac).toLong()
+                    val idx = model.samples.indices.minByOrNull { abs(model.samples[it].at - want) } ?: return@forEach
+                    if (idx == 0 || idx == model.samples.lastIndex) return@forEach
+                    val pt = lay.path.getOrNull(idx) ?: return@forEach
+                    val label = TIME_FMT.format(Date(model.samples[idx].at))
+                    val measured = measurer.measure(label, labelStyle)
+                    drawCircle(muted, radius = 3f, center = Offset(pt.x, pt.y))
+                    drawText(
+                        measured,
+                        topLeft = Offset(
+                            (pt.x + 6f).coerceAtMost(size.width - measured.size.width),
+                            (pt.y - measured.size.height - 2f).coerceAtLeast(0f),
+                        ),
+                    )
+                }
                 val start = lay.path.first()
                 val end = lay.path.last()
                 drawCircle(track, radius = 6f, center = Offset(start.x, start.y))
@@ -210,3 +273,5 @@ fun SitPathCanvas(
 
 private fun scaleLabel(m: Double): String =
     if (m >= 1000) "${(m / 1000).toInt()} km" else "${m.toInt()} m"
+
+private val TIME_FMT = SimpleDateFormat("HH:mm", Locale.getDefault())

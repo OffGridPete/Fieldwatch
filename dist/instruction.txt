@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.1.8 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.1.9 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  919eda14010804640b256e59715916da09f64016bfe733deee95bf2ad949c364
+  be298da2666dc9f0688ce3f7e17b7b08c2e1d711f9bda12a492bb15c97a3e27c
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
@@ -302,13 +302,13 @@ Max collection (battery is the cost) — full walk-through:
                not a second roster. Logging on/off and GPS tagging
                stay on Settings.
   Settings     Scan intensity, Faster Wi-Fi AP scans, GPS tagging,
-               Online place names, Keep screen on, logging on/off and
+               Online place names and maps, Keep screen on, logging on/off and
                rotate size (rotating file is JSON lines; Format is on
                Reports → Log), Watchlist, Named radios (custom name +
                Observer notes). Footer: Fieldwatch version · Catalog N.
                Update stock catalog from GitHub needs internet; replaces
                stock rows (Extra attention too); bookmarks stay. Offline:
-               Import signatures. GPS tagging, Online place names, Keep screen
+               Import signatures. GPS tagging, Online place names and maps, Keep screen
                on, Watchlist alerts, and Beep ship on. Voice on watched
                signature ships off. Beep and Voice are independent:
                pip, spoken phrase, or both. What to say (while Voice is
@@ -371,7 +371,7 @@ following are educated guesses, not legal findings.
     What to say: Class, Signature, or Class + signature
     (default Class). Test alert plays whatever is on. Not Hunt.
   • Tag detections with GPS, Keep screen on, and Online place names
-    ship on. Location → high accuracy,
+    and maps ship on. Location → high accuracy,
     then walk/drive until Filters shows a path that is not 0 m;
     Filters → Moving with you (loud stable radios: bag/car tag, not a second iPhone).
     After the walk, Reports → Debrief still has the last-15-minute tracking
@@ -395,7 +395,7 @@ following are educated guesses, not legal findings.
     being heard and stay in the next Debrief. AI Export pastes the
     onboard Debrief plus working data and asks a chat for statistical
     depth the phone report cannot do (not a rewrite). Streets in those
-    files if Online place names is on (it ships on) and the phone is
+    files if Online place names and maps is on (it ships on) and the phone is
     online. Live view and Filters do not change Debrief. Share log /
     Save to SD are on the same tab.
   • Full after-action file: Reports → Share log (logging must have been on).

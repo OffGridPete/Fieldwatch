@@ -14,6 +14,9 @@ object SitDiff {
         val lat: Double? = null,
         val lon: Double? = null,
         val observerNotes: String = "",
+        val gpsTrail: List<GpsSample> = emptyList(),
+        val firstSeen: Long = 0L,
+        val lastSeen: Long = 0L,
     )
 
     data class Side(
@@ -52,9 +55,12 @@ object SitDiff {
         named = device.key in customNames,
         fleetNames = device.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = device.randomized,
-        lat = device.gpsTrail.lastOrNull()?.lat ?: device.latitude,
-        lon = device.gpsTrail.lastOrNull()?.lon ?: device.longitude,
+        lat = SitPathPlot.loudestFix(device)?.lat ?: device.latitude,
+        lon = SitPathPlot.loudestFix(device)?.lon ?: device.longitude,
         observerNotes = observerNotes[device.key].orEmpty(),
+        gpsTrail = device.gpsTrail,
+        firstSeen = device.firstSeen,
+        lastSeen = device.lastSeen,
     )
 
     fun fromSitRadio(
@@ -71,9 +77,12 @@ object SitDiff {
         named = row.key in customNames,
         fleetNames = row.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
         randomized = row.randomized,
-        lat = row.gpsTrail.lastOrNull()?.lat,
-        lon = row.gpsTrail.lastOrNull()?.lon,
+        lat = SitPathPlot.loudestFix(row.gpsTrail)?.lat,
+        lon = SitPathPlot.loudestFix(row.gpsTrail)?.lon,
         observerNotes = observerNotes[row.key].orEmpty(),
+        gpsTrail = row.gpsTrail,
+        firstSeen = row.firstSeen,
+        lastSeen = row.lastSeen,
     )
 
     fun report(
@@ -166,12 +175,15 @@ object SitDiff {
             },
         )
         if (tracks.isEmpty()) return null
-        val dots = (thisSit.radios + second.radios)
+        val points = ArrayList<SitPathPlot.Dot>()
+        val along = ArrayList<SitPathPlot.Dot>()
+        (thisSit.radios + second.radios)
             .filter { it.extraAttention || it.named }
-            .mapNotNull { r ->
-                val lat = r.lat ?: return@mapNotNull null
-                val lon = r.lon ?: return@mapNotNull null
-                SitPathPlot.Dot(
+            .distinctBy { it.key }
+            .forEach { r ->
+                val lat = r.lat ?: return@forEach
+                val lon = r.lon ?: return@forEach
+                val dot = SitPathPlot.Dot(
                     key = r.key,
                     lat = lat,
                     lon = lon,
@@ -183,9 +195,17 @@ object SitDiff {
                     fleetNames = r.fleetNames,
                     observerNotes = r.observerNotes,
                 )
+                val walk = when {
+                    r.key in thisSit.keys -> thisSit.path
+                    else -> second.path
+                }
+                if (SitPathPlot.alongRoute(r.firstSeen, r.lastSeen, walk, hasFix = true)) {
+                    along += dot
+                } else {
+                    points += dot
+                }
             }
-            .distinctBy { it.key }
-            .take(24)
+        val dots = points.take(24)
         val all = tracks.flatMap { it.samples }
         val cap = if (tracks.size == 2) {
             "Two walks on one north-up frame. Green = this sit. Slate = second sit. A number is a place on this phone's path; stacked radios share a number (Path key). Hear-points, not radio fixes."
@@ -199,6 +219,7 @@ object SitDiff {
             lengthM = Geo.pathLengthM(all),
             spanM = Geo.spanM(all),
             caption = cap,
+            alongRoute = along.take(24),
         )
     }
 

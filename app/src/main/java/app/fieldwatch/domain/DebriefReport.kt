@@ -425,17 +425,18 @@ object DebriefReport {
         observerNotes: Map<String, String> = emptyMap(),
     ): SitPathPlot.Figure? {
         if (path.size < 2) return null
-        val dots = SitPathPlot.dotsFrom(
+        val plot = SitPathPlot.dotsFrom(
             devices, fleets, namedKeys = customNames.keys, cap = 24,
-            customNames = customNames, observerNotes = observerNotes,
+            customNames = customNames, observerNotes = observerNotes, path = path,
         )
         return SitPathPlot.Figure(
             kicker = "OPERATOR PATH",
             tracks = listOf(SitPathPlot.FigureTrack(title, path)),
-            dots = dots,
+            dots = plot.points,
             lengthM = Geo.pathLengthM(path),
             spanM = Geo.spanM(path),
-            caption = "North-up. Line is this phone (${path.lengthM()}). A number is a place on this path; stacked radios share a number (Path key). Hear-points, not radio fixes.",
+            caption = "North-up. Line is this phone (${path.lengthM()}). A number is a place on this path; stacked radios share a number (Path key). Radios heard along the whole sit are in Present for the entire route, not as a stop.",
+            alongRoute = plot.alongRoute,
         )
     }
 

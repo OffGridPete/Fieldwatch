@@ -386,7 +386,33 @@ object DebriefPdf {
             out += pathKeyRow(i + 1, pile)
             out += spacer(5f)
         }
+        if (fig.alongRoute.isNotEmpty()) {
+            out += spacer(8f)
+            out += sectionHead("", "Present for the entire route", alert = false)
+            out += spacer(4f)
+            fig.alongRoute.forEach { d ->
+                val kind = if (d.kind.name == "WIFI") "WIFI" else "BLE"
+                val tag = if (d.extraAttention) "Extra attention" else null
+                val fleets = d.fleetNames.filter { it.isNotBlank() }.joinToString(", ")
+                val obs = d.observerNotes.trim().takeIf { it.isNotEmpty() }?.let { "Observer: $it" }
+                val line = listOfNotNull(
+                    kind,
+                    d.label.ifBlank { d.mac },
+                    fleets.ifBlank { null },
+                    tag,
+                    "Heard along this sit",
+                    obs,
+                ).joinToString("  ")
+                out += pathAlongRow(line)
+                out += spacer(5f)
+            }
+        }
         return out
+    }
+
+    private fun pathAlongRow(line: String): Block {
+        val sl = layout(line, CONTENT_W, 9f, muted = false)
+        return textBlock(sl)
     }
 
     private fun pathKeyLine(n: Int, pile: SitPathPlot.Cluster): String {

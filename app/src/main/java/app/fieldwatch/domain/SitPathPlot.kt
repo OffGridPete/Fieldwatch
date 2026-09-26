@@ -20,6 +20,8 @@ object SitPathPlot {
         val mac: String = "",
         val fleetNames: List<String> = emptyList(),
         val observerNotes: String = "",
+        val rssiMin: Int = 0,
+        val rssiMax: Int = 0,
     )
 
     data class Model(
@@ -30,6 +32,7 @@ object SitPathPlot {
         val title: String,
         val emptyHint: String? = null,
         val live: Boolean = false,
+        val alongRoute: List<Dot> = emptyList(),
     )
 
     data class Pt(val x: Float, val y: Float)
@@ -40,6 +43,10 @@ object SitPathPlot {
         val scaleBarM: Double,
         val scaleBarFrac: Float,
         val project: (Double, Double) -> Pt = { _, _ -> Pt(0f, 0f) },
+        val plotLeft: Float = 0f,
+        val plotTop: Float = 0f,
+        val plotRight: Float = 0f,
+        val plotBottom: Float = 0f,
     )
 
     data class FigureTrack(
@@ -55,6 +62,7 @@ object SitPathPlot {
         val lengthM: Double,
         val spanM: Double,
         val caption: String,
+        val alongRoute: List<Dot> = emptyList(),
     ) {
         val drawable: Boolean
             get() = tracks.any { it.samples.size >= 2 }
@@ -130,6 +138,16 @@ object SitPathPlot {
             minX = min(minX, x); maxX = max(maxX, x)
             minY = min(minY, y); maxY = max(maxY, y)
         }
+        run {
+            val midX = (minX + maxX) / 2f
+            val midY = (minY + maxY) / 2f
+            val hx = ((maxX - minX) / 2f).coerceAtLeast(4f) * 1.22f
+            val hy = ((maxY - minY) / 2f).coerceAtLeast(4f) * 1.22f
+            minX = midX - hx
+            maxX = midX + hx
+            minY = midY - hy
+            maxY = midY + hy
+        }
         val spanX = (maxX - minX).coerceAtLeast(8f)
         val spanY = (maxY - minY).coerceAtLeast(8f)
         val innerW = width - pad * 2
@@ -153,6 +171,10 @@ object SitPathPlot {
             scaleBarM = barM,
             scaleBarFrac = barFrac,
             project = { lat, lon -> map(mx(lat, lon), my(lat, lon)) },
+            plotLeft = pad,
+            plotTop = pad,
+            plotRight = width - pad,
+            plotBottom = height - pad - 44f,
         )
     }
 
@@ -169,6 +191,11 @@ object SitPathPlot {
         return nice * mag
     }
 
+    data class PlotRadios(
+        val points: List<Dot>,
+        val alongRoute: List<Dot>,
+    )
+
     fun dotsFrom(
         devices: List<Sighting>,
         fleets: List<Fleet>,
@@ -176,27 +203,70 @@ object SitPathPlot {
         cap: Int = 48,
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
-    ): List<Dot> {
-        val extra = devices.filter { it.attentionNotes(fleets).isNotEmpty() }
-        val named = devices.filter { it.key in namedKeys && it !in extra }
-        return (extra + named).mapNotNull { d ->
-            val fix = d.gpsTrail.lastOrNull()
-                ?: d.latitude?.let { lat ->
-                    val lon = d.longitude ?: return@mapNotNull null
-                    GpsSample(d.lastSeen, lat, lon, d.rssi)
-                } ?: return@mapNotNull null
-            Dot(
-                key = d.key,
-                lat = fix.lat,
-                lon = fix.lon,
-                label = d.reportName(customNames).ifBlank { d.mac },
-                extraAttention = d.attentionNotes(fleets).isNotEmpty(),
-                named = d.key in namedKeys,
-                kind = d.kind,
-                mac = d.mac,
-                fleetNames = d.fleetIds.mapNotNull { id -> fleets.firstOrNull { it.id == id }?.name },
-                observerNotes = observerNotes[d.key].orEmpty(),
-            )
-        }.take(cap)
+        path: List<GpsSample> = emptyList(),
+    ): PlotRadios {
+        val points = ArrayList<Dot>()
+        val along = ArrayList<Dot>()
+        devices
+            .filter { it.attentionNotes(fleets).isNotEmpty() || it.key in namedKeys }
+            .groupBy { it.key }
+            .forEach { (_, group) ->
+                val d = group.maxBy { it.rssi }
+                val fix = loudestFix(d) ?: return@forEach
+                val dot = Dot(
+                    key = d.key,
+                    lat = fix.lat,
+                    lon = fix.lon,
+                    label = d.reportName(customNames).ifBlank { d.mac },
+                    extraAttention = d.attentionNotes(fleets).isNotEmpty(),
+                    named = d.key in namedKeys,
+                    kind = d.kind,
+                    mac = d.mac,
+                    fleetNames = d.fleetIds.mapNotNull { id -> fleets.firstOrNull { it.id == id }?.name },
+                    observerNotes = observerNotes[d.key].orEmpty(),
+                    rssiMin = d.rssiMin,
+                    rssiMax = d.rssiMax,
+                )
+                if (alongRoute(d.firstSeen, d.lastSeen, path, hasFix = true)) along += dot else points += dot
+            }
+        fun take(rows: List<Dot>) =
+            rows.sortedWith(compareByDescending<Dot> { it.extraAttention }.thenBy { it.label }).take(cap)
+        return PlotRadios(take(points), take(along))
+    }
+
+    /**
+     * Heard from near the start of this sit through near the end (first/last vs operator path).
+     * Uses presence time, not the capped GPS trail (TRAIL_CAP 40 would fail a long drive).
+     */
+    fun alongRoute(
+        firstSeen: Long,
+        lastSeen: Long,
+        path: List<GpsSample>,
+        hasFix: Boolean,
+    ): Boolean {
+        if (!hasFix || path.size < 2) return false
+        val pathStart = path.first().at
+        val pathEnd = path.last().at
+        val pathDur = (pathEnd - pathStart).coerceAtLeast(1L)
+        if (pathDur < Sit.PATH_MIN_MS) return false
+        if ((lastSeen - firstSeen) < pathDur * 0.5) return false
+        if (firstSeen > pathStart + pathDur * 0.25) return false
+        if (lastSeen < pathEnd - pathDur * 0.25) return false
+        return true
+    }
+
+    /** One hear-point per radio: loudest GPS-trail sample. rssi 0 is treated as unset. */
+    fun loudestFix(trail: List<GpsSample>): GpsSample? {
+        if (trail.isEmpty()) return null
+        return trail.maxWithOrNull(
+            compareBy<GpsSample> { if (it.rssi == 0) Int.MIN_VALUE else it.rssi }.thenBy { it.at },
+        )
+    }
+
+    fun loudestFix(d: Sighting): GpsSample? {
+        loudestFix(d.gpsTrail)?.let { return it }
+        val lat = d.latitude ?: return null
+        val lon = d.longitude ?: return null
+        return GpsSample(d.lastSeen, lat, lon, d.rssi)
     }
 }

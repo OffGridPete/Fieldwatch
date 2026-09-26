@@ -436,15 +436,15 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Online place names in Debrief", Modifier.weight(1f))
+                Text("Online place names and maps", Modifier.weight(1f))
                 FieldwatchSwitch(settings.onlineLookup, { on -> vm.updateSettings { it.copy(onlineLookup = on) } })
             }
             Text(
-                "On by default. When the phone has internet, Debrief and AI Export reverse-geocode GPS stamps " +
-                    "to street/city via the system geocoder (no Fieldwatch cloud, no API key). " +
-                    "If you are offline, the report notes that and continues — no error dialog. " +
-                    "Turn off if you do not want streets of your path in those files. " +
-                    "Debrief, AI Export, Share log, Save log, and Reset / clear log are on the Reports tab.",
+                "On by default. When the phone has internet, Debrief / AI Export reverse-geocode GPS stamps " +
+                    "to street/city, and Reports → Path loads OpenStreetMap tiles under the trace. " +
+                    "No Fieldwatch cloud, no API key. Offline, no geocoder, or Privacy mode: Debrief uses coordinates only and Path stays the current north-up trace — no error dialog. " +
+                    "Turn off to keep streets and map tiles out of reports and Path. " +
+                    "Debrief, Sit export, Log export, and Reset / clear log are on the Reports tab.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

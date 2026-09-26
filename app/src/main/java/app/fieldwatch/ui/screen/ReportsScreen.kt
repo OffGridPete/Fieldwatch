@@ -37,6 +37,7 @@ import app.fieldwatch.domain.LogExportKind
 import app.fieldwatch.domain.LogExportRadios
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitDiff
+import app.fieldwatch.domain.SitPathPlot
 import app.fieldwatch.ui.component.FieldwatchDropdownField
 import app.fieldwatch.ui.component.SitPathCanvas
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -201,7 +202,7 @@ fun ReportsScreen(
             }
             SectionCard("Path") {
                 Text(
-                    "North up. This phone. Extra attention and Named radios as dots — hear-points, not radio fixes. No map tiles; airplane mode is fine.",
+                    "North up. This phone. Extra attention and Named radios as dots — one hear-point each, at the strongest RSSI. A radio heard along most of this sit is listed as Present for the entire route, not as a stop. Thick green on the line is a stay. Time ticks along the path. Map tiles use Settings → Online place names and maps; offline or Privacy mode keeps this trace.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -213,11 +214,21 @@ fun ReportsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
+                    val pathTiles by vm.pathTiles.collectAsStateWithLifecycle()
+                    val stopN = model.dots.size
+                    val entireN = model.alongRoute.size
                     Text(
-                        "${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span",
+                        buildString {
+                            append("${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span")
+                            if (stopN > 0 || entireN > 0) {
+                                append(" · $stopN stop")
+                                if (stopN != 1) append("s")
+                                append(" · $entireN entire route")
+                            }
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    SitPathCanvas(model, onOpenRadio = onOpenPathRadio)
+                    SitPathCanvas(model, tiles = pathTiles, onOpenRadio = onOpenPathRadio)
                     Text(
                         "Stacked count: tap the number for names. Tap again to close. Isolated dots and the list still open the radio.",
                         style = MaterialTheme.typography.bodySmall,
@@ -245,7 +256,7 @@ fun ReportsScreen(
                             )
                         }
                     }
-                    if (model.dots.isEmpty()) {
+                    if (model.dots.isEmpty() && model.alongRoute.isEmpty()) {
                         Text(
                             "No Extra attention or Named radios with a GPS stamp on this path.",
                             style = MaterialTheme.typography.bodySmall,
@@ -253,33 +264,30 @@ fun ReportsScreen(
                         )
                     } else {
                         model.dots.forEachIndexed { i, dot ->
-                            val mac = MacUtil.screenMac(dot.mac, settings.demoMode)
-                            val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
-                            val tag = if (dot.extraAttention) "Extra attention" else ""
-                            val fleets = dot.fleetNames.joinToString(" · ")
-                            val title = buildString {
-                                append("${i + 1}. $kind  ${dot.label}")
-                                if (dot.label != mac && mac.isNotBlank()) append("  $mac")
-                            }
-                            val sub = listOfNotNull(tag.ifBlank { null }, fleets.ifBlank { null }).joinToString(" · ")
-                            Column(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onOpenPathRadio(dot.key) }
-                                    .padding(vertical = 4.dp),
-                            ) {
-                                Text(title, style = MaterialTheme.typography.bodyMedium)
-                                if (sub.isNotEmpty()) {
-                                    Text(
-                                        sub,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (dot.extraAttention) MaterialTheme.colorScheme.error
-                                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
+                            PathRadioRow(
+                                index = i + 1,
+                                dot = dot,
+                                demoMode = settings.demoMode,
+                                onOpen = { onOpenPathRadio(dot.key) },
+                            )
+                        }
+                        if (model.alongRoute.isNotEmpty()) {
+                            Text(
+                                "Present for the entire route",
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                            model.alongRoute.forEach { dot ->
+                                PathRadioRow(
+                                    index = null,
+                                    dot = dot,
+                                    demoMode = settings.demoMode,
+                                    onOpen = { onOpenPathRadio(dot.key) },
+                                    alongRoute = true,
+                                )
                             }
                         }
-                        val noted = model.dots.filter { it.observerNotes.trim().isNotEmpty() }
+                        val noted = (model.dots + model.alongRoute).filter { it.observerNotes.trim().isNotEmpty() }
                         if (noted.isNotEmpty()) {
                             Text(
                                 "Observer notes",
@@ -610,6 +618,49 @@ private fun SitChoiceRow(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PathRadioRow(
+    index: Int?,
+    dot: SitPathPlot.Dot,
+    demoMode: Boolean,
+    onOpen: () -> Unit,
+    alongRoute: Boolean = false,
+) {
+    val mac = MacUtil.screenMac(dot.mac, demoMode)
+    val kind = if (dot.kind == RadioKind.WIFI) "WIFI" else "BLE"
+    val tag = if (dot.extraAttention) "Extra attention" else ""
+    val fleets = dot.fleetNames.joinToString(" · ")
+    val title = buildString {
+        if (index != null) append("$index. ")
+        append("$kind  ${dot.label}")
+        if (dot.label != mac && mac.isNotBlank()) append("  $mac")
+    }
+    val rssi = if (alongRoute && (dot.rssiMin != 0 || dot.rssiMax != 0)) {
+        "${dot.rssiMax} to ${dot.rssiMin} dBm"
+    } else null
+    val sub = listOfNotNull(
+        tag.ifBlank { null },
+        fleets.ifBlank { null },
+        rssi,
+    ).joinToString(" · ")
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .padding(vertical = 4.dp),
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyMedium)
+        if (sub.isNotEmpty()) {
+            Text(
+                sub,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (dot.extraAttention) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
