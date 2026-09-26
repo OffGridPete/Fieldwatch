@@ -658,7 +658,7 @@ def story():
                 ["Turn a pattern family on or off", "Chapter 9"],
                 ["Read cleartext BLE bytes (temp, Remote ID, …)", "§9.6 Decode fields"],
                 ["Build my own decode map from a payload spec", "§9.6.1–§9.6.5"],
-                ["Overlay radios on ATAK / TAK (CoT feed)", "§5.8 (configure) and §12.15 (sit)"],
+                ["Overlay radios on ATAK / TAK (CoT feed)", "§5.8 (configure), §12.15 (sit), §12.16 (Remote ID)"],
                 ["Path / sit compare / log export", "§5.6, then §11"],
                 ["Custom name / Observer notes", "§5.5, Settings → Named radios"],
                 ["Followed / new arrival / hunt / cameras", "Chapter 12"],
@@ -1528,7 +1528,7 @@ def story():
             "<b>Signal</b> — RSSI plus min/max this session, claimed TX power, channel / MHz, Wi-Fi standard and channel width when the OS reports them.",
             "<b>BLE</b> — PHY (1M / 2M / Coded), connectable, advertising interval, decoded Flags, GAP Appearance, Class of Device (major / minor / service classes), named 16-bit service UUIDs, service data, manufacturer payload. Connectable stays Yes once any advertisement from this radio was connectable — scan responses from the same MAC are not connectable and no longer flip the line.",
             "<b>Known payloads</b> — iBeacon (UUID / major / minor / calibrated TX); Google Fast Pair (pairing-mode 24-bit model ID with a local name list, or account-key broadcast); Apple Continuity (AirPods/Beats model, battery, in-ear/in-case; Find My / Offline Finding; Nearby Info activity; Nearby Action; AirDrop; Handoff; Hey Siri; AirPlay; Instant Hotspot). Eddystone UID / URL / TLM / EID (service 0xFEAA) <b>accumulate</b> on this page: each frame type stays once heard, labeled on the raw line (UID, URL, TLM, EID). Frames do not replace each other. Microsoft Swift Pair / Nearby Sharing when present. Unknown 0xFF blobs stay company + hex — there is no official database of proprietary payloads.",
-            "<b>Decoded fields</b> — BLE only. If a matched signature has a field map (§9.6), labels and values from the <i>current</i> advertisement (temperature, model, Remote ID location, …). The heading carries the same hexagon as the Live display chip. Encrypted or short payloads stay hex; a note appears if a map exists but did not apply to this packet (Govee lights often only send a name). Matched signatures lists a hexagon next to names that have a map. Apple / Fast Pair / Eddystone / Microsoft stay in Known payloads and Maker data. Share as text, AI Export, and Debrief notable BLE print the same lines.",
+            "<b>Decoded fields</b> — Catalog maps read BLE manufacturer or service data (§9.6): labels and values from the <i>current</i> advertisement (temperature, model, Remote ID location, …). Remote ID Location on a Wi-Fi AP uses the OpenDroneID parser on vendor IE FA:0B:BC, not a catalog map, and shows here when those bytes decoded. The heading carries the same hexagon as the Live display chip. Encrypted or short payloads stay hex; a note appears if a map exists but did not apply to this packet (Govee lights often only send a name). Matched signatures lists a hexagon next to names that have a map. Apple / Fast Pair / Eddystone / Microsoft stay in Known payloads and Maker data. Share as text, AI Export, and Debrief notable BLE print the same lines.",
             "<b>Wi-Fi AP</b> — SSID (or Hidden), RSN/WPA/AKM/cipher from information elements in plain language, supported rates, capability string, vendor-specific IEs (OUI + type + payload) looked up in IEEE OUI/CID.",
             "<b>Session</b> — first/last seen, hit count, optional GPS (operator phone at hear-time), <b>every</b> matched signature (not capped at three), raw advertisement bytes, RSSI sparkline, 15-minute presence. Bookmark (top bar) watches this radio — see below. BLE: Hunt. Signature family card. Then Create signature from device.",
         ]),
@@ -1631,7 +1631,7 @@ def story():
         bullets([
             "<b>While it runs.</b> Live title FIELDWATCH · SIT and a status banner. Path, Debrief, Sit export, Compare’s this-sit side, and AI Export use this window, not 15 minutes. Filters, Hunt, TAK, and the 400-radio Live list stay as they are. Start and End sit stay on Reports.",
             "<b>After End sit.</b> The sit appears in the list on Reports. Pick it for Path / Debrief / Sit export / Compare this-sit, or leave Last 15 minutes selected. Rename / Delete sit under the list.",
-            "<b>Path</b> — North-up plot of the selected sit (open, saved, or last 15 minutes). Full write-up: §5.6.1.",
+            "<b>Path</b> — North-up plot of the selected sit (open, saved, or last 15 minutes). Leave Reports in front to watch an open sit grow, or the last-15-minute snake move. Full write-up: §5.6.1.",
             "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit, or last 15 minutes in RAM (~400 radios, hard ceiling 900). Hobby / as-is disclaimer at the top. Custom names replace advertised names. Observer notes is its own section after Where you were. Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk.",
             "<b>Compare (text) / Compare (PDF)</b> — This sit vs a second saved sit. Presence only: only here, only there, in both. Kind + MAC. Same window as Debrief. Observer notes after Windows. Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 3000). PDF overlays both walks when both have GPS.",
             "<b>Compare AI Export</b> — Paste-ready addendum for a chat. Embeds the onboard Compare, then overlap (both/union), Wi-Fi vs BLE in each bucket, RAND BLE among exclusives, exclusive Extra attention / Named radios, and Observer notes if any. Instructs the model not to reprint the lists. Sit report AI Export stays this window.",
@@ -1644,12 +1644,23 @@ def story():
         P("5.6.1 Path", "h3"),
         figure_wrap(
             "fig-path.png",
-            "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and bookmarked (blue) hear-points, scale bar.",
+            "Fig. 6 — Reports → Path. Drive through target area sit. Extra attention (red) at strongest RSSI. Privacy mode: north-up trace, no tiles, MAC tails masked.",
             "Reports → Path is a north-up plot of <b>this phone</b> for the sit you selected "
             "(open sit, a saved sit, or last 15 minutes). "
             "Tag detections with GPS must have been on, and the path must be about 10 m or more, "
             "or the card says so. Start sit for a longer track than Live’s last 15 minutes. "
             "Privacy mode still draws the line; coordinate text is masked.",
+        ),
+        P(
+            "<b>Watch it live.</b> Leave Reports in front while you walk or drive. The plot redraws "
+            "about every three seconds — not every GPS fix. A new point is stored when this phone "
+            "has moved about 10 m, or about five seconds have passed. The snake steps; it does not crawl. "
+            "Last 15 minutes (no sit running): a sliding 15-minute window. The tail drops off; the head "
+            "is labeled Now. An open sit: the line grows from Start to Now for that window. "
+            "While a sit is running, Path follows it (saved sits and Last 15 minutes are disabled until End sit). "
+            "Extra attention (red) and bookmarked (blue) dots appear as those radios are heard, "
+            "each KIND+MAC once at the strongest RSSI so far. Leave Reports and the last draw holds until you come back. "
+            "After End sit, pick the saved sit to review a still — the head is labeled End."
         ),
         P(
             "The line is this phone. Header counts stops. "
@@ -1840,7 +1851,7 @@ def story():
         bullets([
             "<b>It is</b> an overlay of radios Fieldwatch heard, at a coordinate Fieldwatch already has.",
             "<b>Heard here</b> means this phone’s GPS at the loudest hear so far (closest approach). The other radio is somewhere in earshot, not on that pin. Walking away does not drag it.",
-            "<b>Advertised position</b> means the BLE advertisement itself decoded to WGS84 (stock Remote ID Location; any custom map whose field ids are <font face='Courier'>latitude</font> / <font face='Courier'>longitude</font>). That pin is what the gadget claimed, not a Fieldwatch DF fix.",
+            "<b>Advertised position</b> means the radio encoded WGS84 (stock Remote ID Location on BLE UUID FFFA or Wi-Fi vendor IE FA:0B:BC; any custom map whose field ids are <font face='Courier'>latitude</font> / <font face='Courier'>longitude</font>). That pin is what the gadget claimed, not a Fieldwatch DF fix.",
             "<b>It is not</b> a Remote ID plugin, a drone tracker, direction-finding, pairing, GATT, or Wi-Fi monitor mode. It does not join the multicast group (send-only). When a radio leaves the feed, Fieldwatch sends a CoT with stale=now so ATAK drops it instead of waiting ~120 s. Privacy pause does not send those gone events (the feed just stops; ATAK stale-times out).",
             "<b>It is not</b> the Live display. Filters do not shrink the feed. A radio you hid on the Live display still publishes if it matches What to send and has a pin.",
         ]),
@@ -1849,23 +1860,9 @@ def story():
             "Every published event needs a coordinate. Fieldwatch picks in this order:"
         ),
         numbered([
-            "<b>Advertised payload.</b> If this radio has a sticky <font face='Courier'>latitude</font> + <font face='Courier'>longitude</font> from a decode map, that pair is the pin. GPS tagging can be off. Stock Remote ID uses this path.",
+            "<b>Advertised payload.</b> If this radio has a sticky <font face='Courier'>latitude</font> + <font face='Courier'>longitude</font> (catalog Decode fields on BLE, or the OpenDroneID parser on BLE FFFA / Wi-Fi RID), that pair is the pin. GPS tagging can be off. Stock Remote ID uses this path.",
             "<b>Operator GPS (heard here).</b> Otherwise a tagged hear on this radio. The TAK pin holds the loudest RSSI so far (closest approach), not the last hear. Settings → Tag detections with GPS must be on, and there must be a live fix (last-known older than 30 s is ignored, same as the log). GPS tagging off and no payload → nothing is sent for that radio.",
         ]),
-        P(
-            "Remote ID (ASTM F3411 / OpenDroneID on BLE UUID 0xFFFA) rotates message types. "
-            "A Location message has lat/lon/alt; the next packet is often Basic ID with none. "
-            "Fieldwatch keeps the last <i>valid</i> Location pair on that radio for the session, "
-            "so the ATAK pin does not blink off between types. Basic ID "
-            "<font face='Courier'>uas_id</font> sticks the same way — that is the TAK uid, "
-            "not the rotating BLE MAC — so one aircraft is one marker that <i>moves</i>. "
-            "Until the first Basic ID, the uid is still the MAC; then it jumps once and the "
-            "old MAC marker is dropped. The System message’s "
-            "<font face='Courier'>op_lat</font> / <font face='Courier'>op_lon</font> are the "
-            "<b>pilot / operator</b> location — they are a <i>second</i> pin (Orange), linked "
-            "to the aircraft, not a substitute for it. A 0,0 pair, a non-finite number, or a value outside "
-            "±90 / ±180 is rejected and does not clobber a previous good fix."
-        ),
         callout(
             "Heard-here is still this phone",
             "An Axon, Flipper, or Pineapple marker at your GPS is “I heard that radio here,” "
@@ -1876,15 +1873,67 @@ def story():
             "which may be kilometers from you.",
             "note",
         ),
-        P("5.8.3 Generic field ids — Remote ID works without a special case", "h3"),
+        P("5.8.3 Remote ID — BLE and Wi-Fi", "h3"),
         P(
-            "The publisher never asks “is this Remote ID?” It looks up stable decode field "
-            "<b>ids</b> on whatever signature matched. Stock Remote ID already maps Location "
-            "to <font face='Courier'>latitude</font>, <font face='Courier'>longitude</font>, "
-            "and <font face='Courier'>alt_geo</font> (i32 LE × 1e−7 degrees, protocol v2). "
-            "A custom signature that uses those same ids pins advertised position the same way. "
-            "There is no TAK checkbox on Decode fields. Labels can say “Aircraft lat”; the id "
-            "must be <font face='Courier'>latitude</font>."
+            "Remote ID is ASTM F3411 / OpenDroneID. It is a digital license plate the aircraft "
+            "broadcasts. Fieldwatch labels it on the Live display and, with TAK on, can pin the "
+            "<i>advertised</i> aircraft. Not a tail number. Not DF. Not a Remote ID plugin."
+        ),
+        P(
+            "Through 1.1.11 the stock row labeled BLE UUID FFFA and decoded protocol-2 Location "
+            "on that advertisement. 1.1.12–1.1.13 add Wi-Fi vendor IE FA:0B:BC as identity, "
+            "decode the same 25-byte messages from that IE, protocol versions 0–2, heading and "
+            "speed on the ATAK track, and a Wi-Fi-only aircraft pin when Location is in the beacon."
+        ),
+        P("<b>Two ways Fieldwatch hears it.</b>", "body_left"),
+        bullets([
+            "<b>BLE.</b> UUID FFFA in service data. One 25-byte message per advertisement. Types rotate: Basic ID, Location, System, Self ID, Operator ID. Protocol versions 0, 1, and 2 decode. The BLE address often rotates; Basic ID <font face='Courier'>uas_id</font> is the sticky identity.",
+            "<b>Wi-Fi.</b> A normal AP beacon with vendor IE FA:0B:BC type 0x0D. Android 11+ exposes that IE; Android 10 does not, so a Wi-Fi-only drone will not label on Android 10. A Wi-Fi beacon can pack several 25-byte messages in one frame. Identity is the vendor IE. Decode is the OpenDroneID parser — the same packed messages as BLE — not a catalog Decode fields map on the IE.",
+        ]),
+        P("<b>What still misses.</b>", "body_left"),
+        bullets([
+            "Wi-Fi Neighbor Awareness Networking (NAN) stuffed beacons. Stock Android does not give those reliably.",
+            "Fast fly-bys. OS Wi-Fi scan throttle. A hover or slow pass is more likely.",
+            "Android 10 for Wi-Fi RID. minSdk is still 29; vendor IEs need API 30.",
+            "STA / client frames, probe requests, monitor mode, Wi-Fi Direct unless it already appears in a ScanResult. Fieldwatch still only sees AP beacons on Wi-Fi.",
+        ]),
+        P(
+            "<b>What sticks.</b> A Location message has lat/lon/alt; the next BLE packet is often "
+            "Basic ID with none. Fieldwatch keeps the last <i>valid</i> Location pair on that radio "
+            "for the session, so the ATAK pin does not blink off between types. Basic ID "
+            "<font face='Courier'>uas_id</font> sticks the same way — that is the TAK uid, "
+            "not the rotating BLE MAC — so one aircraft is one marker that <i>moves</i>. "
+            "Until the first Basic ID, the uid is still the MAC; then it jumps once and the "
+            "old MAC marker is dropped. The System message’s "
+            "<font face='Courier'>op_lat</font> / <font face='Courier'>op_lon</font> are the "
+            "<b>pilot / operator</b> location — a <i>second</i> pin (Orange), linked to the "
+            "aircraft, not a substitute for it."
+        ),
+        P(
+            "<b>Track.</b> Location heading is the direction byte plus the east/west flag "
+            "(+180° when that flag is set). Horizontal speed is 0.25 m/s per count, or "
+            "0.75 m/s per count plus an offset, from the SpeedMult bit. Invalid direction or "
+            "speed is 255 and is omitted. Those values go in the ATAK "
+            "<font face='Courier'>track</font> so the aircraft icon can point and show motion. "
+            "Pilot and heard-here pins have no track. Vertical speed and baro altitude decode "
+            "when present. A 0,0 pair, a non-finite number, or a value outside ±90 / ±180 is "
+            "rejected and does not clobber a previous good fix."
+        ),
+        P(
+            "<b>Catalog vs parser.</b> Catalog Decode fields maps still read BLE manufacturer "
+            "or service data. Stock Remote ID’s map on FFFA is that path. Wi-Fi RID uses the "
+            "OpenDroneID parser on vendor IE FA:0B:BC type 0x0D. TAK Payload location reads "
+            "the sticky ids either way. There is no generic vendor-IE decode map for other "
+            "signatures."
+        ),
+        P("5.8.4 Field ids TAK looks up", "h3"),
+        P(
+            "TAK looks up stable decode field <b>ids</b>, not the signature name. Stock Remote ID "
+            "fills those ids from the OpenDroneID parser (BLE FFFA and Wi-Fi FA:0B:BC) and from "
+            "the catalog map on BLE service data. Protocol versions 0–2 decode. A custom BLE map "
+            "that uses the same ids pins advertised position the same way. There is no TAK checkbox "
+            "on Decode fields. Labels can say “Aircraft lat”; the id must be "
+            "<font face='Courier'>latitude</font>."
         ),
         table(
             ["Field id", "Role"],
@@ -1893,6 +1942,8 @@ def story():
                 ["longitude (aliases lon, lng)", "Advertised WGS84 longitude. Required with latitude."],
                 ["alt_geo (aliases altitude, alt, hae)", "Optional HAE meters for the CoT point. Sticky with the lat/lon pair."],
                 ["op_lat / op_lon (aliases operator_lat / operator_lon)", "Remote ID System operator (pilot) location. Second TAK pin, linked to the aircraft. Not the aircraft pin. Do not reuse these ids for the aircraft."],
+                ["heading (aliases course, direction)", "Location heading degrees. TAK track course on the aircraft pin. OpenDroneID uses direction + east/west flag, not a ×2 scale."],
+                ["speed (aliases hspeed)", "Horizontal speed m/s. TAK track speed on the aircraft pin."],
                 ["uas_id (alias serial)", "Remote ID Basic ID. Sticky. TAK aircraft uid when at least four characters after cleaning."],
                 ["self_id", "Remote ID Self ID. Sticky. Preferred advertised callsign when present."],
             ],
@@ -1906,7 +1957,7 @@ def story():
             "i32 LE, scale 1e−7, unit °). Save. Settings → TAK / CoT feed on, Payload location "
             "chip on. No other TAK setup. §9.6.3."
         ),
-        P("5.8.4 Turn it on — step by step", "h3"),
+        P("5.8.5 Turn it on — step by step", "h3"),
         numbered([
             "Put the phone and the TAK client on the <b>same LAN</b> if you will use multicast (239.2.3.1). Cellular and most guest Wi-Fi will not deliver that group. Some access points filter multicast — then use unicast.",
             "On ATAK CIV: Manage Inputs should show a UDP CoT listener (typically 10011 on 0.0.0.0). Stock ATAK also listens to 239.2.3.1:6969 for self-SA. You do not install a Fieldwatch plugin.",
@@ -1915,7 +1966,7 @@ def story():
             "Leave Extra attention and Payload location on (they ship on). That is the out-of-the-box set: “!” families at your GPS, plus any radio that advertised lat/lon (Remote ID) at that advertised point.",
             "Scan. An Extra attention radio with a GPS fix, or a Remote ID Location packet, should appear on the TAK map within a few seconds. Heard-here callsigns end in (here). Remote ID callsign is Self ID, else UAS ID, else the signature name. Settings shows last send count, dest, and time under the host fields.",
         ]),
-        P("5.8.5 Host and port", "h3"),
+        P("5.8.6 Host and port", "h3"),
         table(
             ["Setting", "Default", "What to put"],
             [
@@ -1933,7 +1984,7 @@ def story():
             "Fieldwatch already has install-time INTERNET (Online place names). The feed uses that permission for UDP. There is no Fieldwatch cloud; packets go only to the host you typed.",
             "Restore default signatures &amp; presets resets host/port and turns the feed off.",
         ]),
-        P("5.8.6 What to send", "h3"),
+        P("5.8.7 What to send", "h3"),
         P(
             "Four independent chips, shown only while the master switch is on. A radio publishes "
             "when <i>any</i> selected chip matches <i>and</i> a pin exists. Unmatched radios "
@@ -1943,7 +1994,7 @@ def story():
             ["Chip", "Ships", "Who is selected"],
             [
                 ["Extra attention", "On", "Any matched signature whose Extra attention text is not empty (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus). Pin is usually heard-here (your GPS)."],
-                ["Payload location", "On", "Any radio with a sticky advertised lat/lon from a decode map. Stock Remote ID is the reason this defaults on: that row has no Extra attention mark, so without this chip it would never publish. Custom maps with the same field ids are included."],
+                ["Payload location", "On", "Any radio with a sticky advertised lat/lon from a decode map or the OpenDroneID parser. Stock Remote ID is the reason this defaults on: that row has no Extra attention mark, so without this chip it would never publish. BLE FFFA and Wi-Fi FA:0B:BC both qualify. Custom BLE maps with the same field ids are included."],
                 ["Watchlist", "Off", "Bookmarked signatures, and Named radios whose Alert is on. Named radios with Alert off (label only) stay off the feed."],
                 ["All signatures", "Off", "Every labeled radio. A plaza will flood ATAK. Use it for a short sit, not a walk."],
             ],
@@ -1956,7 +2007,7 @@ def story():
             "When many radios qualify at once, Fieldwatch sends at most about 24 per tick, Extra "
             "attention and payload pins first, then louder RSSI."
         ),
-        P("5.8.7 Privacy, GPS tagging, and when nothing is sent", "h3"),
+        P("5.8.8 Privacy, GPS tagging, and when nothing is sent", "h3"),
         bullets([
             "<b>Master off</b> (default) — no datagrams.",
             "<b>Privacy mode on</b> — the feed pauses even if the master is on. Settings shows a line under the switch. Fieldwatch will not send masked MACs or masked coordinates. Turn Privacy mode off to publish; the screen can stay on Privacy for screenshots while you are not feeding TAK.",
@@ -1977,12 +2028,13 @@ def story():
             "Missing the 24-per-tick cap or a GPS blip does not count as gone. Privacy pause does not "
             "send those events."
         ),
-        P("5.8.8 What ATAK shows", "h3"),
+        P("5.8.9 What ATAK shows", "h3"),
         bullets([
             "<b>uid</b> — Remote ID with a sticky UAS ID is <font face='Courier'>FIELDWATCH-RID-</font> plus that id (one aircraft, one moving marker). Otherwise <font face='Courier'>FIELDWATCH-BLE-</font> or <font face='Courier'>FIELDWATCH-WIFI-</font> plus the MAC without colons. Pilot pin is <font face='Courier'>FIELDWATCH-PILOT-</font> plus the same id. A rotated BLE address without a UAS ID is still a new marker.",
             "<b>type</b> — advertised drone-class (Remote ID / DJI class) is <font face='Courier'>a-u-A-M-H-Q</font> (unknown UAV, Yellow). Heard-here Extra attention is <font face='Courier'>a-u-G</font> (Maroon). Pilot is <font face='Courier'>a-u-G</font> (Orange). Other ground is Cyan. Not friendly/hostile affiliation.",
             "<b>callsign</b> — Named radio label if that MAC is named; else advertised Self ID / UAS ID; else an Extra attention signature name; else the first matching signature; else the advertised name; else the MAC tail. Heard-here callsigns end in (here).",
             "<b>point</b> — lat/lon as above. <font face='Courier'>hae</font> is advertised altitude when known, else the CoT unknown (9999999). ce/le are unknown.",
+            "<b>track</b> — advertised aircraft only. <font face='Courier'>course</font> is heading degrees, <font face='Courier'>speed</font> is m/s, when Location had them. Pilot and heard-here pins omit track. Omitted if neither course nor speed.",
             "<b>remarks</b> — A short card (newlines) when you inspect the marker: callsign, Wi-Fi or BLE, full MAC, RSSI dBm, Wi-Fi channel when known, advertised position / heard here (operator GPS) / operator (pilot) position, UAS ID, advertised name if it is not already the callsign, up to three signature names, Extra attention text. Cap about 800 characters. Map label is still the 32-character callsign. Privacy mode pauses the feed, so remarks are not sent while it is on.",
             "<b>how</b> — <font face='Courier'>m-g</font> (machine / GPS). Time/start/stale are UTC.",
         ]),
@@ -1991,16 +2043,17 @@ def story():
             "stays empty: Privacy mode, master off, wrong LAN, AP multicast filter, or no "
             "qualifying radio with a pin. §14 troubleshooting."
         ),
-        P("5.8.9 Limits you will hit", "h3"),
+        P("5.8.10 Limits you will hit", "h3"),
         bullets([
-            "Stock Android does not give Wi-Fi Neighbor Awareness Networking / stuffed beacons reliably. Many Remote ID aircraft also broadcast Wi-Fi; Fieldwatch’s Remote ID row is the BLE UUID 0xFFFA advertisement. A miss on BLE is a miss on TAK.",
+            "Stock Android does not give Wi-Fi Neighbor Awareness Networking / stuffed beacons reliably. Many Remote ID aircraft also broadcast Wi-Fi. Fieldwatch hears BLE FFFA and AP-beacon vendor IE FA:0B:BC type 0x0D (Android 11+). NAN still misses. A Wi-Fi-only drone on Android 10 will not label. A Wi-Fi beacon with Location can still pin the aircraft when BLE FFFA is quiet.",
+            "OS Wi-Fi scan throttle. A hover or slow pass is more likely than a fast fly-by.",
             "No DF, no range. Heard-here is the loudest operator GPS while that radio was in earshot, not a bearing. Advertised position is whatever the gadget encoded, including a bad GPS on the aircraft.",
             "No pairing, no GATT, no encrypted ads. If lat/lon only exist after a connect, Fieldwatch will never pin them.",
             "A randomized BLE MAC is a new uid when it rotates, unless a sticky UAS ID is already on that radio (Remote ID Basic ID). Phones and bag tags do not get that id.",
             "All signatures in a plaza will load ATAK with café APs and headphones. That is the chip working. Turn it off.",
             "Multicast does not traverse the internet. A teammate on LTE will not see 239.2.3.1 from your phone. This feed is UDP; it does not log into a TAK server. Put ATAK on the LAN, or prove whether that ATAK relays injected CoT to the server.",
         ]),
-        P("5.8.10 Field checklist", "h3"),
+        P("5.8.11 Field checklist", "h3"),
         P(
             "Feed status under the host fields shows pins on the feed (what Fieldwatch is keeping on ATAK), sends this tick, dest, error, and time. A send count that flashes and returns to 0 is the keep-alive hold (about 10 s, or 30 m for advertised / this-phone) — the on-the-feed number should stay. A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
             "pentest) is the same switch with Payload location optional. For decode-map ids, §9.6."
@@ -3009,7 +3062,7 @@ def story():
             "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi). "
             "Osmo Action / Pocket / 360 / Nano are the Osmo row (0x08AA model IDs 0x0006–0x0022 plus OsmoAction* names), not DJI. "
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
-            "In-flight drones also hit <b>Remote ID</b> (ASTM UUID 0xFFFA). Skydio / Autel / Parrot "
+            "In-flight drones also hit <b>Remote ID</b> (BLE UUID FFFA and Wi-Fi vendor IE FA:0B:BC). Skydio / Autel / Parrot "
             "ANAFI-Bebop / HOVERAir are name rows; Autel default-ssid and Parrot company 0x0043 are not used."
         ),
         P(
@@ -3042,7 +3095,7 @@ def story():
             "many cars never put that company ID in an advertisement, and Classic Bluetooth is invisible."
         ),
         P(
-            "<b>Drones vs surveillance.</b> Drones is Remote ID (UUID FFFA), DJI, Skydio, Autel, Parrot, "
+            "<b>Drones vs surveillance.</b> Drones is Remote ID (BLE FFFA and Wi-Fi FA:0B:BC), DJI, Skydio, Autel, Parrot, "
             "HOVERAir. Osmo / Insta360 action cameras are Cameras, not Drones. Surveillance is poles, ALPR, and commercial readers — not aircraft and not campus access points. "
             "Same amber chip; class splits them."
         ),
@@ -3102,6 +3155,7 @@ def story():
             "Fig. 18 — Signature editor (Ruuvi).",
             "After a signature matches a BLE advertiser, Fieldwatch can map <b>cleartext</b> bytes "
             "in that advertisement to labels — temperature, model, Remote ID location, and so on. "
+            "Wi-Fi Remote ID is the OpenDroneID parser on vendor IE FA:0B:BC, not this editor (§5.8.3). "
             "Identity match stays on the rule list: Decode fields do not help the matcher. "
             "The Live display does not parse the bytes (that path stays cheap). A small hexagon "
             "in the signature chip — same color as the name — means that signature has a map; "
@@ -3188,7 +3242,7 @@ def story():
                 ["Scale / Add", "Numeric types only. After the integer/float read: modulo (if set), then × scale, then + add. Temperature often needs scale 0.01 or 0.005. Pressure that is stored as (hPa − 500)×100 uses scale 0.01 and add 500."],
                 ["Only if…", "Skip this field unless a gate holds (§9.6.4)."],
                 ["Named values…", "Map a raw number or hex to a word (§9.6.4)."],
-                ["More", "ID (stable key; leave the slug unless you export maps or want TAK advertised-position pins). TAK / CoT looks up ids, not labels: latitude + longitude (optional alt_geo) pin the gadget; op_lat / op_lon are the Remote ID pilot and are not the aircraft pin. §5.8.3. Modulo is remainder before scale — Govee packed humidity is modulo 1000."],
+                ["More", "ID (stable key; leave the slug unless you export maps or want TAK advertised-position pins). TAK / CoT looks up ids, not labels: latitude + longitude (optional alt_geo) pin the gadget; op_lat / op_lon are the Remote ID pilot and are not the aircraft pin. §5.8.4. Modulo is remainder before scale — Govee packed humidity is modulo 1000."],
             ],
             [1.45 * inch, 5.05 * inch],
         ),
@@ -3222,7 +3276,7 @@ def story():
             "own gate. If the gate fails, that field is omitted; the rest still run."
         ),
         bullets([
-            "<b>equals</b> — bytes at Offset / Length must match Hex. Ruuvi Format 5: offset 0, length 1, hex 05. Remote ID location: the message-type nibble is packed with protocol 2, so the header byte is 12 for location (type 1, proto 2).",
+            "<b>equals</b> — bytes at Offset / Length must match Hex. Ruuvi Format 5: offset 0, length 1, hex 05. Remote ID location on the catalog map: the message-type nibble is packed with the protocol version, so the header is 10 / 11 / 12 for location (type 1, proto 0–2). The OpenDroneID parser reads the same versions on BLE and Wi-Fi.",
             "<b>not equals</b> — skip when those bytes are Hex (a reserved/invalid marker).",
             "<b>mask</b> — every 1-bit in Hex must be set in the payload slice: (payload AND Hex) equals Hex. Use it for flag bytes when you only care that a bit is on.",
             "<b>payload length</b> (When → length) — the whole source payload must be exactly Bytes long. Offset/Hex are ignored. Govee H5074 is 7 bytes; H5075 is 5 or 6. Same company ID, different length, different fields.",
@@ -3292,7 +3346,7 @@ def story():
             "Named values are for enums and flags, not for scaling. Scale 0.01 is not a named value of “°C”.",
             "Do not expect GATT. If the interesting number only appears after a connect (modern Fitbit steps, many locks), Fieldwatch will never see it.",
             "Open a stock row (Ruuvi, Remote ID, Govee) and read its cards before you type a new map. The editor is the spec.",
-            "If you want TAK to pin advertised position, set the field IDs to latitude and longitude (scale as the spec). Labels can be anything. op_lat / op_lon are not the pin. §5.8.3.",
+            "If you want TAK to pin advertised position, set the field IDs to latitude and longitude (scale as the spec). Labels can be anything. op_lat / op_lon are not the pin. §5.8.4.",
             "After Save, open a live radio. If half the values are missing, the advertisement is a different format or a scan response — add Only if, or accept that this packet is short.",
         ]),
     ]
@@ -4008,10 +4062,11 @@ def story():
                 ["Walking — who is with me", "§12.2 Moving with you on the Live display; Debrief still writes the last-15-minute tracking line even if you leave that filter or change view. Need GPS tagging and ~50 m of path. Walking uses a tight ~75 m still-here window (§8.5)."],
                 ["Driving — who is with me", "Same filter. “Still here” grows with speed so a car tag does not flash between advertisements; passing roadside radios still fail the trail-moved gates. §8.5, §12.2."],
                 ["Sitting a room — who just arrived", "§12.3 New detections only. Mark seen after the room is the baseline. Reset seen when you change rooms."],
-                ["ATAK overlay (Remote ID / Extra attention)", "§5.8 configure, §12.15 sit. Settings → TAK / CoT feed. Extra attention + Payload location. Same Wi-Fi LAN. Privacy mode off."],
+                ["ATAK overlay (Remote ID / Extra attention)", "§5.8 configure, §12.15 sit, §12.16 hear RID. Settings → TAK / CoT feed. Extra attention + Payload location. BLE FFFA and Wi-Fi FA:0B:BC. Same Wi-Fi LAN. Privacy mode off."],
                 ["Long sit / parked vehicle", "Balanced or Saver. Timeline. RSSI floor −80 if unreadable. Logging on. Watchlist, not a stare."],
                 ["Drive, then arrive home", "Moving with you is BLE only — house APs stay off. If a bag tag still does not show, the path was too short or GPS only stamped at the destination."],
-                ["Long drive (several km)", "Do not wait for one Debrief at the end. Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). City RF can fill the ~400 live-set cap in a few kilometers. Radios moving with you stay in each report; roadside unnamed BLE will not. Log export is the hour-long file."],
+                ["Watch the path grow", "Reports → Path, stay on that tab. Open sit grows Start → Now; last 15 minutes is a sliding snake (tail drops off). Red / blue dots plot Extra attention and bookmarked radios as you hear them. Redraws about every 3 s. §5.6.1."],
+                ["Long drive (several km)", "Do not wait for one Debrief at the end. Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). City RF can fill the ~400 live-set cap in a few kilometers. Radios moving with you stay in each report; roadside unnamed BLE will not. Log export is the hour-long file. Path on Reports can stay in front for the live trace."],
                 ["List too fast to tap", "Pause. Then detail. Resume. Or Display → Subtitle None so more of the list fits without Pause."],
                 ["Fit the row to the job", "§5.3. Display is look (Title/Subtitle, extras). Filters are who. Plaza: Subtitle None. Copy MAC: Title → MAC. Channel sit: Frequency on."],
                 ["Write the sit", "§12.12. Debrief for a sit report; Sit export for that window’s roster; AI Export for a chat prompt; Log export for the session tape. Long drive: Debrief each stop (§11.4.1)."],
@@ -4229,8 +4284,10 @@ def story():
             "<b>What you should see.</b> Within a few seconds of a qualifying hear, ATAK plots "
             "a marker. Extra attention (Axon, glasses, Flipper, Pineapple, …) sits at <i>your</i> "
             "GPS at the loudest hear — walk toward it and the pin updates; walk away and it stays. "
-            "Remote ID Location sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV); the next Basic ID "
+            "Remote ID Location sits at the <i>advertised</i> aircraft lat/lon (Yellow UAV) from BLE FFFA "
+            "or a Wi-Fi AP beacon with vendor IE FA:0B:BC (Android 11+). The next Basic ID "
             "packet does not clear it and, once UAS ID is heard, that aircraft is one marker that moves. "
+            "Heading and speed from Location go in the ATAK track so the icon can point. "
             "A decoded pilot location is a second Orange pin. Heard-here callsigns end in (here). "
             "Tap a marker for remarks (name, MAC, RSSI, signatures). "
             "A radio that leaves is dropped on ATAK instead of sitting two minutes.",
@@ -4246,20 +4303,73 @@ def story():
                 ["Café APs filled the map", "All signatures is on. Turn it off. Extra attention + Payload location is the field default."],
                 ["Marker vanished after ~2 min", "The radio left earshot, scanning stopped, or Fieldwatch sent a gone event. Start scanning again if you still want it."],
                 ["I want one bag tag on the map", "Watchlist On, bookmark that MAC (Alert on). Extra attention can stay on. Do not use All signatures."],
-                ["Custom sensor with lat/lon in the ad", "Decode fields: ids latitude and longitude (scale as the spec). Payload location On. No TAK checkbox. §5.8.3, §9.6."],
+                ["Custom sensor with lat/lon in the ad", "Decode fields: ids latitude and longitude (scale as the spec). Payload location On. No TAK checkbox. §5.8.4, §9.6."],
             ],
             [2.0 * inch, 4.5 * inch],
         ),
         P(
             "<b>What it is not.</b> Not a team SA substitute (Fieldwatch is not your self-marker). "
             "Not Wi-Fi NAN Remote ID. Not encrypted ads. Not a range ring. Filters, Pause, and "
-            "Display do not change the feed. Stop on the scan notification stops sending.",
+            "Display do not change the feed. Stop on the scan notification stops sending. "
+            "A Wi-Fi beacon with Location can still pin the aircraft when BLE FFFA is quiet.",
             "body_left",
         ),
         P(
             "<b>Write it down.</b> ATAK is the live overlay. Fieldwatch still has Debrief / Log export "
             "for the sit file. The CoT remarks are not a report. If you share a screen of the "
             "map, remember the MAC is full — Privacy mode was off to publish.",
+            "body_left",
+        ),
+        P("12.16 Hear Remote ID (BLE and Wi-Fi)", "h2"),
+        callout(
+            "Advertised position, not DF",
+            "A Remote ID pin is what the aircraft encoded. It may be kilometers from you. "
+            "Fieldwatch does not range or direction-find. §5.8.3.",
+            "note",
+        ),
+        P(
+            "<b>Question.</b> Can Fieldwatch label an in-flight drone’s digital license plate, "
+            "and when does that become a moving pin on ATAK?",
+            "body_left",
+        ),
+        P("<b>Setup.</b>", "body_left"),
+        numbered([
+            "Android 11+ if you care about Wi-Fi RID (vendor IEs). Android 10 still hears BLE FFFA.",
+            "Live display: All traffic, High performance. Do not filter Drones only if you also want Extra attention on the same walk.",
+            "For TAK: Privacy mode Off, Payload location On, Extra attention On. GPS tagging is not required for advertised aircraft pins. §12.15.",
+            "A hover or slow pass beats a fast fly-by. OS Wi-Fi scans are batched.",
+        ]),
+        P(
+            "<b>What you should see.</b> A Remote ID chip on the Live display when BLE FFFA or "
+            "a Wi-Fi AP beacon with vendor IE FA:0B:BC is in earshot. Detail Decoded fields can "
+            "show UAS ID, Self ID, Location lat/lon/alt, heading, and operator lat/lon as those "
+            "message types rotate in. On TAK, Location becomes a Yellow UAV at the advertised "
+            "point; Basic ID sticks the uid so one marker moves; System can add an Orange pilot "
+            "pin; track course/speed point the aircraft icon. Skydio / Autel / Parrot name rows "
+            "are still the setup/RC radios — in-flight license plate is this Remote ID row.",
+            "body_left",
+        ),
+        table(
+            ["If this…", "Then…"],
+            [
+                ["Chip on BLE, nothing on Wi-Fi", "Expected. Many aircraft do both; Fieldwatch’s Wi-Fi path is AP beacons with FA:0B:BC, not NAN."],
+                ["Wi-Fi AP labeled Remote ID, no lat/lon yet", "Wait for a Location message in that beacon pack. Basic ID has the UAS ID, not the pin."],
+                ["Nothing on Android 10 Wi-Fi", "Expected. Vendor IEs need Android 11+. BLE FFFA still works."],
+                ["Fast pass, no Wi-Fi chip", "OS scan throttle. Slow down or hover. BLE may still catch FFFA."],
+                ["Cloud of BLE dots on ATAK", "UAS ID not heard yet. First Basic ID jumps the uid onto one marker."],
+                ["Pin is kilometers away", "Advertised GPS on the aircraft. Not a Fieldwatch fix."],
+            ],
+            [2.0 * inch, 4.5 * inch],
+        ),
+        P(
+            "<b>What it is not.</b> Not a tail number. Not DJI OcuSync. Not Wi-Fi NAN. "
+            "Not a catalog Decode fields map on vendor IEs — only this OpenDroneID parser. "
+            "Protocol 0–2 decode; a different packing still misses.",
+            "body_left",
+        ),
+        P(
+            "<b>Write it down.</b> Detail → Share as text for that radio (Decoded fields). "
+            "Sit: Reports → Debrief. TAK is the live overlay (§12.15). Privacy mode off to publish.",
             "body_left",
         ),
     ]
@@ -4410,19 +4520,20 @@ def story():
             ["BLE", "Bluetooth Low Energy. Advertisements are connectionless broadcast packets."],
             ["Classic Bluetooth", "BR/EDR (headsets, file-send, HC-05/HC-06 serial). Fieldwatch does not run Classic inquiry. A dual-mode BLE advertiser may claim Classic in flags or CoD; that is not a Classic scan. §2.2, §3.5, §7.2."],
             ["Signature", "A named bundle of match rules plus optional cluster flags."],
-            ["Decode fields", "Optional BLE cleartext map on a signature (Signatures → row → Decode fields). After the rules hit, device detail / Share / AI Export / Debrief notable BLE parse manufacturer or service-data bytes into labels (temp, model, Remote ID, …). TAK / CoT also reads numeric ids latitude / longitude for advertised-position pins. Not a matcher. Not pairing or GATT. Encrypted ads stay hex. The Live display does not parse these; a hexagon on that signature’s chip means a map exists (§5.4). Byte 0 is after the company ID (manufacturer) or the first service-data byte. How to build a map: §9.6.1–§9.6.5. Stock maps: §9.6.6. TAK ids: §5.8.3."],
+            ["Decode fields", "Optional BLE cleartext map on a signature (Signatures → row → Decode fields). After the rules hit, device detail / Share / AI Export / Debrief notable BLE parse manufacturer or service-data bytes into labels (temp, model, Remote ID, …). TAK / CoT also reads numeric ids latitude / longitude for advertised-position pins. Wi-Fi Remote ID uses the OpenDroneID parser on vendor IE FA:0B:BC, not this editor. Not a matcher. Not pairing or GATT. Encrypted ads stay hex. The Live display does not parse these; a hexagon on that signature’s chip means a map exists (§5.4). Byte 0 is after the company ID (manufacturer) or the first service-data byte. How to build a map: §9.6.1–§9.6.5. Stock maps: §9.6.6. TAK ids: §5.8.4. Remote ID: §5.8.3."],
             ["Decode hexagon", "Small hexagon inside a signature name chip (same color as the name) when that signature has a Decode fields map. Dual-chip radios mark only the mapped name(s). Catalog check, not a parse of this packet. Hidden when Display → Signature names is off. Extra attention “!”, the cyan Observer notes chip, and the phosphor alerted bell are separate chips. Same mark on the Signatures list, By class signature rows, and detail Decoded fields. §5.4, §9.6."],
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
             ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
-            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
+            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
-            ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID Location. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. GPS tagging can be off."],
-            ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark)."],
+            ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo), filled by a catalog map or the OpenDroneID parser (BLE FFFA / Wi-Fi FA:0B:BC). Stock Remote ID Location. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
+            ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. BLE UUID FFFA and Wi-Fi vendor IE FA:0B:BC type 0x0D. OpenDroneID parser reads protocol 0–2 Location / Basic ID / System / Self ID. TAK Payload location pins advertised aircraft; track course/speed when present. Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
+            ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon from a decode map or the OpenDroneID parser. Required for stock Remote ID (no Extra attention mark). BLE FFFA and Wi-Fi FA:0B:BC both qualify."],
             ["Reports", "Bottom tab. Sits (optional named window), Path, Debrief (text/PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Config for GPS, place names, and logging on/off stays on Settings. §5.6."],
             ["Sit (named)", "Optional window of watching, started from Reports → Start sit. Path, Debrief, Compare this-sit, and AI Export use that start/end instead of the last 15 minutes in RAM, and keep radios the Live list has dropped. One at a time. Live list, Filters, Hunt, TAK unchanged if you never start one. Not DF. §5.6."],
-            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and bookmarked (blue) dots at strongest RSSI. Observer notes only if that radio is bookmarked. Thick green = stay. Time ticks. OSM tiles when Online place names and maps is on and the phone is online; otherwise the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
+            ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Leave Reports in front to watch an open sit grow, or the last-15-minute snake move; the plot redraws about every three seconds. Extra attention (red) and bookmarked (blue) dots at strongest RSSI. Observer notes only if that radio is bookmarked. Thick green = stay. Time ticks. Head labeled Now while live, End on a saved sit. OSM tiles when Online place names and maps is on and the phone is online; Privacy mode or offline: the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
             ["Sit export", "Reports card under Sit report. Same Format chips as Log export, different file: one row per unique radio in the selected sit (or last 15 minutes). Logging can be off. GPX/KML include the operator path as a track. Not the rotating log. Privacy mode does not mask the file. §5.6.2."],
             ["Log export", "Reports card. Share/Save of the rotating session file (JSON lines on disk; CSV / GPX / KML / WiGLE at export). One line per hear while logging was on. Needs Write to disk. Clearing the log does not delete sits. §5.6.3, §11.6."],
             ["Observer notes", "Optional 280-character field on a Named radio (same KIND+MAC as the custom name). Cyan block on detail; cyan notes chip on Live next to Extra attention “!”. Debrief lists them after Where you were; Compare after Windows. Path lists the note only if that radio is bookmarked. AI Export lists heard radios with the note. Not catalog Notes and not Extra attention gold. BLE privacy addresses hide the pencil. Settings backup includes the note. §5.5, §5.6."],
@@ -4557,8 +4668,8 @@ def story():
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
             ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
-            ["Remote ID", "BLE UUID 0xFFFA (ASTM F3411 / FAA Remote ID)", "In-flight digital license plate. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. Not FIDO FFF9 or Thread FFFB. Wi-Fi NAN often misses on stock Android. Not a tail number. Drones class. Decode fields: Open Drone ID app/counter/message; protocol 2 Basic ID / location / Self ID / System / Operator ID (§9.6). Stock bookmark."],
-            ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. RID in flight is often Wi-Fi beacon (easy to miss) — UUID FFFA is the Remote ID row. Drones class. Stock bookmark."],
+            ["Remote ID", "BLE UUID FFFA; Wi-Fi vendor IE FA:0B:BC (ASTM F3411 / FAA Remote ID)", "In-flight digital license plate. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. Not FIDO FFF9 or Thread FFFB. Wi-Fi NAN still misses; AP beacons with FA:0B:BC type 0x0D decode on Android 11+. Not a tail number. Drones class. OpenDroneID parser: protocol 0–2 Basic ID / location (lat/lon/alt_geo/heading/speed) / Self ID / System (op_lat / op_lon = pilot). TAK Payload location plus track course/speed. §5.8.3, §9.6, §12.16. Stock bookmark."],
+            ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],
             ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
             ["Parrot", "Names ANAFI* / Bebop*", "Parrot drones. Not company 0x0043 (automotive). Disco* not used. Drones class. Stock bookmark."],
             ["HOVERAir", "Wi-Fi Hover* / HoverX1_*; names HOVERAir*", "Zero Zero Robotics flying cameras. Drones class. Stock bookmark."],
@@ -4630,6 +4741,7 @@ def story():
             ["WAVLINK", "Wi-Fi WAVLINK* plus Winstars IEEE OUI 80:3F:5D", "Consumer APs. ISP / routers class."],
             ["Samsung SmartTags", "Names SmartTag / Smart Tag / Galaxy SmartTag; UUID FD5A; mfg 0x0075", "FD5A is the usual SmartTag service."],
             ["Tile Trackers", "Name Tile; UUIDs FEED, FEDD; mfg 0x00C7", "Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
+            ["Google Find Hub", "BLE service FEAA, data prefix 40 (nearby) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. Separated mode can hold a MAC about a day. Finder tags class. Decode: mode plus 20-byte EID. Chipolo / Pebblebee / moto tag name rows may dual-label."],
             ["iBeacon", "Apple 0x004C type 0x02 length 0x15; names *iBeacon*", "Protocol, not a vendor. Dropped when a product signature already labeled the radio (Sony TV, Tesla phone-key). Minew / Estimote / Kontakt / Target Atrius basket still dual-label. Not Nearby Info 0x10 / AirTags 0x12 / AirPods 0x07. Not Eddystone FEAA."],
             ["Target Atrius basket", "Apple iBeacon UUID 5993A94C-7D97-4DF7-9ABF-E493BFD5D000; service 0xB1BB", "Target shopping-basket / Atrius tags. Two stores: hundreds of unnamed radios, unique major/minor, TX 0xC3. Not Acuity company 0x0346 on those radios. Dual-labels with iBeacon. Retail beacons class."],
             ["Minew", "IEEE OUI AC:23:3F; names Minew*", "Shenzhen Minew beacons / sensors. Field AC:23:3F often also iBeacon or Eddystone."],
@@ -4862,13 +4974,15 @@ def story():
             ["Last fix or Debrief shows “masked” instead of lat/lon", "Privacy mode is on.", "Expected. Settings → Privacy mode hides GPS coordinates on the screen and in sit reports. Street names are omitted too. The log still has lat/lon. A TAK / CoT feed is paused. Turn Privacy mode off when you need the pin or the overlay."],
             ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Appearance → Night mode Off. Restore defaults also turns Night mode off. Fig. 9."],
             ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
-            ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 2); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected."],
+            ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 0–2) on BLE FFFA or Wi-Fi FA:0B:BC (Android 11+); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected. §5.8.3, §12.16."],
+            ["Wi-Fi drone, no Remote ID chip", "Android 10, NAN-only RID, or a fast fly-by.", "Vendor IEs need Android 11+. NAN still misses. Hover or slow pass. BLE FFFA still works on Android 10. §5.8.3, §12.16."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
-            ["TAK heard-here pin did not follow me when I walked away", "Heard-here holds the loudest hear.", "Expected. Walk closer to move it. Keep-alives stay on the same lat/lon. Not DF. §5.8.7."],
+            ["TAK heard-here pin did not follow me when I walked away", "Heard-here holds the loudest hear.", "Expected. Walk closer to move it. Keep-alives stay on the same lat/lon. Not DF. §5.8.8."],
             ["Debrief is still last 15 minutes", "No named sit is running or selected.", "Expected. Reports → Start sit. While a sit is open, or you pick a saved sit in the radio list, Debrief follows that window. §5.6."],
             ["ATAK filled with café APs", "All signatures is on.", "Turn All signatures off. Field default is Extra attention + Payload location."],
             ["TAK marker vanished", "The radio left the feed, scanning stopped, or Privacy mode paused it.", "Expected. Fieldwatch sends a gone event (stale=now) when a radio leaves. Privacy pause does not; ATAK then stale-times out ~120 s. A rotated BLE MAC without a sticky UAS ID is a new uid."],
             ["Remote ID is a cloud of dots on ATAK", "UID was the BLE MAC, which Remote ID rotates.", "1.0.3 keys the aircraft on sticky UAS ID. One marker should move. Until the first Basic ID packet, it still keys on MAC, then jumps once."],
+            ["Path on Reports is not growing while I drive", "Reports is not in front, GPS tagging is off, or you picked a saved sit.", "Stay on Reports. The plot redraws about every 3 s while that tab is open. Last 15 minutes or an open sit are live (head labeled Now). A saved sit is a still (End). Tag detections with GPS on, high-accuracy Location, scanning running. §5.6.1."],
             ["GPS path stays 0 m while I drive / Moving with you says keep moving", "The phone is not giving a live fix.", "Turn on Tag detections with GPS and high-accuracy Location. Scanning must be running. Wait until the path meter is not 0, then walk or drive."],
             ["Second iPhone in the car did not show under Moving with you", "iOS rotates the BLE address, so Fieldwatch sees a new radio with an empty GPS trail.", "Expected. Use a tag with a stable MAC (AirTag/Tile in the bag) as the confidence check. Phones will not stitch as one follower."],
             ["Moving with you lists house APs after I get home", "Wi-Fi access points are excluded from this filter.", "Expected. A loud AP you drive past paints your hear-time path and would look like co-travel, so APs never qualify. Bag and car BLE tags should stay on."],
