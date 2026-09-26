@@ -37,14 +37,15 @@ object Hunt {
         if (missing) return HuntCue.GONE
         if (lastSeen == null) return HuntCue.WAITING
         if (now - lastSeen > QUIET_MS) return HuntCue.QUIET
-        val recent = samples.filter { it.at >= now - RECENT_MS }
+        val usable = samples.filter { Rssi.measured(it.rssi) }
+        val recent = usable.filter { it.at >= now - RECENT_MS }
         val loud = if (recent.isNotEmpty()) {
             recent.map { it.rssi }.average()
         } else {
-            samples.lastOrNull { now - it.at <= QUIET_MS }?.rssi?.toDouble()
+            usable.lastOrNull { now - it.at <= QUIET_MS }?.rssi?.toDouble()
         }
         if (loud != null && loud >= VERY_CLOSE_DBM) return HuntCue.VERY_CLOSE
-        val earlier = samples.filter { it.at in (now - EARLIER_FROM_MS)..(now - EARLIER_TO_MS) }
+        val earlier = usable.filter { it.at in (now - EARLIER_FROM_MS)..(now - EARLIER_TO_MS) }
         if (recent.size < 2 || earlier.size < 2) return HuntCue.WAITING
         val delta = recent.map { it.rssi }.average() - earlier.map { it.rssi }.average()
         return when {

@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.10")
+    c.drawString(48, 108, "Version 1.1.11")
     c.drawString(48, 94, "26 September 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.10  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.11  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1203,6 +1203,7 @@ def story():
             "The circle on each row is a class glyph. The two radio kinds are Wi-Fi access points and BLE advertisers "
             "(§1.1); they show as a small Wi-Fi or Bluetooth icon on the subtitle. "
             "RSSI is loudness at this phone in dBm (closer to 0 is louder). "
+            "127 means the stack did not report a measurement (Bluetooth “not available”), not transmit power. "
             "Filters change who appears. Display (§5.3) changes how each row looks. "
             "Pause freezes the picture; the radios keep scanning and the log still writes. "
             "A new filter applies when you run the Live display again."
@@ -4891,8 +4892,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.10 (versionCode 20), field build of 26 September 2026"],
-                ["Document version", "1.1.10"],
+                ["Software version", "1.1.11 (versionCode 21), field build of 26 September 2026"],
+                ["Document version", "1.1.11"],
                 ["Document date", "26 September 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

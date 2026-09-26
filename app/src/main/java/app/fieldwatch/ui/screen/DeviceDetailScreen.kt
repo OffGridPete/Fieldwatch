@@ -59,6 +59,7 @@ import app.fieldwatch.domain.Palette
 import app.fieldwatch.domain.RadioDb
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.Rssi
 import app.fieldwatch.domain.ServiceDataRecord
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.SignatureFamilyHint
@@ -302,7 +303,12 @@ fun DeviceDetailScreen(
                     Meta("How loud here (RSSI)", "Not available")
                     Meta(
                         "Last heard",
-                        "${fmt.format(Date(device.lastSeen))} at ${device.rssi} dBm",
+                        buildString {
+                            append(fmt.format(Date(device.lastSeen)))
+                            Rssi.lastMeasured(device.rssi, device.rssiHistory)?.let {
+                                append(" at $it dBm")
+                            }
+                        },
                     )
                 } else {
                     Meta("How loud here (RSSI)", DeviceExplain.rssiExplain(device.rssi))
@@ -312,7 +318,10 @@ fun DeviceDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Meta("Heard range this session", "${device.rssiMin} to ${device.rssiMax} dBm")
+                Meta(
+                    "Heard range this session",
+                    Rssi.sessionRange(device.rssiMin, device.rssiMax, device.rssiHistory),
+                )
                 facts.txPowerDbm?.let {
                     Meta("Claimed transmit power", "$it dBm — how loud it says it transmits, not a distance")
                 }

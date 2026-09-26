@@ -381,9 +381,13 @@ class SitSession(
             firstSeen = min(old.firstSeen, next.firstSeen),
             lastSeen = max(old.lastSeen, next.lastSeen),
             hitCount = max(old.hitCount, next.hitCount),
-            rssi = next.rssi,
-            rssiMin = min(old.rssiMin, next.rssi),
-            rssiMax = max(old.rssiMax, next.rssi),
+            rssi = if (Rssi.measured(next.rssi)) next.rssi else old.rssi,
+            rssiMin = if (Rssi.measured(next.rssi)) {
+                if (Rssi.measured(old.rssiMin)) min(old.rssiMin, next.rssi) else next.rssi
+            } else old.rssiMin,
+            rssiMax = if (Rssi.measured(next.rssi)) {
+                if (Rssi.measured(old.rssiMax)) max(old.rssiMax, next.rssi) else next.rssi
+            } else old.rssiMax,
             channel = if (next.channel > 0) next.channel else old.channel,
             frequencyMhz = if (next.frequencyMhz > 0) next.frequencyMhz else old.frequencyMhz,
             randomized = old.randomized || next.randomized,

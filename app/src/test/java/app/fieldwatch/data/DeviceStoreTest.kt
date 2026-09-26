@@ -218,6 +218,24 @@ class DeviceStoreTest {
     }
 
     @Test
+    fun rssi127DoesNotBecomeMaxOrHistory() {
+        val store = DeviceStore()
+        val mac = "E0:9D:13:6E:71:03"
+        store.ingestBatch(listOf(ble(mac, name = "SmartTag", rssi = -92)), fleets, 30)
+        store.ingestBatch(listOf(ble(mac, name = "SmartTag", rssi = 127)), fleets, 30)
+        val device = store.find("BLE:$mac")!!
+        assertEquals(-92, device.rssi)
+        assertEquals(-92, device.rssiMin)
+        assertEquals(-92, device.rssiMax)
+        assertTrue(device.rssiHistory.none { it.rssi == 127 })
+        store.ingestBatch(listOf(ble(mac, name = "SmartTag", rssi = -86)), fleets, 30)
+        val louder = store.find("BLE:$mac")!!
+        assertEquals(-86, louder.rssi)
+        assertEquals(-92, louder.rssiMin)
+        assertEquals(-86, louder.rssiMax)
+    }
+
+    @Test
     fun refreshEmitsWithoutDroppingTags() {
         val store = DeviceStore()
         val mac = "00:00:0C:11:22:33"
@@ -253,11 +271,12 @@ class DeviceStoreTest {
         mac: String,
         name: String,
         facts: RadioFacts = RadioFacts.Empty,
+        rssi: Int = -50,
     ) = Observation(
         kind = RadioKind.BLE,
         mac = mac,
         name = name,
-        rssi = -50,
+        rssi = rssi,
         channel = 0,
         frequencyMhz = 0,
         hiddenSsid = false,

@@ -79,12 +79,13 @@ object DeviceDetailText {
         section("Signal")
         if (device.gone) {
             line("How loud here (RSSI)", "Not available")
-            line("Last heard", "${device.rssi} dBm")
+            val last = Rssi.lastMeasured(device.rssi, device.rssiHistory)
+            line("Last heard", last?.let { "$it dBm" } ?: "Not available")
         } else {
             line("How loud here (RSSI)", DeviceExplain.rssiExplain(device.rssi))
             out.append("Closer to 0 dBm is louder here, not a distance.\n")
         }
-        line("Heard range this session", "${device.rssiMin} to ${device.rssiMax} dBm")
+        line("Heard range this session", Rssi.sessionRange(device.rssiMin, device.rssiMax, device.rssiHistory))
         facts.txPowerDbm?.let {
             line("Claimed transmit power", "$it dBm — how loud it says it transmits, not a distance")
         }
@@ -111,9 +112,12 @@ object DeviceDetailText {
                 ).joinToString("  ·  "),
             )
         }
-        if (device.rssiHistory.isNotEmpty()) {
-            val tail = device.rssiHistory.takeLast(24).joinToString(", ") { it.rssi.toString() }
-            line("Recent RSSI (oldest → newest)", tail)
+        val rssiTail = device.rssiHistory.filter { Rssi.measured(it.rssi) }.takeLast(24)
+        if (rssiTail.isNotEmpty()) {
+            line(
+                "Recent RSSI (oldest → newest)",
+                rssiTail.joinToString(", ") { it.rssi.toString() },
+            )
         }
 
         if (device.kind == RadioKind.BLE) {

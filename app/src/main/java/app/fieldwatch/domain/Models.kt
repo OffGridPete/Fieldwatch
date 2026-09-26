@@ -738,13 +738,13 @@ data class Sighting(
 
     fun averageRssi(windowMs: Long, now: Long = System.currentTimeMillis(), floor: Int = -100): Double {
         val from = now - windowMs
-        val heard = rssiHistory.filter { it.at >= from }
+        val heard = rssiHistory.filter { it.at >= from && Rssi.measured(it.rssi) }
         if (heard.isNotEmpty()) return heard.map { it.rssi }.average()
-        return rssi.toDouble().coerceAtLeast(floor.toDouble())
+        return (if (Rssi.measured(rssi)) rssi else floor).toDouble()
     }
 
     fun rssiTrend(count: Int = 12): RssiTrend {
-        val samples = rssiHistory.takeLast(count.coerceAtLeast(4))
+        val samples = rssiHistory.filter { Rssi.measured(it.rssi) }.takeLast(count.coerceAtLeast(4))
         if (samples.size < 4) return RssiTrend.UNKNOWN
         val mid = samples.size / 2
         val older = samples.take(mid).map { it.rssi }.average()

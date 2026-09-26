@@ -12,6 +12,7 @@ import app.fieldwatch.domain.DetectionPolicy
 import app.fieldwatch.domain.FastPair
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.PayloadLocation
+import app.fieldwatch.domain.Rssi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,7 +75,7 @@ class DeviceStore(
         if (observation.kind == app.fieldwatch.domain.RadioKind.WIFI && !observation.fresh && existing != null) {
             val next = existing.copy(
                 name = observation.name.ifBlank { existing.name },
-                rssi = observation.rssi,
+                rssi = if (Rssi.measured(observation.rssi)) observation.rssi else existing.rssi,
                 vendorIeOuis = mergeIes(existing.vendorIeOuis, observation.vendorIeOuis),
                 facts = existing.facts.merge(observation.facts),
                 fastPairPairing = existing.fastPairPairing || FastPair.pairingAdvertised(observation.facts),
@@ -82,7 +83,8 @@ class DeviceStore(
             live[key] = next
             return next
         }
-        val sample = RssiSample(now, observation.rssi)
+        val measured = Rssi.measured(observation.rssi)
+        val sample = if (measured) RssiSample(now, observation.rssi) else null
         val merged = if (existing == null) {
             Sighting(
                 key = key,
@@ -107,7 +109,7 @@ class DeviceStore(
                 lastSeen = now,
                 hitCount = 1,
                 fleetIds = emptySet(),
-                rssiHistory = listOf(sample),
+                rssiHistory = if (sample != null) listOf(sample) else emptyList(),
                 presence = listOf(PresenceSpan(now, null)),
                 latitude = observation.latitude,
                 longitude = observation.longitude,
@@ -117,7 +119,9 @@ class DeviceStore(
                 fastPairPairing = FastPair.pairingAdvertised(observation.facts),
             )
         } else {
-            val history = if (existing.rssiHistory.size >= historyLimit) {
+            val history = if (sample == null) {
+                existing.rssiHistory
+            } else if (existing.rssiHistory.size >= historyLimit) {
                 existing.rssiHistory.drop(existing.rssiHistory.size - historyLimit + 1) + sample
             } else {
                 existing.rssiHistory + sample
@@ -135,12 +139,18 @@ class DeviceStore(
             }
             existing.copy(
                 name = observation.name.ifBlank { existing.name },
-                rssi = observation.rssi,
+                rssi = if (measured) observation.rssi else existing.rssi,
                 vendor = existing.vendor
                     ?: OuiLookup.vendor(mac)
                     ?: observation.manufacturerId?.let { app.fieldwatch.domain.RadioDb.company(it) },
-                rssiMin = minOf(existing.rssiMin, observation.rssi),
-                rssiMax = maxOf(existing.rssiMax, observation.rssi),
+                rssiMin = if (measured) {
+                    if (Rssi.measured(existing.rssiMin)) minOf(existing.rssiMin, observation.rssi)
+                    else observation.rssi
+                } else existing.rssiMin,
+                rssiMax = if (measured) {
+                    if (Rssi.measured(existing.rssiMax)) maxOf(existing.rssiMax, observation.rssi)
+                    else observation.rssi
+                } else existing.rssiMax,
                 channel = if (observation.channel != 0) observation.channel else existing.channel,
                 frequencyMhz = if (observation.frequencyMhz != 0) observation.frequencyMhz else existing.frequencyMhz,
                 hiddenSsid = existing.hiddenSsid || observation.hiddenSsid,
@@ -360,7 +370,8 @@ class DeviceStore(
     private fun gpsStart(observation: Observation): List<app.fieldwatch.domain.GpsSample> {
         val lat = observation.latitude ?: return emptyList()
         val lon = observation.longitude ?: return emptyList()
-        return listOf(app.fieldwatch.domain.GpsSample(observation.at, lat, lon, observation.rssi))
+        val rssi = if (Rssi.measured(observation.rssi)) observation.rssi else 0
+        return listOf(app.fieldwatch.domain.GpsSample(observation.at, lat, lon, rssi))
     }
 
     private fun gpsAppend(
@@ -369,7 +380,8 @@ class DeviceStore(
     ): List<app.fieldwatch.domain.GpsSample> {
         val lat = observation.latitude ?: return trail
         val lon = observation.longitude ?: return trail
-        return app.fieldwatch.domain.Geo.append(trail, observation.at, lat, lon, observation.rssi)
+        val rssi = if (Rssi.measured(observation.rssi)) observation.rssi else 0
+        return app.fieldwatch.domain.Geo.append(trail, observation.at, lat, lon, rssi)
     }
 
     private fun mergeMfgHex(old: String, extra: String): String {

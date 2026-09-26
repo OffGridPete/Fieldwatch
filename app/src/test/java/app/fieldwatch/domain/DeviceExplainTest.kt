@@ -1,8 +1,10 @@
 package app.fieldwatch.domain
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+
 
 class DeviceExplainTest {
     @Test
@@ -30,6 +32,17 @@ class DeviceExplainTest {
         assertTrue(text, text.contains("Locally administered BSSID"))
         assertFalse(text, text.contains("privacy", ignoreCase = true))
         assertFalse(text, text.contains("can change", ignoreCase = true))
+    }
+
+    @Test
+    fun rssi127IsNotAvailableNotVeryStrong() {
+        assertEquals("Not available", DeviceExplain.rssiExplain(127))
+        assertEquals("not available", DeviceExplain.rssiBand(127))
+        assertEquals(
+            "-103 to -86 dBm",
+            Rssi.sessionRange(-103, 127, listOf(RssiSample(1L, -86), RssiSample(2L, 127))),
+        )
+        assertEquals(-99, Rssi.lastMeasured(127, listOf(RssiSample(1L, -99), RssiSample(2L, 127))))
     }
 
     @Test

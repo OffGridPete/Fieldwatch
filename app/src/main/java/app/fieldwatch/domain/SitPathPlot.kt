@@ -241,7 +241,9 @@ object SitPathPlot {
     fun loudestFix(trail: List<GpsSample>): GpsSample? {
         if (trail.isEmpty()) return null
         return trail.maxWithOrNull(
-            compareBy<GpsSample> { if (it.rssi == 0) Int.MIN_VALUE else it.rssi }.thenBy { it.at },
+            compareBy<GpsSample> {
+                if (it.rssi == 0 || !Rssi.measured(it.rssi)) Int.MIN_VALUE else it.rssi
+            }.thenBy { it.at },
         )
     }
 

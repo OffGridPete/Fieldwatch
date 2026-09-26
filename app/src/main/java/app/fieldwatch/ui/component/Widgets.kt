@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.sp
+import app.fieldwatch.domain.Rssi
 import app.fieldwatch.domain.RssiSample
 import app.fieldwatch.domain.RssiTrend
 import app.fieldwatch.domain.Sighting
@@ -132,20 +133,21 @@ fun Sparkline(
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 6f), 0f),
             )
         }
-        if (samples.isEmpty()) return@Canvas
-        if (samples.size == 1) {
-            drawCircle(color, radius = 5f, center = Offset(right, yOf(samples[0].rssi)))
+        val series = samples.filter { Rssi.measured(it.rssi) }
+        if (series.isEmpty()) return@Canvas
+        if (series.size == 1) {
+            drawCircle(color, radius = 5f, center = Offset(right, yOf(series[0].rssi)))
             return@Canvas
         }
         val path = Path()
-        val lastIndex = samples.lastIndex
-        samples.forEachIndexed { i, sample ->
+        val lastIndex = series.lastIndex
+        series.forEachIndexed { i, sample ->
             val x = xOf(i, lastIndex)
             val y = yOf(sample.rssi)
             if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
         drawPath(path, color, style = Stroke(width = 3.2f, cap = StrokeCap.Round))
-        drawCircle(color, radius = 4.6f, center = Offset(right, yOf(samples.last().rssi)))
+        drawCircle(color, radius = 4.6f, center = Offset(right, yOf(series.last().rssi)))
     }
 }
 

@@ -140,6 +140,7 @@ object DeviceExplain {
     }
 
     fun rssiBand(rssi: Int): String = when {
+        !Rssi.measured(rssi) -> "not available"
         rssi >= -45 -> "very strong"
         rssi >= -60 -> "strong"
         rssi >= -75 -> "medium"
@@ -147,7 +148,9 @@ object DeviceExplain {
         else -> "very weak"
     }
 
-    fun rssiExplain(rssi: Int): String = "%d dBm · %s".format(rssi, rssiBand(rssi))
+    fun rssiExplain(rssi: Int): String =
+        if (!Rssi.measured(rssi)) "Not available"
+        else "%d dBm · %s".format(rssi, rssiBand(rssi))
 
     fun wifiSecurityExplain(raw: String): String {
         val bits = ArrayList<String>(4)
