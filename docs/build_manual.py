@@ -1452,7 +1452,10 @@ def story():
             "offline from packed IEEE and Bluetooth SIG tables (no network). Jargon is spelled "
             "out in plain language (for example BR/EDR not supported = BLE-only, no classic "
             "Bluetooth). RSSI is a short band (very strong / strong / medium / weak / very weak) "
-            "so the page does not reflow as the number ticks.",
+            "so the page does not reflow as the number ticks. "
+            "127 means the stack did not report a measurement (Bluetooth “not available”), not transmit power — "
+            "How loud here, session range, sparkline, Hunt, and Share omit it. "
+            "Gone radios show How loud here as Not available and Last heard with the last real dBm.",
             "<b>What this looks like</b> (top card). A cautious guess. A matched catalog family "
             "outranks a generic SSID heuristic — a <font face='Courier'>DIRECT-rR-Raven-*</font> AP "
             "is a Raven / ShotSpotter sensor, not “a phone or TV on Wi-Fi Direct.” Then advertised "
@@ -1554,7 +1557,8 @@ def story():
         P(
             "<b>Observer notes</b> is a cyan block under the name (not Extra attention gold, not catalog Notes). "
             "Up to 280 characters, same MAC as the custom name. Edit on this page or Settings → Named radios. "
-            "Debrief, Compare, Path, and AI Export include an Observer notes section (heard radio + the note). "
+            "Debrief, Compare, and AI Export include an Observer notes section (heard radio + the note). "
+            "Path lists the note only if that radio is bookmarked. "
             "Live list shows a cyan notes chip on that row (next to Extra attention “!”). "
             "Saving notes without a name still creates the Named-radio row (suggested label, Alert off). "
             "The same BLE hide-pencil rule as custom name applies. Settings backup includes the note.",
@@ -1583,6 +1587,7 @@ def story():
             "<b>Hunt</b> (BLE only). Device detail → Hunt. A full-screen page for this advertiser. "
             "You get a large RSSI and a cue: Very Close, Closer, Further, About the same, Quiet, or Gone. "
             "Very Close is about −45 dBm or louder (the same “very strong” band as detail). "
+            "A 127 callback is ignored (not available), not treated as Very Close. "
             "Closer / Further / About the same come from a few seconds of smoothed packets (about a 3 dB step). "
             "A ring around YOU contracts on Closer / Very Close and expands on Further. Loudest this hunt and a hunt-only sparkline sit with it. Cue and hint are in fixed slots so the dBm number does not jump. "
             "Beep and Vibrate (off by default, remembered) sit under Reset / Back and tick faster as RSSI gets louder — a short click, not the watchlist chirp. Silent when Quiet or Gone. "
@@ -1639,7 +1644,7 @@ def story():
         P("5.6.1 Path", "h3"),
         figure_wrap(
             "fig-path.png",
-            "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and Named (blue) hear-points, scale bar.",
+            "Fig. 6 — Reports → Path. North-up operator track, Extra attention (red) and bookmarked (blue) hear-points, scale bar.",
             "Reports → Path is a north-up plot of <b>this phone</b> for the sit you selected "
             "(open sit, a saved sit, or last 15 minutes). "
             "Tag detections with GPS must have been on, and the path must be about 10 m or more, "
@@ -1648,9 +1653,11 @@ def story():
         ),
         P(
             "The line is this phone. Header counts stops. "
-            "Red dots are Extra attention; blue dots are bookmarked radios. "
+            "Red dots are Extra attention; blue dots are bookmarked radios (Alert on that MAC). "
+            "A custom name without a bookmark does not plot. "
             "Each KIND+MAC plots once, at the strongest RSSI hear-point. "
-            "Observer notes on a bookmarked radio list after the numbered roster. A custom name without a bookmark does not plot. "
+            "Observer notes on a bookmarked radio list after the numbered roster "
+            "(plot number, custom name, MAC, the note). Live list still shows only the cyan notes chip, not the text. "
             "Thick green on the line is a stay (~40 m, same as Debrief Where you were). Time ticks (HH:mm) sit along the path. "
             "When several radios stack at one place, the plot shows one number and a count badge. "
             "Tap that number for a single inset; tap again to close. Isolated dots and the roster open detail. "
@@ -1662,10 +1669,6 @@ def story():
             "Tiles fill the plot box, then clip; extra map shows around the route. "
             "Offline, no tiles, or Privacy mode: the north-up plot only — no error dialog. Airplane mode is fine. "
             "Turn that switch off to keep streets out of Debrief/AI Export and maps off Path together."
-        ),
-        P(
-            "Observer notes on a <b>bookmarked</b> radio list after the numbered roster "
-            "(plot number, custom name, MAC, the note). Live list still shows only the cyan notes chip, not the text."
         ),
         P(
             "Debrief PDF and Compare PDF include a letter-size operator-path figure of the same walk. "
@@ -2090,7 +2093,7 @@ def story():
         figure_wrap(
             "fig-hybrid.png",
             "Fig. 13 — Hybrid.",
-            "<b>What it shows.</b> The strength list (same Title/Subtitle, Sort, and extra-fact switches) plus a full-width sparkline of recent RSSI samples (up to 40 points kept per device) and the same &gt;&gt; / &lt;&lt; trend mark. Scale is fixed: top = −30 dBm, bottom = −100 dBm. A faint 10 dB grid with a left-hand scale (−30 / −50 / −70 / −100) and four vertical columns. A dot marks the newest packet. There is no banner on this view; the grid is the legend. In a plaza, drop back to Strength list and Subtitle None before you blame the sparkline for the clutter.",
+            "<b>What it shows.</b> The strength list (same Title/Subtitle, Sort, and extra-fact switches) plus a full-width sparkline of recent RSSI samples (up to 40 points kept per device) and the same &gt;&gt; / &lt;&lt; trend mark. Scale is fixed: top = −30 dBm, bottom = −100 dBm. A faint 10 dB grid with a left-hand scale (−30 / −50 / −70 / −100) and four vertical columns. A dot marks the newest packet. 127 (not available) is omitted from the line. There is no banner on this view; the grid is the legend. In a plaza, drop back to Strength list and Subtitle None before you blame the sparkline for the clutter.",
         ),
         P("<b>How to interpret.</b> Left = older packets, right = newest, up = stronger. A line high on the strip is loud. A line near the bottom is weak. A flat line at one height means the radio is sitting still at that strength — that is the usual Wi-Fi picture between 30 s scans. The line only climbs or drops when RSSI actually changes. After 40 samples the waveform shifts left. The chevron is the glanceable answer: &gt;&gt; much stronger (~+8 dB), &gt; stronger (~+3 dB), = steady, &lt; weaker, &lt;&lt; much weaker. A sawtooth is often a duty-cycled BLE advertiser, not motion.", "body_left"),
         P("<b>When it is most useful.</b> Following one or two candidates while still seeing the rest of the field. Better than radar for “is this getting louder.”", "body_left"),
@@ -4410,7 +4413,7 @@ def story():
             ["Decode fields", "Optional BLE cleartext map on a signature (Signatures → row → Decode fields). After the rules hit, device detail / Share / AI Export / Debrief notable BLE parse manufacturer or service-data bytes into labels (temp, model, Remote ID, …). TAK / CoT also reads numeric ids latitude / longitude for advertised-position pins. Not a matcher. Not pairing or GATT. Encrypted ads stay hex. The Live display does not parse these; a hexagon on that signature’s chip means a map exists (§5.4). Byte 0 is after the company ID (manufacturer) or the first service-data byte. How to build a map: §9.6.1–§9.6.5. Stock maps: §9.6.6. TAK ids: §5.8.3."],
             ["Decode hexagon", "Small hexagon inside a signature name chip (same color as the name) when that signature has a Decode fields map. Dual-chip radios mark only the mapped name(s). Catalog check, not a parse of this packet. Hidden when Display → Signature names is off. Extra attention “!”, the cyan Observer notes chip, and the phosphor alerted bell are separate chips. Same mark on the Signatures list, By class signature rows, and detail Decoded fields. §5.4, §9.6."],
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
-            ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Debrief, Compare, Path, and AI Export list heard radios with notes in an Observer notes section. §5.5, §5.7, §8.1, §10.1."],
+            ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
@@ -4422,7 +4425,7 @@ def story():
             ["Path", "Reports card. North-up plot of this phone for the selected sit (or last 15 minutes). Extra attention (red) and bookmarked (blue) dots at strongest RSSI. Observer notes only if that radio is bookmarked. Thick green = stay. Time ticks. OSM tiles when Online place names and maps is on and the phone is online; otherwise the trace only. Also a letter-size figure on Debrief / Compare PDF. §5.6.1."],
             ["Sit export", "Reports card under Sit report. Same Format chips as Log export, different file: one row per unique radio in the selected sit (or last 15 minutes). Logging can be off. GPX/KML include the operator path as a track. Not the rotating log. Privacy mode does not mask the file. §5.6.2."],
             ["Log export", "Reports card. Share/Save of the rotating session file (JSON lines on disk; CSV / GPX / KML / WiGLE at export). One line per hear while logging was on. Needs Write to disk. Clearing the log does not delete sits. §5.6.3, §11.6."],
-            ["Observer notes", "Optional 280-character field on a Named radio (same KIND+MAC as the custom name). Cyan block on detail; cyan notes chip on Live next to Extra attention “!”. Debrief lists them after Where you were; Compare after Windows. Path and AI Export list heard radios with the note. Not catalog Notes and not Extra attention gold. BLE privacy addresses hide the pencil. Settings backup includes the note. §5.5, §5.6."],
+            ["Observer notes", "Optional 280-character field on a Named radio (same KIND+MAC as the custom name). Cyan block on detail; cyan notes chip on Live next to Extra attention “!”. Debrief lists them after Where you were; Compare after Windows. Path lists the note only if that radio is bookmarked. AI Export lists heard radios with the note. Not catalog Notes and not Extra attention gold. BLE privacy addresses hide the pencil. Settings backup includes the note. §5.5, §5.6."],
             ["Signature candidates", "Reports action. Re-matches the rotating log against the current catalog, then lists unmatched families that share a unique on-air ID on two or more radios. Randomized addresses and house-like names are skipped. Create signature opens the editor as a draft (shared rule, no MAC pin). Save returns to the list and re-runs it. Offline. §5.6.4, §9.2.1, §11.5."],
             ["vendor_ie (log)", "Last CSV column / JSON field on new Wi-Fi rows: pipe-separated vendor-IE OUIs, up to eight. Empty on BLE and on older 17-column rows. Signature candidates uses product IEs; WPA/RSN/P2P/Qualcomm chip IEs are logged but not clustered. §11.2, §11.5."],
             ["Alerted (list)", "Phosphor notification pip on a Live display row (list, hybrid, timeline, By class) after a watchlist alert this session. Lasts until you leave Fieldwatch. Distinct from Extra attention “!” and from the one-second flash. Newest alert ranks by the same event. On radar the same radios keep a phosphor ring after the ping. §5.3, §5.4, §6.1."],
@@ -4478,7 +4481,7 @@ def story():
             ["Tag detections with GPS", "Settings switch, on by default. Current GPS/network updates while scanning; stamps each hear (detail, Moving with you, Debrief, log lat/lon, heard-here TAK pins). Last-known older than 30 s ignored. Operator phone at hear-time, not the other radio. Advertised TAK pins (Remote ID) do not need this. High-accuracy Location or the path stays 0. §5.7, §5.8."],
             ["Share as text", "Device-detail button. Plain dump of the open radio (identity, signal, decode, session). Not the sit report and not the rotating log."],
             ["Voice (watchlist)", "Settings → Voice on watched signature, on by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class + signature. A named radio speaks its watch name instead, including a custom name from Named radios. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix. Jump works with voice alone. §5.7, §10.2.1."],
-            ["Hunt", "Device-detail, BLE only. Full-screen closer/further from smoothed RSSI. Rings around YOU contract on Closer and expand on Further. Very Close at about −45 dBm or louder (look around; still not meters). Loudest-this-hunt + hunt sparkline. Beep / Vibrate at the bottom (off by default; faster as RSSI gets louder; silent when Quiet/Gone; not the watchlist chirp, never speaks). Optional body-block turn for a crude heading (§12.13). Walls, metal, people, and floors change RSSI without a change in range. Not distance, not DF. Wi-Fi omitted (OS scan throttle; Faster Wi-Fi AP scans still batch, not Hunt)."],
+            ["Hunt", "Device-detail, BLE only. Full-screen closer/further from smoothed RSSI. Rings around YOU contract on Closer and expand on Further. Very Close at about −45 dBm or louder (look around; still not meters). 127 is ignored. Loudest-this-hunt + hunt sparkline. Beep / Vibrate at the bottom (off by default; faster as RSSI gets louder; silent when Quiet/Gone; not the watchlist chirp, never speaks). Optional body-block turn for a crude heading (§12.13). Walls, metal, people, and floors change RSSI without a change in range. Not distance, not DF. Wi-Fi omitted (OS scan throttle; Faster Wi-Fi AP scans still batch, not Hunt)."],
             ["lat / lon (log)", "CSV columns and JSON fields on each new log row when Tag detections with GPS is on and a fix exists. Operator phone at hear-time, not the other radio. Empty/null otherwise. In CSV these columns sit before vendor_ie so older files still parse."],
             ["Where you were", "Debrief / AI Export section. Operator path split into stays (~40 m) and transits. Lat/lon once per stay, optional street name, loud radios heard there. Not lat/lon on every inventory line."],
             ["Fast Pair", "Google tap-to-pair. Service UUID 0xFE2C. Catalog signature (on): Android phones and many buds. Three-byte model ID in pairing mode (Live display chip Fast Pair pairing); longer payloads are an account-key filter. Filters → Hide Fast Pair account-key drops account-key-only chips. Hide selected Fast Pair drops both. §8.1, §9.5."],
@@ -4815,6 +4818,7 @@ def story():
             ["Cannot delete a signature", "Delete is on the editor page, not the list.", "Open the signature and tap Delete signature at the bottom. Confirm. Restore defaults if you removed a built-in by mistake."],
             ["No Decode fields row on a signature", "That row is Wi-Fi-only (hidden SSID / vendor IE / radio=Wi-Fi), or you are on the Live display not the editor.", "Open a BLE signature (Ruuvi, Remote ID, Govee, …). Decode fields sits under Add rule. §9.6."],
             ["Decoded fields missing on detail", "The signature has no map, this advertisement is encrypted/short, or the gate (Only if) did not match.", "Open the signature → Decode fields. A note on detail means a map exists but this packet did not fit. Usual miss: offset 0 counted the company ID. Encrypted Fitbit / Find My ads stay hex. §9.6.1 / §9.6.5."],
+            ["Detail shows 127 dBm / very strong", "127 is Bluetooth “RSSI not available,” not transmit power. Some stacks return it on a callback.", "1.1.11 omits 127 from current, min/max, sparkline, Hunt, and Share. Real BLE hears are typically well below 0 dBm. §5, §5.5."],
             ["Preview is empty but the hex looks right", "Offset includes the company ID, wrong endian, or Only if hex does not match this packet.", "Count pairs on detail Raw payload (first pair = 0). Try BE if the spec is big-endian. Check Only if length vs Hex length. Open stock Ruuvi and copy the card shape. §9.6.3–§9.6.4."],
             ["Custom name edit is gone on detail", "BLE address is random / privacy (IEEE local bit or Android Random type).", "Expected on BLE — a name would not follow a rotation. Wi-Fi always has the pencil, including locally administered vehicle / mesh BSSIDs. A name you already saved still shows. Bookmark can still watch this MAC."],
             ["I want a Cameras / Drones / Surveillance chip", "Those class sits are not stock presets.", "Filters → Show only, pick the class chip, Save current as… Restore default signatures & presets puts the short stock set back and wipes custom chips."],
