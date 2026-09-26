@@ -44,6 +44,35 @@ class DefaultCatalogTest {
     }
 
     @Test
+    fun flockAndFsExtDropEspressifAndSilabsOuis() {
+        val flock = DefaultCatalog.fleets().single { it.id == "fleet-flock-cameras" }
+        val fs = DefaultCatalog.fleets().single { it.id == "fleet-fs-ext-battery" }
+        val flockOuis = flock.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        val fsOuis = fs.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        assertFalse(flockOuis.contains("A4:CF:12"))
+        assertFalse(flockOuis.contains("3C:71:BF"))
+        assertTrue(flockOuis.contains("B4:1E:52"))
+        assertFalse(fsOuis.contains("90:35:EA"))
+        assertFalse(fsOuis.contains("58:8E:81"))
+        assertFalse(fsOuis.contains("EC:1B:BD"))
+    }
+
+    @Test
+    fun catalogV77AddsGlassesAndAxonUuids() {
+        val axon = DefaultCatalog.fleets().single { it.id == "fleet-axon" }
+        val meta = DefaultCatalog.fleets().single { it.id == "fleet-meta-glasses" }
+        val snap = DefaultCatalog.fleets().single { it.id == "fleet-snap-spectacles" }
+        val vuzix = DefaultCatalog.fleets().single { it.id == "fleet-vuzix" }
+        val rid = DefaultCatalog.fleets().single { it.id == "fleet-remote-id" }
+        assertTrue(axon.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FC81", true) })
+        assertTrue(axon.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x034D })
+        assertTrue(meta.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FEB7", true) })
+        assertTrue(snap.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE45", true) })
+        assertTrue(vuzix.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x060C })
+        assertTrue(rid.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("FA:0B:BC", true) })
+    }
+
+    @Test
     fun aftermarketTpmsMatchesPrefixAndNameNotBareNokia() {
         val stock = DefaultCatalog.fleets()
         val engine = SignatureEngine()

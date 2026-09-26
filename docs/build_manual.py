@@ -2891,7 +2891,7 @@ def story():
                 ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Public safety", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc. Used in law enforcement, not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit."],
                 ["Vehicle", "Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, GM hotspot, Audi MMI, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, PeopleNet, Samsara, AUMOVIO, Winegard, Goodyear TPMS, Schrader TPMS, Pacific TPMS, Huf, FOBO TPMS, Aftermarket TPMS, SYTPMS, TireCheck, TPMS service"],
-                ["Glasses", "Ray-Ban / Meta glasses, Snap Spectacles"],
+                ["Glasses", "Ray-Ban / Meta glasses, Snap Spectacles, Vuzix"],
                 ["Audio", "Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Cameras", "Wyze, Ring, Arlo, eufy Security, Nest, Tapo, Reolink, GoPro, Osmo, Insta360"],
                 ["Thermostats", "Nest Thermostat, ecobee, Sensi, Honeywell Home"],
@@ -4520,7 +4520,7 @@ def story():
         ),
     ]
     stock_sigs = [
-            ["Flock Safety Cameras", "OUI B4:1E:52; ~28 additional field OUIs (LiteOn / Espressif / related); names Flock, FLCK, CONDOR, FALCON, SPARROW; globs Flock-*, Flock-??????. Extra attention filled. Stock bookmark.", "Roadside ALPR / camera pole. High only for B4:1E:52 or a Flock-* SSID. Other OUIs are component vendors — false positives expected. Beeps on a new match."],
+            ["Flock Safety Cameras", "OUI B4:1E:52; LiteOn / related field OUIs (Espressif A4:CF:12 and 3C:71:BF dropped); names Flock, FLCK, CONDOR, FALCON, SPARROW; globs Flock-*, Flock-??????. Extra attention filled. Stock bookmark.", "Roadside ALPR / camera pole. High only for B4:1E:52 or a Flock-* SSID. Current poles are often quiet on Wi-Fi and BLE. Other OUIs are component vendors. Beeps on a new match."],
             ["Raven / ShotSpotter", "Names RAVEN, ShotSpotter, SoundThinking; UUIDs 3100–3500; mfg 0x09C8; OUI D4:11:D6", "UUID range and 0x09C8 are the stronger digital fingerprints."],
             ["Apple AirTags", "Name AirTag / Find My; mfg data 0x004C / 12; UUID FD44", "Offline Finding. iPhones also send 0x12 — dropped when Continuity (Apple Device) is on the same radio unless the name is AirTag or UUID FD44. Not Continuity 0x10 and not AirPods (0x07)."],
             ["Apple Device", "Apple 0x004C types 0x10 / 0x0F / 0x0B / 0x05 / 0x0C–0x0E / 0x08 / 0x0A; names iPhone, iPad, MacBook", "Phone / tablet / Mac Continuity. OF 0x12 on the same radio is not a second AirTag chip. A street of iPhones will light this up."],
@@ -4637,7 +4637,7 @@ def story():
             ["Kontakt.io", "BLE company 0x01FD; names Kontakt*", "Kontakt Micro-Location beacons. Decode fields: UUID FE6A Location packet (battery / TX / channel / moving). §9.6."],
             ["Penguin", "Name / glob Penguin*. Extra attention filled. Stock bookmark.", "Flock-family / roadside camera provisioning name. Name-only. Low uniqueness. Beeps on a new match."],
             ["Pigvision", "Name / glob Pigvision*. Extra attention filled. Stock bookmark.", "Flock-family / roadside camera name. Name-only. Beeps on a new match."],
-            ["FS Ext Battery", "Name FS Ext Battery; globs FS_*, FS Ext*; Silicon Labs OUIs 04:0D:84, 1C:34:F1, 38:5B:44, 94:34:69, B4:E3:F9, F0:82:C0, 58:8E:81, EC:1B:BD, 90:35:EA. Extra attention filled. Stock bookmark. Surveillance class.", "Usually a Flock-style camera pack. Name is medium confidence. OUI-only hits are low confidence. Beeps on a new match."],
+            ["FS Ext Battery", "Name FS Ext Battery; globs FS_*, FS Ext*; remaining pack OUIs 04:0D:84, 1C:34:F1, 38:5B:44, 94:34:69, B4:E3:F9, F0:82:C0 (Silabs 90:35:EA / 58:8E:81 / EC:1B:BD dropped). Extra attention filled. Stock bookmark. Surveillance class.", "Usually a Flock-style camera pack. Name is medium confidence. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
             ["Raven / ShotSpotter", "Names RAVEN / ShotSpotter / SoundThinking; UUIDs 3100–3500; mfg 0x09C8; OUI D4:11:D6", "Flock Raven or ShotSpotter-style acoustic gunshot sensor. Wi-Fi Direct SSIDs such as DIRECT-rR-Raven-* hit on the Raven name, not a catch-all DIRECT- prefix. Surveillance class."],
             ["Digital Ally", "IEEE 00:23:BD; names FirstVu / Digital Ally / EVO-HD / VuLink", "Body-worn or in-car camera. Extra attention. Quiet LTE units stay off-air."],
             ["Limitless Pendant", "BLE service 632de001-604c-446b-a80f-7963e950f3fb; name Limitless", "Wearable conversation recorder. Extra attention."],
@@ -4737,10 +4737,11 @@ def story():
             ["GhostESP", "Wi-Fi GhostNet / GhostNet*. Extra attention filled. Stock bookmark.", "GhostESP ESP32 audit firmware default AP. Same boards are DIY. Not proof of an attack. Beeps on a new match."],
             ["Bruce", "Wi-Fi BruceNet / BruceNet*. Extra attention filled. Stock bookmark.", "Bruce ESP32 pentest firmware default AP. Evil-portal SSIDs look like ordinary Wi-Fi and miss. Not proof of an attack. Beeps on a new match."],
             ["Rekor", "Rekor / Rekor*. Extra attention filled. Stock bookmark.", "Highway / transit ALPR. Name-only. Beeps on a new match."],
-            ["Axon", "OUI 00:25:DF (Axon Enterprise); names Axon Body / Fleet / Dock / BWCDEVICE / Axon*; UUID 0xFE6C (Axon Signal). Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). Body-worn, in-car, dock, or TASER. Body 3/4 often advertise BLE on the public OUI. Not that officer. Not Axon Networks 00:58:28. ZTE Axon phones can hit the name. Beeps on a new match."],
+            ["Axon", "OUI 00:25:DF (Axon Enterprise); names Axon Body / Fleet / Dock / BWCDEVICE / Axon*; UUIDs FE6B/FE6C/FC81; company TASER International 0x034D. Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). Body-worn, in-car, dock, or TASER. Body 3/4 often advertise BLE on the public OUI. Not that officer. Not Axon Networks 00:58:28. ZTE Axon phones can hit the name. Beeps on a new match."],
             ["WatchGuard Video", "OUI 00:1D:96; names WatchGuard / VISTA WiFi / VISTA XLT. Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). WatchGuard Video (now Motorola) body-worn / in-car. Not WatchGuard firewall 00:01:21. Patrol units may stay quiet. Beeps on a new match."],
-            ["Ray-Ban / Meta glasses", "BLE company IDs 0x01AB, 0x058E, 0x0D53; names Ray-Ban / Meta View / Oakley Meta. Extra attention filled. Stock bookmark.", "Often Ray-Ban Meta. Same IDs on Quest and other Meta wearables. Not proof of recording. Beeps on a new match."],
-            ["Snap Spectacles", "BLE company ID 0x03C2; Spectacles names. Extra attention filled. Stock bookmark.", "Snap Spectacles or other Snap BLE. Not proof of recording. Beeps on a new match."],
+            ["Ray-Ban / Meta glasses", "BLE company IDs 0x01AB, 0x058E, 0x0D53; UUIDs FEB7/FEB8; names Ray-Ban / Meta View / Oakley Meta. Extra attention filled. Stock bookmark.", "Often Ray-Ban Meta. Same IDs on Quest and other Meta wearables. Not proof of recording. Beeps on a new match."],
+            ["Snap Spectacles", "BLE company ID 0x03C2; UUID FE45; Spectacles names. Extra attention filled. Stock bookmark.", "Snap Spectacles or other Snap BLE. Not proof of recording. Beeps on a new match."],
+            ["Vuzix", "BLE company ID 0x060C; names Vuzix*. Extra attention filled. Stock bookmark on new installs.", "Vuzix smart glasses. Not proof of recording. Beeps on a new match if bookmarked."],
             ["Avigilon", "Avigilon / Avigilon*. Extra attention filled. Stock bookmark.", "Motorola cameras / LPR on municipal poles and commercial sites. Name-only. Beeps on a new match."],
             ["Axis", "AXIS-* / Axis Camera. Extra attention filled. Stock bookmark.", "Municipal / public CCTV poles. Name-only. Beeps on a new match."],
             ["UniFi", "UniFi, Ubiquiti, UAP-* (either radio)", "Name only. Use UniFi AP when you want BSSID matching. ISP / routers class."],
@@ -4763,7 +4764,7 @@ def story():
         "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32", "14:5A:FC", "74:4C:A1",
         "08:3A:88", "9C:2F:9D", "C0:35:32", "94:08:53", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6",
         "24:B2:B9", "00:F4:8D", "D0:39:57", "E8:D0:FC", "E0:4F:43", "B8:1E:A4", "70:08:94",
-        "3C:71:BF", "58:00:E3", "5C:93:A2", "64:6E:69", "48:27:EA", "A4:CF:12", "82:6B:F2",
+        "58:00:E3", "5C:93:A2", "64:6E:69", "48:27:EA", "82:6B:F2",
     ]
     oui_cols = 4
     oui_w = 6.5 * inch / oui_cols

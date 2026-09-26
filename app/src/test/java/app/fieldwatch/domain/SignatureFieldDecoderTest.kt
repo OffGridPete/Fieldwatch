@@ -330,6 +330,7 @@ class SignatureFieldDecoderTest {
         assertEquals("-74 °", rows.display("longitude"))
         assertEquals("100 m", rows.display("alt_geo"))
         assertEquals("50 m", rows.display("height"))
+        assertEquals("0 °", rows.display("heading"))
         assertEquals(40.0, rows.number("latitude")!!, 1e-6)
         assertEquals(-74.0, rows.number("longitude")!!, 1e-6)
         assertEquals(100.0, rows.number("alt_geo")!!, 1e-6)

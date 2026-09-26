@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 76,
+    "catalogVersion": 77,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -8322,8 +8322,32 @@
                 },
                 {
                     "kind": "SERVICE_UUID",
+                    "text": "FE6B",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
                     "text": "FE6C",
                     "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FC81",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 845,
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
@@ -24386,14 +24410,6 @@
                 },
                 {
                     "kind": "OUI",
-                    "text": "3C:71:BF",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
                     "text": "58:00:E3",
                     "companyId": 0,
                     "dataPrefixHex": "",
@@ -24419,14 +24435,6 @@
                 {
                     "kind": "OUI",
                     "text": "48:27:EA",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "A4:CF:12",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -24517,8 +24525,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Flock-style roadside ALPR / camera pole. A Flock- name is the stronger hit; LiteOn and Espressif boards are also used on unrelated products.",
-            "attentionNote": "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the stronger hit; LiteOn and Espressif OUIs are component vendors used on many products. Pattern match, not that camera. Look with your eyes.",
+            "notes": "Flock-style roadside ALPR / camera pole. A Flock- name or IEEE B4:1E:52 is the stronger hit. Current poles are often quiet on Wi-Fi and BLE. LiteOn boards also appear on unrelated products.",
+            "attentionNote": "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the stronger hit. Current poles are often quiet on Wi-Fi and BLE. LiteOn OUIs are component vendors used on many products. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
         },
@@ -25013,38 +25021,14 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "58:8E:81",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "EC:1B:BD",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "90:35:EA",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "External battery pack usually associated with a Flock-style camera pole. Silicon Labs boards also appear on unrelated IoT.",
-            "attentionNote": "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger; Silicon Labs OUIs also appear on unrelated IoT. Pattern match, not that camera. Look with your eyes.",
+            "notes": "External battery pack usually associated with a Flock-style camera pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE.",
+            "attentionNote": "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
         },
@@ -49346,8 +49330,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Penguin Flock-family / roadside camera provisioning name. Name-only, low uniqueness.",
-            "attentionNote": "Penguin is a Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Pattern match, not that camera. Look with your eyes.",
+            "notes": "Penguin Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Current Flock-family poles are often quiet on Wi-Fi and BLE.",
+            "attentionNote": "Penguin is a Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
         },
@@ -50079,7 +50063,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Flock Raven or ShotSpotter-style acoustic gunshot sensor, usually on a pole with cameras.",
+            "notes": "Flock Raven or ShotSpotter-style acoustic gunshot sensor, usually on a pole with cameras. Current Flock-family poles are often quiet on Wi-Fi and BLE.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "SURVEILLANCE"
@@ -50162,6 +50146,22 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEB7",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEB8",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -50220,13 +50220,21 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "VENDOR_IE_OUI",
+                    "text": "FA:0B:BC",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE",
@@ -50333,6 +50341,162 @@
                             "offset": 2,
                             "length": 1,
                             "op": "eq",
+                            "valueHex": "00"
+                        }
+                    },
+                    {
+                        "id": "ua_type",
+                        "label": "UA type",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 0,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "None",
+                            "1": "Aeroplane",
+                            "2": "Helicopter / multirotor",
+                            "3": "Gyroplane",
+                            "4": "Hybrid lift",
+                            "6": "Glider",
+                            "10": "Airship",
+                            "15": "Other"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "00"
+                        }
+                    },
+                    {
+                        "id": "uas_id",
+                        "label": "UAS ID",
+                        "offset": 4,
+                        "length": 20,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "00"
+                        }
+                    },
+                    {
+                        "id": "id_type",
+                        "label": "ID type",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 4,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "None",
+                            "1": "Serial (CTA-2063)",
+                            "2": "CAA registration",
+                            "3": "UTM UUID",
+                            "4": "Session ID"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "01"
+                        }
+                    },
+                    {
+                        "id": "ua_type",
+                        "label": "UA type",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 0,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "None",
+                            "1": "Aeroplane",
+                            "2": "Helicopter / multirotor",
+                            "3": "Gyroplane",
+                            "4": "Hybrid lift",
+                            "6": "Glider",
+                            "10": "Airship",
+                            "15": "Other"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "01"
+                        }
+                    },
+                    {
+                        "id": "uas_id",
+                        "label": "UAS ID",
+                        "offset": 4,
+                        "length": 20,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "01"
+                        }
+                    },
+                    {
+                        "id": "id_type",
+                        "label": "ID type",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 4,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "None",
+                            "1": "Serial (CTA-2063)",
+                            "2": "CAA registration",
+                            "3": "UTM UUID",
+                            "4": "Session ID"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
                             "valueHex": "02"
                         }
                     },
@@ -50411,6 +50575,414 @@
                             "offset": 2,
                             "length": 1,
                             "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "heading",
+                        "label": "Heading",
+                        "offset": 4,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 2.0,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10",
+                            "and": {
+                                "offset": 4,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "FF"
+                            }
+                        }
+                    },
+                    {
+                        "id": "vspeed",
+                        "label": "Vertical speed",
+                        "offset": 6,
+                        "length": null,
+                        "type": "i8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "m/s",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "latitude",
+                        "label": "Latitude",
+                        "offset": 7,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "longitude",
+                        "label": "Longitude",
+                        "offset": 11,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "alt_baro",
+                        "label": "Altitude (baro)",
+                        "offset": 15,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "alt_geo",
+                        "label": "Altitude (HAE)",
+                        "offset": 17,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "height",
+                        "label": "Height",
+                        "offset": 19,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "10"
+                        }
+                    },
+                    {
+                        "id": "status",
+                        "label": "Status",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 4,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "Undeclared",
+                            "1": "Ground",
+                            "2": "Airborne",
+                            "3": "Emergency",
+                            "4": "RID failure"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "heading",
+                        "label": "Heading",
+                        "offset": 4,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 2.0,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11",
+                            "and": {
+                                "offset": 4,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "FF"
+                            }
+                        }
+                    },
+                    {
+                        "id": "vspeed",
+                        "label": "Vertical speed",
+                        "offset": 6,
+                        "length": null,
+                        "type": "i8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "m/s",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "latitude",
+                        "label": "Latitude",
+                        "offset": 7,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "longitude",
+                        "label": "Longitude",
+                        "offset": 11,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "alt_baro",
+                        "label": "Altitude (baro)",
+                        "offset": 15,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "alt_geo",
+                        "label": "Altitude (HAE)",
+                        "offset": 17,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "height",
+                        "label": "Height",
+                        "offset": 19,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "11"
+                        }
+                    },
+                    {
+                        "id": "status",
+                        "label": "Status",
+                        "offset": 3,
+                        "length": null,
+                        "type": "bits",
+                        "endian": "le",
+                        "bitOffset": 4,
+                        "bitWidth": 4,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "0": "Undeclared",
+                            "1": "Ground",
+                            "2": "Airborne",
+                            "3": "Emergency",
+                            "4": "RID failure"
+                        },
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "12"
+                        }
+                    },
+                    {
+                        "id": "heading",
+                        "label": "Heading",
+                        "offset": 4,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 2.0,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "12",
+                            "and": {
+                                "offset": 4,
+                                "length": 1,
+                                "op": "neq",
+                                "valueHex": "FF"
+                            }
+                        }
+                    },
+                    {
+                        "id": "vspeed",
+                        "label": "Vertical speed",
+                        "offset": 6,
+                        "length": null,
+                        "type": "i8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "m/s",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
                             "valueHex": "12"
                         }
                     },
@@ -50448,6 +51020,27 @@
                         "offsetAdd": null,
                         "modulo": null,
                         "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "12"
+                        }
+                    },
+                    {
+                        "id": "alt_baro",
+                        "label": "Altitude (baro)",
+                        "offset": 15,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 0.5,
+                        "offsetAdd": -1000.0,
+                        "modulo": null,
+                        "unit": "m",
                         "enum": null,
                         "when": {
                             "offset": 2,
@@ -50516,7 +51109,133 @@
                             "offset": 2,
                             "length": 1,
                             "op": "eq",
+                            "valueHex": "30"
+                        }
+                    },
+                    {
+                        "id": "self_id",
+                        "label": "Self ID",
+                        "offset": 4,
+                        "length": 23,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "31"
+                        }
+                    },
+                    {
+                        "id": "self_id",
+                        "label": "Self ID",
+                        "offset": 4,
+                        "length": 23,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
                             "valueHex": "32"
+                        }
+                    },
+                    {
+                        "id": "op_lat",
+                        "label": "Operator lat",
+                        "offset": 4,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "40"
+                        }
+                    },
+                    {
+                        "id": "op_lon",
+                        "label": "Operator lon",
+                        "offset": 8,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "40"
+                        }
+                    },
+                    {
+                        "id": "op_lat",
+                        "label": "Operator lat",
+                        "offset": 4,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "41"
+                        }
+                    },
+                    {
+                        "id": "op_lon",
+                        "label": "Operator lon",
+                        "offset": 8,
+                        "length": null,
+                        "type": "i32",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": 1.0E-7,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": "°",
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "41"
                         }
                     },
                     {
@@ -50559,6 +51278,48 @@
                             "length": 1,
                             "op": "eq",
                             "valueHex": "42"
+                        }
+                    },
+                    {
+                        "id": "operator_id",
+                        "label": "Operator ID",
+                        "offset": 4,
+                        "length": 20,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "50"
+                        }
+                    },
+                    {
+                        "id": "operator_id",
+                        "label": "Operator ID",
+                        "offset": 4,
+                        "length": 20,
+                        "type": "utf8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 2,
+                            "length": 1,
+                            "op": "eq",
+                            "valueHex": "51"
                         }
                     },
                     {
@@ -55321,6 +56082,14 @@
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE45",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
                     "enabled": true
                 }
             ],
@@ -61066,6 +61835,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-vuzix",
+            "name": "Vuzix",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1548,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "Vuzix",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Vuzix*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Vuzix smart glasses or other Vuzix BLE wearable.",
+            "attentionNote": "Vuzix BLE glasses. Not proof of recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
+            "builtIn": true,
+            "kind": "GLASSES"
         },
         {
             "id": "fleet-watchguard-ap",

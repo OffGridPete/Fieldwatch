@@ -107,7 +107,7 @@ internal object CatalogDecodes {
     /**
      * ASTM F3411 / OpenDroneID on UUID 0xFFFA.
      * Service data: 0x0D app code, counter, then a 25-byte message.
-     * Type-specific fields are gated on protocol version 2 (F3411-22a).
+     * Type-specific fields are gated on protocol versions 0–2 (F3411).
      * Older protocol bytes still show app code, counter, and message type.
      */
     val remoteId: FleetDecode = FleetDecode(
@@ -400,8 +400,11 @@ internal object CatalogDecodes {
                 "4" to "RID failure",
             ),
         ),
+        u8("heading", "Heading", 4, scale = 2.0, unit = "°", gate = neq(4, "FF")),
+        i8("vspeed", "Vertical speed", 6, scale = 0.5, unit = "m/s"),
         i32le("latitude", "Latitude", 7, scale = 1e-7, unit = "°"),
         i32le("longitude", "Longitude", 11, scale = 1e-7, unit = "°"),
+        u16le("alt_baro", "Altitude (baro)", 15, scale = 0.5, offsetAdd = -1000.0, unit = "m"),
         u16le("alt_geo", "Altitude (HAE)", 17, scale = 0.5, offsetAdd = -1000.0, unit = "m"),
         u16le("height", "Height", 19, scale = 0.5, offsetAdd = -1000.0, unit = "m"),
     )
@@ -419,10 +422,14 @@ internal object CatalogDecodes {
         utf8("operator_id", "Operator ID", 4, length = 20),
     )
 
-    /** Gate on message-type nibble with protocol version 2 (header = type<<4 | 0x2). */
+    /** Gate on message type for protocol versions 0–2 (header = type<<4 | version). */
     private fun forMessageType(type: Int, fields: List<DecodeField>): List<DecodeField> {
-        val header = "%02X".format((type shl 4) or 2)
-        return fields.map { it.copy(gate = eq(2, header)) }
+        return (0..2).flatMap { ver ->
+            val headerGate = eq(2, "%02X".format((type shl 4) or ver))
+            fields.map { field ->
+                field.copy(gate = field.gate?.let { headerGate.copy(and = it) } ?: headerGate)
+            }
+        }
     }
 
     private fun ruuviRawV1(): List<DecodeField> = listOf(
@@ -505,8 +512,8 @@ internal object CatalogDecodes {
 
     private fun i8(
         id: String, label: String, offset: Int,
-        unit: String? = null, gate: DecodeWhen? = null,
-    ) = DecodeField(id, label, offset, type = DecodeType.I8, unit = unit, gate = gate)
+        scale: Double? = null, unit: String? = null, gate: DecodeWhen? = null,
+    ) = DecodeField(id, label, offset, type = DecodeType.I8, scale = scale, unit = unit, gate = gate)
 
     private fun hex(
         id: String, label: String, offset: Int, length: Int,

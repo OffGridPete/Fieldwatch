@@ -285,6 +285,7 @@ object DefaultCatalog {
         hobbyBleSerial(),
         metaGlasses(),
         snapSpectacles(),
+        vuzix(),
         brilliantFrame(),
         evenG1(),
         hak5Pineapple(),
@@ -319,8 +320,8 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "Flock-style roadside ALPR / camera pole. A Flock- name is the stronger hit; LiteOn and Espressif boards are also used on unrelated products.",
-        attentionNote = "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the stronger hit; LiteOn and Espressif OUIs are component vendors used on many products. Pattern match, not that camera. Look with your eyes.",
+        notes = "Flock-style roadside ALPR / camera pole. A Flock- name or IEEE B4:1E:52 is the stronger hit. Current poles are often quiet on Wi-Fi and BLE. LiteOn boards also appear on unrelated products.",
+        attentionNote = "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the stronger hit. Current poles are often quiet on Wi-Fi and BLE. LiteOn OUIs are component vendors used on many products. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
         rules = buildList {
             // IEEE MA-L registered to Flock Safety (2024-05-09)
@@ -331,8 +332,8 @@ object DefaultCatalog {
                 "14:5A:FC", "74:4C:A1", "08:3A:88", "9C:2F:9D", "C0:35:32",
                 "94:08:53", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6", "24:B2:B9",
                 "00:F4:8D", "D0:39:57", "E8:D0:FC", "E0:4F:43", "B8:1E:A4",
-                "70:08:94", "3C:71:BF", "58:00:E3", "5C:93:A2", "64:6E:69",
-                "48:27:EA", "A4:CF:12", "82:6B:F2",
+                "70:08:94", "58:00:E3", "5C:93:A2", "64:6E:69",
+                "48:27:EA", "82:6B:F2",
             ).forEach { add(oui(it)) }
             add(name("Flock"))
             add(name("FLCK"))
@@ -353,7 +354,7 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "Flock Raven or ShotSpotter-style acoustic gunshot sensor, usually on a pole with cameras.",
+        notes = "Flock Raven or ShotSpotter-style acoustic gunshot sensor, usually on a pole with cameras. Current Flock-family poles are often quiet on Wi-Fi and BLE.",
         builtIn = true,
         rules = listOf(
             name("RAVEN"),
@@ -507,8 +508,8 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "Penguin Flock-family / roadside camera provisioning name. Name-only, low uniqueness.",
-        attentionNote = "Penguin is a Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Pattern match, not that camera. Look with your eyes.",
+        notes = "Penguin Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Current Flock-family poles are often quiet on Wi-Fi and BLE.",
+        attentionNote = "Penguin is a Flock-family / roadside camera provisioning name. Name-only, low uniqueness. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
         rules = listOf(
             name("Penguin"),
@@ -540,8 +541,8 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "External battery pack usually associated with a Flock-style camera pole. Silicon Labs boards also appear on unrelated IoT.",
-        attentionNote = "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger; Silicon Labs OUIs also appear on unrelated IoT. Pattern match, not that camera. Look with your eyes.",
+        notes = "External battery pack usually associated with a Flock-style camera pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE.",
+        attentionNote = "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
         rules = buildList {
             add(name("FS Ext Battery"))
@@ -549,8 +550,7 @@ object DefaultCatalog {
             add(glob("FS Ext*"))
             listOf(
                 "04:0D:84", "1C:34:F1", "38:5B:44", "94:34:69",
-                "B4:E3:F9", "F0:82:C0", "58:8E:81", "EC:1B:BD",
-                "90:35:EA",
+                "B4:E3:F9", "F0:82:C0",
             ).forEach { add(oui(it)) }
         },
     )
@@ -2645,7 +2645,10 @@ object DefaultCatalog {
             name("Axon Dock"),
             name("BWCDEVICE"),
             glob("Axon*"),
+            uuid("FE6B"),
             uuid("FE6C"),
+            uuid("FC81"),
+            mfg(0x034D),
         ),
     )
 
@@ -2945,6 +2948,8 @@ object DefaultCatalog {
             bleGlob("RayBan*"),
             bleName("Meta View"),
             bleName("Oakley Meta"),
+            uuid("FEB7"),
+            uuid("FEB8"),
         ),
     )
 
@@ -2963,6 +2968,24 @@ object DefaultCatalog {
             bleName("Snap Spectacles"),
             bleName("Spectacles"),
             bleGlob("Spectacles*"),
+            uuid("FE45"),
+        ),
+    )
+
+    private fun vuzix() = Fleet(
+        id = "fleet-vuzix",
+        name = "Vuzix",
+        enabled = true,
+        colorIndex = Hue.GLASSES,
+        kind = SignatureClass.GLASSES,
+        matchAny = true,
+        notes = "Vuzix smart glasses or other Vuzix BLE wearable.",
+        attentionNote = "Vuzix BLE glasses. Not proof of recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            mfg(0x060C),
+            bleName("Vuzix"),
+            bleGlob("Vuzix*"),
         ),
     )
 
@@ -3490,11 +3513,12 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
         builtIn = true,
         decode = CatalogDecodes.remoteId,
         rules = listOf(
             uuid("FFFA"),
+            vendorIe("FA:0B:BC"),
         ),
     )
 

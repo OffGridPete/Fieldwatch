@@ -318,6 +318,8 @@ object DeviceExplain {
                     Hint("vehicle", "a Tesla BLE tire sensor", "Matched signature $raw.", 7)
                 "tpms" in n || n == "tirecheck" || n == "sytpms" ->
                     Hint("vehicle", "a BLE tire-pressure sensor", "Matched signature $raw.", 7)
+                n == "vuzix" ->
+                    Hint("glasses", "Vuzix smart glasses", "Matched signature $raw.", 7)
                 n == "tesla" ->
                     Hint("vehicle", "a Tesla vehicle (including Cybertruck) or phone-as-key", "Matched signature $raw.", 7)
                 n == "google" ->
