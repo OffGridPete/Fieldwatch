@@ -40,6 +40,7 @@ Do not rename the APK. Open `Fieldwatch.apk` from Files (or My Files). Allow ins
 | `dist/fieldwatch-signatures-v2.json` | Stock catalog for 1.1.12+ GitHub update |
 | `dist/instruction.txt` | Permissions, first launch |
 | `dist/Fieldwatch_User_Manual.pdf` | User manual |
+| [`docs/WEAR_OS.md`](docs/WEAR_OS.md) | Wear OS companion & standalone smartwatch documentation |
 | [`CHANGELOG.md`](CHANGELOG.md) | What’s new in each build |
 | `LICENSE` | MIT License |
 | `NOTICE` | Third-party attribution |
@@ -49,6 +50,19 @@ Android 10+. Allow install from the app you used to open the APK. Play Protect m
 ```bash
 adb install -r dist/Fieldwatch.apk
 ```
+
+## Wear OS Integration (Smartwatches)
+
+Fieldwatch includes a dedicated **Wear OS** module (`:wear`) built with Compose for Wear OS, designed for circular smartwatches such as the Google Pixel Watch and Samsung Galaxy Watch (Wear OS 3.0+ / API 30–35).
+
+- **Classic CRT Phosphor Radar**: 360° rotating radar sweep with simulated phosphor decay, concentric dBm range rings, color-coded RF contacts (AirTags, SmartTags, Wi-Fi, BLE), interactive target selection, and physical rotary crown zooming (1.0× to 3.5×).
+- **Tactile Wrist Hunt**: Eyes-free tracking using dynamic haptic pulses that accelerate like a Geiger counter as you approach an unwanted tracker or surveillance device.
+- **Wear OS Quick Tile**: Real-time RF density and active alerts accessible directly from your watch face carousel.
+- **Dual Mode**: Operates seamlessly as a companion to the phone app via the Wearable Data Layer API, or independently as a battery-safe 10-second burst BLE scanner.
+- **100% Offline**: Zero internet permissions declared, zero cloud reliance, zero tracking.
+
+For full technical documentation, architecture diagrams, message contracts, and tactical operation guide, see **[Fieldwatch for Wear OS Guide](docs/WEAR_OS.md)**.
+
 
 ### Upgrading from 1.0.4 or earlier — Fieldwatch now has a real publisher certificate (one-time reinstall)
 

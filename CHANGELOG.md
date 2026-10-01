@@ -4,6 +4,16 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.2.0 (Wear OS Integration) — 1 October 2026
+
+- **Wear OS Application Module (`:wear`)**: Added standalone and companion Wear OS application supporting Wear OS 3.0+ (API 30–35), optimized for circular displays (e.g. Google Pixel Watch, Samsung Galaxy Watch).
+- **Classic CRT Phosphor Radar (`ClassicRadarScreen.kt`)**: Implemented circular 360-degree radar scope with continuous 3.2-second beam sweep, 22-step radial phosphor decay trail, concentric dBm distance rings (-40, -60, -80, -100 dBm), color-coded blip contacts, interactive target reticle selection HUD, and physical rotary crown zooming (1.0× to 3.5×).
+- **Tactile Wrist Hunt Mode (`WristHuntScreen.kt`)**: Added eyes-free haptic tracking mode that vibrates dynamically like a Geiger counter (intervals scaling from 1200ms down to 75ms) as proximity to a targeted transmitter increases.
+- **PhoneWearBridge & Wearable Data Layer**: Real-time peer-to-peer data synchronization between the Android phone and smartwatch via Google Play Services Wearable Data Layer API (`/fieldwatch/rf_summary`, `/fieldwatch/alerts`, `/fieldwatch/hunt_update`, `/fieldwatch/hunt_control`).
+- **Wear OS Quick Tile (`FieldwatchTileService.kt`)**: Added watch carousel tile displaying glanceable RF density and active alerts.
+- **Battery-Safe Standalone BLE Scanner (`WatchBleScanner.kt`)**: 10-second burst scanning engine for untethered watch usage.
+- **Documentation**: Comprehensive documentation added in `docs/WEAR_OS.md` and `wear/README.md`.
+
 ## 1.1.16 — 30 September 2026
 
 - Reports → Path plots MAC alerts and signature alerts, each once at the strongest hear, as a class icon. A count is several in one place. The black dot is the start. The blue dot is you, at the last point. The list puts the Wi-Fi or BLE icon next to the MAC. The symbol key under the map is gone, and the alert rows sit closer together. An alert with a decoded latitude and longitude is drawn at the last advertised fix as a class icon. The advertised track on that card is a white dotted line. If that icon shares a spot with other alerts, the count lists them together. The pilot is a person icon, with no word label on the map. A lone class icon has no number box; tap it for that one radio. A count still lists only the radios in that spot. A fix farther than 2 km stays on that aircraft’s map. Other alerts stay at the strongest hear. Debrief and Compare PDF figures draw that track as a black dotted line, with a class icon at the last position and a person icon for the pilot. On a compare, the second sit’s track is a blue dotted line. Those PDF figures plot the same MAC alerts and signature alerts, at the last advertised position when the radio sent one. The Path key under that figure lists an advertised aircraft with the drone class icon, plus its live status, UAS id, last position, motion, and pilot position. A start or end mark that covers a detection still opens that detection.
