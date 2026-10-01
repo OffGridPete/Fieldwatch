@@ -3,6 +3,8 @@
 .kotlin/
 build/
 app/build/
+wear/build/
+.android/
 *.apk
 !dist/*.apk
 *.aab

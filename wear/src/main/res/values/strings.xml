@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Fieldwatch</string>
+    <string name="tile_title">Fieldwatch RF</string>
+    <string name="tile_description">Nearby Wi-Fi, BLE, and Tracker status</string>
+</resources>

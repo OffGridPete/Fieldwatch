@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Fieldwatch"
-include(":app")
+include(":app", ":wear")

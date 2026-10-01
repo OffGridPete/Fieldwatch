@@ -45,6 +45,8 @@ class FieldwatchApp : Application() {
         private set
     lateinit var tak: TakPublisher
         private set
+    lateinit var wearBridge: app.fieldwatch.wear.PhoneWearBridge
+        private set
     private val filters = FilterEngine()
     private val _arrivals = MutableStateFlow(ArrivalsState())
     val arrivals: StateFlow<ArrivalsState> = _arrivals.asStateFlow()
@@ -85,6 +87,13 @@ class FieldwatchApp : Application() {
         if (config.filter.arrivalsOnly) {
             beginArrivals(keepRemembered = true)
         }
+        wearBridge = app.fieldwatch.wear.PhoneWearBridge(
+            context = this,
+            scope = scope,
+            devices = devices,
+            alerter = alerter,
+        )
+        wearBridge.start()
     }
 
     fun beginArrivals(keepRemembered: Boolean = false) {
