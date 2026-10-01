@@ -416,7 +416,19 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 HeaderCount(state.wifiNow, Icons.Outlined.Wifi, "Wi-Fi")
                                 HeaderCount(state.bleNow, Icons.Outlined.Bluetooth, "BLE")
                                 HeaderCount(state.namedNow, Icons.Outlined.Hub, "signatures")
-                                if (state.throttleHint.isNotBlank()) {
+                                if (state.rfThreatHint.isNotBlank()) {
+                                    Text(
+                                        "·  ${state.rfThreatHint}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                    )
+                                } else if (state.throttleHint.isNotBlank()) {
                                     Text(
                                         "·  ${state.throttleHint}",
                                         style = MaterialTheme.typography.labelSmall,

@@ -27,3 +27,7 @@ research/
 scripts/.lookup-cache/
 
 # Machine JDK path belongs in JAVA_HOME, not the tree
+
+# Working screenshots and scripts
+/*.png
+install_fieldwatch.*

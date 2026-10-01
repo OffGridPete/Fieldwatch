@@ -45,6 +45,7 @@ import app.fieldwatch.domain.FamilyVerdict
 import app.fieldwatch.domain.LogRadio
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.RfAnomalyDetector
 import app.fieldwatch.domain.RssiSample
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.SignatureCandidate
@@ -133,6 +134,7 @@ data class FieldwatchUi(
     val namedNow: Int = 0,
     val logLines: Long = 0,
     val throttleHint: String = "",
+    val rfThreatHint: String = "",
     val hiddenKnown: Int = 0,
     val arrivalsLearning: Boolean = false,
     val displayPaused: Boolean = false,
@@ -298,6 +300,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         .thenByDescending { it.sortRssi(config.settings.strengthSort, windowMs, now) }
             },
         )
+        val spamAssessment = RfAnomalyDetector.assessBleSpam(labeled, now)
+        val threatHint = if (spamAssessment.isSpamAttackActive) {
+            "⚠️ BLE FLOOD (${spamAssessment.burstCount})"
+        } else {
+            ""
+        }
         FieldwatchUi(
             devices = labeled,
             filtered = filtered,
@@ -315,6 +323,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             namedNow = stats.namedNow,
             logLines = stats.logLines,
             throttleHint = stats.throttleHint,
+            rfThreatHint = threatHint,
             hiddenKnown = hiddenKnown,
             arrivalsLearning = learning,
             operatorSpanM = if (moveCtx.ready || config.filter.movingWithYou) {
