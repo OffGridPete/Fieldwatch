@@ -125,4 +125,52 @@ class AdvPayloadDecoderTest {
         val tesla = bleSighting(DefaultCatalog.TESLA_IBEACON_MFG_PREFIX + "00010002C5")
         assertTrue(AdvPayloadDecoder.roleHints(tesla).any { it.label.contains("Tesla") })
     }
+
+    @Test
+    fun samsungSmartTagDecodesManufacturerPayload() {
+        val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0075, "010203040506070809"))
+        val byLabel = fields.associate { it.label to it.value }
+        assertEquals("Samsung Electronics (0x0075)", byLabel["Manufacturer"])
+        assertEquals("Galaxy SmartTag (SmartThings Find)", byLabel["Product"])
+    }
+
+    @Test
+    fun meshtasticDecodesServicePayload() {
+        val fields = AdvPayloadDecoder.decodeService(ServiceDataRecord("CBF0", "01020304"))
+        val byLabel = fields.associate { it.label to it.value }
+        assertEquals("Meshtastic LoRa Mesh", byLabel["Network"])
+        assertEquals("0xCBF0", byLabel["Service UUID"])
+    }
+
+    @Test
+    fun roleHintsDetectMeshtasticNode() {
+        val sighting = Sighting(
+            key = "BLE:AA:BB:CC:DD:EE:11",
+            kind = RadioKind.BLE,
+            mac = "AA:BB:CC:DD:EE:11",
+            name = "CustomNodeCallsign",
+            rssi = -65,
+            rssiMin = -65,
+            rssiMax = -65,
+            channel = 0,
+            frequencyMhz = 0,
+            vendor = null,
+            randomized = false,
+            hiddenSsid = false,
+            serviceUuids = listOf("0000CBF0-0000-1000-8000-00805F9B34FB"),
+            manufacturerId = null,
+            manufacturerDataHex = "",
+            rawHex = "",
+            extras = "",
+            firstSeen = 1L,
+            lastSeen = 1L,
+            hitCount = 1,
+            fleetIds = emptySet(),
+            rssiHistory = emptyList(),
+            presence = emptyList(),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("CBF0", "AABBCCDD"))),
+        )
+        val hints = AdvPayloadDecoder.roleHints(sighting)
+        assertTrue(hints.any { it.bucket == "mesh" && it.label.contains("Meshtastic") })
+    }
 }

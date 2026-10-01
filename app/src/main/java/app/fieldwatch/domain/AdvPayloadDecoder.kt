@@ -21,6 +21,7 @@ object AdvPayloadDecoder {
             0x004C -> decodeApple(bytes)
             0x0006 -> decodeMicrosoft(bytes)
             0x0157 -> decodeAltBeacon(bytes)
+            0x0075 -> decodeSamsung(bytes)
             0x00E0 -> listOf(Field("Google manufacturer data", "${bytes.size} bytes"))
             else -> emptyList()
         }
@@ -32,6 +33,7 @@ object AdvPayloadDecoder {
         return when (short) {
             0xFE2C -> decodeFastPair(bytes)
             0xFEAA -> decodeEddystone(bytes)
+            0xCBF0 -> decodeMeshtastic(bytes)
             else -> emptyList()
         }
     }
@@ -95,8 +97,29 @@ object AdvPayloadDecoder {
                 }
             }
         }
+        for (rec in mfg) {
+            if (rec.companyId == 0x0075) {
+                val bytes = hexToBytes(rec.dataHex) ?: continue
+                if (bytes.size >= 4) {
+                    out += RoleHint(
+                        "tag",
+                        "a Samsung Galaxy SmartTag or SmartThings device",
+                        "Samsung SmartThings Find advertisement (0x0075).",
+                        7,
+                    )
+                }
+            }
+        }
         for (sd in device.facts.serviceData) {
             when (uuid16(sd.uuid)) {
+                0xCBF0 -> {
+                    out += RoleHint(
+                        "mesh",
+                        "a Meshtastic LoRa mesh node",
+                        "Meshtastic off-grid mesh radio service (UUID 0xCBF0).",
+                        9,
+                    )
+                }
                 0xFE2C -> {
                     val bytes = hexToBytes(sd.dataHex) ?: continue
                     if (bytes.size == 3) {
@@ -132,6 +155,14 @@ object AdvPayloadDecoder {
                     }
                 }
             }
+        }
+        if (device.serviceUuids.any { uuid16(it) == 0xCBF0 } && out.none { it.bucket == "mesh" }) {
+            out += RoleHint(
+                "mesh",
+                "a Meshtastic LoRa mesh node",
+                "Meshtastic off-grid mesh radio service (UUID 0xCBF0).",
+                9,
+            )
         }
         return out
     }
@@ -618,6 +649,37 @@ object AdvPayloadDecoder {
             )
         }
         return emptyList()
+    }
+
+    private fun decodeSamsung(bytes: ByteArray): List<Field> {
+        if (bytes.isEmpty()) return listOf(Field("Samsung payload", "empty"))
+        val out = ArrayList<Field>(4)
+        out += Field("Manufacturer", "Samsung Electronics (0x0075)")
+        if (bytes.size >= 6) {
+            val tagType = when (bytes[0].toInt() and 0xFF) {
+                0x01 -> "Galaxy SmartTag (SmartThings Find)"
+                0x02 -> "Galaxy SmartTag2"
+                0x42 -> "SmartThings Find Offline Beacon"
+                else -> "Samsung SmartThings Accessory"
+            }
+            out += Field("Product", tagType)
+            out += Field("SmartThings payload", "${bytes.size} bytes: ${bytes.toHexUpper()}")
+        } else {
+            out += Field("Samsung data", "${bytes.size} bytes: ${bytes.toHexUpper()}")
+        }
+        return out
+    }
+
+    private fun decodeMeshtastic(bytes: ByteArray): List<Field> {
+        val out = ArrayList<Field>(4)
+        out += Field("Network", "Meshtastic LoRa Mesh")
+        out += Field("Service UUID", "0xCBF0")
+        if (bytes.isNotEmpty()) {
+            out += Field("Node broadcast", "${bytes.size} bytes: ${bytes.toHexUpper()}")
+        } else {
+            out += Field("Role", "Meshtastic node companion service")
+        }
+        return out
     }
 
     private fun modelId24(bytes: ByteArray): Int =

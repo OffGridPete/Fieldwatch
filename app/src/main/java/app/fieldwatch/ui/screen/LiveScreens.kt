@@ -599,12 +599,21 @@ private fun radarPoint(
     rssi: Double = device.rssi.toDouble(),
     zoom: Float = 1f,
 ): Offset {
-    val angle = radarAngle(device.mac)
+    val angle = RadarPlot.contactAngle(device)
     val dist = radarRadius(rssi, maxR, zoom)
     return Offset(
         center.x + (cos(angle) * dist).toFloat(),
         center.y + (sin(angle) * dist).toFloat(),
     )
+}
+
+private fun sweepBehindDegrees(sweepDeg: Float, device: Sighting): Float {
+    val blip = RadarPlot.contactDegrees(device)
+    var beam = (270f + sweepDeg) % 360f
+    if (beam < 0f) beam += 360f
+    var behind = beam - blip
+    while (behind < 0f) behind += 360f
+    return behind
 }
 
 private fun sweepBehindDegrees(sweepDeg: Float, mac: String): Float {
@@ -657,9 +666,24 @@ private fun DrawScope.drawRadarContact(
     gone: Boolean,
     flashElapsedMs: Long?,
     alertedRing: Color? = null,
+    trueBearing: Boolean = false,
 ) {
     val rad = if (named) 11f else 7f
     if (named && !gone) drawCircle(color.copy(alpha = 0.28f), radius = 20f, center = pos)
+    if (trueBearing && !gone) {
+        val d = rad + 5f
+        drawPath(
+            path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(pos.x, pos.y - d)
+                lineTo(pos.x + d, pos.y)
+                lineTo(pos.x, pos.y + d)
+                lineTo(pos.x - d, pos.y)
+                close()
+            },
+            color = color,
+            style = Stroke(width = 1.8f),
+        )
+    }
     if (flashElapsedMs == null) {
         drawCircle(color, radius = rad, center = pos)
         drawCircle(Color.Black.copy(alpha = 0.35f), radius = rad, center = pos, style = Stroke(1.4f))
@@ -832,6 +856,16 @@ private fun RadarView(
             drawLine(ring.copy(alpha = 0.4f), Offset(c.x - maxR, c.y), Offset(c.x + maxR, c.y), 2f)
             drawLine(ring.copy(alpha = 0.4f), Offset(c.x, c.y - maxR), Offset(c.x, c.y + maxR), 2f)
 
+            val cardStyle = ringStyle.copy(fontWeight = FontWeight.Bold, color = ring.copy(alpha = 0.85f))
+            val nLayout = measurer.measure("N", cardStyle)
+            val sLayout = measurer.measure("S", cardStyle)
+            val eLayout = measurer.measure("E", cardStyle)
+            val wLayout = measurer.measure("W", cardStyle)
+            drawText(nLayout, topLeft = Offset(c.x - nLayout.size.width / 2f, c.y - maxR + 4f))
+            drawText(sLayout, topLeft = Offset(c.x - sLayout.size.width / 2f, c.y + maxR - sLayout.size.height - 4f))
+            drawText(eLayout, topLeft = Offset(c.x + maxR - eLayout.size.width - 6f, c.y - eLayout.size.height / 2f))
+            drawText(wLayout, topLeft = Offset(c.x - maxR + 6f, c.y - wLayout.size.height / 2f))
+
             rotate(sweep.floatValue, c) {
                 drawRadarSweep(c, maxR, beam, night)
             }
@@ -843,7 +877,7 @@ private fun RadarView(
                 if (!RadarPlot.onDisc(plotRssi.toInt(), maxR, z)) return null
                 val pos = radarPoint(device, c, maxR, plotRssi, z)
                 val named = device.fleetIds.isNotEmpty()
-                val paint = if (persist) sweepPaint(sweepBehindDegrees(sweep.floatValue, device.mac)) else 1f
+                val paint = if (persist) sweepPaint(sweepBehindDegrees(sweep.floatValue, device)) else 1f
                 val alpha = (if (device.gone) 0.45f else 1f) * (0.35f + 0.65f * paint)
                 val color = (device.fleetIds.firstOrNull()
                     ?.let { Color(Palette.color(vm.fleetColor(it))) }
@@ -854,8 +888,9 @@ private fun RadarView(
             }
             devices.forEach { device ->
                 val (pos, color, named) = contact(device) ?: return@forEach
+                val trueBearing = RadarPlot.hasTrueBearing(device)
                 if (device.key !in flashKeys && device.key !in alertedKeys) {
-                    drawRadarContact(pos, color, named, device.gone, null)
+                    drawRadarContact(pos, color, named, device.gone, null, trueBearing = trueBearing)
                 }
                 val rad = if (named) 11f else 7f
                 val label = when {
@@ -880,13 +915,15 @@ private fun RadarView(
                 if (device.key in flashKeys || device.key !in alertedKeys) return@forEach
                 val (pos, color, named) = contact(device, persist = false) ?: return@forEach
                 val ring = phosphor.copy(alpha = if (device.gone) 0.45f else 1f)
-                drawRadarContact(pos, color, named, device.gone, null, alertedRing = ring)
+                val trueBearing = RadarPlot.hasTrueBearing(device)
+                drawRadarContact(pos, color, named, device.gone, null, alertedRing = ring, trueBearing = trueBearing)
             }
             devices.forEach { device ->
                 if (device.key !in flashKeys) return@forEach
                 val (pos, color, named) = contact(device, persist = false) ?: return@forEach
                 val started = flashAt[device.key] ?: now
-                drawRadarContact(pos, color, named, device.gone, now - started)
+                val trueBearing = RadarPlot.hasTrueBearing(device)
+                drawRadarContact(pos, color, named, device.gone, now - started, trueBearing = trueBearing)
             }
 
             drawCircle(youColor, radius = 7f, center = c)
