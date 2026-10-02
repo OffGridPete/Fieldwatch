@@ -39,8 +39,34 @@ class StockCatalogFileTest {
             assertEquals(row.id, expect.kind, row.kind)
             assertEquals(row.id, expect.attentionNote, row.attentionNote)
             assertEquals(row.id, expect.notes, row.notes)
+            assertEquals(row.id, expect.matchAny, row.matchAny)
             assertTrue(row.builtIn)
         }
+        val ray = pack.fleets.single { it.id == "fleet-rayneo" }
+        assertFalse(ray.matchAny)
+        assertEquals(0x0BC6, ray.rules.single { it.kind == RuleKind.MANUFACTURER_ID }.companyId)
+        assertEquals("RayNeo*", ray.rules.single { it.kind == RuleKind.NAME_GLOB }.text)
+        assertEquals(2, ray.rules.size)
+        val even = pack.fleets.single { it.id == "fleet-even-g1" }
+        assertTrue(even.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x10F9 })
+        val lite = pack.fleets.single { it.id == "fleet-liteon-camera-radio" }
+        val ouis = lite.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        assertTrue(ouis.contains("E0:0A:F6"))
+        assertTrue(ouis.contains("14:B5:CD"))
+        assertTrue(lite.attentionNote.isBlank())
+        val remote = pack.fleets.single { it.id == "fleet-remote-id" }
+        assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("6A:5C:35", true) })
+        assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("FA:0B:BC", true) })
+        val tello = pack.fleets.single { it.id == "fleet-tello" }
+        assertEquals(
+            setOf("TELLO*", "RMTT*"),
+            tello.rules.map { it.text }.toSet(),
+        )
+        val crazy = pack.fleets.single { it.id == "fleet-crazyflie" }
+        assertFalse(crazy.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        assertTrue(pack.fleets.single { it.id == "fleet-parrot" }.rules.any {
+            it.kind == RuleKind.NAME_GLOB && it.text == "Skycontroller*"
+        })
     }
 
     private fun distPackFile(): File {

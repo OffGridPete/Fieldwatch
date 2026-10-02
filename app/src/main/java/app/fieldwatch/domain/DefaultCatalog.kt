@@ -122,6 +122,13 @@ object DefaultCatalog {
         autel(),
         parrot(),
         hoverAir(),
+        tello(),
+        potensic(),
+        holyStone(),
+        hubsan(),
+        yuneec(),
+        swellPro(),
+        crazyflie(),
         netgear(),
         tpLink(),
         asus(),
@@ -291,6 +298,7 @@ object DefaultCatalog {
         vuzix(),
         brilliantFrame(),
         evenG1(),
+        rayNeo(),
         hak5Pineapple(),
         flipperZero(),
         pwnagotchi(),
@@ -350,8 +358,8 @@ object DefaultCatalog {
         rules = buildList {
             listOf(
                 "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32",
-                "14:5A:FC", "74:4C:A1", "08:3A:88", "9C:2F:9D", "C0:35:32",
-                "94:08:53", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6", "24:B2:B9",
+                "14:5A:FC", "14:B5:CD", "74:4C:A1", "08:3A:88", "9C:2F:9D", "C0:35:32",
+                "94:08:53", "E0:0A:F6", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6", "24:B2:B9",
                 "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4",
                 "70:08:94", "58:00:E3", "5C:93:A2", "64:6E:69",
                 "48:27:EA", "82:6B:F2",
@@ -3058,12 +3066,30 @@ object DefaultCatalog {
         colorIndex = Hue.GLASSES,
         kind = SignatureClass.GLASSES,
         matchAny = true,
-        notes = "Even Realities G1 glasses. Name-only (Even G1). Nordic UART is too common to use as a rule.",
-        attentionNote = "Even Realities G1 glasses. Name-only when advertised (Even G1). Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+        notes = "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Nordic UART is too common to use as a rule.",
+        attentionNote = "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
         builtIn = true,
         rules = listOf(
+            mfg(0x10F9),
             bleName("Even G1"),
             bleGlob("Even G1*"),
+        ),
+    )
+
+    /** TCL company id is phones too. Both rules are required. */
+    private fun rayNeo() = Fleet(
+        id = "fleet-rayneo",
+        name = "RayNeo",
+        enabled = true,
+        colorIndex = Hue.GLASSES,
+        kind = SignatureClass.GLASSES,
+        matchAny = false,
+        notes = "RayNeo smart glasses. Matches only when the name starts with RayNeo and the advertisement uses the TCL company id. A TCL phone without that name does not match.",
+        attentionNote = "RayNeo smart glasses. The name has to start with RayNeo, and the advertisement has to use the TCL company id. A TCL phone without that name does not match. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            mfg(0x0BC6),
+            bleGlob("RayNeo*"),
         ),
     )
 
@@ -3558,12 +3584,13 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. The French Direct Remote ID vendor IE labels this row too. That plate does not fill position or pilot. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
         builtIn = true,
         decode = CatalogDecodes.remoteId,
         rules = listOf(
             uuid("FFFA"),
             vendorIe("FA:0B:BC"),
+            vendorIe("6A:5C:35"),
         ),
     )
 
@@ -3608,17 +3635,21 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "Parrot ANAFI or Bebop drone. In-flight digital license plate is the Remote ID row. Not a Parrot car kit.",
+        notes = "Parrot ANAFI, Bebop, or Skycontroller. In-flight digital license plate is the Remote ID row. Not a Parrot car kit.",
         builtIn = true,
         rules = listOf(
             name("ANAFI"),
             glob("ANAFI*"),
             name("Bebop"),
             glob("Bebop*"),
+            name("Skycontroller"),
+            glob("Skycontroller*"),
             bleGlob("ANAFI*"),
             wifiGlob("ANAFI*"),
             bleGlob("Bebop*"),
             wifiGlob("Bebop*"),
+            bleGlob("Skycontroller*"),
+            wifiGlob("Skycontroller*"),
         ),
     )
 
@@ -3639,6 +3670,96 @@ object DefaultCatalog {
             bleGlob("Hover*"),
             bleGlob("HOVERAir*"),
         ),
+    )
+
+    private fun tello() = Fleet(
+        id = "fleet-tello",
+        name = "Tello",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Ryze Tello or Tello Talent. The name starts with TELLO or RMTT. A renamed network misses. Often no Remote ID plate.",
+        builtIn = true,
+        rules = listOf(
+            glob("TELLO*"),
+            glob("RMTT*"),
+        ),
+    )
+
+    private fun potensic() = Fleet(
+        id = "fleet-potensic",
+        name = "Potensic",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Potensic drone, including ATOM. The name starts with Potensic. A bare ATOM name does not match. A renamed network misses. Often no Remote ID plate.",
+        builtIn = true,
+        rules = listOf(glob("Potensic*")),
+    )
+
+    private fun holyStone() = Fleet(
+        id = "fleet-holystone",
+        name = "Holy Stone",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Holy Stone drone. The name starts with HolyStone or Holy Stone. A generic camera name does not match. A renamed network misses.",
+        builtIn = true,
+        rules = listOf(
+            glob("HolyStone*"),
+            glob("Holy Stone*"),
+        ),
+    )
+
+    private fun hubsan() = Fleet(
+        id = "fleet-hubsan",
+        name = "Hubsan",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Hubsan drone. The name starts with Hubsan. A renamed network misses. Often no Remote ID plate.",
+        builtIn = true,
+        rules = listOf(glob("Hubsan*")),
+    )
+
+    private fun yuneec() = Fleet(
+        id = "fleet-yuneec",
+        name = "Yuneec",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Yuneec drone. The name starts with Yuneec. A renamed network misses. Often no Remote ID plate.",
+        builtIn = true,
+        rules = listOf(glob("Yuneec*")),
+    )
+
+    private fun swellPro() = Fleet(
+        id = "fleet-swellpro",
+        name = "SwellPro",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "SwellPro waterproof drone. The name starts with SwellPro. A renamed network misses. Often no Remote ID plate.",
+        builtIn = true,
+        rules = listOf(glob("SwellPro*")),
+    )
+
+    private fun crazyflie() = Fleet(
+        id = "fleet-crazyflie",
+        name = "Crazyflie",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Bitcraze Crazyflie lab drone. The name starts with Crazyflie. The Bitcraze company id is not a rule.",
+        builtIn = true,
+        rules = listOf(glob("Crazyflie*")),
     )
 
     private fun cradlepoint() = Fleet(

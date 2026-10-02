@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 88,
+    "catalogVersion": 90,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -20468,6 +20468,31 @@
             "kind": "LAW_ENFORCEMENT"
         },
         {
+            "id": "fleet-crazyflie",
+            "name": "Crazyflie",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Crazyflie*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bitcraze Crazyflie lab drone. The name starts with Crazyflie. The Bitcraze company id is not a rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
+        },
+        {
             "id": "fleet-cudy",
             "name": "Cudy",
             "enabled": true,
@@ -23334,6 +23359,14 @@
             "colorIndex": 5,
             "rules": [
                 {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 4345,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
                     "kind": "NAME_CONTAINS",
                     "text": "Even G1",
                     "companyId": 0,
@@ -23354,8 +23387,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Even Realities G1 glasses. Name-only (Even G1). Nordic UART is too common to use as a rule.",
-            "attentionNote": "Even Realities G1 glasses. Name-only when advertised (Even G1). Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+            "notes": "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Nordic UART is too common to use as a rule.",
+            "attentionNote": "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
         },
@@ -26950,6 +26983,39 @@
             "attentionNote": "These default BLE serial names are cheap hobby modules. Some pump/ATM overlays have used boards like this so someone nearby can pull data over Bluetooth. The same modules show up on printers, cars, and DIY. If this radio is loud next to a card reader, treat it with caution and look with your eyes. Not proof of a skimmer. A miss is not a clean bill (name changed, Classic HC-05/HC-06, or cellular). Fieldwatch does not connect and does not try default PINs. Fieldwatch does not see Classic HC-05/HC-06.",
             "builtIn": true,
             "kind": "HACKING"
+        },
+        {
+            "id": "fleet-holystone",
+            "name": "Holy Stone",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HolyStone*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Holy Stone*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Holy Stone drone. The name starts with HolyStone or Holy Stone. A generic camera name does not match. A renamed network misses.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
         },
         {
             "id": "fleet-honda",
@@ -44022,6 +44088,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-hubsan",
+            "name": "Hubsan",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Hubsan*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Hubsan drone. The name starts with Hubsan. A renamed network misses. Often no Remote ID plate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
+        },
+        {
             "id": "fleet-huf",
             "name": "Huf",
             "enabled": true,
@@ -45447,6 +45538,14 @@
                 },
                 {
                     "kind": "OUI",
+                    "text": "14:B5:CD",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
                     "text": "74:4C:A1",
                     "companyId": 0,
                     "dataPrefixHex": "",
@@ -45480,6 +45579,14 @@
                 {
                     "kind": "OUI",
                     "text": "94:08:53",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "E0:0A:F6",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -49314,6 +49421,22 @@
                     "enabled": true
                 },
                 {
+                    "kind": "NAME_CONTAINS",
+                    "text": "Skycontroller",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Skycontroller*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
                     "kind": "NAME_GLOB",
                     "text": "ANAFI*",
                     "companyId": 0,
@@ -49340,6 +49463,22 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "Bebop*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Skycontroller*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Skycontroller*",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "WIFI",
@@ -49350,7 +49489,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Parrot ANAFI or Bebop drone. In-flight digital license plate is the Remote ID row. Not a Parrot car kit.",
+            "notes": "Parrot ANAFI, Bebop, or Skycontroller. In-flight digital license plate is the Remote ID row. Not a Parrot car kit.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
@@ -50033,6 +50172,31 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-potensic",
+            "name": "Potensic",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Potensic*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Potensic drone, including ATOM. The name starts with Potensic. A bare ATOM name does not match. A renamed network misses. Often no Remote ID plate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
+        },
+        {
             "id": "fleet-pwnagotchi",
             "name": "Pwnagotchi",
             "enabled": true,
@@ -50390,6 +50554,39 @@
             "kind": "GLASSES"
         },
         {
+            "id": "fleet-rayneo",
+            "name": "RayNeo",
+            "enabled": true,
+            "matchAny": false,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3014,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "RayNeo*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "RayNeo smart glasses. Matches only when the name starts with RayNeo and the advertisement uses the TCL company id. A TCL phone without that name does not match.",
+            "attentionNote": "RayNeo smart glasses. The name has to start with RayNeo, and the advertisement has to use the TCL company id. A TCL phone without that name does not match. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+            "builtIn": true,
+            "kind": "GLASSES"
+        },
+        {
             "id": "fleet-rekor",
             "name": "Rekor",
             "enabled": true,
@@ -50444,13 +50641,21 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "VENDOR_IE_OUI",
+                    "text": "6A:5C:35",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator. The French Direct Remote ID vendor IE labels this row too. That plate does not fill position or pilot. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE",
@@ -57013,6 +57218,31 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-swellpro",
+            "name": "SwellPro",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SwellPro*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SwellPro waterproof drone. The name starts with SwellPro. A renamed network misses. Often no Remote ID plate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
+        },
+        {
             "id": "fleet-synology",
             "name": "Synology",
             "enabled": true,
@@ -57401,6 +57631,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "LOCK"
+        },
+        {
+            "id": "fleet-tello",
+            "name": "Tello",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TELLO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "RMTT*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Ryze Tello or Tello Talent. The name starts with TELLO or RMTT. A renamed network misses. Often no Remote ID plate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
         },
         {
             "id": "fleet-tenda",
@@ -62811,6 +63074,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-yuneec",
+            "name": "Yuneec",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Yuneec*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Yuneec drone. The name starts with Yuneec. A renamed network misses. Often no Remote ID plate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
         },
         {
             "id": "fleet-zyxel",

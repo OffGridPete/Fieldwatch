@@ -207,6 +207,195 @@ class DefaultCatalogTest {
         assertFalse(dump.contains("EXTRA ATTENTION (${oura.name})"))
     }
 
+    @Test
+    fun catalog89RayNeoRequiresNameAndTclEvenOrsCompanyIdLiteOnStaysQuiet() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val ray = stock.single { it.id == "fleet-rayneo" }
+        val even = stock.single { it.id == "fleet-even-g1" }
+        val lite = stock.single { it.id == "fleet-liteon-camera-radio" }
+        val flock = stock.single { it.id == "fleet-flock-cameras" }
+
+        assertFalse(ray.matchAny)
+        assertEquals(listOf("fleet-rayneo"), stock.filter { !it.matchAny }.map { it.id })
+        assertEquals(SignatureClass.GLASSES, ray.kind)
+        assertTrue(ray.attentionNote.isNotBlank())
+        assertEquals(0x0BC6, ray.rules.single { it.kind == RuleKind.MANUFACTURER_ID }.companyId)
+        assertEquals("RayNeo*", ray.rules.single { it.kind == RuleKind.NAME_GLOB }.text)
+        assertEquals(2, ray.rules.size)
+        assertTrue(even.matchAny)
+        assertTrue(even.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x10F9 })
+        assertTrue(even.rules.any { it.kind == RuleKind.NAME_CONTAINS && it.text == "Even G1" })
+        assertFalse(even.notes.contains("Name-only", ignoreCase = true))
+        val liteOuis = lite.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        assertTrue(liteOuis.contains("E0:0A:F6"))
+        assertTrue(liteOuis.contains("14:B5:CD"))
+        assertTrue(liteOuis.contains("08:3A:88"))
+        assertTrue(lite.attentionNote.isBlank())
+        assertEquals(SignatureClass.CAMERA, lite.kind)
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        assertTrue("fleet-rayneo" in watched)
+        assertTrue("fleet-even-g1" in watched)
+        assertFalse("fleet-liteon-camera-radio" in watched)
+        assertFalse(stock.any { fleet ->
+            fleet.rules.any { rule ->
+                rule.kind == RuleKind.MANUFACTURER_ID &&
+                    rule.companyId in setOf(0x07D7, 0x0BA7, 0xFD5F)
+            }
+        })
+        assertFalse(stock.any { fleet ->
+            fleet.rules.any { rule ->
+                rule.text.contains("FlockCam", ignoreCase = true) ||
+                    rule.text.contains("RWLS", ignoreCase = true) ||
+                    rule.text.contains("META_RB", ignoreCase = true) ||
+                    rule.text.equals("Pico", ignoreCase = true)
+            }
+        })
+        assertTrue(flock.rules.any { it.kind == RuleKind.NAME_CONTAINS && it.text == "Flock" })
+
+        val both = tagged("01", "RayNeo Air 2", 0x0BC6)
+        val bare = tagged("02", "RayNeo", 0x0BC6)
+        val lower = tagged("03", "rayneo", 0x0BC6)
+        val nameOnly = tagged("04", "RayNeo Air 2", null)
+        val tclOnly = tagged("05", "TCL 50", 0x0BC6)
+        val midName = tagged("06", "My RayNeo", 0x0BC6)
+        val qinheng = tagged("07", "RayNeo", 0x07D7)
+        val hearx = tagged("08", "RayNeo", 0x0BA7)
+        val evenId = tagged("09", "", 0x10F9)
+        val evenName = tagged("0A", "Even G1", null)
+        val uart = ble(name = "", serviceUuids = listOf("6E400001-B5A3-F393-E0A9-E50E24DCCA9E"))
+            .copy(key = "BLE:0B", mac = "AA:BB:CC:DD:EE:0B")
+        val liteA = wifi("E0:0A:F6:11:22:33")
+        val liteB = wifi("14:B5:CD:11:22:33")
+        val flockCam = wifi("02:11:22:33:44:55", "FlockCam-9")
+        val rwls = wifi("02:11:22:33:44:56", "RWLS-1")
+        val hits = engine.match(
+            listOf(
+                both, bare, lower, nameOnly, tclOnly, midName, qinheng, hearx,
+                evenId, evenName, uart, liteA, liteB, flockCam, rwls,
+            ),
+            stock,
+        )
+        assertTrue("name and TCL id", "fleet-rayneo" in hits.getValue(both.key))
+        assertTrue("bare RayNeo", "fleet-rayneo" in hits.getValue(bare.key))
+        assertTrue("lowercase rayneo", "fleet-rayneo" in hits.getValue(lower.key))
+        assertFalse("name only", "fleet-rayneo" in hits.getValue(nameOnly.key))
+        assertFalse("TCL phone", "fleet-rayneo" in hits.getValue(tclOnly.key))
+        assertFalse("name not at the start", "fleet-rayneo" in hits.getValue(midName.key))
+        assertFalse("Qinheng id", "fleet-rayneo" in hits.getValue(qinheng.key))
+        assertFalse("hearX id", "fleet-rayneo" in hits.getValue(hearx.key))
+        assertTrue("Even company id", "fleet-even-g1" in hits.getValue(evenId.key))
+        assertFalse("Even id is not RayNeo", "fleet-rayneo" in hits.getValue(evenId.key))
+        assertTrue("Even name", "fleet-even-g1" in hits.getValue(evenName.key))
+        assertFalse("Nordic UART", "fleet-even-g1" in hits.getValue(uart.key))
+        assertTrue("E0:0A:F6", "fleet-liteon-camera-radio" in hits.getValue(liteA.key))
+        assertFalse("E0:0A:F6 is not Flock", "fleet-flock-cameras" in hits.getValue(liteA.key))
+        assertTrue("14:B5:CD", "fleet-liteon-camera-radio" in hits.getValue(liteB.key))
+        assertFalse("14:B5:CD is not Flock", "fleet-flock-cameras" in hits.getValue(liteB.key))
+        assertTrue("Flock name already covers FlockCam", "fleet-flock-cameras" in hits.getValue(flockCam.key))
+        assertFalse("RWLS is not Flock", "fleet-flock-cameras" in hits.getValue(rwls.key))
+        assertTrue(liteA.copy(fleetIds = hits.getValue(liteA.key)).attentionNotes(stock).isEmpty())
+    }
+
+    @Test
+    fun catalog90FrenchPlateAndNamedDronesStayNarrow() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val added = listOf(
+            "fleet-tello", "fleet-potensic", "fleet-holystone", "fleet-hubsan",
+            "fleet-yuneec", "fleet-swellpro", "fleet-crazyflie",
+        )
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        for (id in added) {
+            val fleet = stock.single { it.id == id }
+            assertEquals(id, SignatureClass.DRONE, fleet.kind)
+            assertTrue(fleet.matchAny)
+            assertTrue(fleet.attentionNote.isBlank())
+            assertTrue(id in watched)
+        }
+        val remote = stock.single { it.id == "fleet-remote-id" }
+        assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("6A:5C:35", true) })
+        assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("FA:0B:BC", true) })
+        val crazy = stock.single { it.id == "fleet-crazyflie" }
+        assertFalse(crazy.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        assertTrue(stock.single { it.id == "fleet-parrot" }.rules.any {
+            it.kind == RuleKind.NAME_GLOB && it.text == "Skycontroller*"
+        })
+
+        val french = wifi("02:00:00:00:00:01", "RID", "6A:5C:35")
+        val astm = wifi("02:00:00:00:00:02", "RID", "FA:0B:BC")
+        val nan = wifi("02:00:00:00:00:03", "RID", "50:6F:9A")
+        val parrotOui = wifi("90:3A:E6:11:22:33", "Home")
+        val tello = wifi("02:00:00:00:00:11", "TELLO-ABCDEF")
+        val talent = wifi("02:00:00:00:00:12", "RMTT-9AFF2A")
+        val telloMid = wifi("02:00:00:00:00:13", "my TELLO")
+        val dji = wifi("02:00:00:00:00:14", "DJI-Mini")
+        val potensic = wifi("02:00:00:00:00:21", "Potensic-ATOM-1")
+        val atom = wifi("02:00:00:00:00:22", "ATOM-1")
+        val holy = wifi("02:00:00:00:00:31", "HolyStoneFPV-1")
+        val holySpaced = wifi("02:00:00:00:00:32", "Holy Stone HS720")
+        val fpv = wifi("02:00:00:00:00:33", "FPV_WIFI")
+        val hubsan = wifi("02:00:00:00:00:41", "HUBSAN-Zino")
+        val exo = wifi("02:00:00:00:00:42", "EXO-1234")
+        val yuneec = wifi("02:00:00:00:00:51", "Yuneec-H520")
+        val typhoon = wifi("02:00:00:00:00:52", "Typhoon")
+        val swell = wifi("02:00:00:00:00:61", "SwellPro-Splash")
+        val crazyName = wifi("02:00:00:00:00:71", "Crazyflie")
+        val bitcraze = tagged("81", "", 0x01C5)
+        val sky = wifi("02:00:00:00:00:91", "Skycontroller 3")
+        val autelSsid = wifi("02:00:00:00:00:A1", "default-ssid")
+        val elrs = wifi("02:00:00:00:00:A2", "ExpressLRS")
+        val radios = listOf(
+            french, astm, nan, parrotOui, tello, talent, telloMid, dji,
+            potensic, atom, holy, holySpaced, fpv, hubsan, exo, yuneec, typhoon,
+            swell, crazyName, bitcraze, sky, autelSsid, elrs,
+        )
+        val hits = engine.match(radios, stock)
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("French plate", "fleet-remote-id" in ids(french))
+        assertTrue("ASTM plate", "fleet-remote-id" in ids(astm))
+        assertFalse("NAN is not Remote ID", "fleet-remote-id" in ids(nan))
+        assertFalse("Parrot OUI alone", "fleet-parrot" in ids(parrotOui))
+        assertTrue("Tello", "fleet-tello" in ids(tello))
+        assertFalse("Tello is not DJI", "fleet-dji" in ids(tello))
+        assertTrue("Tello Talent", "fleet-tello" in ids(talent))
+        assertFalse("TELLO in the middle", "fleet-tello" in ids(telloMid))
+        assertTrue("DJI name", "fleet-dji" in ids(dji))
+        assertFalse("DJI name is not Tello", "fleet-tello" in ids(dji))
+        assertTrue("Potensic", "fleet-potensic" in ids(potensic))
+        assertFalse("bare ATOM", "fleet-potensic" in ids(atom))
+        assertTrue("HolyStone", "fleet-holystone" in ids(holy))
+        assertTrue("Holy Stone", "fleet-holystone" in ids(holySpaced))
+        assertFalse("generic FPV", "fleet-holystone" in ids(fpv))
+        assertTrue("Hubsan", "fleet-hubsan" in ids(hubsan))
+        assertFalse("bare EXO", "fleet-hubsan" in ids(exo))
+        assertTrue("Yuneec", "fleet-yuneec" in ids(yuneec))
+        assertFalse("Typhoon", "fleet-yuneec" in ids(typhoon))
+        assertTrue("SwellPro", "fleet-swellpro" in ids(swell))
+        assertTrue("Crazyflie name", "fleet-crazyflie" in ids(crazyName))
+        assertFalse("Bitcraze company id", "fleet-crazyflie" in ids(bitcraze))
+        assertTrue("Skycontroller", "fleet-parrot" in ids(sky))
+        assertFalse("default-ssid", "fleet-autel" in ids(autelSsid))
+        assertTrue(added.none { id -> id in ids(elrs) })
+        for (id in added) {
+            assertTrue(wifi("02:11:22:33:44:55", "Home").let { quiet ->
+                engine.match(listOf(quiet), stock).getValue(quiet.key).contains(id).not()
+            })
+        }
+    }
+
+    private fun tagged(tail: String, name: String, manufacturerId: Int?) =
+        ble(name = name, manufacturerId = manufacturerId)
+            .copy(key = "BLE:$tail", mac = "AA:BB:CC:DD:EE:$tail")
+
+    private fun wifi(mac: String, name: String = "Home", vendorIe: String? = null) = ble(name = name).copy(
+        key = "WIFI:$mac",
+        kind = RadioKind.WIFI,
+        mac = mac,
+        randomized = false,
+        vendorIeOuis = if (vendorIe == null) emptyList() else listOf(vendorIe),
+    )
+
     private fun ble(
         name: String = "",
         manufacturerId: Int? = null,
