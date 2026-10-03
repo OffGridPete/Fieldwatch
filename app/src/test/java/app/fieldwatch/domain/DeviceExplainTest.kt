@@ -26,6 +26,29 @@ class DeviceExplainTest {
     }
 
     @Test
+    fun localBitWithGroupBitIsNotAFactoryAddress() {
+        val device = wifi("5B:AF:C8:11:22:33", "").copy(
+            kind = RadioKind.BLE,
+            key = "BLE:5B:AF:C8:11:22:33",
+            randomized = false,
+            vendor = null,
+            facts = RadioFacts(addressType = "Public"),
+        )
+        val text = DeviceExplain.addressExplain(device)
+        assertTrue(text, text.contains("local bit", ignoreCase = true))
+        assertFalse(text, text.contains("Public factory"))
+        assertEquals(
+            "Public factory address (stable, IEEE-assigned).",
+            DeviceExplain.addressExplain(
+                device.copy(
+                    mac = "00:00:0C:11:22:33",
+                    key = "BLE:00:00:0C:11:22:33",
+                ),
+            ),
+        )
+    }
+
+    @Test
     fun wifiLocalBitBssidIsNotARotatingPrivacyMac() {
         val ap = wifi("02:0A:F5:86:56:DD", "PS-CRADLEPOINT").copy(randomized = true)
         val text = DeviceExplain.addressExplain(ap)

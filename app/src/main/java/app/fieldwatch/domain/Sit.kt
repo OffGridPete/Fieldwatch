@@ -106,6 +106,9 @@ data class SitRadio(
     val payloadUasId: String? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val payloadAircraft: String? = null,
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     val payloadAlt: Double? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
@@ -155,6 +158,7 @@ data class SitRadio(
         payloadLat = payloadLat,
         payloadLon = payloadLon,
         payloadUasId = payloadUasId,
+        payloadAircraft = payloadAircraft,
         payloadAlt = payloadAlt,
         payloadHeading = payloadHeading,
         payloadSpeed = payloadSpeed,
@@ -186,6 +190,7 @@ data class SitRadio(
             payloadLat = device.payloadLat,
             payloadLon = device.payloadLon,
             payloadUasId = device.payloadUasId,
+            payloadAircraft = device.payloadAircraft,
             payloadAlt = device.payloadAlt,
             payloadHeading = device.payloadHeading,
             payloadSpeed = device.payloadSpeed,
@@ -217,6 +222,7 @@ data class SitFile(
     val summary: SitSummary,
     val radios: List<SitRadio> = emptyList(),
     val operatorPath: List<GpsSample> = emptyList(),
+    val floods: List<FloodBurst> = emptyList(),
 )
 
 data class SitUi(
@@ -236,6 +242,7 @@ data class SitDebrief(
     val endAt: Long,
     val devices: List<Sighting>,
     val operatorPath: List<GpsSample>,
+    val floods: List<FloodBurst> = emptyList(),
 )
 
 data class DebriefWindow(
@@ -250,6 +257,7 @@ class SitSession(
     summary: SitSummary,
     radios: List<SitRadio> = emptyList(),
     path: List<GpsSample> = emptyList(),
+    floods: List<FloodBurst> = emptyList(),
 ) {
     var summary: SitSummary = summary
         private set
@@ -257,6 +265,7 @@ class SitSession(
         radios.forEach { put(it.key, it) }
     }
     private val path = ArrayList<GpsSample>(path.size + 16).apply { addAll(path) }
+    private val floods = ArrayList<FloodBurst>(floods.size + 4).apply { addAll(floods) }
     var dirty: Boolean = false
         private set
 
@@ -276,7 +285,36 @@ class SitSession(
             extraAttentionCount = extra,
         )
         summary = sum
-        return SitFile(summary = sum, radios = radios.values.toList(), operatorPath = path.toList())
+        return SitFile(
+            summary = sum,
+            radios = radios.values.toList(),
+            operatorPath = path.toList(),
+            floods = floods.toList(),
+        )
+    }
+
+    /** Copy bursts that started during this sit. The same start time updates in place. */
+    fun noteFloods(incoming: List<FloodBurst>) {
+        if (!open || incoming.isEmpty()) return
+        val start = summary.startAt
+        var changed = false
+        for (burst in incoming) {
+            if (burst.at < start) continue
+            val index = floods.indexOfFirst { it.at == burst.at && it.wifi == burst.wifi }
+            if (index < 0) {
+                floods += burst
+                changed = true
+            } else if (floods[index] != burst) {
+                floods[index] = burst
+                changed = true
+            }
+        }
+        if (floods.size > 40) {
+            val drop = floods.size - 40
+            repeat(drop) { floods.removeAt(0) }
+            changed = true
+        }
+        if (changed) dirty = true
     }
 
     fun sightings(): List<Sighting> = radios.values.map { it.toSighting() }
@@ -433,6 +471,11 @@ class SitSession(
             payloadLat = next.payloadLat ?: old.payloadLat,
             payloadLon = next.payloadLon ?: old.payloadLon,
             payloadUasId = next.payloadUasId ?: old.payloadUasId,
+            payloadAircraft = if (next.payloadUasId != null && next.payloadUasId != old.payloadUasId) {
+                next.payloadAircraft
+            } else {
+                next.payloadAircraft ?: old.payloadAircraft
+            },
             payloadAlt = next.payloadAlt ?: old.payloadAlt,
             payloadHeading = next.payloadHeading ?: old.payloadHeading,
             payloadSpeed = next.payloadSpeed ?: old.payloadSpeed,

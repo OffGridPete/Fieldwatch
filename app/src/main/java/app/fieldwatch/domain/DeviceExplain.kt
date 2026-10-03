@@ -128,6 +128,8 @@ object DeviceExplain {
         return when {
             device.kind == RadioKind.WIFI && device.randomized ->
                 "Locally administered BSSID. Vehicle, mesh, and guest APs often keep this address. Not a rotating phone MAC."
+            MacUtil.isLocallyAdministered(device.mac) && !device.randomized ->
+                "Locally administered address. The local bit is set, so this is not an IEEE factory assignment."
             type.equals("Public", true) && !device.randomized ->
                 "Public factory address (stable, IEEE-assigned)."
             type.equals("Random", true) || device.randomized ->

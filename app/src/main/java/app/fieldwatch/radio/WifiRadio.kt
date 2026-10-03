@@ -23,6 +23,7 @@ class WifiRadio(
     private val context: Context,
     private val onObservation: (Observation) -> Unit,
     private val onScanFinished: (Int, Boolean) -> Unit,
+    private val onFreshScan: (List<Observation>) -> Unit = {},
 ) {
     private val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     private val main = Handler(Looper.getMainLooper())
@@ -153,12 +154,16 @@ class WifiRadio(
         val isFresh = fresh || awaitingScan.get()
         awaitingScan.set(false)
         var count = 0
+        val batch = ArrayList<Observation>(results.size)
         results.forEach { result ->
             if (result.BSSID.isNullOrBlank()) return@forEach
             count++
-            onObservation(toObservation(result, nowWall, isFresh))
+            val obs = toObservation(result, nowWall, isFresh)
+            batch += obs
+            onObservation(obs)
         }
         onScanFinished(count, isFresh)
+        if (isFresh && batch.isNotEmpty()) onFreshScan(batch)
     }
 
     private fun toObservation(result: ScanResult, nowWall: Long, fresh: Boolean): Observation {

@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.17")
-    c.drawString(48, 94, "1 October 2026")
+    c.drawString(48, 108, "Version 1.1.18")
+    c.drawString(48, 94, "3 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.17  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.18  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1048,7 +1048,7 @@ def story():
             "are Extra attention rows: Axon, WatchGuard Video, Ray-Ban / Meta glasses, "
             "Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, "
             "Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus); "
-            "plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). "
+            "plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). "
             "Privacy mode, the shade notification, and the TAK / CoT feed stay off. "
             "Chip colors follow class (§9.5)."
         ),
@@ -1223,6 +1223,35 @@ def story():
             "Screenshots in this book use Privacy mode (MAC tails **:**:**) unless noted.",
         ),
         figure_wrap(
+            "fig-flood.png",
+            "Fig. 1 — Pairing flood. Hide these takes those new addresses off the Live display. "
+            "Continue leaves them up. The line behind the dialog is an earlier burst still hidden.",
+            "A burst of new Bluetooth addresses in a few seconds raises one dialog, then a single red line. "
+            "<b>Pairing flood</b> is many new addresses advertising a pairing popup at about the same loudness. "
+            "<b>Name flood</b> is many new addresses that only advertise a name. "
+            "The dialog names the pairing kinds in that burst. "
+            "<b>Hide these</b> dismisses the dialog and turns <b>Hide this burst</b> on. "
+            "<b>Continue</b> dismisses it and leaves the radios on the Live display. "
+            "The switch on the red line starts off for each new burst.",
+            "Hide this burst takes that burst’s new addresses off the list, the radar, the timeline, and By class "
+            "until they would have left on their own. "
+            "The sit file and the log still keep those packets. "
+            "Alerts stay quiet for those addresses. "
+            "After the red line clears, <b>Hiding N flood radios</b> stays while any of them remain and the switch is on. "
+            "Turn that switch off and they come back. "
+            "The next burst starts with its own switch off. "
+            "A burst still hidden from earlier keeps its line, as in this figure. "
+            "Debrief and Compare print one Flood line per burst and leave those addresses out of the radio counts and lists. "
+            "The line says how many were set aside. Compare names the sit. "
+            "A sit saved before those addresses were stored still counts them with the other radios. "
+            "The advertisement does not name the tool.",
+            "A Wi-Fi beacon flood is the same shape on Live. Many new Wi-Fi names in one scan, about the same loudness, "
+            "gone by the next scan. The first scan of a session stays quiet. "
+            "A repeated name, a mesh, an extender, or a guest network is not counted. "
+            "One dialog, then one red line, then the same Flood note. "
+            "Those addresses are left out of the radio counts and lists. The sit file and the log still keep them.",
+        ),
+        figure_wrap(
             "fig-signatures.png",
             "Fig. 2 — Signatures.",
             "Signatures is the pattern catalog. The title shows how many signatures are loaded (stock plus any you added). "
@@ -1234,8 +1263,8 @@ def story():
         table(
             ["Tab", "Function"],
             [
-                ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports."],
-                ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 15–17."],
+                ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports. A pairing flood, a name flood, or a Wi-Fi beacon flood shows one dialog, then a red line with Hide this burst."],
+                ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide my radios, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). Each row shows the class glyph, and a hexagon when that row has a Decode fields map (§9.6). Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). Bookmark = watch (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Sits (optional named window), Path, Debrief (text / PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Signature candidates mines the rotating log. GPS / place names / logging on-off stay on Settings."],
                 ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Update stock catalog from GitHub, Settings backup, restore defaults, Show Live tour. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
@@ -1401,7 +1430,7 @@ def story():
             "Signatures only, Watched only, Named radios only, and the class chips are further down. "
             "Turning it on starts a follow test on all radios. It clears Signatures only, "
             "Watched only, Named radios only, and class Show only so those filters do not empty the list. Hide these "
-            "stays if you were hiding a bag tag. The Moving with you preset at the top replaces "
+            "stays if you were hiding a bag tag. Hide my radios stays on. The Moving with you preset at the top replaces "
             "the whole filter the same way. While it is on, the Live display shows Follow · path N m "
             "and a <b>Start over</b> button above the tabs (same bar as Mark seen / Reset seen if "
             "New detections only is also on). Start over clears the operator GPS path and every "
@@ -1502,7 +1531,8 @@ def story():
         figure_wrap(
             "fig-detail.png",
             "Fig. 4 — Device detail. Custom name is the title; advertised name is smaller. "
-            "Cyan Observer notes sit under the name (not Extra attention gold). Privacy mode masks MAC tails.",
+            "Cyan Observer notes sit under the name. Mine is the switch under those notes. "
+            "Privacy mode masks MAC tails.",
             "Tap a row or a radar blip. Detail is the full decode of that observation, resolved "
             "offline from packed IEEE and Bluetooth SIG tables (no network). Jargon is spelled "
             "out in plain language (for example BR/EDR not supported = BLE-only, no classic "
@@ -1511,6 +1541,15 @@ def story():
             "127 means the stack did not report a measurement (Bluetooth “not available”), not transmit power — "
             "How loud here, session range, sparkline, Hunt, and Share omit it. "
             "Gone radios show How loud here as Not available and Last heard with the last real dBm.",
+            "<b>Mine</b> is the switch under Observer notes, on the same radios as the name pencil, "
+            "and on Settings → Named radios next to Alert. "
+            "Turning it on fills a blank custom name the same way notes do. "
+            "The live list shows a Mine chip. That radio stays listed and does not beep, speak, flash, or raise a card while Mine is on. "
+            "Filters → Hide my radios takes those rows off Live. The sit, the log, and Debrief still include them. "
+            "A bookmarked signature still alerts every other radio. "
+            "Debrief lists Marked mine after Observer notes and leaves that radio out of the co-travel callouts. "
+            "Compare does the same and says which window. Extra attention still names the signature. "
+            "A random / privacy BLE address hides this switch, the same way it hides the name pencil.",
             "<b>What this looks like</b> (top card). A cautious guess. A matched catalog family "
             "outranks a generic SSID heuristic — a <font face='Courier'>DIRECT-rR-Raven-*</font> AP "
             "is a Raven / ShotSpotter sensor, not “a phone or TV on Wi-Fi Direct.” Then advertised "
@@ -1530,7 +1569,7 @@ def story():
             "<b>Extra attention</b> (optional amber card under that guess). Only if a <i>matched</i> "
             "signature has text in Extra attention — a separate field from Notes. Stock fills it "
             "on Hobby BLE serial, Axon, WatchGuard Video, Digital Ally, Reveal Media, Wolfcom, "
-            "Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, "
+            "Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, RayNeo, "
             "Fieldy, Plaud Note, Limitless, Bee, Omi, Friend, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, "
             "GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Panasonic i-PRO / Arbitrator, "
             "and roadside / public camera + ALPR "
@@ -1579,7 +1618,7 @@ def story():
             "works; the log number fills in once the rotating log has been read."
         ),
         bullets([
-            "<b>Identity</b> — advertised name, MAC, address type (public factory vs random/privacy). Vendor from IEEE OUI, MA-M, or MA-S when the address is universal; randomized BLE addresses skip the OUI table. Bluetooth Company ID from manufacturer data is named from the SIG list (~4012).",
+            "<b>Identity</b> — advertised name, MAC, address type (public factory, locally administered when the local bit is set, or random/privacy). Vendor is the IEEE name for the MAC prefix when that prefix is listed. Randomized BLE addresses skip the OUI table. The Bluetooth company in the advertisement is its own line, named from the SIG list (~4012).",
             "<b>Signal</b> — RSSI plus min/max this session, claimed TX power, channel / MHz, Wi-Fi standard and channel width when the OS reports them.",
             "<b>BLE</b> — PHY (1M / 2M / Coded), connectable, advertising interval, decoded Flags, GAP Appearance, Class of Device (major / minor / service classes), named 16-bit service UUIDs, service data, manufacturer payload. Connectable stays Yes once any advertisement from this radio was connectable — scan responses from the same MAC are not connectable and no longer flip the line.",
             "<b>Known payloads</b> — iBeacon (UUID / major / minor / calibrated TX); Google Fast Pair (pairing-mode 24-bit model ID with a local name list, or account-key broadcast); Apple Continuity (AirPods/Beats model, battery, in-ear/in-case; Find My / Offline Finding; Nearby Info activity; Nearby Action; AirDrop; Handoff; Hey Siri; AirPlay; Instant Hotspot). Eddystone UID / URL / TLM / EID (service 0xFEAA) <b>accumulate</b> on this page: each frame type stays once heard, labeled on the raw line (UID, URL, TLM, EID). Frames do not replace each other. Microsoft Swift Pair / Nearby Sharing when present. Unknown 0xFF blobs stay company + hex — there is no official database of proprietary payloads.",
@@ -1708,8 +1747,8 @@ def story():
             "<b>While it runs.</b> Live title FIELDWATCH · SIT and a status banner. Path, Debrief, Sit export, Compare’s this-sit side, and AI Export use this window, not 15 minutes. Filters, Hunt, TAK, and the 400-radio Live list stay as they are. Start and End sit stay on Reports.",
             "<b>After End sit.</b> The sit appears in the list on Reports. Pick it for Path / Debrief / Sit export / Compare this-sit, or leave Last 15 minutes selected. Rename / Delete sit under the list.",
             "<b>Path</b> — North-up plot of the selected sit (open, saved, or last 15 minutes). Leave Reports in front to watch an open sit grow, or the last-15-minute snake move. An open or saved sit draws an advertised aircraft track as a white dotted line on this card. Full write-up: §5.6.1.",
-            "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit (up to 6000 unique radios), or last 15 minutes in RAM (~400, hard ceiling 900). Unmatched rotating BLE omitted from lists by default; counts still include them. Show unmatched rotating BLE is on the Sit report card. Sit export has every radio. Full cap / drop / list rules just above. Hobby / as-is disclaimer at the top. Custom names. Observer notes after Where you were. An Aircraft section follows when a radio advertised a position (§5.4.1). Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk. A nearby advertised track is a black dotted line on that figure. The last position is a class icon. The pilot is a person icon.",
-            "<b>Compare (text) / Compare (PDF)</b> — This sit vs a second saved sit. Presence only: only here, only there, in both. Kind + MAC. Same window as Debrief. Observer notes after Windows. A live value that changed is stated (Separated → Near owner, Airborne → Ground). Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 6000). PDF overlays both walks when both have GPS. This sit’s advertised track is a black dotted line. The second sit’s is a blue dotted line.",
+            "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit (up to 6000 unique radios), or last 15 minutes in RAM (~400, hard ceiling 900). Unmatched rotating BLE omitted from lists by default; counts still include them. Show unmatched rotating BLE is on the Sit report card. Show all radios is off by default: counts, and a radio that is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. Turn Show all radios on for the full rosters. The PDF draws those counts as bars. The text report has the same counts and the same lines. Sit export has every radio. Full cap / drop / list rules just above. Hobby / as-is disclaimer at the top. Custom names. Observer notes after Where you were. An Aircraft section follows when a radio advertised a position (§5.4.1). Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk. A nearby advertised track is a black dotted line on that figure. The last position is a class icon. The pilot is a person icon. A pairing flood, a name flood, or a Wi-Fi beacon flood heard during the sit is a quiet Flood section: the time, the kind, how many new addresses or new names, and how many of those addresses are left out of the radio counts and lists. The sit file and Sit export still have every radio. A sit saved before those addresses were stored still counts them with the other radios.",
+            "<b>Compare (text) / Compare (PDF)</b> — This sit vs a second saved sit. Presence only: only here, only there, in both. Kind + MAC. Same window as Debrief. Observer notes after Windows. Marked mine after that, one line per radio and which window. A live value that changed is stated (Separated → Near owner, Airborne → Ground). Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 6000). PDF overlays both walks when both have GPS. This sit’s advertised track is a black dotted line. The second sit’s is a blue dotted line. A flood note, including a Wi-Fi beacon flood, names which sit the burst was in and leaves that burst’s addresses out of the presence counts and lists.",
             "<b>Compare AI Export</b> — Paste-ready addendum for a chat. Embeds the onboard Compare, then overlap (both/union), Wi-Fi vs BLE in each bucket, RAND BLE among exclusives, exclusive Extra attention / Named radios, and Observer notes if any. Instructs the model not to reprint the lists. Sit report AI Export stays this window.",
             "<b>AI Export</b> — Sit-level paste-ready addendum (the open or selected sit, otherwise last 15 minutes with a 5-minute slice). Onboard Debrief verbatim, then rates, RSSI bands, Extra attention, finder-tag IDs, and Observer notes — not a second inventory. Instructs the model not to reprint Debrief. For a <i>single</i> radio, use AI Export on the device-detail page instead.",
             "<b>Sit export</b> — Own card under Sit report. Same Format chips as Log export, for a different file. Full write-up: §5.6.2.",
@@ -1820,7 +1859,7 @@ def story():
             "Signature candidates still mines the log, not Sit export."
         ),
         bullets([
-            "<b>Log file — CSV / JSON lines</b> — One line per unique radio: kind, MAC, advertised name, custom name, Observer notes, RSSI min/max, channel, first/last, hits, lat/lon when tagged, Extra attention, matched signatures, Extra attention families.",
+            "<b>Log file — CSV / JSON lines</b> — One line per unique radio: kind, MAC, advertised name, custom name, Observer notes, RSSI min/max, channel, first/last, hits, lat/lon when tagged, Extra attention, matched signatures, Extra attention families, mine.",
             "<b>GPX / KML</b> — This phone’s path as a track, plus a hear-point per unique radio (loudest GPS-trail sample). Log export’s GPX/KML are hear-point waypoints only — no operator track.",
             "<b>WiGLE CSV</b> — One row per unique radio at that hear-point. Weaker than a log WiGLE file, which has many hears. Advertised SSID, not the custom name.",
         ]),
@@ -1906,7 +1945,7 @@ def story():
         P("Radios, watchlist, logging, and backup", "h3"),
         bullets([
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
-            "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
+            "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
             "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Location heading and speed go in the ATAK track when present. Wi-Fi Remote ID (vendor IE FA:0B:BC) can pin the aircraft the same way as BLE FFFA on Android 11+. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Online place names and maps</b> — On by default. One switch. Debrief and AI Export reverse-geocode GPS stamps (system geocoder). Reports → Path loads OpenStreetMap tiles under the trace (no Fieldwatch cloud, no API key). Offline, no geocoder, or no tiles: Debrief uses coordinates only and Path stays the north-up plot — no error dialog. Privacy mode does not hide that map. Turn off to keep streets and map tiles out of reports and Path together. Generate buttons are on Reports (§5.6, §5.6.1).",
@@ -2005,6 +2044,8 @@ def story():
         bullets([
             "<b>BLE.</b> UUID FFFA in service data. One 25-byte message per advertisement. Types rotate: Basic ID, Location, System, Self ID, Operator ID. Protocol versions 0, 1, and 2 decode. The BLE address often rotates; Basic ID <font face='Courier'>uas_id</font> is the sticky identity.",
             "<b>Wi-Fi.</b> A normal AP beacon with vendor IE FA:0B:BC type 0x0D. Android 11+ exposes that IE; Android 10 does not, so a Wi-Fi-only drone will not label on Android 10. A Wi-Fi beacon can send one 25-byte message or an ASTM message pack (type 0xF, several messages). Identity is the vendor IE. The parser frames each 25-byte message as BLE FFFA (app code 0x0D, counter, message) so the stock Remote ID Decode fields map, detail, and TAK run the same as BLE.",
+            "<b>French plate.</b> Vendor IE 6A:5C:35 labels the same Remote ID row. It does not fill position, heading, or the pilot pin. Those still come from the ASTM advertisement.",
+            "<b>Serial.</b> When Basic ID says the ID type is a serial, a known manufacturer prefix adds a line on that same Remote ID row. Freefly, BRINC, and Teal. A session ID does not. The French plate does not.",
         ]),
         P("<b>What still misses.</b>", "body_left"),
         bullets([
@@ -2654,7 +2695,7 @@ def story():
         ),
         P(
             "On the Filters tab, top to bottom: presets, radios to show, Moving with you, "
-            "New detections only, Signatures only, Watched only, Named radios only, Hide Fast Pair account-key, signature classes (Show only / Hide these plus class chips), "
+            "New detections only, Signatures only, Watched only, Named radios only, Hide my radios, Hide Fast Pair account-key, signature classes (Show only / Hide these plus class chips), "
             "Show only selected signatures, Hide selected signatures (class A–Z lists open under those switches), "
             "RSSI / name / OUI, Extra filter logic (AND/OR). "
             "Reset filter clears every clause, including class picks, remembered show/hide picks, and "
@@ -2668,6 +2709,7 @@ def story():
             "<b>Signatures only</b> — hide radios that match no signature. While class Show only or Show only selected signatures is narrowing the Live display, this is already true: the switch stays on and disabled until you turn those off.",
             "<b>Watched only</b> — hide radios that are not a bookmarked signature match and not a Named radio with Alert on. Always AND. Hide these still applies (Watched only + Hide Surveillance drops bookmarked cameras). Label-only names stay on Named radios only. The Live display shows a Watched only strip while this is on.",
             "<b>Named radios only</b> — hide radios that do not have a custom name (Settings → Named radios). Alert can still be off. Not the same as Signatures only or Watched only. A random / privacy MAC will not follow a rotation. The Live display shows a Named radios only strip while this is on.",
+            "<b>Hide my radios</b> — radios marked Mine stay off the Live display. The sit, the log, and Debrief still include them. Always AND. Turning on Moving with you leaves this on. The Moving with you preset replaces the whole filter, so this goes off with the rest.",
             "<b>Hide Fast Pair account-key</b> — drop plaza Fast Pair chips that are already paired, when Fast Pair is the only signature on the row. Pairing-mode stays (chip Fast Pair pairing, subtitle pair). A Pixel that also matched Google still shows. This is not Hide selected Fast Pair, which removes the whole family including pairing-mode. Always AND. What the two payloads mean: §9.5.",
             "<b>Signature classes</b> — Live display only; signatures still label. <b>Show only</b> keeps radios of the class chips you pick. <b>Hide these</b> drops those classes and leaves the rest, including unmatched radios. Show only with no class picked leaves the Live display unchanged. Class chips sit two across with the same glyphs as the Live display. Cameras / Drones / Finder tags / Phones / PCs and the rest are these chips — Show only or Hide these, then Save current as… if you want a named preset. Class vs color: §9.5.",
             "<b>Show only selected signatures</b> — only radios matching the families you pick stay on the Live display. The list opens under the switch, grouped Class A–Z (tap a class to open its signatures, same outline as the Signatures tab). Empty list = no extra include. Separate picks from Hide selected.",
@@ -2685,7 +2727,7 @@ def story():
             "(“BLE + signatures only + RSSI ≥ −70”)."
         ),
         P(
-            "<b>OR</b>: radios, Signatures only, Named radios only, Watched only, class Hide these, Hide selected, Moving with you, and New detections only still apply. Among the optional "
+            "<b>OR</b>: radios, Signatures only, Named radios only, Watched only, Hide my radios, class Hide these, Hide selected, Moving with you, and New detections only still apply. Among the optional "
             "clauses (name query, OUI query, RSSI floor if raised above −100, class Show only), any one pass is "
             "enough. Use this when you want a broad search (“name contains Flock OR OUI contains B41E52”). "
             "AND/OR never overrides a hidden class or signature — if Hide these Finder tags is on, "
@@ -3058,7 +3100,7 @@ def story():
                 ["Signage", "Retail LED sign, Electronic shelf label"],
                 ["Wearables", "Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note"],
                 ["Surveillance", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack"],
-                ["Drones", "Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
+                ["Drones", "Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
                 ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Public safety", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc. Used in law enforcement, not exclusive to it — government, municipal, and other corporate fleets likely run some of the same kit."],
                 ["Vehicle", "Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, GM hotspot, Audi MMI, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, PeopleNet, Samsara, AUMOVIO, Winegard, Goodyear TPMS, Schrader TPMS, Pacific TPMS, Huf, FOBO TPMS, Aftermarket TPMS, SYTPMS, TireCheck, TPMS service"],
@@ -3081,7 +3123,7 @@ def story():
             ["Color", "Class", "Stock signatures"],
             [
                 ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
-                ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir"],
+                ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
                 ["Purple", "Phones / Find My tags", "Apple Device, Apple AirTags, Chipolo, Google Find Hub, DULT tracker, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
                 ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
                 ["Green", "Mesh / LoRa", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
@@ -3105,7 +3147,7 @@ def story():
         ),
         P(
             "The stock catalog fills Extra attention on Hobby BLE serial, Axon, WatchGuard Video, Digital Ally, "
-            "Reveal Media, Wolfcom, Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, "
+            "Reveal Media, Wolfcom, Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, RayNeo, "
             "Fieldy, Plaud Note, Limitless Pendant, Bee Pendant, Omi, Friend Pendant, Hak5 Pineapple, Flipper Zero, "
             "Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, "
             "Utility Inc, and the roadside / public camera + ALPR rows: Flock Safety Cameras, Penguin, "
@@ -3180,8 +3222,9 @@ def story():
             "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi). "
             "Osmo Action / Pocket / 360 / Nano are the Osmo row (0x08AA model IDs 0x0006–0x0022 plus OsmoAction* names), not DJI. "
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
-            "In-flight drones also hit <b>Remote ID</b> (BLE UUID FFFA and Wi-Fi vendor IE FA:0B:BC). Skydio / Autel / Parrot "
-            "ANAFI-Bebop / HOVERAir are name rows; Autel default-ssid and Parrot company 0x0043 are not used."
+            "In-flight drones also hit <b>Remote ID</b> (BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC, and the French plate vendor IE 6A:5C:35). "
+            "Skydio / Autel / Parrot ANAFI-Bebop-Skycontroller / HOVERAir / Tello / Potensic / Holy Stone / Hubsan / Yuneec / SwellPro / Crazyflie "
+            "are name rows. Autel default-ssid, a bare ATOM or EXO name, and Parrot company 0x0043 are not used."
         ),
         P(
             "<b>Fast Pair is not “Android.”</b> It is Google’s tap-to-pair UUID (FE2C), a Phones / PCs "
@@ -3213,8 +3256,8 @@ def story():
             "many cars never put that company ID in an advertisement, and Classic Bluetooth is invisible."
         ),
         P(
-            "<b>Drones vs surveillance.</b> Drones is Remote ID (BLE FFFA and Wi-Fi FA:0B:BC), DJI, Skydio, Autel, Parrot, "
-            "HOVERAir. Osmo / Insta360 action cameras are Cameras, not Drones. Surveillance is poles, ALPR, and commercial readers — not aircraft and not campus access points. "
+            "<b>Drones vs surveillance.</b> Drones is Remote ID (BLE FFFA, Wi-Fi FA:0B:BC, and French vendor IE 6A:5C:35), DJI, Skydio, Autel, Parrot, "
+            "HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, and Crazyflie. Osmo / Insta360 action cameras are Cameras, not Drones. Surveillance is poles, ALPR, and commercial readers — not aircraft and not campus access points. "
             "Same amber chip; class splits them."
         ),
         P(
@@ -3499,7 +3542,7 @@ def story():
         ),
         bullets([
             "Device: open detail → bookmark icon to be notified when that radio appears. Prefills a name (advertised name or type guess). Settings → Named radios lists those MACs: rename, Observer notes, Alert on/off, remove one, Clear all. Signature watches are not on that list. A rotated BLE address stays until you delete it.",
-            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir).",
+            "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie).",
             "Master switch: Settings → Watchlist alerts. Off suppresses beep, voice, vibration, flash, and jump. Beep and Voice are independent (pip, spoken phrase, or both). Jump works with any of those. Settings → System notification (off by default) posts a silent shade card; skip it in the field.",
         ]),
         P("10.2 Beep, voice, flash, and optional shade card", "h2"),
@@ -3677,7 +3720,7 @@ def story():
                 ["channel", "Wi-Fi channel derived from MHz; 0 for BLE."],
                 ["freq", "MHz. BLE is recorded as 2402 as a band marker, not a precise advertising channel."],
                 ["oui", "First three octets."],
-                ["vendor", "IEEE MA-L/M/S name for a universal MAC, else Bluetooth company name when that is all we have. Randomized BLE addresses usually empty."],
+                ["vendor", "IEEE MA-L/M/S name for the MAC prefix. Empty when that prefix is not in the IEEE list. The Bluetooth company stays on its own line."],
                 ["fleets", "Matched signature names joined with +, at write time. Column name is still fleets for log compatibility. Signature candidates re-matches; do not trust this column after a catalog change."],
                 ["mfg", "Manufacturer company ID as hex, or empty."],
                 ["uuids", "Service UUIDs joined with |."],
@@ -3720,7 +3763,7 @@ def story():
                 ["channel", "Wi-Fi channel; 0 for BLE."],
                 ["freq", "MHz. BLE recorded as 2402 as a band marker."],
                 ["oui", "First three octets."],
-                ["vendor", "IEEE or Bluetooth company name, or null."],
+                ["vendor", "IEEE vendor name for the MAC prefix, or null when the prefix is not listed."],
                 ["fleets", "Matched signature names joined with +, at write time. Re-match if the catalog changed."],
                 ["mfg", "Manufacturer company ID as integer, or null. (CSV stores the same ID as hex.)"],
                 ["uuids", "Service UUIDs, comma-separated."],
@@ -3809,6 +3852,8 @@ def story():
             "(status word, last position, altitude, course, speed, how many fixes; the map is §5.6.1), "
             "then (3) <b>Observer notes</b> when any heard radio in this window has a Named-radio note "
             "(custom name, MAC, RSSI, the note — quieter radios still appear here even if they are not in Loudest APs), "
+            "then <b>Marked mine</b> when any heard radio is marked yours "
+            "(that radio leaves Possible trackers, Possible tail, Retail beacons, and Wearables; Extra attention still names the signature), "
             "then tracking assessment, "
             "then optional amber callouts <b>Possible trackers with you</b> and <b>Possible tail</b> (finder tags) when those lists are non-empty, " +
             "plus <b>Retail beacons with you</b> and <b>Wearables with you</b> when those classes stayed with the path, "
@@ -4015,7 +4060,7 @@ def story():
         numbered([
             "Tag detections with GPS and Keep screen on are on by default. Location → high accuracy. Scanning must be running so live GPS updates can start.",
             "Walk or drive until Filters shows a path of about 50 m. If it stays 0 m, the phone is not giving a live fix. Sitting still does not grow the path. After a sit, Live display → Start over if you want a fresh follow test.",
-            "Filters → Moving with you (the preset, or the switch under Radios to show). The switch clears Signatures only, Watched only, Named radios only, and class Show only so unmatched radios can co-travel.",
+            "Filters → Moving with you (the preset, or the switch under Radios to show). The switch clears Signatures only, Watched only, Named radios only, and class Show only so unmatched radios can co-travel. Hide my radios stays on if you already turned it on.",
             "Optional: Display → Sort → New at bottom so new co-travelers append instead of jumping the list.",
             "When a row appears that is not your kit: Pause, open detail, bookmark if you want a beep on return.",
         ]),
@@ -4669,7 +4714,9 @@ def story():
             ["Decode hexagon", "Small hexagon inside a signature name chip (same color as the name) when that signature has a Decode fields map. Dual-chip radios mark only the mapped name(s). Catalog check, not a parse of this packet. Hidden when Display → Signature names is off. Extra attention “!”, the cyan Observer notes chip, the phosphor alerted bell, and a live value chip are separate. Same mark on the Signatures list, By class signature rows, and detail Decoded fields. §5.4, §9.6."],
             ["Live value", "One decoded word on a Live list row, in the signature color. Live row must be on for that Decode fields entry, and this advertisement must have produced the word. Strong values use a heavier chip. Stock: DULT and Find Hub Separated; Remote ID Emergency, plus Ground, Airborne, Undeclared, and RID failure. Strength list, Hybrid, Timeline, By class. Not radar. Signature names off still shows the word. §5.4.1."],
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
-            ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
+            ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
+            ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. A blank name is filled. Filters → Hide my radios takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
+            ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. Hide these turns Hide this burst on. Continue leaves the radios up. The switch starts off on each new burst. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. The advertisement does not name the tool. §5.1, §5.6."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Reports → Path still loads map tiles when Online place names and maps is on. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
@@ -4687,7 +4734,7 @@ def story():
             ["vendor_ie (log)", "Last CSV column / JSON field on new Wi-Fi rows: pipe-separated vendor-IE OUIs, up to eight. Empty on BLE and on older 17-column rows. Signature candidates uses product IEs; WPA/RSN/P2P/Qualcomm chip IEs are logged but not clustered. §11.2, §11.5."],
             ["Alerted (list)", "Phosphor notification pip on a Live display row (list, hybrid, timeline, By class) after a watchlist alert this session. Lasts until you leave Fieldwatch. Distinct from Extra attention “!” and from the one-second flash. Newest alert ranks by the same event. On radar the same radios keep a phosphor ring after the ping. §5.3, §5.4, §6.1."],
             ["Notes (signature)", "Editor field on a signature. Shows on radio detail as a quiet Notes card for matching radios, and in Share / AI Export. Stock copy is what the family is and how it is typically used — not the match recipe (company IDs, UUIDs). Not Extra attention: no Live “!”, not amber, not Debrief. Dual-chip radios list each family. §5.5, §9.3."],
-            ["Extra attention", "Optional field on a signature, separate from Notes. If it is not empty, a match gets a “!” on the Live display, an amber Extra attention card on detail, and a line in Debrief / AI Export (amber PDF callout). Empty = no mark. The “!” is its own chip, not the decode hexagon, not the cyan Observer notes chip, and not the phosphor alerted bell. Stock fills it on Hobby BLE serial, Axon, WatchGuard Video, Digital Ally, Reveal Media, Wolfcom, Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, Fieldy, Plaud Note, Limitless, Bee, Omi, Friend, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Panasonic i-PRO / Arbitrator, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, Hayden AI, Miovision, Tattile, LVT LiveView) — those rows also ship with the bookmark on. Many camera/ALPR rows are name-only; cellular units stay quiet. Pattern match, not identity, not a safety finding. §5.5, §9.3, §9.5, §12.14."],
+            ["Extra attention", "Optional field on a signature, separate from Notes. If it is not empty, a match gets a “!” on the Live display, an amber Extra attention card on detail, and a line in Debrief / AI Export (amber PDF callout). Empty = no mark. The “!” is its own chip, not the decode hexagon, not the cyan Observer notes chip, and not the phosphor alerted bell. Stock fills it on Hobby BLE serial, Axon, WatchGuard Video, Digital Ally, Reveal Media, Wolfcom, Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, RayNeo, Fieldy, Plaud Note, Limitless, Bee, Omi, Friend, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Panasonic i-PRO / Arbitrator, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, Hayden AI, Miovision, Tattile, LVT LiveView) — those rows also ship with the bookmark on. Many camera/ALPR rows are name-only; cellular units stay quiet. Pattern match, not identity, not a safety finding. §5.5, §9.3, §9.5, §12.14."],
             ["Hobby BLE serial", "Catalog signature (on). BLE advertised names for cheap UART modules (HMSoft, JDY, CC41, AT-09, BT05, ESP32 BLE). Not Classic HC-05/HC-06. Extra attention cautions that the same boards have been used in some pump/ATM overlays; look with your eyes if it is loud next to a card reader. Not proof. Turn the row off if those names are local noise."],
             ["Axon", "Catalog signature (on). IEEE OUI 00:25:DF plus Axon Body / Fleet / Dock names, UUIDs, and BWCDEVICE in BLE service data. Extra attention: body-worn, in-car, dock, or TASER. Public safety class — used in law enforcement, not exclusive to it. Not that officer. Quiet LTE units will not appear."],
             ["WatchGuard Video", "Catalog signature (on). IEEE OUI 00:1D:96 (WatchGuard Video, not the firewall company). Extra attention: body-worn / in-car. Now Motorola. Public safety class — used in law enforcement, not exclusive to it."],
@@ -4720,15 +4767,17 @@ def story():
             ["Signatures only", "Filter that hides devices with no signature match. Dimmed while class Show only or Show only selected signatures is narrowing the Live display. §8.1–8.3."],
             ["Watched only", "Filter that hides radios that are not a bookmarked signature match and not a Named radio with Alert on. Always AND. Hide these still applies (Watched only + Hide Surveillance drops bookmarked cameras). Label-only names stay on Named radios only. Live display shows a Watched only strip while this is on. Moving with you clears it. §8.1."],
             ["Named radios only", "Filter that hides radios without a custom name. Alert can be off. Not Signatures only or Watched only. Random / privacy MACs stay pinned to that address. §5.5, §8.1."],
+            ["Hide my radios", "Filter that hides radios marked Mine. Live display only. The sit, the log, and Debrief still include them. Always AND. Turning on Moving with you leaves this on. The preset replaces the whole filter. §8.1."],
             ["Hide Fast Pair account-key", "Filter that hides Fast Pair-only radios whose payload is the longer account-key filter, not the 3-byte pairing-mode model ID. Pairing-mode stays (chip Fast Pair pairing, subtitle pair). Dual-chip radios stay. Hide selected Fast Pair drops both. Always AND. §8.1, §9.5."],
             ["Show only selected signatures", "Filters collapsing list, grouped Class A–Z like the Signatures tab. Only radios matching the signatures you pick stay on the Live display. Empty list = no extra include. Separate picks from Hide selected. §8.1–8.3."],
             ["Hide selected signatures", "Filter switch for one family. When on, matching devices drop off the Live display. Picks stay stored if you turn the switch off. Empty list hides nothing. Prefer class Hide these when the whole Finder tags / ISP bucket is clutter."],
             ["Pause (Live display)", "Freezes the Live display. Radios and the log keep running. Filters and Settings still update; the new filter applies when you run the Live display again. Detail opened from a paused row is that snapshot, even if the radio has since gone. Tap the Live tab again (the control then reads Live) to run again. Mark seen while paused uses the frozen list."],
             ["Mark seen", "Live display button, above the tabs, only while New detections only is on. Adds what is on the Live display to already-seen. While paused, uses the frozen list."],
             ["Reset seen", "Live display button, above the tabs, only while New detections only is on. Clears already-seen to zero so those radios can show as new. Does not clear the log."],
-            ["Debrief (text)", "Reports share of the field sit report as plain text. Opens with DISCLAIMER (hobby / as-is; hypotheses not identity; local law). Selected sit (up to 6000 unique radios) or last 15 minutes in RAM (~400). Unmatched rotating BLE omitted from lists by default; counts still include them. Extra attention, named signatures, bookmarks, payload pins stay. Show unmatched rotating BLE on the Sit report card. Sit export has every radio. Ignores Live display view and Filters. Where you were, Observer notes, tracking, inventories, takeaway. On a drive, tap more than once. §5.6, §11.4.1."],
+            ["Debrief (text)", "Reports share of the field sit report as plain text. Opens with DISCLAIMER (hobby / as-is; hypotheses not identity; local law). Selected sit (up to 6000 unique radios) or last 15 minutes in RAM (~400). Same counts and radio lines as the PDF. Show all radios off: counts, plus Extra attention, a custom name, Marked mine, or a bookmark. On: full rosters. Show unmatched rotating BLE still applies to those lists. Sit export has every radio. Ignores Live display view and Filters. Where you were, Observer notes, tracking, inventories, takeaway. On a drive, tap more than once. §5.6, §11.4.1."],
+            ["Show all radios", "Sit report switch, off by default. Off: Debrief and Compare lead with counts and list Extra attention, a custom name, Marked mine, a bookmark, or a Compare decoded value that changed. On: the full rosters. PDF draws the counts as bars. Text has the same numbers. §5.6."],
             ["Debrief (PDF)", "Same sit report as Debrief (text), letter-size typeset PDF. Same window, same unmatched-RAND hide, same counts. Disclaimer, FIELDWATCH header, numbered sections, full-width path figure, amber co-travel / Extra attention callouts, takeaway. Long trip: tap more than once (§11.4.1). Share as application/pdf."],
-            ["Compare sits", "Reports card under Sit report. This sit (open, selected, or last 15 minutes) vs a second saved sit. Presence only — only in this sit, only in the second, in both. Kind + MAC. Text, PDF, and AI Export. Observer notes after Windows. Not a radio fix. §5.6."],
+            ["Compare sits", "Reports card under Sit report. This sit (open, selected, or last 15 minutes) vs a second saved sit. Presence counts for only in this sit, only in the second, and in both, split Wi-Fi and BLE, then by signature. A radio line when it is Extra attention, named, marked Mine, bookmarked, or its decoded value changed. Show all radios prints every kind + MAC. Text, PDF, and AI Export. Observer notes after Windows. Not a radio fix. §5.6."],
             ["Online place names and maps", "Settings switch, on by default. Debrief and AI Export reverse-geocode GPS stamps via the system geocoder when online. Reports → Path loads OpenStreetMap tiles under the trace (fill the plot, clip, extra map around the route). Offline or no tiles: Debrief coordinates only, Path is the north-up trace — no error dialog. Privacy mode does not hide that map. Turn off to keep streets and maps out together."],
             ["New at bottom", "Display → Sort. First-seen order, oldest at top; new radios append; gone radios drop. List follows the bottom unless you scroll up."],
             ["unnamed LE", "BLE Advertised name / Name + type when there is no advertised name and no useful decode. On the subtitle the Bluetooth icon already marks LE, so the body is unnamed (not “unnamed LE” twice). Title Advertised name still shows unnamed LE. The title is the MAC unless you change it."],
@@ -4771,7 +4820,7 @@ def story():
             "Every stock signature always labels when its rules hit. "
             "Hide a noisy family on Filters (Hide these for a class, or Hide selected for one row). "
             "Chip colors are by class (§9.5). Extra attention and a stock bookmark ship on the "
-            "body-cam, camera-glasses, recording-wearable, pentest, public-safety vehicle AP, and roadside / public camera + ALPR rows noted below, plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir). Consumer cameras, ISP "
+            "body-cam, camera-glasses, recording-wearable, pentest, public-safety vehicle AP, and roadside / public camera + ALPR rows noted below, plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Consumer cameras, ISP "
             "gateways, and office mice will label when their factory names or OUIs are heard. "
             "The table is A–Z by signature name."
         ),
@@ -4815,11 +4864,18 @@ def story():
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
             ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
-            ["Remote ID", "BLE UUID FFFA and Wi-Fi vendor IE FA:0B:BC (ASTM F3411 / FAA Remote ID)", "In-flight digital license plate on both radios. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. Same Decode fields map: protocol 0–2 Basic ID / location (lat/lon/alt_geo/heading/speed) / Self ID / System (op_lat / op_lon = pilot). A Location message shows Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is heavier. Wi-Fi packs framed as FFFA. TAK Payload location plus track course/speed. A new sit can draw the advertised track on Reports → Path and in the sit report. NAN still misses; AP beacons need Android 11+. Not FIDO FFF9 or Thread FFFB. Not a tail number. Drones class. §5.4.1, §5.8.3, §9.6, §12.16. Stock bookmark."],
+            ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and pilot. The French plate labels the row and does not fill position or pilot. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. Not a tail number. Drones class. Stock bookmark."],
             ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],
             ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
-            ["Parrot", "Names ANAFI* / Bebop*", "Parrot drones. Not company 0x0043 (automotive). Disco* not used. Drones class. Stock bookmark."],
+            ["Parrot", "Names ANAFI* / Bebop* / Skycontroller*", "Parrot drones and the Skycontroller. Not company 0x0043 (automotive). Not IEEE 90:3A:E6. Disco* not used. Drones class. Stock bookmark."],
             ["HOVERAir", "Wi-Fi Hover* / HoverX1_*; names HOVERAir*", "Zero Zero Robotics flying cameras. Drones class. Stock bookmark."],
+            ["Tello", "Names TELLO* / RMTT*", "Ryze Tello and Tello Talent. The name does not start with DJI. A renamed network misses. Often no Remote ID plate. Drones class. Stock bookmark."],
+            ["Potensic", "Name Potensic*", "Potensic, including ATOM. A bare ATOM name does not match. A renamed network misses. Drones class. Stock bookmark."],
+            ["Holy Stone", "Names HolyStone* / Holy Stone*", "Holy Stone drones. A generic camera name does not match. A renamed network misses. Drones class. Stock bookmark."],
+            ["Hubsan", "Name Hubsan*", "Hubsan drones. A bare EXO name does not match. A renamed network misses. Drones class. Stock bookmark."],
+            ["Yuneec", "Name Yuneec*", "Yuneec drones. A renamed network misses. Often no Remote ID plate. Drones class. Stock bookmark."],
+            ["SwellPro", "Name SwellPro*", "SwellPro waterproof drones. A renamed network misses. Often no Remote ID plate. Drones class. Stock bookmark."],
+            ["Crazyflie", "Name Crazyflie*", "Bitcraze Crazyflie lab drone. The Bitcraze company id is not a rule. Drones class. Stock bookmark."],
             ["Starlink", "Wi-Fi SSIDs STARLINK* / Starlink*; SpaceX OUI 00:26:12", "BSSID often randomized; name is the usual hit."],
             ["Meraki", "Wi-Fi SSIDs Meraki* plus Cisco Meraki IEEE OUIs", "Not Cisco Systems OUIs. Renamed SSID still hits on BSSID. Cisco vendor IE 00:00:0C on the same beacon stays Meraki only. ISP / routers class."],
             ["Cisco", "Wi-Fi Cisco*; tsunami; Cisco Systems and Cisco SPVTG IEEE OUIs", "Not a Cisco substring (Francisco). AP beacons only. Meraki / Cisco-Linksys have their own OUI lists. ISP / routers class."],
@@ -5002,6 +5058,8 @@ def story():
             ["Ray-Ban / Meta glasses", "BLE company IDs 0x01AB, 0x058E, 0x0D53; UUIDs FEB7/FEB8; names Ray-Ban / Meta View / Oakley Meta. Extra attention filled. Stock bookmark.", "Often Ray-Ban Meta. Same IDs on Quest and other Meta wearables. Not proof of recording. Beeps on a new match."],
             ["Snap Spectacles", "BLE company ID 0x03C2; UUID FE45; Spectacles names. Extra attention filled. Stock bookmark.", "Snap Spectacles or other Snap BLE. Not proof of recording. Beeps on a new match."],
             ["Vuzix", "BLE company ID 0x060C; names Vuzix*. Extra attention filled. Stock bookmark on new installs.", "Vuzix smart glasses. Not proof of recording. Beeps on a new match if bookmarked."],
+            ["RayNeo", "Match-all: TCL company id 0x0BC6 and BLE name RayNeo*. Extra attention filled. Stock bookmark on new installs.", "RayNeo glasses. A TCL phone without a RayNeo name does not match. Not proof of recording. Beeps on a new match if bookmarked."],
+            ["Even G1", "Even Realities company id 0x10F9, or BLE name Even G1*. Extra attention filled. Stock bookmark.", "Even Realities G1 glasses. Nordic UART is not a rule. Not proof of recording. Beeps on a new match."],
             ["Avigilon", "Avigilon / Avigilon*. Extra attention filled. Stock bookmark.", "Motorola cameras / LPR on municipal poles and commercial sites. Name-only. Beeps on a new match."],
             ["Axis", "AXIS-* / Axis Camera. Extra attention filled. Stock bookmark.", "Municipal / public CCTV poles. Name-only. Beeps on a new match."],
             ["UniFi", "UniFi, Ubiquiti, UAP-* (either radio)", "Name only. Use UniFi AP when you want BSSID matching. ISP / routers class."],
@@ -5022,7 +5080,7 @@ def story():
     ))
     flock_ouis = [
         "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32", "14:5A:FC", "74:4C:A1",
-        "08:3A:88", "9C:2F:9D", "C0:35:32", "94:08:53", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6",
+        "08:3A:88", "9C:2F:9D", "C0:35:32", "94:08:53", "E0:0A:F6", "14:B5:CD", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6",
         "24:B2:B9", "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4", "70:08:94",
         "58:00:E3", "5C:93:A2", "64:6E:69", "48:27:EA", "82:6B:F2",
     ]
@@ -5101,6 +5159,7 @@ def story():
             ["Finder tags / Surveillance shows nothing", "Show only that class, and no matching radios are on the air.", "Empty Live display means none of that class is in earshot (a bag AirTag is the check for Finder tags). Hide these on another class does not mute labels."],
             ["Signatures only switch does nothing under Show only", "Show only already hides unmatched radios.", "The switch is dimmed while Show only has a class or selected signatures picked. Turn Show only off to use Signatures only, or use Hide these if unmatched radios should stay."],
             ["Moving with you empty after Show only Finder tags", "Class Show only, Signatures only, Named radios only, or Watched only was still on. Finder tags rotate MACs, so they often fail co-travel, and unmatched radios were hidden.", "Tap the Moving with you preset, or turn the switch on. Either one clears Show only, Signatures only, Named radios only, and Watched only. Hide these stays if you were hiding a bag tag. The path still needs about 50 m."],
+            ["My bag tag is missing from Moving with you", "Hide my radios is on, and that radio is marked Mine.", "Turn Filters → Hide my radios off to see it on Live. Debrief still lists it under Marked mine."],
             ["Watched only is empty", "No bookmarked signature is matching, and no Named radio has Alert on — or Hide these dropped the ones that did.", "Bookmark a family on Signatures, or turn Alert on a Named radio (detail bookmark). Label-only names stay on Named radios only. Hide these still drops watched cameras. Turn the switch off to see the rest of the field."],
             ["I hid AirTags, then they came back", "Class Hide these or Hide selected was turned off. Hiding only runs while that mode is on.", "Turn Hide these (Finder tags) or Hide selected back on. Reset filter is what forgets the picks."],
             ["Pause, then detail says left range", "The radio aged out after you opened detail from a running list.", "Pause first, then tap the row. Detail uses the frozen snapshot."],
@@ -5159,9 +5218,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.17 (versionCode 27), field build of 1 October 2026"],
-                ["Document version", "1.1.17"],
-                ["Document date", "1 October 2026"],
+                ["Software version", "1.1.18 (versionCode 28), field build of 3 October 2026"],
+                ["Document version", "1.1.18"],
+                ["Document date", "3 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

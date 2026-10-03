@@ -9,6 +9,7 @@ import app.fieldwatch.domain.VendorIeRecord
 import app.fieldwatch.domain.toHexUpper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -134,6 +135,7 @@ class DeviceStoreTest {
         assertEquals(-74.0, again.payloadLon!!, 1e-6)
         assertEquals(100.0, again.payloadAlt!!, 1e-6)
         assertEquals("TESTSERIAL1234567890", again.payloadUasId)
+        assertNull(again.payloadAircraft)
     }
 
     @Test
@@ -156,8 +158,121 @@ class DeviceStoreTest {
         )
         val again = store.find("BLE:$mac")!!
         assertEquals("Location packet keeps Basic ID", "TESTSERIAL1234567890", again.payloadUasId)
+        assertNull(again.payloadAircraft)
         assertEquals(40.0, again.payloadLat!!, 1e-6)
         assertEquals(-74.0, again.payloadLon!!, 1e-6)
+    }
+
+    @Test
+    fun remoteIdSerialPrefixSticksAndClears() {
+        val store = DeviceStore()
+        val mac = "AA:BB:CC:DD:EE:12"
+        val location = "0D0012200000000084D717007FE4D3000098083408000000000000"
+        val basic = basicIdService(1, "18179132000209")
+        store.ingestBatch(
+            listOf(ble(mac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", basic))))),
+            fleets,
+            30,
+        )
+        val named = store.find("BLE:$mac")!!
+        assertEquals("18179132000209", named.payloadUasId)
+        assertEquals("Freefly Alta X Gen2", named.payloadAircraft)
+        assertTrue(named.liveDecode.isEmpty())
+
+        store.ingestBatch(
+            listOf(ble(mac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", location))))),
+            fleets,
+            30,
+        )
+        val held = store.find("BLE:$mac")!!
+        assertEquals("Freefly Alta X Gen2", held.payloadAircraft)
+        assertEquals("18179132000209", held.payloadUasId)
+        assertEquals(40.0, held.payloadLat!!, 1e-6)
+        assertEquals(-74.0, held.payloadLon!!, 1e-6)
+        assertTrue(held.liveDecode.none { it.text.contains("Freefly") })
+
+        val session = basicIdService(4, "SESSIONID123456789")
+        store.ingestBatch(
+            listOf(ble(mac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", session))))),
+            fleets,
+            30,
+        )
+        val cleared = store.find("BLE:$mac")!!
+        assertEquals("SESSIONID123456789", cleared.payloadUasId)
+        assertNull(cleared.payloadAircraft)
+        assertEquals(40.0, cleared.payloadLat!!, 1e-6)
+
+        val caaMac = "AA:BB:CC:DD:EE:13"
+        store.ingestBatch(
+            listOf(
+                ble(
+                    caaMac,
+                    name = "",
+                    facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", basicIdService(2, "18179132000209")))),
+                ),
+            ),
+            fleets,
+            30,
+        )
+        val caa = store.find("BLE:$caaMac")!!
+        assertEquals("18179132000209", caa.payloadUasId)
+        assertNull(caa.payloadAircraft)
+
+        val dronetag = "AA:BB:CC:DD:EE:14"
+        store.ingestBatch(
+            listOf(
+                ble(
+                    dronetag,
+                    name = "",
+                    facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", basicIdService(1, "1596F330000000000001")))),
+                ),
+            ),
+            fleets,
+            30,
+        )
+        val module = store.find("BLE:$dronetag")!!
+        assertEquals("1596F330000000000001", module.payloadUasId)
+        assertNull(module.payloadAircraft)
+
+        val packMac = "AA:BB:CC:DD:EE:15"
+        val pack = "0D00" + basicIdService(1, "1914CL2D230001").removePrefix("0D00") + location.removePrefix("0D00")
+        store.ingestBatch(
+            listOf(ble(packMac, name = "", facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", pack))))),
+            fleets,
+            30,
+        )
+        val packed = store.find("BLE:$packMac")!!
+        assertEquals("BRINC Lemur 2", packed.payloadAircraft)
+        assertEquals(40.0, packed.payloadLat!!, 1e-6)
+        assertTrue(packed.liveDecode.none { it.text.contains("BRINC") })
+
+        val tealMac = "AA:BB:CC:DD:EE:16"
+        val teal = "00" + basicIdService(1, "1839FTD50200000001").removePrefix("0D00")
+        store.ingestBatch(
+            listOf(
+                wifi(tealMac, name = "RID-WIFI", ies = listOf("FA:0B:BC")).copy(
+                    facts = RadioFacts(vendorIes = listOf(VendorIeRecord("FA:0B:BC", 0x0D, teal))),
+                ),
+            ),
+            fleets,
+            30,
+        )
+        assertEquals("Teal 2", store.find("WIFI:$tealMac")!!.payloadAircraft)
+
+        val french = "AA:BB:CC:DD:EE:17"
+        store.ingestBatch(
+            listOf(
+                wifi(french, name = "RID-FR", ies = listOf("6A:5C:35")).copy(
+                    facts = RadioFacts(vendorIes = listOf(VendorIeRecord("6A:5C:35", 0x01, teal))),
+                ),
+            ),
+            fleets,
+            30,
+        )
+        val plate = store.find("WIFI:$french")!!
+        assertTrue("fleet-remote-id" in plate.fleetIds)
+        assertNull(plate.payloadAircraft)
+        assertNull(plate.payloadUasId)
     }
 
     @Test
@@ -348,6 +463,15 @@ class DeviceStoreTest {
         val height = le16(2100)
         val msg = byteArrayOf(0x12, flags.toByte(), 90, 40, 4) + lat + lon + le16(0) + geo + height + ByteArray(6)
         return "00" + msg.toHexUpper()
+    }
+
+    private fun basicIdService(idType: Int, serial: String): String {
+        val msg = ByteArray(25)
+        msg[0] = 0x02
+        msg[1] = (((idType and 0x0F) shl 4) or 0x02).toByte()
+        val bytes = serial.toByteArray(Charsets.US_ASCII)
+        bytes.copyInto(msg, destinationOffset = 2, endIndex = minOf(bytes.size, 20))
+        return "0D00" + msg.toHexUpper()
     }
 
     private fun le32(n: Int) = byteArrayOf(

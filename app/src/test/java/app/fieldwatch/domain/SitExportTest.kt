@@ -49,7 +49,18 @@ class SitExportTest {
         val wifiLine = data.first { it.contains("CafeWiFi") }
         assertTrue(wifiLine, wifiLine.contains("Flock Safety Cameras; Ring"))
         val bleLine = data.first { it.contains("Tag") }
-        assertTrue(bleLine.endsWith(",false,,") || bleLine.contains(",false,,"))
+        assertTrue(bleLine.endsWith(",false"))
+        assertTrue(SitExport.CSV_HEADER.endsWith(",mine"))
+        val marked = SitExport.csv(
+            listOf(wifi),
+            LogExportRadios.BOTH,
+            emptyMap(),
+            emptyMap(),
+            extra,
+            fleets,
+            mineKeys = setOf(wifi.key),
+        )
+        assertTrue(marked.lines().first { it.contains("CafeWiFi") }.endsWith(",true"))
     }
 
     @Test

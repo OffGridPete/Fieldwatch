@@ -87,6 +87,7 @@ object AircraftTrail {
             path.any { sample -> Geo.meters(fix.lat, fix.lon, sample.lat, sample.lon) <= NEAR_M }
         }
         val titled = uasId.ifBlank { latest.title.ifBlank { "Advertised position" } }
+        val aircraft = rows.filter { it.aircraft.isNotBlank() }.maxByOrNull { it.lastSeen }?.aircraft.orEmpty()
         return Picture(
             uasId = uasId,
             title = titled,
@@ -103,6 +104,7 @@ object AircraftTrail {
             keys = rows.map { it.key }.filter { it.isNotEmpty() }.toSet(),
             who = latest.title,
             mac = latest.mac,
+            aircraft = aircraft,
         )
     }
 
@@ -136,6 +138,7 @@ object AircraftTrail {
             pilotLon = device.payloadOpLon,
             key = device.key,
             mac = device.mac,
+            aircraft = device.payloadAircraft?.trim().orEmpty(),
         )
     }
 
@@ -146,6 +149,7 @@ object AircraftTrail {
                 if (index > 0) appendLine()
                 val head = if (pic.status.isBlank()) pic.title else "${pic.title} — ${pic.status}"
                 appendLine("• $head")
+                if (pic.aircraft.isNotBlank()) appendLine("  ${pic.aircraft}")
                 val last = pic.fixes.last()
                 appendLine("  Last ${fmtCoord(last.lat, last.lon)}")
                 val motion = listOfNotNull(
@@ -377,8 +381,11 @@ object AircraftTrail {
         speed: Double?,
         pilotLat: Double?,
         pilotLon: Double?,
+        aircraft: String = "",
     ): String {
         val bits = ArrayList<String>()
+        val craft = aircraft.trim()
+        if (craft.isNotEmpty()) bits += craft
         val state = status.trim()
         if (state.isNotEmpty()) bits += state
         val id = uasId.trim()
@@ -414,16 +421,18 @@ object AircraftTrail {
             speed = pic.speed,
             pilotLat = pic.pilotLat,
             pilotLon = pic.pilotLon,
+            aircraft = pic.aircraft,
         )
         return "$head — $note"
     }
 
     private fun sideBit(pic: Picture): String {
+        val craft = if (pic.aircraft.isBlank()) "" else "${pic.aircraft}, "
         val status = if (pic.status.isBlank()) "" else "${pic.status}, "
         val last = pic.fixes.lastOrNull()
         val where = if (last == null) "" else " last ${fmtCoord(last.lat, last.lon)}"
         val count = if (pic.fixes.size == 1) "1 fix" else "${pic.fixes.size} fixes"
-        return "$status$count$where".trim()
+        return "$craft$status$count$where".trim()
     }
 
     private fun cap(samples: List<PayloadFix>, limit: Int): List<PayloadFix> {
@@ -464,6 +473,7 @@ object AircraftTrail {
         /** Device key of the radio that sent these fixes. Empty for a report-only source. */
         val key: String = "",
         val mac: String = "",
+        val aircraft: String = "",
     )
 
     data class Picture(
@@ -484,5 +494,6 @@ object AircraftTrail {
         /** Radio name when it is not already the UAS id. */
         val who: String = "",
         val mac: String = "",
+        val aircraft: String = "",
     )
 }

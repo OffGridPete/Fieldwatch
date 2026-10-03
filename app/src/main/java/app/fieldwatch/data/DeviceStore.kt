@@ -97,8 +97,7 @@ class DeviceStore(
                 rssiMax = observation.rssi,
                 channel = observation.channel,
                 frequencyMhz = observation.frequencyMhz,
-                vendor = OuiLookup.vendor(mac)
-                    ?: observation.manufacturerId?.let { app.fieldwatch.domain.RadioDb.company(it) },
+                vendor = OuiLookup.vendor(mac),
                 randomized = MacUtil.isRandomized(mac),
                 hiddenSsid = observation.hiddenSsid,
                 serviceUuids = observation.serviceUuids,
@@ -141,9 +140,7 @@ class DeviceStore(
             existing.copy(
                 name = observation.name.ifBlank { existing.name },
                 rssi = if (measured) observation.rssi else existing.rssi,
-                vendor = existing.vendor
-                    ?: OuiLookup.vendor(mac)
-                    ?: observation.manufacturerId?.let { app.fieldwatch.domain.RadioDb.company(it) },
+                vendor = existing.vendor ?: OuiLookup.vendor(mac),
                 rssiMin = if (measured) {
                     if (Rssi.measured(existing.rssiMin)) minOf(existing.rssiMin, observation.rssi)
                     else observation.rssi

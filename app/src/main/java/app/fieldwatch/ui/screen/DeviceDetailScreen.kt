@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.FieldwatchSwitch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -267,6 +268,51 @@ fun DeviceDetailScreen(
                     saved = notesIsSaved && lastSavedNotes.isNotBlank(),
                 )
             }
+            if (canName) {
+                var mineOn by remember(device.key) { mutableStateOf(vm.isMine(device.key)) }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 1.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Mine", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "While on, this radio stays listed and does not beep.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        FieldwatchSwitch(
+                            checked = mineOn,
+                            onCheckedChange = { on ->
+                                vm.setRadioMine(device, on)
+                                mineOn = on
+                                if (on && lastSaved.isBlank()) {
+                                    val suggest = RadioBookmarks.suggestLabel(
+                                        device,
+                                        device.fleetIds.map { vm.fleetName(it) },
+                                    )
+                                    lastSaved = suggest
+                                    nameDraft = suggest
+                                }
+                                if (on) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            "Marked as yours. No beep while this is on. Still listed.",
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+            }
 
             val guess = DeviceExplain.guess(device, device.fleetIds.map { vm.fleetName(it) })
             StickyHeight(device.key to "guess") { GuessCard(guess) }
@@ -444,6 +490,8 @@ fun DeviceDetailScreen(
             }
 
             if (device.kind == RadioKind.BLE || device.kind == RadioKind.WIFI) {
+                val aircraft = device.payloadAircraft?.trim().orEmpty()
+                if (aircraft.isNotEmpty()) Meta("Aircraft", aircraft)
                 val fleets = vm.ui.value.fleets
                 val decoded = remember(device.key, device.facts, device.fleetIds) {
                     SignatureFieldDecoder.decodeSighting(device, fleets)

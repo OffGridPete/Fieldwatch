@@ -486,6 +486,8 @@ data class FilterState(
     val useClassFilter: Boolean = false,
     val excludeClasses: Boolean = false,
     val classes: Set<SignatureClass> = emptySet(),
+    /** Live hide: radios marked Mine. The sit and Debrief still include them. */
+    val hideMine: Boolean = false,
 ) {
     /** Show only is narrowing Live to at least one picked class. Empty Show only does not hide unmatched. */
     fun classIncludeActive(): Boolean =
@@ -544,6 +546,8 @@ data class WatchTarget(
     val alert: Boolean = true,
     /** Operator caption on this MAC. Empty = none. */
     val observerNotes: String = "",
+    /** This radio is the operator's. Missing JSON = off. Alert is left as last set. */
+    val mine: Boolean = false,
 )
 
 @Serializable
@@ -597,6 +601,12 @@ data class AppSettings(
      * Counts, Extra attention, named signatures, bookmarks, payload pins, and Sit export still include them.
      */
     val debriefShowUnmatchedRandomBle: Boolean = false,
+    /**
+     * When false (default), Debrief and Compare print counts and the radios that
+     * are Extra attention, named, marked Mine, or bookmarked. Compare also lists
+     * a decoded value that changed. Full rosters return when this is on.
+     */
+    val debriefShowAllRadios: Boolean = false,
     /**
      * Ask for Wi-Fi AP scans faster than the stock ~30 s cadence.
      * Only takes effect while Android Wi-Fi scan throttling is off
@@ -730,6 +740,11 @@ data class Sighting(
     val payloadOpLon: Double? = null,
     /** Sticky Remote ID Basic ID / Self ID. TAK keys the aircraft on uas_id when present. */
     val payloadUasId: String? = null,
+    /**
+     * Maker from a CTA-2063 serial on this radio.
+     * Set only after a Serial Basic ID. A later Basic ID with no maker clears it.
+     */
+    val payloadAircraft: String? = null,
     val payloadSelfId: String? = null,
     val payloadHeading: Double? = null,
     val payloadSpeed: Double? = null,
@@ -882,6 +897,12 @@ object MacUtil {
     fun isRandomized(mac: String): Boolean {
         val first = normalize(mac).substringBefore(":").toIntOrNull(16) ?: return false
         return (first and 0x02) != 0 && (first and 0x01) == 0
+    }
+
+    /** Local bit of the first octet. The address was assigned locally, whether or not the group bit is set. */
+    fun isLocallyAdministered(mac: String): Boolean {
+        val first = normalize(mac).substringBefore(":").toIntOrNull(16) ?: return false
+        return (first and 0x02) != 0
     }
 
     /**

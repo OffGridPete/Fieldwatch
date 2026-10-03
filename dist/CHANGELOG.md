@@ -4,6 +4,24 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.18 — 3 October 2026
+
+- Live warns when many new Bluetooth addresses advertise a pairing popup, or many new names, within a few seconds at about the same loudness. One dialog, then a single line until that burst goes quiet. The advertisement does not name the tool.
+- A pairing or name flood during a sit is one quiet Flood line on Debrief and Compare: the time, the kind, how many new addresses, and which sit on a compare. Those addresses are left out of the radio counts and lists. The line says how many were set aside. The sit file and the log still keep them. A sit saved before the addresses were stored still counts them with the other radios. The note is saved when the live warning appears.
+- Hide this burst, on the Live flood line, takes that burst’s new addresses off the Live display until they would have left on their own. The sit file and the log still keep them. Debrief and Compare leave them out of the radio counts and lists. Alerts stay quiet for those addresses. The next burst starts with the switch off.
+- Live warns when many new Wi-Fi names show up in one scan, about the same loudness, and are gone on the next scan. The first scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a single line, then the same Flood note. Those addresses are left out of the radio counts and lists. The sit file and the log still keep them. The advertisement does not name the tool.
+- Pairing flood counts a Swift Pair beacon (beacon id, a pairing sub-scenario, and the reserved byte), so Hide this burst covers those new Microsoft Device addresses. Nearby Sharing still counts from its own advertisement.
+- Pairing flood counts a Samsung Easy Setup buds or watch advertisement, so Hide this burst covers those new addresses. They still show as Samsung SmartTags. A tag advertising service FD5A or FD59 is unchanged.
+- Pairing flood counts a LoveSpouse advertisement (company 0x00FF and its fixed prefix), so Hide this burst covers those new addresses. They stay unmatched. A shorter 0x00FF blob stays out.
+- Catalog 89: Even G1 also matches the Even Realities company id. RayNeo matches only when the name starts with RayNeo and the advertisement uses the TCL company id. LiteOn camera radio adds E0:0A:F6 and 14:B5:CD, still with no Extra attention.
+- Catalog 90: Remote ID also labels the French Direct Remote ID vendor IE. Position and pilot still come from the ASTM plate. Tello matches a name that starts with TELLO or RMTT. Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, and Crazyflie match a name that starts with the brand. Parrot also matches Skycontroller. These drone rows are bookmarked and have no Extra attention.
+- Remote ID names Freefly, BRINC, and Teal from the serial on the ASTM plate, when the ID type is a serial. The row stays Remote ID. A session ID and the French plate do not get that name.
+- Mine marks a radio you can already name. The live list shows a Mine chip. That radio does not beep, speak, flash, vibrate, or raise a card while Mine is on, including when a bookmarked signature matches. Other radios of that signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. Turning Mine on fills a blank custom name the same way observer notes do.
+- Filters → Who stays → Hide my radios takes radios marked Mine off the live list. The sit, the log, and Debrief still include them. Turning on Moving with you leaves this switch on. Live does not show a reminder line for it.
+- A Bluetooth company name stays on the company line. It is no longer stored as the IEEE vendor when the MAC prefix is not in the list. An address with the local bit set is not called a factory address.
+- Settings → Named radios puts the Wi-Fi or BLE mark on the name line. The custom name and MAC each stay on one line. Mine and Alert sit under the name.
+- Debrief and Compare lead with counts. The PDF draws class, channel, and compare bars. A radio is listed when it is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. Reports → Sit report → Show all radios brings the full rosters back. Text has the same counts and the same lines. Sit export is unchanged.
+
 ## 1.1.17 — 1 October 2026
 
 - Privacy mode no longer hides the map on Reports → Path, or on the Debrief and Compare letter path figures. Those tiles follow Online place names and maps. Privacy mode still masks MAC tails and coordinates, omits street names, and pauses the TAK / CoT feed.

@@ -23,10 +23,11 @@ import kotlin.math.sin
 import androidx.core.app.NotificationCompat
 import app.fieldwatch.MainActivity
 import app.fieldwatch.R
+import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MacUtil
+import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sighting
-import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.spokenWatchPhrase
 import app.fieldwatch.domain.testWatchPhrase
@@ -131,13 +132,13 @@ class Alerter(private val context: Context) {
         val liveKeys = onAir.map { it.key }.toSet()
         announced.removeAll { token -> token.substringAfter('\t') !in liveKeys }
         val fleetNames = fleets.associateBy { it.id }
+        val mineKeys = RadioBookmarks.mineKeys(watchlist)
         var beepFired = false
         var voicePhrase: String? = null
         if (voiceOn) prepareVoice()
         for (target in watchlist) {
             for (device in onAir) {
-                if (target.deviceKey != null && !target.alert) continue
-                if (!matches(target, device)) continue
+                if (!shouldRaiseWatch(target, device, mineKeys)) continue
                 if (!visibleOnLive(device)) continue
                 val token = "${target.id}\t${device.key}"
                 if (token in announced) continue
@@ -173,12 +174,6 @@ class Alerter(private val context: Context) {
         } else {
             main.post { speakClassName(phrase) }
         }
-    }
-
-    private fun matches(target: WatchTarget, device: Sighting): Boolean = when {
-        target.deviceKey != null -> device.key == target.deviceKey
-        target.fleetId != null -> target.fleetId in device.fleetIds
-        else -> false
     }
 
     private fun isNewAppearance(device: Sighting, now: Long): Boolean {
@@ -521,5 +516,23 @@ class Alerter(private val context: Context) {
         private const val TTS_START_WAIT_MS = 1_500L
         private const val SPEAK_TIMEOUT_MS = 8_000L
         private const val UTTERANCE = "fieldwatch-class"
+    }
+}
+
+/**
+ * Mine skips beep, voice, flash, vibrate, and the shade card for that device key.
+ * A fleet watch still matches every other radio. Alert on the row is left as set.
+ */
+internal fun shouldRaiseWatch(
+    target: WatchTarget,
+    device: Sighting,
+    mineKeys: Set<String>,
+): Boolean {
+    if (device.key in mineKeys) return false
+    if (target.deviceKey != null && !target.alert) return false
+    return when {
+        target.deviceKey != null -> device.key == target.deviceKey
+        target.fleetId != null -> target.fleetId in device.fleetIds
+        else -> false
     }
 }

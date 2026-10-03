@@ -207,15 +207,23 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 filter.namedOnly || filter.namedOnlyImplied() ->
                                     " Signatures only / Show only is also on — unmatched radios stay hidden."
                                 else -> ""
-                            }
+                            } +
+                            if (filter.hideMine) " Hide my radios is on — those stay off this list." else ""
                     filter.customNamesOnly || filter.watchedOnly || filter.namedOnly || filter.namedOnlyImplied() ->
                         "GPS path ${state.operatorSpanM.toInt()} m. Signatures only, class Show only, " +
                             "Named radios only, or Watched only is also on, so only those radios can co-travel. " +
-                            "Tap the Moving with you preset to test BLE. A tag in your bag or car should match. Wi-Fi access points stay hidden."
+                            "Tap the Moving with you preset to test BLE. A tag in your bag or car should match. Wi-Fi access points stay hidden." +
+                            if (filter.hideMine) " Hide my radios is on — those stay off this list." else ""
                     else ->
                         "GPS path ${state.operatorSpanM.toInt()} m. Loud BLE heard along that " +
                             "path at a fairly steady level — not ones that only appear when you " +
-                            "arrive. A tag in your bag or car will match. Wi-Fi access points stay hidden " +
+                            "arrive. " +
+                            (if (filter.hideMine) {
+                                "Hide my radios is on — those stay off this list. "
+                            } else {
+                                "A tag in your bag or car will match. "
+                            }) +
+                            "Wi-Fi access points stay hidden " +
                             "(range looks like co-travel). A phone’s rotating BLE address will not stitch as one follower. " +
                             "Live → Start over clears the path and trails so you can test again."
                 },
@@ -310,6 +318,20 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             Text(
                 "Only radios you gave a custom name. Alert can still be off. Settings → Named radios. " +
                     "A random / privacy MAC will not follow a rotation.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Hide my radios", Modifier.weight(1f))
+                FieldwatchSwitch(
+                    filter.hideMine,
+                    { on -> vm.updateFilter { it.copy(hideMine = on) } },
+                )
+            }
+            Text(
+                "Radios marked Mine stay off Live. The sit and Debrief still have them. " +
+                    "Turning on Moving with you leaves this on.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -485,7 +507,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
 
             Text("Extra filter logic", style = MaterialTheme.typography.labelLarge)
             Text(
-                "AND/OR applies to name, OUI, RSSI, and class include — not to radios, Named radios only, Watched only, Hide Fast Pair account-key, or hide lists.",
+                "AND/OR applies to name, OUI, RSSI, and class include — not to radios, Named radios only, Watched only, Hide my radios, Hide Fast Pair account-key, or hide lists.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

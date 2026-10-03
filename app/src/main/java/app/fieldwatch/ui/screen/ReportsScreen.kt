@@ -423,6 +423,25 @@ fun ReportsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Show all radios",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                FieldwatchSwitch(
+                    settings.debriefShowAllRadios,
+                    { on -> vm.updateSettings { it.copy(debriefShowAllRadios = on) } },
+                )
+            }
+            Text(
+                "Off (default): Debrief and Compare lead with counts. A radio is listed when it is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. On: the full rosters return. Show unmatched rotating BLE applies to those lists. The PDF draws the counts as bars. Sit export has every radio.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             FieldwatchActionButton(
                 onClick = vm::startAiExport,
                 enabled = !exporting,

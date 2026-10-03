@@ -42,6 +42,26 @@ object RadioBookmarks {
             if (row.alert) key else null
         }.toSet()
 
+    /** Device keys marked mine. Fleet rows are not included. */
+    fun mineKeys(watchlist: List<WatchTarget>): Set<String> =
+        watchlist.mapNotNull { row ->
+            val key = row.deviceKey ?: return@mapNotNull null
+            if (row.mine) key else null
+        }.toSet()
+
+    /**
+     * Path-list note for a radio that is already plotted.
+     * Mine does not add a dot. A bookmark still gates the observer caption.
+     */
+    fun pathNote(bookmarked: Boolean, observerNotes: String, mine: Boolean): String {
+        val obs = if (bookmarked) observerNotes.trim() else ""
+        return when {
+            obs.isNotEmpty() && mine -> "$obs\nMarked mine"
+            mine -> "Marked mine"
+            else -> obs
+        }
+    }
+
     fun withoutRadios(watchlist: List<WatchTarget>): List<WatchTarget> =
         watchlist.filter { it.deviceKey == null }
 
@@ -113,6 +133,50 @@ object RadioBookmarks {
         watchlist.map { row ->
             if (row.id == id && row.deviceKey != null) row.copy(alert = on) else row
         }
+
+    /**
+     * Mine on a new row writes the suggested name and leaves Alert off.
+     * An existing name is kept. A blank name is filled. Turning Mine off keeps the name.
+     */
+    fun setMine(
+        watchlist: List<WatchTarget>,
+        deviceKey: String,
+        on: Boolean,
+        suggestLabel: String,
+    ): List<WatchTarget> {
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (!on) {
+            if (i < 0) return watchlist
+            return watchlist.mapIndexed { idx, row ->
+                if (idx == i) row.copy(mine = false) else row
+            }
+        }
+        if (i < 0) {
+            return watchlist + WatchTarget(
+                id = UUID.randomUUID().toString(),
+                deviceKey = deviceKey,
+                label = clip(suggestLabel),
+                alert = false,
+                mine = true,
+            )
+        }
+        val row = watchlist[i]
+        val label = if (row.label.trim().isEmpty()) clip(suggestLabel) else row.label
+        return watchlist.mapIndexed { idx, it ->
+            if (idx == i) it.copy(label = label, mine = true) else it
+        }
+    }
+
+    /** Named-radios row. A blank label is filled from the key when Mine turns on. */
+    fun setMineOnRow(watchlist: List<WatchTarget>, id: String, on: Boolean): List<WatchTarget> {
+        val row = watchlist.firstOrNull { it.id == id && it.deviceKey != null } ?: return watchlist
+        val key = row.deviceKey ?: return watchlist
+        val suggest = row.label.trim().ifBlank {
+            val mac = key.substringAfter(':')
+            if (key.startsWith("BLE:")) "unnamed LE" else mac.takeLast(8)
+        }
+        return setMine(watchlist, key, on, suggest)
+    }
 
     fun toggleAlert(watchlist: List<WatchTarget>, deviceKey: String, suggest: String): List<WatchTarget> {
         val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }

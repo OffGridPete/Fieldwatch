@@ -26,12 +26,17 @@ object DebriefPrompt {
         customNames: Map<String, String> = emptyMap(),
         observerNotes: Map<String, String> = emptyMap(),
         bookmarkedKeys: Set<String> = emptySet(),
+        mineKeys: Set<String> = emptySet(),
+        floods: List<FloodBurst> = emptyList(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
         val windowStart = win.startAt
         val windowEnd = win.endAt
-        val in15 = devices.filter { it.lastSeen >= windowStart || it.firstSeen >= windowStart }
+        val aside = FloodBurst.keysOf(floods, windowStart, windowEnd)
+        val in15 = devices.filter {
+            (it.lastSeen >= windowStart || it.firstSeen >= windowStart) && it.key !in aside
+        }
         val shortStart = maxOf(windowStart, windowEnd - WINDOW_SHORT_MS)
         val in5 = in15.filter { it.lastSeen >= shortStart || it.firstSeen >= shortStart }
         val wifi = in15.filter { it.kind == RadioKind.WIFI }
@@ -47,13 +52,19 @@ object DebriefPrompt {
         val extraHits = in15.flatMap { d ->
             d.attentionNotes(fleets).map { (sig, note) -> Triple(d, sig, note) }
         }
-        val finders = in15.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.FINDER }
+        val finders = in15.filter {
+            it.key !in mineKeys && TrackerMatch.kind(it, names) == TrackerMatch.Kind.FINDER
+        }
         val sigFamilies = signed.groupBy { d ->
             d.fleetIds.joinToString("+") { names[it] ?: it }
         }.mapValues { it.value.size }.toList().sortedByDescending { it.second }
         val bleRssi = ble.map { it.rssi }
         val wifiRssi = wifi.map { it.rssi }
-        val onboard = DebriefReport.build(devices, fleets, settings, operatorPath, now, places, win, customNames, observerNotes, bookmarkedKeys)
+        val onboard = DebriefReport.build(
+            devices, fleets, settings, operatorPath, now, places, win,
+            customNames, observerNotes, bookmarkedKeys, mineKeys = mineKeys,
+            floods = floods,
+        )
         val iso = utc(windowEnd)
         val start = utc(windowStart)
 
@@ -72,6 +83,8 @@ object DebriefPrompt {
             appendLine("- RSSI is loudness at the phone, not meters.")
             appendLine("- Live RAM cap is about 400 radios; unnamed BLE evicts after ~3 min. A named sit keeps more. This is not a complete capture.")
             appendLine("- Do not claim a tracker is following unless the onboard GPS co-travel section supports it. A radio with you the whole sit is not automatically yours — it may be planted. Do not dismiss it. Do not invent a tail the onboard test did not flag. Do not treat a retail beacon as a Find My tail.")
+            appendLine("- A radio marked mine was claimed by the operator. Do not treat it as an unexplained follower.")
+            appendLine("- A flood note is a burst of new addresses, not a follower.")
             appendLine("- A decoded live value on a tracking row is catalog text for that advertisement. Quote the catalog sentence when the onboard report includes one. Do not stitch that value onto a different MAC.")
             appendLine("- An aircraft block and an amber track are positions the radio advertised. Trails with the same UAS id are one aircraft. They are not this phone's GPS and they are not a finding that the aircraft followed the operator.")
             appendLine("- Do not give safety advice. Do not tell the operator they are safe or in danger.")
@@ -81,7 +94,7 @@ object DebriefPrompt {
             appendLine("Write complete sentences. Headings as below. Short bullets only for Extra attention and tracking rows from the working table. No markdown tables. No code fences. No dump of the onboard inventories.")
             appendLine()
             appendLine("1. **Disclaimer** — Repeat the experimental-use disclaimer first.")
-            appendLine("2. **What the onboard Debrief already established** — 3–5 sentences. Counts, distance, tracking callouts, Extra attention hits, Observer notes if any. Do not reprint inventories.")
+            appendLine("2. **What the onboard Debrief already established** — 3–5 sentences. Counts, distance, tracking callouts, Extra attention hits, Observer notes if any, Marked mine if any, Flood if any. Do not reprint inventories.")
             appendLine("3. **What the numbers add** — 5- vs 15-minute counts, RSSI bands, RAND BLE percent, arrivals per minute, persistent vs gone, signature-family mix. Say street vs dwelling vs retail vs vehicle, and 5-minute vs 15-minute change (denser, quieter, stable). Confidence. If GPS ran, path length/span from the working table — do not pin a radio to a stay.")
             appendLine("4. **Extra attention and tracking callouts** — Full identifiers from the working table (complete MAC, name, RSSI min/max, signatures, dwell). Stress-test onboard Possible trackers with you / Possible tail / Retail beacons / Wearables. Agree, qualify, or say the data are too thin. Pattern match, not identity. If none, say none.")
             appendLine("5. **What another sit or Hunt would shrink** — Concrete in-app next steps only (Hunt on one Extra attention row, a longer GPS path, Compare sits, Filters). No safety advice. No “call the police.”")
@@ -140,6 +153,7 @@ object DebriefPrompt {
             } else {
                 extraHits.forEach { (d, sig, note) ->
                     append("- ").append(row(d, names, now, windowStart, customNames, observerNotes))
+                    if (d.key in mineKeys) append("  Marked mine")
                     append(" | ").append(sig).append(": ").append(note)
                     appendLine()
                 }

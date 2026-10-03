@@ -60,6 +60,7 @@ import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.TakFeedStatus
 import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
+import app.fieldwatch.domain.PairingFlood
 import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
@@ -209,6 +210,22 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val catalogOpenClasses: StateFlow<Set<String>> = _catalogOpenClasses
     @Volatile private var frozenUi: FieldwatchUi? = null
 
+    val floodNotice: StateFlow<PairingFlood.Notice?> = combine(
+        app.pairingFlood.notice,
+        app.wifiFlood.notice,
+    ) { ble, wifi -> ble ?: wifi }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val floodHide: StateFlow<PairingFlood.FloodHide> = combine(
+        app.pairingFlood.hide,
+        app.wifiFlood.hide,
+    ) { ble, wifi ->
+        PairingFlood.FloodHide(
+            episodeOn = ble.episodeOn || wifi.episodeOn,
+            keys = if (wifi.keys.isEmpty()) ble.keys else if (ble.keys.isEmpty()) wifi.keys else ble.keys + wifi.keys,
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, PairingFlood.FloodHide())
+
     private val liveUi: StateFlow<FieldwatchUi> = combine(
         combine(app.devices.devices, app.devices.stats, app.config.config) { devices, stats, config ->
             Triple(devices, stats, config)
@@ -218,7 +235,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         },
         lastAlertAt,
         app.tak.status,
-    ) { tripleA, quad, alerts, takStatus ->
+        floodHide,
+    ) { tripleA, quad, alerts, takStatus, hide ->
         val (devices, stats, config) = tripleA
         val sel = quad[0] as String?
         val fleetDraft = quad[1] as Fleet?
@@ -245,7 +263,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             CoTravel.Ctx.None
         }
         val classById = config.fleets.associate { it.id to it.kind }
+        val hiddenFlood = hide.keys
         val filtered = labeled.filter { device ->
+            if (hiddenFlood.isNotEmpty() && device.key in hiddenFlood) return@filter false
             if (!filters.pass(
                     device,
                     config.filter,
@@ -255,6 +275,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     watchNames.keys,
                     RadioBookmarks.watchedFleetIds(config.watchlist),
                     RadioBookmarks.alertDeviceKeys(config.watchlist),
+                    RadioBookmarks.mineKeys(config.watchlist),
                 )
             ) {
                 return@filter false
@@ -393,7 +414,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             while (true) {
                 delay(1_000)
-                clock.value = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
+                clock.value = now
+                val liveKeys = app.devices.devices.value.mapTo(HashSet()) { it.key }
+                app.pairingFlood.tick(now)
+                app.pairingFlood.prune(liveKeys)
+                app.wifiFlood.prune(liveKeys)
+                app.sits.noteFloods(app.pairingFlood.bursts())
+                app.sits.noteFloods(app.wifiFlood.bursts())
             }
         }
         viewModelScope.launch {
@@ -472,6 +500,31 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             }
             startScan()
         }
+    }
+
+    fun dismissPairingFlood() {
+        if (app.pairingFlood.notice.value != null) app.pairingFlood.dismiss()
+        else app.wifiFlood.dismiss()
+    }
+
+    fun setHideBurst(on: Boolean) {
+        if (app.pairingFlood.notice.value != null) app.pairingFlood.setHideBurst(on)
+        else app.wifiFlood.setHideBurst(on)
+    }
+
+    fun hidePairingFlood() {
+        if (app.pairingFlood.notice.value != null) {
+            app.pairingFlood.setHideBurst(true)
+            app.pairingFlood.dismiss()
+        } else {
+            app.wifiFlood.setHideBurst(true)
+            app.wifiFlood.dismiss()
+        }
+    }
+
+    fun clearHiddenFlood() {
+        app.pairingFlood.clearHidden()
+        app.wifiFlood.clearHidden()
     }
 
     fun dismissLiveTour() {
@@ -819,6 +872,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             thisSide,
             second,
             RadioBookmarks.watchedFleetIds(app.config.watchlist),
+            showAllRadios = app.config.settings.debriefShowAllRadios,
         )
             .withDemoMacs(macs, app.config.settings.demoMode)
     }
@@ -832,14 +886,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val customNames = RadioBookmarks.labels(app.config.watchlist)
         val observerNotes = RadioBookmarks.notes(app.config.watchlist)
         val bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist)
-        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes, bookmarkedKeys)
+        val mineKeys = RadioBookmarks.mineKeys(app.config.watchlist)
+        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
         val second = SitDiff.Side(
             name = otherFile.summary.name,
             ram = false,
             radios = otherFile.radios.map {
-                SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
             },
             path = otherFile.operatorPath,
+            floods = otherFile.floods,
         )
         return thisSide to second
     }
@@ -850,6 +906,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         customNames: Map<String, String>,
         observerNotes: Map<String, String>,
         bookmarkedKeys: Set<String>,
+        mineKeys: Set<String>,
     ): SitDiff.Side {
         val open = sit.open
         if (open != null) {
@@ -858,9 +915,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 name = open.name,
                 ram = false,
                 radios = source?.devices.orEmpty().map {
-                    SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                    SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
                 },
                 path = source?.operatorPath.orEmpty(),
+                floods = source?.floods.orEmpty(),
             )
         }
         val selected = sit.closed.firstOrNull { it.id == sit.selectedId }
@@ -871,19 +929,22 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 name = selected.name,
                 ram = false,
                 radios = file.radios.map {
-                    SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                    SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
                 },
                 path = file.operatorPath,
+                floods = file.floods,
             )
         }
         val now = System.currentTimeMillis()
+        val since = now - DebriefPrompt.WINDOW_MS
         return SitDiff.Side(
             name = "Last 15 minutes",
             ram = true,
             radios = app.devices.devices.value.map {
-                SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys)
+                SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
             },
-            path = app.operatorPathCopy().filter { it.at >= now - DebriefPrompt.WINDOW_MS },
+            path = app.operatorPathCopy().filter { it.at >= since },
+            floods = app.floodBursts().filter { it.at >= since },
         )
     }
 
@@ -1083,6 +1144,26 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             app.config.update { cfg ->
                 cfg.copy(watchlist = RadioBookmarks.setAlert(cfg.watchlist, id, on))
+            }
+        }
+    }
+
+    fun isMine(deviceKey: String): Boolean =
+        app.config.watchlist.any { it.deviceKey == deviceKey && it.mine }
+
+    fun setRadioMine(device: Sighting, on: Boolean) {
+        viewModelScope.launch {
+            val suggest = RadioBookmarks.suggestLabel(device, device.fleetIds.map { fleetName(it) })
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setMine(cfg.watchlist, device.key, on, suggest))
+            }
+        }
+    }
+
+    fun setNamedRadioMine(id: String, on: Boolean) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setMineOnRow(cfg.watchlist, id, on))
             }
         }
     }
@@ -1544,6 +1625,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 bookmarkedKeys = bookmarkedKeys,
                 watchedFleetIds = watchedFleets,
                 alertsOnly = true,
+                mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
             )
             val empty = when {
                 !tagging -> "Tag detections with GPS (Settings) to record a path."
@@ -1589,6 +1671,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 bookmarkedKeys = bookmarkedKeys,
                 watchedFleetIds = watchedFleets,
                 alertsOnly = true,
+                mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
             )
         } else {
             SitPathPlot.PlotRadios(emptyList())
@@ -1744,6 +1827,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 observerNotes = RadioBookmarks.notes(app.config.watchlist),
                 bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist),
                 watchedFleetIds = RadioBookmarks.watchedFleetIds(app.config.watchlist),
+                mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
+                floods = source?.floods ?: app.floodBursts(),
             ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
         }
     }
@@ -1785,6 +1870,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         customNames = RadioBookmarks.labels(app.config.watchlist),
                         observerNotes = RadioBookmarks.notes(app.config.watchlist),
                         bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist),
+                        mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
+                        floods = source?.floods ?: app.floodBursts(),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),
@@ -1845,6 +1932,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         device, names, settings, places, attentionNotes = attention,
                         signatureNotes = notes,
                         fleets = app.config.fleets,
+                        mine = isMine(device.key),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
@@ -1887,6 +1975,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     val raw = DeviceDetailText.build(
                         device, names, attentionNotes = attention, signatureNotes = notes,
                         fleets = app.config.fleets,
+                        mine = isMine(device.key),
                     )
                     val masked = Geo.redactCoordsIn(
                         MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
@@ -1997,6 +2086,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val radios = _sitExportRadios.value
         val custom = RadioBookmarks.labels(app.config.watchlist)
         val notes = RadioBookmarks.notes(app.config.watchlist)
+        val mine = RadioBookmarks.mineKeys(app.config.watchlist)
         val fleets = app.config.fleets
         val extra = win.devices.filter { it.attentionNotes(fleets).isNotEmpty() }.map { it.key }.toSet()
         val rows = SitExport.rows(win.devices, radios)
@@ -2005,9 +2095,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             publishExport(0.4f, "Writing ${kind.label} · ${rows.size} radios")
             return withContext(Dispatchers.Default) {
                 if (kind == LogExportKind.LOG_CSV) {
-                    SitExport.csv(win.devices, radios, custom, notes, extra, fleets)
+                    SitExport.csv(win.devices, radios, custom, notes, extra, fleets, mine)
                 } else {
-                    SitExport.jsonl(win.devices, radios, custom, notes, extra, fleets)
+                    SitExport.jsonl(win.devices, radios, custom, notes, extra, fleets, mine)
                 }
             }
         }

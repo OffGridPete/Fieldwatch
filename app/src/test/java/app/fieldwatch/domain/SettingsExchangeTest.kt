@@ -72,6 +72,7 @@ class SettingsExchangeTest {
                 label = "bag tag",
                 alert = true,
                 observerNotes = "in the bag",
+                mine = true,
             ),
             WatchTarget(
                 id = "watch-airtag",
@@ -93,6 +94,20 @@ class SettingsExchangeTest {
         assertEquals(SettingsPack.FORMAT, pack.format)
         assertEquals(1, pack.watchlist.count { it.deviceKey == "BLE:C3:A6:A9:11:22:33" })
         assertEquals("in the bag", pack.watchlist.single { it.deviceKey != null }.observerNotes)
+        assertTrue(pack.watchlist.single { it.deviceKey != null }.mine)
+        val legacy = SettingsExchange.json.decodeFromString(
+            WatchTarget.serializer(),
+            """{"id":"n","deviceKey":"BLE:AA:BB:CC:DD:EE:FF","label":"bag","observerNotes":"in the bag"}""",
+        )
+        assertEquals("in the bag", legacy.observerNotes)
+        assertFalse(legacy.mine)
+        assertFalse(pack.filter.hideMine)
+        val oldFilter = SettingsExchange.json.decodeFromString(
+            FilterState.serializer(),
+            """{"showWifi":false,"showBle":true}""",
+        )
+        assertFalse(oldFilter.hideMine)
+        assertFalse(oldFilter.showWifi)
         assertEquals("plaza -80", pack.presets.last().name)
         assertEquals(setOf("hide-phones"), pack.hiddenPresetIds)
         assertTrue(pack.filter.showBle)
@@ -127,6 +142,7 @@ class SettingsExchangeTest {
         assertEquals(setOf("hide-phones"), next.hiddenPresetIds)
         assertTrue(next.presets.any { it.id == "custom-plaza" })
         assertEquals("bag tag", next.watchlist.single { it.deviceKey != null }.label)
+        assertTrue(next.watchlist.single { it.deviceKey != null }.mine)
         assertEquals("in the bag", next.watchlist.single { it.deviceKey != null }.observerNotes)
         assertTrue(next.fleets.any { it.id == "custom-keep-me" })
         assertEquals(local.fleets.size, next.fleets.size)

@@ -12,6 +12,8 @@ object OpenDroneId {
     private const val MSG = 25
     private const val INV_DIR = 255
     private const val INV_SPEED = 255
+    /** ASTM Basic ID id_type. 1 is a CTA-2063 serial. Session and CAA are not. */
+    private const val ID_SERIAL = 1
 
     fun fromFacts(facts: RadioFacts): PayloadLocation {
         var acc = PayloadLocation()
@@ -155,8 +157,14 @@ object OpenDroneId {
     }
 
     private fun basicId(m: ByteArray): PayloadLocation {
+        val idType = (m[1].toInt() and 0xFF) shr 4
         val id = m.copyOfRange(2, 22).toString(Charsets.US_ASCII).trim('\u0000', ' ')
-        return PayloadLocation(uasId = id.takeIf { it.isNotEmpty() })
+        val maker = if (idType == ID_SERIAL) Cta2063.label(id).orEmpty() else ""
+        return PayloadLocation(
+            uasId = id.takeIf { it.isNotEmpty() },
+            aircraft = maker,
+            basicId = true,
+        )
     }
 
     private fun selfId(m: ByteArray): PayloadLocation {

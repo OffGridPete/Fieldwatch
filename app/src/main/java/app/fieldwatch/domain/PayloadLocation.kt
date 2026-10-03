@@ -18,6 +18,10 @@ data class PayloadLocation(
     val headingDeg: Double? = null,
     val speedMps: Double? = null,
     val vspeedMps: Double? = null,
+    /** Maker from a CTA-2063 serial. Null when this message did not name one. */
+    val aircraft: String? = null,
+    /** This message is a Basic ID, including one that clears [aircraft]. */
+    val basicId: Boolean = false,
 ) {
     fun pin(): Pair<Double, Double>? =
         if (validCoord(lat, lon)) lat!! to lon!! else null
@@ -27,12 +31,19 @@ data class PayloadLocation(
      * keep the last valid Location (and System operator) pair this session.
      * Basic ID `uas_id` / Self ID stick the same way so TAK can key one aircraft
      * across BLE MAC rotation.
+     * A Serial Basic ID can name the maker in [aircraft]. That name sticks across
+     * Location and System. A later Basic ID with no maker clears it. [basicId]
+     * is only for this merge. It is not stored on the radio.
      */
     fun mergeSticky(prev: PayloadLocation?): PayloadLocation {
         val p = prev ?: PayloadLocation()
         val nextPin = if (validCoord(lat, lon)) lat to lon else p.lat to p.lon
         val nextOp = if (validCoord(opLat, opLon)) opLat to opLon else p.opLat to p.opLon
         val nextAlt = alt?.takeIf { it.isFinite() } ?: p.alt
+        val nextAircraft = when {
+            basicId -> aircraft?.takeIf { it.isNotBlank() }
+            else -> aircraft?.takeIf { it.isNotBlank() } ?: p.aircraft
+        }
         return PayloadLocation(
             lat = nextPin.first,
             lon = nextPin.second,
@@ -44,6 +55,8 @@ data class PayloadLocation(
             headingDeg = headingDeg?.takeIf { it.isFinite() } ?: p.headingDeg,
             speedMps = speedMps?.takeIf { it.isFinite() } ?: p.speedMps,
             vspeedMps = vspeedMps?.takeIf { it.isFinite() } ?: p.vspeedMps,
+            aircraft = nextAircraft,
+            basicId = basicId || p.basicId,
         )
     }
 
@@ -91,6 +104,7 @@ data class PayloadLocation(
             headingDeg = device.payloadHeading,
             speedMps = device.payloadSpeed,
             vspeedMps = device.payloadVspeed,
+            aircraft = device.payloadAircraft,
         )
 
         fun applySticky(device: Sighting, fleets: List<Fleet>): Sighting {
@@ -104,6 +118,7 @@ data class PayloadLocation(
                 fromBytes.lat == null &&
                 fromBytes.opLat == null &&
                 fromBytes.uasId == null &&
+                !fromBytes.basicId &&
                 device.payloadLat == null &&
                 device.payloadOpLat == null &&
                 device.payloadUasId == null
@@ -120,7 +135,8 @@ data class PayloadLocation(
                 next.selfId == device.payloadSelfId &&
                 next.headingDeg == device.payloadHeading &&
                 next.speedMps == device.payloadSpeed &&
-                next.vspeedMps == device.payloadVspeed
+                next.vspeedMps == device.payloadVspeed &&
+                next.aircraft == device.payloadAircraft
             ) {
                 return device
             }
@@ -135,6 +151,7 @@ data class PayloadLocation(
                 payloadHeading = next.headingDeg,
                 payloadSpeed = next.speedMps,
                 payloadVspeed = next.vspeedMps,
+                payloadAircraft = next.aircraft,
             )
         }
 

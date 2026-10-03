@@ -2,6 +2,7 @@ package app.fieldwatch.domain
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -154,10 +155,73 @@ class AircraftTrailTest {
         assertTrue(row.contains("AA:BB:CC:DD:EE:10"))
         assertTrue(row.contains("Airborne"))
         assertTrue(row.contains("UAS ABC123"))
+        assertFalse(row.contains("Freefly"))
         assertTrue(row.contains("28.004000"))
         assertTrue(row.contains("130 m"))
         assertTrue(row.contains("course 90°"))
         assertTrue(text.extraFigures.isEmpty())
+    }
+
+    @Test
+    fun advertisedNoteLeadsWithTheSerialMaker() {
+        val note = AircraftTrail.advertisedNote(
+            status = "Airborne",
+            uasId = "18179132000209",
+            label = "Remote ID",
+            lat = 28.0,
+            lon = -81.0,
+            alt = 100.0,
+            heading = 90.0,
+            speed = 5.0,
+            pilotLat = null,
+            pilotLon = null,
+            aircraft = "Freefly Alta X Gen2",
+        )
+        assertTrue(note.startsWith("Freefly Alta X Gen2 · Airborne · UAS 18179132000209"))
+        val text = AircraftTrail.body(
+            listOf(
+                AircraftTrail.Picture(
+                    uasId = "18179200000001",
+                    title = "18179200000001",
+                    fixes = listOf(PayloadFix(1L, 28.0, -81.0)),
+                    status = "Airborne",
+                    alt = null,
+                    heading = null,
+                    speed = null,
+                    pilotLat = null,
+                    pilotLon = null,
+                    pilotOnMap = false,
+                    onWalk = true,
+                    ownFigure = false,
+                    aircraft = "Freefly Alta X",
+                ),
+            ),
+        )
+        assertEquals("  Freefly Alta X", text.lines()[1])
+    }
+
+    @Test
+    fun sitKeepsSerialMakerUntilTheUasIdChanges() {
+        val first = drone(1_000L, 28.0, -81.0).copy(payloadAircraft = "Freefly Alta X")
+        val session = SitSession.start(
+            name = "flight",
+            now = 1_000L,
+            heard = listOf(first),
+            fleets = emptyList(),
+            watchDeviceKeys = emptySet(),
+            watchedFleetIds = emptySet(),
+        )
+        session.ingest(drone(20_000L, 28.002, -81.0), emptyList(), emptySet(), emptySet())
+        assertEquals("Freefly Alta X", session.snapshot().radios.single().payloadAircraft)
+        session.ingest(
+            drone(40_000L, 28.004, -81.0).copy(payloadUasId = "SESSION1", payloadAircraft = null),
+            emptyList(),
+            emptySet(),
+            emptySet(),
+        )
+        val saved = session.snapshot().radios.single()
+        assertEquals("SESSION1", saved.payloadUasId)
+        assertNull(saved.payloadAircraft)
     }
 
     private fun fix(at: Long, lat: Double, lon: Double) = PayloadFix(at, lat, lon)

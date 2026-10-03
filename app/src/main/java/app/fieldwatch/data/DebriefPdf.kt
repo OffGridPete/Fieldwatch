@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.graphics.vector.toPath
 import app.fieldwatch.domain.DebriefDoc
 import app.fieldwatch.domain.ExtraAttentionHit
+import app.fieldwatch.domain.ReportBar
+import app.fieldwatch.domain.ReportChart
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.SitPathPlot
@@ -161,34 +163,145 @@ object DebriefPdf {
                 continue
             }
             out += sectionHead(section.number, section.title, section.alert)
-            val paras = section.body.split('\n')
-            if (paras.isEmpty()) {
-                out += spacer(10f)
-                continue
+            appendProse(out, section.body, section.alert)
+            section.chart?.takeIf { it.rows.isNotEmpty() }?.let { chart ->
+                chartBlocks(chart).forEach { out += it }
+                out += spacer(6f)
             }
-            val width = CONTENT_W - if (section.alert) 12 else 0
-            paras.forEachIndexed { i, raw ->
-                val para = raw.trimEnd()
-                when {
-                    para.isBlank() -> out += spacer(5f)
-                    isStayHead(para) -> {
-                        if (i > 0) out += spacer(8f)
-                        out += subheadBlock(para.trim(), alert = section.alert)
-                    }
-                    isKickerLine(para) -> {
-                        if (i > 0) out += spacer(6f)
-                        out += kickerLineBlock(para.trim(), section.alert)
-                    }
-                    isBullet(para) -> out += bulletBlock(para.trimStart().removePrefix("·").trimStart().removePrefix("•").trim(), section.alert)
-                    else -> chunkText(para, width, 9.5f, muted = false).forEach { sl ->
-                        out += bodyBlock(sl, section.alert)
-                    }
-                }
-                if (i == paras.lastIndex) out += spacer(12f)
-            }
+            appendProse(out, section.after, section.alert)
+            out += spacer(8f)
         }
         out += takeawayBlock(doc.takeaway)
         return out
+    }
+
+    private fun appendProse(out: ArrayList<Block>, text: String, alert: Boolean) {
+        if (text.isBlank()) return
+        val paras = text.split('\n')
+        val width = CONTENT_W - if (alert) 12 else 0
+        paras.forEachIndexed { i, raw ->
+            val para = raw.trimEnd()
+            when {
+                para.isBlank() -> out += spacer(5f)
+                isStayHead(para) -> {
+                    if (i > 0) out += spacer(8f)
+                    out += subheadBlock(para.trim(), alert = alert)
+                }
+                isKickerLine(para) -> {
+                    if (i > 0) out += spacer(6f)
+                    out += kickerLineBlock(para.trim(), alert)
+                }
+                isBullet(para) -> out += bulletBlock(
+                    para.trimStart().removePrefix("·").trimStart().removePrefix("•").trim(),
+                    alert,
+                )
+                else -> chunkText(para, width, 9.5f, muted = false).forEach { sl ->
+                    out += bodyBlock(sl, alert)
+                }
+            }
+        }
+    }
+
+    private fun chartBlocks(chart: ReportChart): List<Block> {
+        val blocks = ArrayList<Block>()
+        if (chart.caption.isNotBlank()) {
+            blocks += textBlock(layout(chart.caption, CONTENT_W, 8f, muted = true))
+        }
+        if (chart.split) {
+            blocks += legendBlock()
+        }
+        val max = chart.rows.maxOf { maxOf(it.value, it.second ?: 0) }.coerceAtLeast(1)
+        chart.rows.forEach { blocks += barBlock(it, max, chart.split) }
+        return blocks
+    }
+
+    private fun legendBlock() = Block(14f) { canvas, y ->
+        val paint = TextPaint().apply {
+            color = MUTED
+            textSize = 8f
+            isAntiAlias = true
+        }
+        drawLegendSwatch(canvas, MARGIN, y + 3f, PHOS)
+        canvas.drawText("Wi-Fi", MARGIN + 14f, y + 10f, paint)
+        drawLegendSwatch(canvas, MARGIN + 58f, y + 3f, PATH_OTHER)
+        canvas.drawText("BLE", MARGIN + 72f, y + 10f, paint)
+    }
+
+    private fun drawLegendSwatch(canvas: Canvas, x: Float, y: Float, color: Int) {
+        val paint = Paint().apply {
+            this.color = color
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        canvas.drawRoundRect(RectF(x, y, x + 10f, y + 6f), 2f, 2f, paint)
+    }
+
+    private fun barBlock(row: ReportBar, max: Int, split: Boolean): Block {
+        val height = if (split) 28f else 16f
+        return Block(height) { canvas, y ->
+            val labelPaint = TextPaint().apply {
+                color = INK
+                textSize = 9f
+                isAntiAlias = true
+            }
+            val numPaint = TextPaint().apply {
+                color = INK
+                textSize = 9f
+                isAntiAlias = true
+                typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            }
+            val detailPaint = TextPaint().apply {
+                color = MUTED
+                textSize = 8f
+                isAntiAlias = true
+            }
+            val labelW = 148f
+            val labelBase = if (split) y + 16f else y + 10f
+            canvas.drawText(fitText(row.label, labelPaint, labelW), MARGIN, labelBase, labelPaint)
+            val barLeft = MARGIN + labelW + 8f
+            val numW = 32f
+            val detailW = if (split || row.detail.isBlank()) 0f else 118f
+            val barRight = PAGE_W - MARGIN - numW - detailW - 8f
+            fun drawOne(value: Int, top: Float, color: Int) {
+                val track = Paint().apply {
+                    this.color = Color.parseColor("#E6EEE9")
+                    style = Paint.Style.FILL
+                    isAntiAlias = true
+                }
+                canvas.drawRoundRect(RectF(barLeft, top, barRight, top + 7f), 3f, 3f, track)
+                if (value > 0) {
+                    val frac = (value.toFloat() / max).coerceIn(0.03f, 1f)
+                    val fill = Paint().apply {
+                        this.color = color
+                        style = Paint.Style.FILL
+                        isAntiAlias = true
+                    }
+                    canvas.drawRoundRect(
+                        RectF(barLeft, top, barLeft + (barRight - barLeft) * frac, top + 7f),
+                        3f,
+                        3f,
+                        fill,
+                    )
+                }
+                canvas.drawText(value.toString(), barRight + 6f, top + 7f, numPaint)
+            }
+            if (split) {
+                drawOne(row.value, y + 2f, PHOS)
+                drawOne(row.second ?: 0, y + 14f, PATH_OTHER)
+            } else {
+                drawOne(row.value, y + 2f, PHOS)
+                if (row.detail.isNotBlank()) {
+                    canvas.drawText(row.detail, barRight + numW + 8f, y + 10f, detailPaint)
+                }
+            }
+        }
+    }
+
+    private fun fitText(text: String, paint: TextPaint, width: Float): String {
+        if (paint.measureText(text) <= width) return text
+        var end = text.length
+        while (end > 1 && paint.measureText(text.substring(0, end) + "…") > width) end--
+        return text.substring(0, end) + "…"
     }
 
     private fun paginate(blocks: List<Block>): List<List<Block>> {

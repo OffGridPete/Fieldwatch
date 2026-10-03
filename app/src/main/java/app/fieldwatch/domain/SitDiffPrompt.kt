@@ -13,6 +13,8 @@ object SitDiffPrompt {
         second: SitDiff.Side,
         demoMode: Boolean,
     ): String {
+        val thisSit = thisSit.withoutFloodRadios()
+        val second = second.withoutFloodRadios()
         val macs = (thisSit.radios + second.radios).map { it.mac }
         val onboard = SitDiff.document(thisSit, second).withDemoMacs(macs, demoMode)
         val thisKeys = thisSit.keys
@@ -40,6 +42,7 @@ object SitDiffPrompt {
             if (label.isNotEmpty() && !label.equals(row.mac, ignoreCase = true)) {
                 append("  ").append(label)
             }
+            if (row.mine) append("  Marked mine")
             row.fleetNames.filter { it.isNotBlank() }.forEach { append("  ").append(it) }
             if (row.extraAttention) append("  Extra attention")
             val labels = row.liveDecode.reportLabels()
@@ -70,6 +73,8 @@ object SitDiffPrompt {
             appendLine("- GPS stamps (if present) are this phone at hear-time, not the other radio.")
             appendLine("- Last 15 minutes vs a named sit is not the same net (RAM about 400 vs sit ${Sit.RADIO_CAP}). Missing BLE on the RAM side can be eviction, not gone.")
             appendLine("- Presence is not co-travel. Do not invent a tail, a follower, or a camera location.")
+            appendLine("- A radio marked mine was claimed by the operator. Do not treat it as an unexplained follower.")
+            appendLine("- A flood note is a burst of new addresses, not a follower.")
             appendLine("- A decoded live value on a row is catalog text for that kind + MAC. If the onboard compare says that value changed, state the change. Do not stitch that value onto a different MAC.")
             appendLine("- An aircraft block is positions the radio advertised, joined by UAS id. If the onboard compare says the status changed, state the change. That track is not this phone's GPS.")
             appendLine("- Do not give safety advice. Do not tell the operator they are safe or in danger.")
@@ -79,7 +84,7 @@ object SitDiffPrompt {
             appendLine("Write complete sentences. Headings as below. Short bullets only for exclusive Extra attention / Named radios. No markdown tables. No code fences. No dump of the onboard lists.")
             appendLine()
             appendLine("1. **Disclaimer** — Repeat the experimental-use disclaimer first.")
-            appendLine("2. **What the onboard compare already established** — 3–5 sentences. Window names, counts, Extra attention exclusives, Observer notes if any. Do not reprint inventories.")
+            appendLine("2. **What the onboard compare already established** — 3–5 sentences. Window names, counts, Extra attention exclusives, Observer notes if any, Marked mine if any, Flood if any. Do not reprint inventories.")
             appendLine("3. **What the numbers add** — Overlap (both/union as a percent), Wi-Fi vs BLE in each bucket, how much exclusive BLE is RAND. Say whether this looks like fixtures, a different stall/hour, or a cap artifact. Confidence. Use the working table; do not invent rates.")
             appendLine("4. **Exclusive Extra attention and Named radios** — Full identifiers from the working table (complete MAC, name, signatures, which window). Pattern match, not identity. If none, say none.")
             appendLine("5. **What another sit or Hunt would shrink** — Concrete in-app next steps only (a third sit at the same stall, Hunt on one exclusive Extra attention row, Filters). No safety advice. No “call the police.”")

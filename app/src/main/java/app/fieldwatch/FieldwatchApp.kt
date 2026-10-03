@@ -16,6 +16,9 @@ import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.GpsSample
+import app.fieldwatch.domain.FloodBurst
+import app.fieldwatch.domain.PairingFlood
+import app.fieldwatch.domain.WifiBeaconFlood
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioDb
 import app.fieldwatch.domain.RadioKind
@@ -45,6 +48,18 @@ class FieldwatchApp : Application() {
         private set
     lateinit var tak: TakPublisher
         private set
+    val pairingFlood = PairingFlood()
+    val wifiFlood = WifiBeaconFlood()
+
+    /** Bluetooth bursts, Wi-Fi bursts, or both in time order. */
+    fun floodBursts(): List<FloodBurst> {
+        val ble = pairingFlood.bursts()
+        val wifi = wifiFlood.bursts()
+        if (wifi.isEmpty()) return ble
+        if (ble.isEmpty()) return wifi
+        return (ble + wifi).sortedBy { it.at }
+    }
+
     private val filters = FilterEngine()
     private val _arrivals = MutableStateFlow(ArrivalsState())
     val arrivals: StateFlow<ArrivalsState> = _arrivals.asStateFlow()
@@ -172,6 +187,11 @@ class FieldwatchApp : Application() {
 
     fun wouldShowOnLive(device: Sighting): Boolean {
         if (device.gone) return false
+        val bleHidden = pairingFlood.hide.value.keys
+        val wifiHidden = wifiFlood.hide.value.keys
+        if ((bleHidden.isNotEmpty() && device.key in bleHidden) ||
+            (wifiHidden.isNotEmpty() && device.key in wifiHidden)
+        ) return false
         val travel = if (config.filter.movingWithYou) {
             CoTravel.Ctx.of(operatorPathCopy())
         } else {
@@ -186,6 +206,7 @@ class FieldwatchApp : Application() {
                 namedRadioKeys = RadioBookmarks.namedKeys(config.watchlist),
                 watchedFleetIds = RadioBookmarks.watchedFleetIds(config.watchlist),
                 alertDeviceKeys = RadioBookmarks.alertDeviceKeys(config.watchlist),
+                mineKeys = RadioBookmarks.mineKeys(config.watchlist),
             )
         ) return false
         if (isHiddenByArrivals(device)) return false

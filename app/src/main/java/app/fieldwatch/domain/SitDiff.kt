@@ -29,6 +29,8 @@ object SitDiff {
         val payloadOpLon: Double? = null,
         val payloadUasId: String = "",
         val payloadTrail: List<PayloadFix> = emptyList(),
+        val payloadAircraft: String = "",
+        val mine: Boolean = false,
     )
 
     data class Side(
@@ -36,8 +38,16 @@ object SitDiff {
         val ram: Boolean,
         val radios: List<Radio>,
         val path: List<GpsSample> = emptyList(),
+        val floods: List<FloodBurst> = emptyList(),
     ) {
         val keys: Set<String> get() = radios.map { it.key }.toSet()
+
+        /** The sit file still holds these radios. Reports leave the counted addresses out. */
+        fun withoutFloodRadios(): Side {
+            val aside = FloodBurst.keysOf(floods)
+            if (aside.isEmpty()) return this
+            return copy(radios = radios.filter { it.key !in aside })
+        }
     }
 
     fun secondSitChoices(
@@ -59,6 +69,7 @@ object SitDiff {
         customNames: Map<String, String>,
         observerNotes: Map<String, String> = emptyMap(),
         bookmarkedKeys: Set<String> = emptySet(),
+        mineKeys: Set<String> = emptySet(),
     ): Radio = Radio(
         key = device.key,
         kind = device.kind,
@@ -86,6 +97,8 @@ object SitDiff {
         payloadOpLon = device.payloadOpLon,
         payloadUasId = device.payloadUasId?.trim().orEmpty(),
         payloadTrail = device.payloadTrail,
+        payloadAircraft = device.payloadAircraft?.trim().orEmpty(),
+        mine = device.key in mineKeys,
     )
 
     fun fromSitRadio(
@@ -94,6 +107,7 @@ object SitDiff {
         customNames: Map<String, String>,
         observerNotes: Map<String, String> = emptyMap(),
         bookmarkedKeys: Set<String> = emptySet(),
+        mineKeys: Set<String> = emptySet(),
     ): Radio = Radio(
         key = row.key,
         kind = row.kind,
@@ -121,15 +135,20 @@ object SitDiff {
         payloadOpLon = row.payloadOpLon,
         payloadUasId = row.payloadUasId?.trim().orEmpty(),
         payloadTrail = row.payloadTrail,
+        payloadAircraft = row.payloadAircraft?.trim().orEmpty(),
+        mine = row.key in mineKeys,
     )
 
     fun report(
         thisSit: Side,
         second: Side,
         demoMode: Boolean,
+        showAllRadios: Boolean = false,
     ): String {
         val macs = (thisSit.radios + second.radios).map { it.mac }
-        return document(thisSit, second).withDemoMacs(macs, demoMode).toPlainText()
+        return document(thisSit, second, showAllRadios = showAllRadios)
+            .withDemoMacs(macs, demoMode)
+            .toPlainText()
     }
 
     /** Same shape as Debrief so Compare (PDF) uses the Debrief letter layout. */
@@ -137,7 +156,10 @@ object SitDiff {
         thisSit: Side,
         second: Side,
         watchedFleetIds: Set<String> = emptySet(),
+        showAllRadios: Boolean = false,
     ): DebriefDoc {
+        val thisSit = thisSit.withoutFloodRadios()
+        val second = second.withoutFloodRadios()
         val thisKeys = thisSit.keys
         val secondKeys = second.keys
         val byKey = (thisSit.radios + second.radios).associateBy { it.key }
@@ -166,6 +188,7 @@ object SitDiff {
                 }
                 append("Radios this phone heard. Kind + MAC. BLE rotation is a new row. Not a radio fix.")
             },
+            chart = presenceChart(onlyThis, onlySecond, both, byKey),
         )
         val thisCraft = AircraftTrail.pictures(thisSit.radios.mapNotNull { it.toCraftSource() }, thisSit.path)
         val secondCraft = AircraftTrail.pictures(second.radios.mapNotNull { it.toCraftSource() }, second.path)
@@ -176,6 +199,9 @@ object SitDiff {
         observerNotesSection(thisSit, second)?.let { body ->
             sections += DebriefSection(next(), "Observer notes", body)
         }
+        markedMineSection(thisSit, second)?.let { body ->
+            sections += DebriefSection(next(), "Marked mine", body)
+        }
         if (extraHits.isNotEmpty()) {
             sections += DebriefSection(
                 next(),
@@ -184,9 +210,12 @@ object SitDiff {
                 alert = true,
             )
         }
-        sections += DebriefSection(next(), "Only in this sit (${onlyThis.size})", listBody(onlyThis, byKey))
-        sections += DebriefSection(next(), "Only in second sit (${onlySecond.size})", listBody(onlySecond, byKey))
-        sections += DebriefSection(next(), "In both (${both.size})", bothBody(both, thisSit, second))
+        floodSection(thisSit, second)?.let { body ->
+            sections += DebriefSection(next(), "Flood", body)
+        }
+        sections += rosterSection(next(), "Only in this sit (${onlyThis.size})", onlyThis, byKey, showAllRadios)
+        sections += rosterSection(next(), "Only in second sit (${onlySecond.size})", onlySecond, byKey, showAllRadios)
+        sections += bothSection(next(), "In both (${both.size})", both, thisSit, second, byKey, showAllRadios)
         val meta = buildList {
             add("This sit" to thisSit.name)
             add("Second sit" to second.name)
@@ -200,7 +229,7 @@ object SitDiff {
             meta = meta,
             disclaimer = FieldwatchDisclaimer.compare(),
             trackingAlert = extraHits.isNotEmpty(),
-            takeaway = "${onlyThis.size} only in this sit · ${onlySecond.size} only in the second · ${both.size} in both.",
+            takeaway = compareTakeaway(onlyThis.size, onlySecond.size, both.size, mineCount(thisSit, second)),
             sections = sections,
             extraAttention = extraHits,
             heading = "FIELDWATCH SIT COMPARE",
@@ -240,7 +269,7 @@ object SitDiff {
             .mapNotNull { r ->
                 val advertised = r.advertisedCoord()
                 val pin = advertised ?: r.hearCoord() ?: return@mapNotNull null
-                val notes = if (r.bookmarked) r.observerNotes else ""
+                val notes = RadioBookmarks.pathNote(r.bookmarked, r.observerNotes, r.mine)
                 val label = r.name.ifBlank { r.mac }
                 val kept = r.payloadTrail.lastOrNull { PayloadLocation.validCoord(it.lat, it.lon) }
                 SitPathPlot.Dot(
@@ -267,6 +296,7 @@ object SitDiff {
                             speed = kept?.speed ?: r.payloadSpeed,
                             pilotLat = r.payloadOpLat,
                             pilotLon = r.payloadOpLon,
+                            aircraft = r.payloadAircraft,
                         )
                     } else {
                         ""
@@ -326,6 +356,7 @@ object SitDiff {
             pilotLon = payloadOpLon,
             key = key,
             mac = mac,
+            aircraft = payloadAircraft,
         )
     }
 
@@ -353,6 +384,103 @@ object SitDiff {
             )
         }
         return hits(onlyThis, "Only in this sit.") + hits(onlySecond, "Only in second sit.")
+    }
+
+    private fun presenceChart(
+        onlyThis: Set<String>,
+        onlySecond: Set<String>,
+        both: Set<String>,
+        byKey: Map<String, Radio>,
+    ): ReportChart {
+        fun row(label: String, keys: Set<String>): ReportBar {
+            var wifi = 0
+            var ble = 0
+            for (key in keys) {
+                val radio = byKey[key] ?: continue
+                if (radio.kind == RadioKind.WIFI) wifi++ else ble++
+            }
+            return ReportBar(label, wifi, second = ble)
+        }
+        return ReportChart(
+            split = true,
+            rows = listOf(
+                row("Only in this sit", onlyThis),
+                row("In both", both),
+                row("Only in second sit", onlySecond),
+            ),
+        )
+    }
+
+    private fun rosterSection(
+        number: String,
+        title: String,
+        keys: Set<String>,
+        byKey: Map<String, Radio>,
+        showAll: Boolean,
+    ): DebriefSection {
+        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        val radios = keys.mapNotNull { byKey[it] }
+        val shown = if (showAll) keys else keys.filter { byKey[it]?.keepShort() == true }.toSet()
+        return DebriefSection(
+            number,
+            title,
+            body = "",
+            chart = radioSignatureChart(radios),
+            after = if (shown.isEmpty()) "" else listBody(shown, byKey),
+        )
+    }
+
+    private fun bothSection(
+        number: String,
+        title: String,
+        keys: Set<String>,
+        thisSit: Side,
+        second: Side,
+        byKey: Map<String, Radio>,
+        showAll: Boolean,
+    ): DebriefSection {
+        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        val earlier = thisSit.radios.associateBy { it.key }
+        val later = second.radios.associateBy { it.key }
+        val shown = if (showAll) {
+            keys
+        } else {
+            keys.filter { key ->
+                val a = earlier[key] ?: return@filter false
+                val b = later[key] ?: return@filter false
+                a.keepShort() || b.keepShort() || decodeChanged(a, b)
+            }.toSet()
+        }
+        return DebriefSection(
+            number,
+            title,
+            body = "",
+            chart = radioSignatureChart(keys.mapNotNull { byKey[it] }),
+            after = if (shown.isEmpty()) "" else bothBody(shown, thisSit, second),
+        )
+    }
+
+    private fun radioSignatureChart(radios: List<Radio>): ReportChart? {
+        if (radios.isEmpty()) return null
+        val counts = linkedMapOf<String, Int>()
+        for (radio in radios) {
+            val sigs = radio.fleetNames.filter { it.isNotBlank() }.distinct()
+            val key = if (sigs.isEmpty()) "Unmatched" else sigs.joinToString(" + ")
+            counts[key] = (counts[key] ?: 0) + 1
+        }
+        val rows = counts.entries
+            .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .map { ReportBar(it.key, it.value) }
+        return ReportChart(rows = rows)
+    }
+
+    private fun Radio.keepShort(): Boolean =
+        extraAttention || named || mine || bookmarked
+
+    private fun decodeChanged(earlier: Radio, later: Radio): Boolean {
+        val left = earlier.liveDecode.reportLabels()
+        val right = later.liveDecode.reportLabels()
+        return left.isNotEmpty() && right.isNotEmpty() && left != right
     }
 
     private fun listBody(keys: Set<String>, byKey: Map<String, Radio>): String {
@@ -408,6 +536,7 @@ object SitDiff {
             append("  ")
             append(label)
         }
+        if (row.mine) append("  Marked mine")
         row.fleetNames.filter { it.isNotBlank() }.forEach { name ->
             append("  ")
             append(name)
@@ -430,6 +559,55 @@ object SitDiff {
                 append(notes.joinToString(" "))
             }
         }
+    }
+
+    private fun mineCount(thisSit: Side, second: Side): Int =
+        (thisSit.radios + second.radios).distinctBy { it.key }.count { it.mine }
+
+    private fun compareTakeaway(onlyThis: Int, onlySecond: Int, both: Int, mine: Int): String {
+        val counts = "$onlyThis only in this sit · $onlySecond only in the second · $both in both."
+        return if (mine > 0) "$counts · $mine marked mine." else counts
+    }
+
+    private fun floodSection(thisSit: Side, second: Side): String? {
+        if (thisSit.floods.isEmpty() && second.floods.isEmpty()) return null
+        fun StringBuilder.linesFor(side: Side) {
+            if (side.floods.isEmpty()) return
+            appendLine(side.name)
+            side.floods.sortedBy { it.at }.forEach { burst ->
+                appendLine("  ${burst.reportLine(FloodBurst.clock(burst.at))}")
+            }
+        }
+        return buildString {
+            appendLine(FloodBurst.intro(thisSit.floods + second.floods))
+            appendLine()
+            linesFor(thisSit)
+            if (thisSit.floods.isNotEmpty() && second.floods.isNotEmpty()) appendLine()
+            linesFor(second)
+        }.trimEnd()
+    }
+
+    private fun markedMineSection(thisSit: Side, second: Side): String? {
+        fun where(key: String): String = when {
+            key in thisSit.keys && key in second.keys -> "both"
+            key in thisSit.keys -> "this sit"
+            else -> "second sit"
+        }
+        val rows = (thisSit.radios + second.radios).distinctBy { it.key }.filter { it.mine }
+        if (rows.isEmpty()) return null
+        return buildString {
+            appendLine("Radios you marked mine. Heard in either window. Still listed.")
+            rows.sortedWith(
+                compareBy<Radio> { where(it.key) }.thenBy { it.mac },
+            ).forEach { r ->
+                val kind = if (r.kind == RadioKind.WIFI) "WIFI" else "BLE"
+                val label = r.name.trim().takeIf { it.isNotEmpty() && !it.equals(r.mac, ignoreCase = true) }
+                append("  · $kind  ${r.mac}")
+                if (label != null) append("  ").append(label)
+                append("  ").append(where(r.key))
+                appendLine()
+            }
+        }.trimEnd()
     }
 
     private fun observerNotesSection(thisSit: Side, second: Side): String? {

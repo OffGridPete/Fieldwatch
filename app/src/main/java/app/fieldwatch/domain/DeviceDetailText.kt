@@ -17,6 +17,7 @@ object DeviceDetailText {
         attentionNotes: List<Pair<String, String>> = emptyList(),
         signatureNotes: List<Pair<String, String>> = emptyList(),
         fleets: List<Fleet> = emptyList(),
+        mine: Boolean = false,
     ): String {
         val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
         val iso = SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US)
@@ -42,6 +43,7 @@ object DeviceDetailText {
         out.append(title).append('\n')
         line("MAC", device.mac)
         if (device.name.isNotBlank()) line("Advertised name", device.name)
+        if (mine) line("Marked mine", "No beep while this is on. Still listed.")
 
         out.append('\n')
         out.append("What this looks like: ").append(guess.headline).append('\n')
@@ -175,6 +177,8 @@ object DeviceDetailText {
                 line("Capability string", it)
             }
         }
+
+        device.payloadAircraft?.trim()?.takeIf { it.isNotEmpty() }?.let { line("Aircraft", it) }
 
         if (fleets.isNotEmpty() && (device.kind == RadioKind.BLE || device.kind == RadioKind.WIFI)) {
             val decoded = SignatureFieldDecoder.decodeSighting(device, fleets)

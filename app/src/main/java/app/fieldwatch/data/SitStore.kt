@@ -3,6 +3,7 @@ package app.fieldwatch.data
 import android.app.ActivityManager
 import android.content.Context
 import app.fieldwatch.domain.Fleet
+import app.fieldwatch.domain.FloodBurst
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sit
@@ -75,7 +76,7 @@ class SitStore(
                 runCatching { File(dir, "${extra.summary.id}.json").delete() }
             }
             open = keepOpen?.let {
-                SitSession(it.summary, it.radios, it.operatorPath)
+                SitSession(it.summary, it.radios, it.operatorPath, it.floods)
             }
             closed = closedAcc.sortedByDescending { it.startAt }
             pruneClosedLocked()
@@ -97,6 +98,13 @@ class SitStore(
                 session.ingest(device, fleets, watchKeys, watchedFleets, tight = tight)
             }
             publishLocked()
+        }
+    }
+
+    fun noteFloods(incoming: List<FloodBurst>) {
+        if (incoming.isEmpty()) return
+        synchronized(lock) {
+            open?.noteFloods(incoming)
         }
     }
 
@@ -246,6 +254,7 @@ class SitStore(
                     endAt = now,
                     devices = snap.radios.map { it.toSighting() },
                     operatorPath = snap.operatorPath,
+                    floods = snap.floods,
                 )
             }
         }
@@ -258,6 +267,7 @@ class SitStore(
             endAt = end,
             devices = file.radios.map { it.toSighting() },
             operatorPath = file.operatorPath,
+            floods = file.floods,
         )
     }
 

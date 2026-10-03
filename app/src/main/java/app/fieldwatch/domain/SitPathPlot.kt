@@ -323,6 +323,7 @@ object SitPathPlot {
          * MAC alerts and signature alerts. A decoded position uses the last advertised fix.
          */
         alertsOnly: Boolean = false,
+        mineKeys: Set<String> = emptySet(),
     ): PlotRadios {
         val points = ArrayList<Dot>()
         devices
@@ -338,7 +339,11 @@ object SitPathPlot {
                 val pin = if (alertsOnly) advertisedFix(d) else null
                 val fix = pin ?: loudestFix(d) ?: return@forEach
                 val bookmarked = d.key in bookmarkedKeys
-                val notes = if (bookmarked) observerNotes[d.key].orEmpty() else ""
+                val notes = RadioBookmarks.pathNote(
+                    bookmarked,
+                    observerNotes[d.key].orEmpty(),
+                    d.key in mineKeys,
+                )
                 val fleet = d.fleetIds.firstNotNullOfOrNull { id ->
                     fleets.firstOrNull { it.id == id && id in watchedFleetIds }
                 } ?: d.fleetIds.firstNotNullOfOrNull { id -> fleets.firstOrNull { it.id == id } }
@@ -371,6 +376,7 @@ object SitPathPlot {
                             speed = kept?.speed ?: d.payloadSpeed,
                             pilotLat = d.payloadOpLat,
                             pilotLon = d.payloadOpLon,
+                            aircraft = d.payloadAircraft?.trim().orEmpty(),
                         )
                     } else {
                         ""

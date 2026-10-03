@@ -134,6 +134,38 @@ class RadioBookmarksTest {
     }
 
     @Test
+    fun setMineFillsABlankNameAndLeavesAlert() {
+        val created = RadioBookmarks.setMine(listOf(fleet), "WIFI:00:11:22:33:44:55", true, "PS-CRADLEPOINT")
+        val row = created.single { it.deviceKey != null }
+        assertEquals("PS-CRADLEPOINT", row.label)
+        assertEquals(false, row.alert)
+        assertTrue(row.mine)
+        assertEquals(setOf("WIFI:00:11:22:33:44:55"), RadioBookmarks.mineKeys(created))
+        val kept = RadioBookmarks.setMine(listOf(radio.copy(alert = true)), radio.deviceKey!!, true, "ignored")
+        val named = kept.single { it.deviceKey != null }
+        assertEquals("van tag", named.label)
+        assertTrue(named.alert)
+        assertTrue(named.mine)
+        val blank = radio.copy(id = "r2", deviceKey = "BLE:11:22:33:44:55:66", label = "  ", alert = true)
+        val filled = RadioBookmarks.setMine(listOf(blank), blank.deviceKey!!, true, "Tile")
+        assertEquals("Tile", filled.single().label)
+        assertTrue(filled.single().alert)
+        val off = RadioBookmarks.setMine(filled, blank.deviceKey!!, false, "ignored")
+        assertEquals("Tile", off.single().label)
+        assertFalse(off.single().mine)
+        assertTrue(RadioBookmarks.mineKeys(off).isEmpty())
+        assertEquals(listOf(fleet), RadioBookmarks.setMine(listOf(fleet), "WIFI:00:11:22:33:44:55", false, "van"))
+    }
+
+    @Test
+    fun pathNoteDoesNotInventADot() {
+        assertEquals("", RadioBookmarks.pathNote(bookmarked = false, observerNotes = "lot B", mine = false))
+        assertEquals("lot B", RadioBookmarks.pathNote(bookmarked = true, observerNotes = "lot B", mine = false))
+        assertEquals("Marked mine", RadioBookmarks.pathNote(bookmarked = false, observerNotes = "lot B", mine = true))
+        assertEquals("lot B\nMarked mine", RadioBookmarks.pathNote(bookmarked = true, observerNotes = "lot B", mine = true))
+    }
+
+    @Test
     fun wifiLocalBitBssidCanTakeACustomName() {
         val ap = wifi(mac = "02:0A:F5:86:56:DD", randomized = true)
         assertTrue(RadioBookmarks.canSetCustomName(ap))

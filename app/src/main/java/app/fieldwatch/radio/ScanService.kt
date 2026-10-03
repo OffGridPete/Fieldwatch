@@ -51,6 +51,11 @@ class ScanService : LifecycleService() {
             this,
             onObservation = { offer(it) },
             onScanFinished = { _, _ -> },
+            onFreshScan = { batch ->
+                val now = System.currentTimeMillis()
+                app.wifiFlood.scan(batch, now)
+                app.sits.noteFloods(app.wifiFlood.bursts())
+            },
         )
         ble = BleRadio(
             this,
@@ -99,6 +104,9 @@ class ScanService : LifecycleService() {
                     .filter { it.isNotBlank() }
                     .joinToString(" · ")
                 app.devices.setScanning(true, hint)
+                app.pairingFlood.tick(System.currentTimeMillis())
+                app.sits.noteFloods(app.pairingFlood.bursts())
+                app.sits.noteFloods(app.wifiFlood.bursts())
                 publishNow()
                 delay(2_000L)
             }
@@ -152,6 +160,12 @@ class ScanService : LifecycleService() {
                 val fleets = app.config.fleets
                 val settings = app.config.settings
                 val seen = app.devices.ingestBatch(tagged, fleets, settings.staleSec)
+                for (i in seen.indices) {
+                    val row = seen[i]
+                    if (row.kind != RadioKind.BLE || row.hitCount != 1) continue
+                    app.pairingFlood.consider(tagged[i], row.lastSeen)
+                }
+                app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.ingest(seen, fleets, app.config.watchlist)
                 if (settings.loggingEnabled) {
                     val toLog = seen.filter { it.hitCount <= 1 || it.hitCount % 25 == 0 }.take(16)
@@ -210,6 +224,9 @@ class ScanService : LifecycleService() {
                 app.onFreshWifiBatch()
             }
             val live = app.devices.devices.value
+            val liveKeys = live.mapTo(HashSet(live.size)) { it.key }
+            app.pairingFlood.prune(liveKeys)
+            app.wifiFlood.prune(liveKeys)
             if (settings.alertsEnabled && app.config.watchlist.isNotEmpty()) {
                 app.alerter.checkLive(
                     live,

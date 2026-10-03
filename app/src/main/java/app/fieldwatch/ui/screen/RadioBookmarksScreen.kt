@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Scaffold
@@ -32,6 +33,7 @@ import app.fieldwatch.ui.component.FieldwatchSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.RadioBookmarks
@@ -87,7 +90,7 @@ fun RadioBookmarksScreen(
         ) {
             item {
                 Text(
-                    "One MAC each. Custom name shows on Live. Observer notes show on detail and reports. Alert is optional (pip / voice / flash). Filters → Named radios only hides everything else. Signature watches stay on Signatures.",
+                    "One MAC each. Custom name shows on Live. Mine marks it as yours: no beep while on, still listed. Observer notes show on detail and reports. Alert is optional (pip / voice / flash). Filters → Named radios only hides everything else. Signature watches stay on Signatures.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -117,6 +120,7 @@ fun RadioBookmarksScreen(
                             if (onAir) onOpen(key)
                         },
                         onAlert = { on -> vm.setRadioAlert(row.id, on) },
+                        onMine = { on -> vm.setNamedRadioMine(row.id, on) },
                         onRename = { renameId = row.id },
                         onRemove = { vm.removeRadioBookmark(row.id) },
                     )
@@ -200,6 +204,7 @@ private fun BookmarkCard(
     onAir: Boolean,
     onOpen: () -> Unit,
     onAlert: (Boolean) -> Unit,
+    onMine: (Boolean) -> Unit,
     onRename: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -211,57 +216,76 @@ private fun BookmarkCard(
             .fillMaxWidth()
             .then(if (onAir) Modifier.clickable(onClick = onOpen) else Modifier),
     ) {
-        Row(
-            Modifier.padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioKindMark(kind, size = 18.dp)
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
+        Column(Modifier.padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioKindMark(kind, size = 14.dp)
+                Spacer(Modifier.width(8.dp))
                 Text(
                     row.label.ifBlank { mac },
+                    modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    mac,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    if (onAir) "On the air — tap to open detail" else "Not this session",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                val obs = row.observerNotes.trim()
-                if (obs.isNotEmpty()) {
-                    Text(
-                        obs,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    IconButton(onClick = onRename, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Outlined.Edit, "Edit", modifier = Modifier.size(18.dp))
+                    }
+                    IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Outlined.Delete, "Remove", modifier = Modifier.size(18.dp))
+                    }
                 }
             }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(start = 8.dp),
+            val underName = Modifier.padding(start = 22.dp)
+            if (row.label.isNotBlank()) {
+                Text(
+                    mac,
+                    modifier = underName,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                if (onAir) "On the air — tap to open detail" else "Not this session",
+                modifier = underName,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val obs = row.observerNotes.trim()
+            if (obs.isNotEmpty()) {
+                Text(
+                    obs,
+                    modifier = underName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Row(
+                modifier = underName.padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(
+                    "Mine",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                FieldwatchSwitch(checked = row.mine, onCheckedChange = onMine)
+                Spacer(Modifier.width(16.dp))
                 Text(
                     "Alert",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Spacer(Modifier.width(6.dp))
                 FieldwatchSwitch(checked = row.alert, onCheckedChange = onAlert)
-            }
-            IconButton(onClick = onRename) {
-                Icon(Icons.Outlined.Edit, "Edit", modifier = Modifier.size(20.dp))
-            }
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Outlined.Delete, "Remove", modifier = Modifier.size(20.dp))
             }
         }
     }

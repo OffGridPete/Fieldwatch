@@ -14,6 +14,7 @@ object DeviceDetailPrompt {
         attentionNotes: List<Pair<String, String>> = emptyList(),
         signatureNotes: List<Pair<String, String>> = emptyList(),
         fleets: List<Fleet> = emptyList(),
+        mine: Boolean = false,
     ): String {
         val title = device.listTitle(signatureNames)
         val kind = if (device.kind == RadioKind.WIFI) "Wi-Fi access point" else "Bluetooth LE advertiser"
@@ -56,7 +57,7 @@ object DeviceDetailPrompt {
             }
             appendLine("## Observation dump (verbatim from the detail page)")
             appendLine()
-            append(DeviceDetailText.build(device, signatureNames, now, attentionNotes, signatureNotes, fleets).trimEnd())
+            append(DeviceDetailText.build(device, signatureNames, now, attentionNotes, signatureNotes, fleets, mine).trimEnd())
             appendLine()
             appendLine()
             appendLine("## Your analysis (required sections)")

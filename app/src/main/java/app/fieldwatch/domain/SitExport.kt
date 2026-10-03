@@ -11,7 +11,7 @@ object SitExport {
     const val CSV_HEADER =
         "kind,mac,name,custom_name,observer_notes,rssi,rssi_min,rssi_max,channel,frequency_mhz," +
             "randomized,hidden,first_seen,last_seen,hits,lat,lon,extra_attention," +
-            "signatures,extra_attention_families"
+            "signatures,extra_attention_families,mine"
 
     fun csv(
         devices: List<Sighting>,
@@ -20,6 +20,7 @@ object SitExport {
         observerNotes: Map<String, String>,
         extraKeys: Set<String>,
         fleets: List<Fleet> = emptyList(),
+        mineKeys: Set<String> = emptySet(),
     ): String = buildString {
         append(CSV_HEADER).append('\n')
         rows(devices, radios).forEach { d ->
@@ -46,6 +47,7 @@ object SitExport {
                     (d.key in extraKeys).toString(),
                     csv(joinedNames(d, fleets)),
                     csv(joinedAttention(d, fleets)),
+                    (d.key in mineKeys).toString(),
                 ).joinToString(","),
             ).append('\n')
         }
@@ -58,6 +60,7 @@ object SitExport {
         observerNotes: Map<String, String>,
         extraKeys: Set<String>,
         fleets: List<Fleet> = emptyList(),
+        mineKeys: Set<String> = emptySet(),
     ): String = buildString {
         rows(devices, radios).forEach { d ->
             val pin = hearPoint(d)
@@ -87,6 +90,7 @@ object SitExport {
             obj.put("extra_attention", d.key in extraKeys)
             obj.put("signatures", joinedNames(d, fleets))
             obj.put("extra_attention_families", joinedAttention(d, fleets))
+            obj.put("mine", d.key in mineKeys)
             append(obj.toString()).append('\n')
         }
     }

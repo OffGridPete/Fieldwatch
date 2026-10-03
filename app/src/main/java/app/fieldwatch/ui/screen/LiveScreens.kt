@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import java.util.Locale
 import app.fieldwatch.ui.component.DecodeGlyph
+import app.fieldwatch.ui.component.FieldwatchSwitch
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
@@ -127,9 +128,58 @@ fun LivePane(
     val demoMode = state.settings.demoMode
     val flashKeys by vm.flashKeys.collectAsStateWithLifecycle()
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
+    val flood by vm.floodNotice.collectAsStateWithLifecycle()
+    val floodHide by vm.floodHide.collectAsStateWithLifecycle()
     var renameSit by remember { mutableStateOf(false) }
     var renameDraft by remember { mutableStateOf("") }
+    val floodNotice = flood
     Column(Modifier.fillMaxSize()) {
+        if (floodNotice != null && !floodNotice.showDialog) {
+            Text(
+                floodNotice.line(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    "Hide this burst",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                FieldwatchSwitch(floodHide.episodeOn, vm::setHideBurst)
+            }
+        }
+        if (floodHide.keys.isNotEmpty() && !floodHide.episodeOn) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    if (floodHide.keys.size == 1) "Hiding 1 flood radio" else "Hiding ${floodHide.keys.size} flood radios",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                FieldwatchSwitch(true, { on -> if (!on) vm.clearHiddenFlood() })
+            }
+        }
+        if (floodNotice != null && floodNotice.showDialog) {
+            AlertDialog(
+                onDismissRequest = { vm.dismissPairingFlood() },
+                title = { Text(floodNotice.title()) },
+                text = { Text(floodNotice.body()) },
+                confirmButton = {
+                    TextButton(onClick = { vm.dismissPairingFlood() }) { Text("Continue") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { vm.hidePairingFlood() }) { Text("Hide these") }
+                },
+            )
+        }
         if (state.displayPaused) {
             Text(
                 "Display paused · radios still scanning and logging. Filters still apply when you run again. Tap Live to run the list again.",
@@ -261,7 +311,11 @@ private fun arrivalsEmpty(state: FieldwatchUi): String? {
                 "No loud BLE has stayed with you among the radios still allowed. " +
                     "Tap the Moving with you preset to test BLE, or turn off Signatures only / Show only / Named radios only / Watched only."
             else ->
-                "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. A tag in your bag or car should show. Find My MAC rotation will not stitch."
+                if (state.filter.hideMine) {
+                    "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. Radios marked Mine stay off this list."
+                } else {
+                    "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. A tag in your bag or car should show. Find My MAC rotation will not stitch."
+                }
         }
     }
     if (state.filter.arrivalsOnly) {
@@ -1161,12 +1215,16 @@ fun DeviceRow(
                     )
                     val attention = vm.hasAttention(device)
                     val observed = vm.hasObserverNote(device)
-                    if (attention || observed || named || alerted || device.liveDecode.isNotEmpty()) {
+                    val mine = vm.isMine(device.key)
+                    if (attention || observed || named || alerted || mine || device.liveDecode.isNotEmpty() ||
+                        !device.payloadAircraft.isNullOrBlank()
+                    ) {
                         FleetNameChips(
                             device, vm, attention,
                             showNames = named,
                             alerted = alerted,
                             observed = observed,
+                            mine = mine,
                         )
                     }
                     if (showSub) {
@@ -1244,6 +1302,7 @@ private fun FleetNameChips(
     showNames: Boolean = true,
     alerted: Boolean = false,
     observed: Boolean = false,
+    mine: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1264,6 +1323,30 @@ private fun FleetNameChips(
                         fontSize = 11.sp,
                         lineHeight = 12.sp,
                         fontWeight = FontWeight.Bold,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                        lineHeightStyle = LineHeightStyle(
+                            alignment = LineHeightStyle.Alignment.Center,
+                            trim = LineHeightStyle.Trim.Both,
+                        ),
+                    ),
+                )
+            }
+        }
+        if (mine) {
+            val ink = MaterialTheme.colorScheme.onSurface
+            Surface(
+                shape = RoundedCornerShape(99.dp),
+                color = ink.copy(alpha = 0.12f),
+            ) {
+                Text(
+                    "Mine",
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 0.dp),
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = ink,
+                        fontSize = 10.sp,
+                        lineHeight = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
                         platformStyle = PlatformTextStyle(includeFontPadding = false),
                         lineHeightStyle = LineHeightStyle(
                             alignment = LineHeightStyle.Alignment.Center,
@@ -1359,6 +1442,34 @@ private fun FleetNameChips(
                         fontSize = 10.sp,
                         lineHeight = 11.sp,
                         fontWeight = if (chip.emphasis) FontWeight.Bold else FontWeight.Normal,
+                        platformStyle = PlatformTextStyle(includeFontPadding = false),
+                        lineHeightStyle = LineHeightStyle(
+                            alignment = LineHeightStyle.Alignment.Center,
+                            trim = LineHeightStyle.Trim.Both,
+                        ),
+                    ),
+                )
+            }
+        }
+        val aircraft = device.payloadAircraft?.trim().orEmpty()
+        if (aircraft.isNotEmpty()) {
+            val id = device.fleetIds.firstOrNull()
+            val color = (id?.let { Color(Palette.color(vm.fleetColor(it))) }
+                ?: MaterialTheme.colorScheme.primary)
+                .nightIf(LocalNightMode.current)
+            Surface(
+                shape = RoundedCornerShape(99.dp),
+                color = color.copy(alpha = 0.18f),
+            ) {
+                Text(
+                    aircraft,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 0.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(
+                        color = color,
+                        fontSize = 10.sp,
+                        lineHeight = 11.sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false),
                         lineHeightStyle = LineHeightStyle(
                             alignment = LineHeightStyle.Alignment.Center,
@@ -1489,13 +1600,17 @@ private fun TimelineView(
                     val observed = vm.hasObserverNote(device)
                     val showNames = showFleet && device.fleetIds.isNotEmpty()
                     val alerted = device.key in alertedKeys
-                    if (attention || observed || showNames || alerted || device.liveDecode.isNotEmpty()) {
+                    val mine = vm.isMine(device.key)
+                    if (attention || observed || showNames || alerted || mine || device.liveDecode.isNotEmpty() ||
+                        !device.payloadAircraft.isNullOrBlank()
+                    ) {
                         Spacer(Modifier.height(3.dp))
                         FleetNameChips(
                             device, vm, attention,
                             showNames = showNames,
                             alerted = alerted,
                             observed = observed,
+                            mine = mine,
                         )
                     }
                     Spacer(Modifier.height(6.dp))

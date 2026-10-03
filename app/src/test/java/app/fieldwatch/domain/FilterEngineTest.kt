@@ -104,6 +104,27 @@ class FilterEngineTest {
     }
 
     @Test
+    fun hideMineDropsMarkedKeysAndKeepsTheRest() {
+        val filter = FilterState(hideMine = true)
+        val mine = setOf(labeled.key)
+        assertFalse(engine.pass(labeled, filter, mineKeys = mine))
+        assertTrue(engine.pass(other, filter, mineKeys = mine))
+        assertTrue(engine.pass(labeled, FilterState(), mineKeys = mine))
+    }
+
+    @Test
+    fun hideMineStaysAndInOrLogic() {
+        val filter = FilterState(
+            hideMine = true,
+            logic = FilterLogic.OR,
+            nameQuery = "anything",
+        )
+        val named = labeled.copy(name = "anything")
+        assertFalse(engine.pass(named, filter, mineKeys = setOf(labeled.key)))
+        assertTrue(engine.pass(other.copy(name = "anything"), filter, mineKeys = setOf(labeled.key)))
+    }
+
+    @Test
     fun signaturesOnlyAndCustomNamesStack() {
         val both = FilterState(namedOnly = true, customNamesOnly = true)
         val keys = setOf(labeled.key, other.key)

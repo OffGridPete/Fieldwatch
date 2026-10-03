@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -214,6 +216,222 @@ class SitTest {
     }
 
     @Test
+    fun debriefNotesAFloodWithoutRaisingTracking() {
+        val now = 1_700_000_000_000L
+        val burst = FloodBurst(
+            at = now - 60_000L,
+            popupCount = 8,
+            nameCount = 0,
+            families = listOf("Apple proximity pairing"),
+            medianRssi = -48,
+        )
+        val outside = burst.copy(at = now - 2 * 60 * 60_000L, popupCount = 99)
+        val doc = DebriefReport.document(
+            devices = emptyList(),
+            fleets = fleets,
+            settings = AppSettings(tagLocation = false),
+            operatorPath = emptyList(),
+            now = now,
+            window = DebriefWindow(now - 15 * 60_000L, now, "lot"),
+            floods = listOf(outside, burst),
+        )
+        val text = doc.toPlainText()
+        val section = doc.sections.single { it.title == "Flood" }
+        assertTrue(text.contains("FLOOD"))
+        assertTrue(section.body.contains(FloodBurst.INTRO))
+        assertTrue(section.body.contains("Pairing flood"))
+        assertTrue(section.body.contains("8 new addresses: Apple proximity pairing"))
+        assertTrue(section.body.contains("about -48 dBm"))
+        assertFalse(section.body.contains("99 new"))
+        assertFalse(section.alert)
+        assertFalse(doc.trackingAlert)
+        assertTrue(doc.sections.none { it.title == "Possible trackers with you" })
+        assertTrue(doc.sections.none { it.title == "Possible tail" })
+        val titles = doc.sections.map { it.title }
+        assertTrue(titles.indexOf("Flood") > titles.indexOf("Anomalies"))
+        assertTrue(titles.indexOf("Flood") < titles.indexOf("Privacy"))
+    }
+
+    @Test
+    fun debriefUsesTheWifiFloodIntroAndLeavesThoseAddressesOut() {
+        val now = 1_700_000_000_000L
+        val window = DebriefWindow(now - 15 * 60_000L, now, "lobby")
+        val real = radio(
+            "WIFI:AC:23:3F:11:22:33",
+            kind = RadioKind.WIFI,
+            firstSeen = now - 60_000L,
+            lastSeen = now,
+            randomized = false,
+            name = "FrontDesk",
+        )
+        val floodA = radio(
+            "WIFI:02:00:00:00:00:11",
+            kind = RadioKind.WIFI,
+            firstSeen = now - 30_000L,
+            lastSeen = now - 30_000L,
+            name = "SpamOne",
+        )
+        val burst = FloodBurst(
+            at = now - 30_000L,
+            popupCount = 15,
+            nameCount = 0,
+            medianRssi = -34,
+            keys = listOf(floodA.key),
+            wifi = true,
+        )
+        val doc = DebriefReport.document(
+            devices = listOf(real, floodA),
+            fleets = fleets,
+            settings = AppSettings(tagLocation = false),
+            operatorPath = emptyList(),
+            now = now,
+            window = window,
+            customNames = mapOf(real.key to "FrontDesk"),
+            floods = listOf(burst),
+        )
+        val section = doc.sections.single { it.title == "Flood" }
+        assertTrue(section.body.contains(FloodBurst.WIFI_INTRO))
+        assertFalse(section.body.contains(FloodBurst.INTRO))
+        assertTrue(section.body.contains("Wi-Fi beacon flood"))
+        assertTrue(section.body.contains("15 new names"))
+        assertTrue(section.body.contains("1 address from this burst is left out of the counts and lists below."))
+        assertEquals("1", doc.meta.first { it.first == "Radios" }.second)
+        assertFalse(doc.toPlainText().contains("02:00:00:00:00:11"))
+        assertTrue(doc.toPlainText().contains("FrontDesk"))
+    }
+
+    @Test
+    fun noteFloodsKeepsWifiBesideBluetoothAtTheSameTime() {
+        val session = SitSession.start(
+            name = "lot",
+            now = 1_000L,
+            heard = emptyList(),
+            fleets = fleets,
+            watchDeviceKeys = emptySet(),
+            watchedFleetIds = emptySet(),
+        )
+        val ble = FloodBurst(at = 5_000L, popupCount = 6, nameCount = 0)
+        val wifi = FloodBurst(
+            at = 5_000L,
+            popupCount = 15,
+            nameCount = 0,
+            keys = listOf("WIFI:02:00:00:00:00:01"),
+            wifi = true,
+        )
+        session.noteFloods(listOf(ble, wifi))
+        session.noteFloods(listOf(wifi.copy(popupCount = 20)))
+        val kept = session.snapshot().floods
+        assertEquals(2, kept.size)
+        assertEquals(6, kept.single { !it.wifi }.popupCount)
+        assertEquals(20, kept.single { it.wifi }.popupCount)
+        assertEquals(listOf("WIFI:02:00:00:00:00:01"), kept.single { it.wifi }.keys)
+    }
+
+    @Test
+    fun debriefLeavesCountedFloodAddressesOutOfTheCounts() {
+        val now = 1_700_000_000_000L
+        val window = DebriefWindow(now - 15 * 60_000L, now, "lot")
+        val real = radio(
+            "BLE:AC:23:3F:11:22:33",
+            firstSeen = now - 60_000L,
+            lastSeen = now,
+            randomized = false,
+            name = "Checkout beacon",
+        )
+        val floodA = radio(
+            "BLE:02:00:00:00:00:01",
+            fleetIds = setOf("fleet-axon"),
+            firstSeen = now - 30_000L,
+            lastSeen = now - 30_000L,
+        ).copy(facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FE2C", "AABBCC"))))
+        val floodB = radio(
+            "BLE:02:00:00:00:00:02",
+            fleetIds = setOf("fleet-axon"),
+            firstSeen = now - 30_000L,
+            lastSeen = now - 30_000L,
+        ).copy(facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FE2C", "CCDDEE"))))
+        val burst = FloodBurst(
+            at = now - 30_000L,
+            popupCount = 8,
+            nameCount = 0,
+            families = listOf("Fast Pair"),
+            medianRssi = -47,
+            keys = listOf(floodA.key, floodB.key),
+        )
+        val earlier = FloodBurst(
+            at = now - 2 * 60 * 60_000L,
+            popupCount = 6,
+            nameCount = 0,
+            keys = listOf(real.key),
+        )
+        val doc = DebriefReport.document(
+            devices = listOf(real, floodA, floodB),
+            fleets = fleets,
+            settings = AppSettings(tagLocation = false),
+            operatorPath = emptyList(),
+            now = now,
+            window = window,
+            customNames = mapOf(real.key to "Checkout beacon"),
+            floods = listOf(earlier, burst),
+        )
+        val text = doc.toPlainText()
+        assertEquals("1", doc.meta.first { it.first == "Radios" }.second)
+        assertTrue(text.contains("Heard 1 advertiser(s)"))
+        assertTrue(text.contains("First seen in this window: 1"))
+        assertTrue(text.contains("Checkout beacon"))
+        assertTrue(text.contains("2 addresses from this burst are left out of the counts and lists below."))
+        assertTrue(doc.sections.single { it.title == "Signature hits" }.body.contains("None in this window."))
+        assertFalse(text.contains("Google Fast Pair in pairing mode"))
+        assertFalse(text.contains("02:00:00:00:00:01"))
+        assertFalse(text.contains("02:00:00:00:00:02"))
+        assertFalse(text.contains("Axon"))
+    }
+
+    @Test
+    fun oldSitJsonWithoutFloodsDecodesEmptyAndANotedBurstRoundTrips() {
+        val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val legacy = json.decodeFromString<SitFile>(
+            """{"format":"fieldwatch-sit","formatVersion":1,"summary":{"id":"a","name":"lot","startAt":1000}}""",
+        )
+        assertTrue(legacy.floods.isEmpty())
+        val session = SitSession.start(
+            name = "lot",
+            now = 1_000L,
+            heard = emptyList(),
+            fleets = fleets,
+            watchDeviceKeys = emptySet(),
+            watchedFleetIds = emptySet(),
+        )
+        val before = FloodBurst(500L, popupCount = 6, nameCount = 0, families = listOf("Fast Pair"))
+        val during = FloodBurst(
+            at = 5_000L,
+            popupCount = 6,
+            nameCount = 0,
+            families = listOf("Apple proximity pairing"),
+            medianRssi = -48,
+            keys = listOf("BLE:02:00:00:00:00:01", "BLE:02:00:00:00:00:02"),
+        )
+        session.noteFloods(listOf(before, during))
+        val louder = during.copy(popupCount = 9)
+        session.noteFloods(listOf(louder))
+        val kept = session.snapshot().floods
+        assertEquals(1, kept.size)
+        assertEquals(5_000L, kept.single().at)
+        assertEquals(9, kept.single().popupCount)
+        assertEquals(listOf("BLE:02:00:00:00:00:01", "BLE:02:00:00:00:00:02"), kept.single().keys)
+        session.noteFloods((1..41).map { FloodBurst(at = 1_000L + it, popupCount = 6, nameCount = 0) })
+        val capped = session.snapshot().floods
+        assertEquals(40, capped.size)
+        assertEquals(1_000L + 2, capped.first().at)
+        val back = json.decodeFromString<SitFile>(json.encodeToString(session.snapshot()))
+        assertEquals(capped, back.floods)
+        session.end(50_000L, fleets)
+        session.noteFloods(listOf(FloodBurst(60_000L, popupCount = 6, nameCount = 0)))
+        assertEquals(40, session.snapshot().floods.size)
+        assertTrue(session.snapshot().floods.none { it.at == 60_000L })
+    }
+
+    @Test
     fun debriefOmitsUnmatchedRandomBleFromListsKeepsCounts() {
         val now = System.currentTimeMillis()
         val rand = radio(
@@ -239,15 +457,31 @@ class SitTest {
         assertTrue(text.contains("2 BLE advertisers"))
         assertTrue(text.contains("1 with randomized addresses") || text.contains("randomized"))
         assertTrue(text.contains("Unmatched rotating BLE omitted"))
+        assertTrue(text.contains("Public safety  1"))
+        assertTrue(text.contains("Unmatched  1"))
+        assertFalse(text.contains("Notable BLE:"))
         assertFalse(text.contains("AA:AA:AA:11:22:33"))
         assertTrue(text.contains("BB:BB:BB:11:22:33"))
-        val shown = DebriefReport.document(
+        val unmatchedOnly = DebriefReport.document(
             devices = listOf(rand, named),
             fleets = fleets,
             settings = AppSettings(tagLocation = false, debriefShowUnmatchedRandomBle = true),
             operatorPath = emptyList(),
             now = now,
         ).toPlainText()
+        assertFalse(unmatchedOnly.contains("AA:AA:AA:11:22:33"))
+        val shown = DebriefReport.document(
+            devices = listOf(rand, named),
+            fleets = fleets,
+            settings = AppSettings(
+                tagLocation = false,
+                debriefShowUnmatchedRandomBle = true,
+                debriefShowAllRadios = true,
+            ),
+            operatorPath = emptyList(),
+            now = now,
+        ).toPlainText()
+        assertTrue(shown.contains("Notable BLE:"))
         assertTrue(shown.contains("AA:AA:AA:11:22:33"))
     }
 
@@ -338,6 +572,149 @@ class SitTest {
     }
 
     @Test
+    fun markedMineLeavesTheUnmarkedTagInTheCallout() {
+        val now = 120_000L
+        val path = listOf(
+            GpsSample(0L, 28.0, -81.0, -50),
+            GpsSample(60_000L, 28.0012, -81.0, -50),
+            GpsSample(now, 28.0018, -81.0, -50),
+        )
+        val dult = listOf(
+            Fleet(
+                id = "fleet-dult",
+                name = "DULT tracker",
+                kind = SignatureClass.FINDER,
+                attentionNote = "A separated tag.",
+            ),
+        )
+        fun tag(mac: String) = radio(
+            "BLE:$mac",
+            fleetIds = setOf("fleet-dult"),
+            firstSeen = 0L,
+            lastSeen = now,
+            rssi = -50,
+            randomized = false,
+            name = "tag",
+        ).copy(gpsTrail = path)
+        val mineTag = tag("11:22:33:44:55:66")
+        val other = tag("11:22:33:44:55:77")
+        val quiet = radio(
+            "BLE:AA:BB:CC:DD:EE:01",
+            firstSeen = 0L,
+            lastSeen = now,
+            rssi = -80,
+            randomized = false,
+        )
+        val doc = DebriefReport.document(
+            devices = listOf(mineTag, other, quiet),
+            fleets = dult,
+            settings = AppSettings(tagLocation = true),
+            operatorPath = path,
+            now = now,
+            window = DebriefWindow(0L, now, "walk"),
+            customNames = mapOf(mineTag.key to "bag tag"),
+            observerNotes = mapOf(quiet.key to "north lot"),
+            mineKeys = setOf(mineTag.key, quiet.key),
+        )
+        val titles = doc.sections.map { it.title }
+        assertEquals("Observer notes", titles[2])
+        val mineAt = titles.indexOf("Marked mine")
+        assertTrue(mineAt > titles.indexOf("Observer notes"))
+        assertTrue(mineAt < titles.indexOf("Tracking assessment"))
+        val mine = doc.sections.single { it.title == "Marked mine" }
+        assertFalse(mine.alert)
+        assertTrue(mine.body.contains("11:22:33:44:55:66"))
+        assertTrue(mine.body.contains("bag tag"))
+        assertTrue(mine.body.contains("Marked mine. With you the whole sit."))
+        assertTrue(mine.body.contains("AA:BB:CC:DD:EE:01"))
+        assertTrue(mine.body.contains("\n    Marked mine."))
+        assertFalse(mine.body.contains("11:22:33:44:55:77"))
+        val trackers = doc.sections.single { it.title == "Possible trackers with you" }
+        assertTrue(trackers.body.contains("11:22:33:44:55:77"))
+        assertFalse(trackers.body.contains("11:22:33:44:55:66"))
+        assertTrue(doc.trackingAlert)
+        assertTrue(doc.toPlainText().contains("Account for it."))
+        val exec = doc.sections.single { it.title == "Executive summary" }.body
+        assertTrue(exec.contains("2 marked mine"))
+        assertFalse(exec.contains("11:22:33:44:55:66"))
+        val extra = doc.sections.single { it.title == "Extra attention" }.body
+        assertTrue(extra.contains("11:22:33:44:55:66"))
+        assertTrue(extra.contains("Marked mine"))
+        assertTrue(extra.contains("A separated tag."))
+        val hit = doc.extraAttention.single { it.radioLabel.contains("11:22:33:44:55:66") }
+        assertTrue(hit.radioLabel.contains("Marked mine"))
+        assertEquals("A separated tag.", hit.note)
+    }
+
+    @Test
+    fun markedMineAloneClearsTheTrackingBanner() {
+        val now = 120_000L
+        val path = listOf(
+            GpsSample(0L, 28.0, -81.0, -50),
+            GpsSample(60_000L, 28.0012, -81.0, -50),
+            GpsSample(now, 28.0018, -81.0, -50),
+        )
+        val dult = listOf(Fleet(id = "fleet-dult", name = "DULT tracker", kind = SignatureClass.FINDER))
+        val mineTag = radio(
+            "BLE:11:22:33:44:55:66",
+            fleetIds = setOf("fleet-dult"),
+            firstSeen = 0L,
+            lastSeen = now,
+            rssi = -50,
+            randomized = false,
+        ).copy(gpsTrail = path)
+        val doc = DebriefReport.document(
+            devices = listOf(mineTag),
+            fleets = dult,
+            settings = AppSettings(tagLocation = true),
+            operatorPath = path,
+            now = now,
+            window = DebriefWindow(0L, now, "walk"),
+            customNames = mapOf(mineTag.key to "bag tag"),
+            mineKeys = setOf(mineTag.key),
+        )
+        assertFalse(doc.trackingAlert)
+        assertTrue(doc.sections.none { it.title == "Possible trackers with you" })
+        assertTrue(doc.sections.none { it.title == "Possible tail" })
+        assertFalse(doc.takeaway.contains("11:22:33:44:55:66"))
+        assertTrue(doc.sections.single { it.title == "Marked mine" }.body.contains("With you the whole sit."))
+        assertTrue(doc.sections.single { it.title == "Executive summary" }.body.contains("1 marked mine"))
+    }
+
+    @Test
+    fun markedMineTailUsesTheArrivalLine() {
+        val now = 120_000L
+        val path = listOf(
+            GpsSample(0L, 28.0, -81.0, -60),
+            GpsSample(40_000L, 28.0008, -81.0, -60),
+            GpsSample(80_000L, 28.0016, -81.0, -60),
+            GpsSample(now, 28.0024, -81.0, -60),
+        )
+        val dult = listOf(Fleet(id = "fleet-dult", name = "DULT tracker", kind = SignatureClass.FINDER))
+        val tail = radio(
+            "BLE:11:22:33:44:55:88",
+            fleetIds = setOf("fleet-dult"),
+            firstSeen = 20_000L,
+            lastSeen = now,
+            rssi = -60,
+            randomized = false,
+        ).copy(gpsTrail = path.drop(1))
+        val doc = DebriefReport.document(
+            devices = listOf(tail),
+            fleets = dult,
+            settings = AppSettings(tagLocation = true),
+            operatorPath = path,
+            now = now,
+            window = DebriefWindow(0L, now, "walk"),
+            mineKeys = setOf(tail.key),
+        )
+        assertFalse(doc.trackingAlert)
+        assertTrue(doc.sections.none { it.title == "Possible tail" })
+        val body = doc.sections.single { it.title == "Marked mine" }.body
+        assertTrue(body.contains("First heard after the sit started and stayed with the path."))
+    }
+
+    @Test
     fun endFreezesSummary() {
         val session = SitSession.start(
             name = "lot",
@@ -383,9 +760,10 @@ class SitTest {
         randomized: Boolean = true,
         rssi: Int = -60,
         name: String = "",
+        kind: RadioKind = RadioKind.BLE,
     ) = Sighting(
         key = key,
-        kind = RadioKind.BLE,
+        kind = kind,
         mac = mac,
         name = name,
         rssi = rssi,

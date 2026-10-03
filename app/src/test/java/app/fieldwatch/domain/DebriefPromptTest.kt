@@ -32,9 +32,58 @@ class DebriefPromptTest {
         assertTrue(text.contains("Axon"))
         assertTrue(text.contains("Takeaway:"))
         assertTrue(text.contains("decoded live value"))
+        assertTrue(text.contains("A flood note is a burst of new addresses, not a follower."))
+        assertTrue(text.contains("Flood if any"))
         assertFalse(text.contains("Full Wi-Fi inventory"))
         assertFalse(text.contains("## Persistence (15 min)"))
         assertFalse(text.contains("## Channel utilization"))
+    }
+
+    @Test
+    fun onboardPasteIncludesAFloodLine() {
+        val now = 15 * 60_000L
+        val text = DebriefPrompt.build(
+            devices = emptyList(),
+            fleets = emptyList(),
+            settings = AppSettings(),
+            now = now,
+            floods = listOf(
+                FloodBurst(
+                    at = now - 60_000L,
+                    popupCount = 8,
+                    nameCount = 0,
+                    families = listOf("Apple proximity pairing"),
+                    medianRssi = -48,
+                ),
+            ),
+        )
+        assertTrue(text.contains("FLOOD"))
+        assertTrue(text.contains(FloodBurst.INTRO))
+        assertTrue(text.contains("8 new addresses"))
+    }
+
+    @Test
+    fun workingCountsLeaveOutFloodAddresses() {
+        val now = 15 * 60_000L
+        val real = radio("BLE:AC:23:3F:11:22:33", "Checkout beacon", now, kind = RadioKind.BLE)
+        val flood = radio("BLE:02:00:00:00:00:01", "spam", now, kind = RadioKind.BLE, rand = true)
+        val text = DebriefPrompt.build(
+            devices = listOf(real, flood),
+            fleets = emptyList(),
+            settings = AppSettings(),
+            now = now,
+            floods = listOf(
+                FloodBurst(
+                    at = now - 60_000L,
+                    popupCount = 6,
+                    nameCount = 0,
+                    keys = listOf(flood.key),
+                ),
+            ),
+        )
+        assertTrue(text.contains("15 min: Wi-Fi 0  BLE 1"))
+        assertTrue(text.contains("1 address from this burst is left out of the counts and lists below."))
+        assertFalse(text.contains("02:00:00:00:00:01"))
     }
 }
 
