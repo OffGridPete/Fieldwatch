@@ -1,5 +1,9 @@
 # Fieldwatch
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+This is the [smallclover fork](https://github.com/smallclover/Fieldwatch) of [OffGridPete/Fieldwatch](https://github.com/OffGridPete/Fieldwatch), with Simplified Chinese localization. For Chinese setup instructions and the fork's current APK status, see the [Chinese README](README.zh-CN.md). Report fork-specific issues [here](https://github.com/smallclover/Fieldwatch/issues). The installation links below refer to the original project's APK, not a Chinese build of this fork.
+
 I built Fieldwatch as a personal tool to look at what Wi-Fi access points and Bluetooth LE ads my phone was able to pick up, so that I could better understand what devices were being used around me. It’s passive, it only listens, there’s no dongle, no account, and no backend server. I wanted something that would work offline in the field.
 
 My goals were to have a modern interface that was easy to use, flexible in how information was displayed so I could customize a view based on what I was trying to do, a filtering engine so I do not have to look at everything, an extensible signature library so I can identify as many radio sources as possible and add new ones on the fly, as well as create reports of what was seen.
