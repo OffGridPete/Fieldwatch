@@ -1,5 +1,9 @@
 package app.fieldwatch.ui.screen
 
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -67,17 +71,17 @@ fun RadioBookmarksScreen(
     val liveKeys = state.devices.filter { !it.gone }.map { it.key }.toSet()
     val demoMode = state.settings.demoMode
     var clearAll by remember { mutableStateOf(false) }
-    var renameId by remember { mutableStateOf<String?>(null) }
+    var renameId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
     val renameTarget = radios.firstOrNull { it.id == renameId }
 
     Scaffold(
         contentWindowInsets = NestedTabInsets,
         topBar = {
             NestedTopBar(
-                title = "Named radios (${radios.size})",
+                title = appText(R.string.radio_bookmarks_screen_named_radios, radios.size),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, appText(R.string.radio_bookmarks_screen_back))
                     }
                 },
             )
@@ -90,7 +94,7 @@ fun RadioBookmarksScreen(
         ) {
             item {
                 Text(
-                    "One MAC each. Custom name shows on Live. Mine marks it as yours: no beep while on, still listed. Observer notes show on detail and reports. Alert is optional (pip / voice / flash). Filters → Named radios only hides everything else. Signature watches stay on Signatures.",
+                    appText(R.string.radio_bookmarks_screen_one_mac_each_custom_name_shows_on),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -98,7 +102,7 @@ fun RadioBookmarksScreen(
             if (radios.isEmpty()) {
                 item {
                     Text(
-                        "No named radios. Set a custom name on detail, or bookmark a radio (top-right) to watch it.",
+                        appText(R.string.radio_bookmarks_screen_no_named_radios_set_a_custom_name),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 12.dp),
@@ -131,7 +135,7 @@ fun RadioBookmarksScreen(
                         onClick = { clearAll = true },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Clear all ${radios.size} named radios")
+                        Text(appText(R.string.radio_bookmarks_screen_clear_all_named_radios, radios.size))
                     }
                 }
             }
@@ -141,9 +145,9 @@ fun RadioBookmarksScreen(
     if (clearAll) {
         AlertDialog(
             onDismissRequest = { clearAll = false },
-            title = { Text("Clear named radios?") },
+            title = { Text(appText(R.string.radio_bookmarks_screen_clear_named_radios)) },
             text = {
-                Text("Remove ${radios.size} named radios. Signature watches stay.")
+                Text(appText(R.string.radio_bookmarks_screen_remove_named_radios_signature_watches_stay, radios.size))
             },
             confirmButton = {
                 TextButton(
@@ -151,30 +155,30 @@ fun RadioBookmarksScreen(
                         vm.clearRadioBookmarks()
                         clearAll = false
                     },
-                ) { Text("Clear") }
+                ) { Text(appText(R.string.radio_bookmarks_screen_clear)) }
             },
             dismissButton = {
-                TextButton(onClick = { clearAll = false }) { Text("Cancel") }
+                TextButton(onClick = { clearAll = false }) { Text(appText(R.string.radio_bookmarks_screen_cancel)) }
             },
         )
     }
     if (renameTarget != null) {
-        var draft by remember(renameTarget.id) { mutableStateOf(renameTarget.label) }
-        var notesDraft by remember(renameTarget.id) { mutableStateOf(renameTarget.observerNotes) }
+        var draft by androidx.compose.runtime.saveable.rememberSaveable(renameTarget.id) { mutableStateOf(renameTarget.label) }
+        var notesDraft by androidx.compose.runtime.saveable.rememberSaveable(renameTarget.id) { mutableStateOf(renameTarget.observerNotes) }
         AlertDialog(
             onDismissRequest = { renameId = null },
-            title = { Text("Named radio") },
+            title = { Text(appText(R.string.radio_bookmarks_screen_named_radio)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     FieldwatchOutlinedField(
                         value = draft,
                         onValueChange = { draft = it.take(RadioBookmarks.MAX_NAME) },
-                        label = "Custom name",
+                        label = appText(R.string.radio_bookmarks_screen_custom_name),
                     )
                     FieldwatchOutlinedField(
                         value = notesDraft,
                         onValueChange = { notesDraft = it.take(RadioBookmarks.MAX_NOTES) },
-                        label = "Observer notes",
+                        label = appText(R.string.radio_bookmarks_screen_observer_notes),
                         singleLine = false,
                         minLines = 3,
                         supportingText = "${notesDraft.trim().length}/${RadioBookmarks.MAX_NOTES}",
@@ -187,10 +191,10 @@ fun RadioBookmarksScreen(
                         vm.updateNamedRadio(renameTarget.id, draft, notesDraft)
                         renameId = null
                     },
-                ) { Text("Save") }
+                ) { Text(appText(R.string.radio_bookmarks_screen_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { renameId = null }) { Text("Cancel") }
+                TextButton(onClick = { renameId = null }) { Text(appText(R.string.radio_bookmarks_screen_cancel)) }
             },
         )
     }
@@ -230,10 +234,10 @@ private fun BookmarkCard(
                 )
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                     IconButton(onClick = onRename, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Outlined.Edit, "Edit", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Edit, appText(R.string.radio_bookmarks_screen_edit), modifier = Modifier.size(18.dp))
                     }
                     IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Outlined.Delete, "Remove", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Delete, appText(R.string.radio_bookmarks_screen_remove), modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -249,7 +253,7 @@ private fun BookmarkCard(
                 )
             }
             Text(
-                if (onAir) "On the air — tap to open detail" else "Not this session",
+                if (onAir) appText(R.string.radio_bookmarks_screen_on_the_air_tap_to_open_detail) else appText(R.string.radio_bookmarks_screen_not_this_session),
                 modifier = underName,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -272,7 +276,7 @@ private fun BookmarkCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Mine",
+                    appText(R.string.radio_bookmarks_screen_mine),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -280,7 +284,7 @@ private fun BookmarkCard(
                 FieldwatchSwitch(checked = row.mine, onCheckedChange = onMine)
                 Spacer(Modifier.width(16.dp))
                 Text(
-                    "Alert",
+                    appText(R.string.radio_bookmarks_screen_alert),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

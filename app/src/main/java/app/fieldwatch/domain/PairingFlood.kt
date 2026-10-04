@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,33 +28,35 @@ data class FloodBurst(
     fun reportLine(clock: String): String {
         val pairing = !wifi && popupCount >= PairingFlood.POPUP_MIN
         val head = when {
-            wifi -> "Wi-Fi beacon flood"
-            pairing -> "Pairing flood"
-            else -> "Name flood"
+            wifi -> localized("pairing_flood_wi_fi_beacon_flood", "Wi-Fi beacon flood")
+            pairing -> localized("pairing_flood_pairing_flood", "Pairing flood")
+            else -> localized("pairing_flood_name_flood", "Name flood")
         }
         val count = when {
             wifi -> popupCount
             pairing -> popupCount
             else -> nameCount
         }
-        val unit = if (wifi) "new names" else "new addresses"
+        val unit = if (wifi) localized("pairing_flood_new_names", "new names") else localized("pairing_flood_new_addresses", "new addresses")
         val fam = if (pairing && families.isNotEmpty()) ": ${families.joinToString(", ")}" else ""
-        val extra = if (pairing && nameCount >= PairingFlood.NAME_MIN) " · $nameCount named" else ""
-        val loud = if (medianRssi != null) " · about $medianRssi dBm" else ""
+        val extra = if (pairing && nameCount >= PairingFlood.NAME_MIN) localized("pairing_flood_named", " · %1\$s named", nameCount) else ""
+        val loud = if (medianRssi != null) localized("pairing_flood_about_dbm", " · about %1\$s dBm", medianRssi) else ""
         val aside = when (keys.size) {
             0 -> ""
-            1 -> " 1 address from this burst is left out of the counts and lists below."
-            else -> " ${keys.size} addresses from this burst are left out of the counts and lists below."
+            1 -> localized("pairing_flood_1_address_from_this_burst_is_left", " 1 address from this burst is left out of the counts and lists below.")
+            else -> localized("pairing_flood_addresses_from_this_burst_are_left_out", " %1\$s addresses from this burst are left out of the counts and lists below.", keys.size)
         }
         return "$clock UTC. $head. $count $unit$fam$extra$loud.$aside"
     }
 
     companion object {
-        const val INTRO =
-            "A burst of new Bluetooth addresses in a few seconds. A handheld can do this by advertising a pairing request or a new name and changing the address every packet. The advertisement does not name the tool."
+        val INTRO: String
+            get() =
+            localized("pairing_flood_a_burst_of_new_bluetooth_addresses_in", "A burst of new Bluetooth addresses in a few seconds. A handheld can do this by advertising a pairing request or a new name and changing the address every packet. The advertisement does not name the tool.")
 
-        const val WIFI_INTRO =
-            "A burst of new Wi-Fi names in one scan, about the same loudness, gone by the next scan. A repeated name, a mesh, an extender, or a guest network is not counted. The advertisement does not name the tool."
+        val WIFI_INTRO: String
+            get() =
+            localized("pairing_flood_a_burst_of_new_wi_fi_names", "A burst of new Wi-Fi names in one scan, about the same loudness, gone by the next scan. A repeated name, a mesh, an extender, or a guest network is not counted. The advertisement does not name the tool.")
 
         /** Device keys counted in these bursts. A burst with no keys contributes nothing. */
         fun keysOf(floods: List<FloodBurst>): Set<String> {
@@ -115,35 +119,35 @@ class PairingFlood {
         val wifi: Boolean = false,
     ) {
         fun title(): String = when {
-            wifi -> "Wi-Fi beacon flood"
-            popupCount >= POPUP_MIN -> "Pairing flood"
-            else -> "Name flood"
+            wifi -> localized("pairing_flood_wi_fi_beacon_flood", "Wi-Fi beacon flood")
+            popupCount >= POPUP_MIN -> localized("pairing_flood_pairing_flood", "Pairing flood")
+            else -> localized("pairing_flood_name_flood", "Name flood")
         }
 
         fun line(): String {
             if (wifi) {
-                val loud = if (medianRssi != null) " · about $medianRssi dBm" else ""
-                return "Wi-Fi beacon flood · $popupCount new names$loud"
+                val loud = if (medianRssi != null) localized("pairing_flood_about_dbm", " · about %1\$s dBm", medianRssi) else ""
+                return localized("pairing_flood_wi_fi_beacon_flood_new_names", "Wi-Fi beacon flood · %1\$s new names%2\$s", popupCount, loud)
             }
             val popupHot = popupCount >= POPUP_MIN
             val nameHot = nameCount >= NAME_MIN
-            val head = if (popupHot) "Pairing flood" else "Name flood"
+            val head = if (popupHot) localized("pairing_flood_pairing_flood", "Pairing flood") else localized("pairing_flood_name_flood", "Name flood")
             val count = if (popupHot) popupCount else nameCount
-            val extra = if (popupHot && nameHot) " · $nameCount named" else ""
-            val loud = if (medianRssi != null) " · about $medianRssi dBm" else ""
-            return "$head · $count new addresses$extra$loud"
+            val extra = if (popupHot && nameHot) localized("pairing_flood_named", " · %1\$s named", nameCount) else ""
+            val loud = if (medianRssi != null) localized("pairing_flood_about_dbm", " · about %1\$s dBm", medianRssi) else ""
+            return localized("pairing_flood_new_addresses_2", "%1\$s · %2\$s new addresses%3\$s%4\$s", head, count, extra, loud)
         }
 
         fun body(): String {
             if (wifi) {
                 val loud = if (medianRssi != null) {
-                    ", about the same loudness, about $medianRssi dBm,"
+                    localized("pairing_flood_about_the_same_loudness_about_dbm", ", about the same loudness, about %1\$s dBm,", medianRssi)
                 } else {
                     ""
                 }
-                val what = "$popupCount new Wi-Fi names showed up in one scan$loud and they were gone on the next scan. " +
-                    "A repeated name, a mesh, an extender, or a guest network is not counted."
-                val how = "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising many network names. The advertisement does not name the tool."
+                val what = localized("pairing_flood_new_wi_fi_names_showed_up_in", "%1\$s new Wi-Fi names showed up in one scan%2\$s and they were gone on the next scan. ", popupCount, loud) +
+                    localized("pairing_flood_a_repeated_name_a_mesh_an_extender", "A repeated name, a mesh, an extender, or a guest network is not counted.")
+                val how = localized("pairing_flood_a_handheld_such_as_a_flipper_zero", "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising many network names. The advertisement does not name the tool.")
                 return what + "\n\n" + how
             }
             val popupHot = popupCount >= POPUP_MIN
@@ -151,7 +155,7 @@ class PairingFlood {
             val what = buildString {
                 if (popupHot) {
                     append(popupCount)
-                    append(" new addresses sent pairing advertisements in the last few seconds")
+                    append(localized("pairing_flood_new_addresses_sent_pairing_advertisements_in_the", " new addresses sent pairing advertisements in the last few seconds"))
                     if (families.isNotEmpty()) {
                         append(": ")
                         append(families.joinToString(", "))
@@ -160,22 +164,22 @@ class PairingFlood {
                     if (nameHot) {
                         append(' ')
                         append(nameCount)
-                        append(" more each advertised a Bluetooth name.")
+                        append(localized("pairing_flood_more_each_advertised_a_bluetooth_name", " more each advertised a Bluetooth name."))
                     }
                 } else {
                     append(nameCount)
-                    append(" new addresses each advertised a Bluetooth name in the last few seconds.")
+                    append(localized("pairing_flood_new_addresses_each_advertised_a_bluetooth_name", " new addresses each advertised a Bluetooth name in the last few seconds."))
                 }
                 if (medianRssi != null) {
-                    append(" They are about the same loudness, about ")
+                    append(localized("pairing_flood_they_are_about_the_same_loudness_about", " They are about the same loudness, about "))
                     append(medianRssi)
-                    append(" dBm, which reads as one nearby radio.")
+                    append(localized("pairing_flood_dbm_which_reads_as_one_nearby_radio", " dBm, which reads as one nearby radio."))
                 }
             }
             val how = if (popupHot) {
-                "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a pairing request and changing the address every packet. The advertisement does not name the tool."
+                localized("pairing_flood_a_handheld_such_as_a_flipper_zero_2", "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a pairing request and changing the address every packet. The advertisement does not name the tool.")
             } else {
-                "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a new name and changing the address every packet. The advertisement does not name the tool."
+                localized("pairing_flood_a_handheld_such_as_a_flipper_zero_3", "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a new name and changing the address every packet. The advertisement does not name the tool.")
             }
             return what + "\n\n" + how
         }

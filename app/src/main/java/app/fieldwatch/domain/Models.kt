@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -755,7 +757,7 @@ data class Sighting(
     val liveDecode: List<LiveDecodeChip> = emptyList(),
 ) {
     val displayName: String
-        get() = name.ifBlank { if (hiddenSsid) "<hidden>" else mac }
+        get() = name.ifBlank { if (hiddenSsid) localized("radio_hidden", "<hidden>") else mac }
 
     /** Custom name from Named radios, else advertised / hidden / MAC. */
     fun reportName(customNames: Map<String, String>): String {
@@ -771,16 +773,16 @@ data class Sighting(
     fun listTitle(signatureNames: List<String> = emptyList()): String {
         val advertised = name.trim()
         if (advertised.isNotEmpty() && !advertised.equals(mac, ignoreCase = true)) return advertised
-        if (kind == RadioKind.WIFI) return if (hiddenSsid) "<hidden>" else mac
-        return DeviceExplain.listLabel(this, signatureNames) ?: "unnamed LE"
+        if (kind == RadioKind.WIFI) return if (hiddenSsid) localized("radio_hidden", "<hidden>") else mac
+        return DeviceExplain.listLabel(this, signatureNames) ?: localized("radio_unnamed", "unnamed LE")
     }
 
     /** SSID or BLE local name; placeholders if blank. */
     fun advertisedName(): String {
         val advertised = name.trim()
         if (advertised.isNotEmpty() && !advertised.equals(mac, ignoreCase = true)) return advertised
-        if (kind == RadioKind.WIFI) return if (hiddenSsid) "<hidden>" else mac
-        return "unnamed LE"
+        if (kind == RadioKind.WIFI) return if (hiddenSsid) localized("radio_hidden", "<hidden>") else mac
+        return localized("radio_unnamed", "unnamed LE")
     }
 
     fun listLineText(
@@ -800,14 +802,14 @@ data class Sighting(
     fun radioKindTag(): String = if (kind == RadioKind.WIFI) "AP" else "LE"
 
     fun statusCrumbs(): String = buildString {
-        if (randomized) append("rand")
+        if (randomized) append(localized("radio_random", "rand"))
         if (fastPairPairing) {
             if (isNotEmpty()) append("  ")
-            append("pair")
+            append(localized("radio_pairing", "pair"))
         }
         if (gone) {
             if (isNotEmpty()) append("  ")
-            append("gone")
+            append(localized("radio_gone", "gone"))
         }
     }
 

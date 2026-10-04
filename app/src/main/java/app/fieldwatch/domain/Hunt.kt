@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 /**
  * Relative-loudness hunt for one BLE advertiser. RSSI is not distance
  * and not a bearing. Quiet / gone is as important as closer / further.
@@ -56,23 +58,23 @@ object Hunt {
     }
 
     fun label(cue: HuntCue): String = when (cue) {
-        HuntCue.VERY_CLOSE -> "Very Close"
-        HuntCue.CLOSER -> "Closer"
-        HuntCue.FURTHER -> "Further"
-        HuntCue.SAME -> "About the same"
-        HuntCue.WAITING -> "Listening…"
-        HuntCue.QUIET -> "Quiet"
-        HuntCue.GONE -> "Gone"
+        HuntCue.VERY_CLOSE -> localized("hunt_very_close", "Very Close")
+        HuntCue.CLOSER -> localized("hunt_closer", "Closer")
+        HuntCue.FURTHER -> localized("hunt_further", "Further")
+        HuntCue.SAME -> localized("hunt_about_the_same", "About the same")
+        HuntCue.WAITING -> localized("hunt_listening", "Listening…")
+        HuntCue.QUIET -> localized("hunt_quiet", "Quiet")
+        HuntCue.GONE -> localized("hunt_gone", "Gone")
     }
 
     fun hint(cue: HuntCue): String = when (cue) {
-        HuntCue.VERY_CLOSE -> "Screaming loud here. Look around — usually in-hand, pocket, or the same bag. Not meters."
-        HuntCue.CLOSER -> "Louder than a few seconds ago. Keep walking that way."
-        HuntCue.FURTHER -> "Quieter than a few seconds ago. Turn or back up."
-        HuntCue.SAME -> "No clear change yet. Slow down; hold the phone still."
-        HuntCue.WAITING -> "Need a few seconds of packets to compare."
-        HuntCue.QUIET -> "No packet for a few seconds. Silent, or behind a wall."
-        HuntCue.GONE -> "Left the live set. Randomized BLE often vanishes mid-hunt."
+        HuntCue.VERY_CLOSE -> localized("hunt_screaming_loud_here_look_around_usually_in", "Screaming loud here. Look around — usually in-hand, pocket, or the same bag. Not meters.")
+        HuntCue.CLOSER -> localized("hunt_louder_than_a_few_seconds_ago_keep", "Louder than a few seconds ago. Keep walking that way.")
+        HuntCue.FURTHER -> localized("hunt_quieter_than_a_few_seconds_ago_turn", "Quieter than a few seconds ago. Turn or back up.")
+        HuntCue.SAME -> localized("hunt_no_clear_change_yet_slow_down_hold", "No clear change yet. Slow down; hold the phone still.")
+        HuntCue.WAITING -> localized("hunt_need_a_few_seconds_of_packets_to", "Need a few seconds of packets to compare.")
+        HuntCue.QUIET -> localized("hunt_no_packet_for_a_few_seconds_silent", "No packet for a few seconds. Silent, or behind a wall.")
+        HuntCue.GONE -> localized("hunt_left_the_live_set_randomized_ble_often", "Left the live set. Randomized BLE often vanishes mid-hunt.")
     }
 
     /**

@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.max
@@ -441,8 +443,8 @@ object TrackerMatch {
         if (beacon.isNotEmpty()) return beacon.joinToString(" + ")
         val wear = nameHits(device, names, wearableTokens)
         if (wear.isNotEmpty()) return wear.joinToString(" + ")
-        if (isFindMyPayload(device)) return "Apple Find My / Offline Finding"
-        if (isCarriedApple(device, names)) return "Apple BLE (phone / Continuity)"
+        if (isFindMyPayload(device)) return localized("geo_apple_find_my_offline_finding", "Apple Find My / Offline Finding")
+        if (isCarriedApple(device, names)) return localized("geo_apple_ble_phone_continuity", "Apple BLE (phone / Continuity)")
         return "tracker-like"
     }
 }

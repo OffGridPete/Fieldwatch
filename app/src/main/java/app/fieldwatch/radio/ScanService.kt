@@ -1,5 +1,7 @@
 package app.fieldwatch.radio
 
+import app.fieldwatch.i18n.localized
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -99,7 +101,7 @@ class ScanService : LifecycleService() {
                 val hint = listOf(
                     wifi.throttleHint(),
                     ble.statusHint(),
-                    if (fastBlocked) "Wi-Fi fast scan needs Developer options" else "",
+                    if (fastBlocked) localized("scan_service_fast_scan_developer_options", "Wi-Fi fast scan needs Developer options") else "",
                 )
                     .filter { it.isNotBlank() }
                     .joinToString(" · ")
@@ -257,7 +259,7 @@ class ScanService : LifecycleService() {
     }
 
     private fun startAsForeground() {
-        val notification = buildNotification("Starting radios…")
+        val notification = buildNotification(localized("scan_service_starting_radios", "Starting radios…"))
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(
                 NOTIF_ID,
@@ -280,8 +282,9 @@ class ScanService : LifecycleService() {
         val now = System.currentTimeMillis()
         if (now - lastNotifAt < 2_500L) return
         lastNotifAt = now
+        ensureChannel()
         val stats = (application as FieldwatchApp).devices.stats.value
-        val text = "${stats.wifiNow} Wi-Fi · ${stats.bleNow} BLE · ${stats.namedNow} signatures"
+        val text = localized("scan_service_wi_fi_ble_signatures", "%1\$s Wi-Fi · %2\$s BLE · %3\$s signatures", stats.wifiNow, stats.bleNow, stats.namedNow)
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIF_ID, buildNotification(text))
     }
@@ -301,12 +304,12 @@ class ScanService : LifecycleService() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_fieldwatch)
-            .setContentTitle("Fieldwatch scanning")
+            .setContentTitle(localized("scan_service_fieldwatch_scanning", "Fieldwatch scanning"))
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(launch)
-            .addAction(0, "Stop", stop)
+            .addAction(0, localized("scan_service_stop", "Stop"), stop)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
     }
@@ -361,8 +364,8 @@ class ScanService : LifecycleService() {
         if (Build.VERSION.SDK_INT < 26) return
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Scanning", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Passive Wi-Fi and Bluetooth scan status"
+            NotificationChannel(CHANNEL, localized("scan_service_scanning", "Scanning"), NotificationManager.IMPORTANCE_LOW).apply {
+                description = localized("scan_service_passive_wi_fi_and_bluetooth_scan_status", "Passive Wi-Fi and Bluetooth scan status")
                 setShowBadge(false)
             },
         )

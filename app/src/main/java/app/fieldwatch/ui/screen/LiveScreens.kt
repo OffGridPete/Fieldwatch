@@ -1,5 +1,13 @@
 package app.fieldwatch.ui.screen
 
+import app.fieldwatch.i18n.displayLiveDecode
+
+import app.fieldwatch.i18n.displayLabel
+
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -130,8 +138,8 @@ fun LivePane(
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
     val flood by vm.floodNotice.collectAsStateWithLifecycle()
     val floodHide by vm.floodHide.collectAsStateWithLifecycle()
-    var renameSit by remember { mutableStateOf(false) }
-    var renameDraft by remember { mutableStateOf("") }
+    var renameSit by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var renameDraft by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     val floodNotice = flood
     Column(Modifier.fillMaxSize()) {
         if (floodNotice != null && !floodNotice.showDialog) {
@@ -146,7 +154,7 @@ fun LivePane(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
             ) {
                 Text(
-                    "Hide this burst",
+                    appText(R.string.live_screens_hide_this_burst),
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.weight(1f),
                 )
@@ -159,7 +167,7 @@ fun LivePane(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
             ) {
                 Text(
-                    if (floodHide.keys.size == 1) "Hiding 1 flood radio" else "Hiding ${floodHide.keys.size} flood radios",
+                    if (floodHide.keys.size == 1) appText(R.string.live_screens_hiding_1_flood_radio) else appText(R.string.live_screens_hiding_flood_radios, floodHide.keys.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -173,16 +181,16 @@ fun LivePane(
                 title = { Text(floodNotice.title()) },
                 text = { Text(floodNotice.body()) },
                 confirmButton = {
-                    TextButton(onClick = { vm.dismissPairingFlood() }) { Text("Continue") }
+                    TextButton(onClick = { vm.dismissPairingFlood() }) { Text(appText(R.string.live_screens_continue)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { vm.hidePairingFlood() }) { Text("Hide these") }
+                    TextButton(onClick = { vm.hidePairingFlood() }) { Text(appText(R.string.live_screens_hide_these)) }
                 },
             )
         }
         if (state.displayPaused) {
             Text(
-                "Display paused · radios still scanning and logging. Filters still apply when you run again. Tap Live to run the list again.",
+                appText(R.string.live_screens_display_paused_radios_still_scanning_and_logging),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -191,9 +199,9 @@ fun LivePane(
         if (state.filter.arrivalsOnly) {
             Text(
                 when {
-                    state.arrivalsLearning -> "New only · learning sitting Wi-Fi"
-                    state.hiddenKnown > 0 -> "New only · ${state.hiddenKnown} hidden"
-                    else -> "New only"
+                    state.arrivalsLearning -> appText(R.string.live_screens_new_only_learning_sitting_wi_fi)
+                    state.hiddenKnown > 0 -> appText(R.string.live_screens_new_only_hidden, state.hiddenKnown)
+                    else -> appText(R.string.live_screens_new_only)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -202,7 +210,7 @@ fun LivePane(
         }
         if (state.filter.movingWithYou) {
             Text(
-                "Follow · path ${state.operatorSpanM.toInt()} m · Start over clears the path",
+                appText(R.string.live_screens_follow_path_m_start_over_clears_the, state.operatorSpanM.toInt()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -210,7 +218,7 @@ fun LivePane(
         }
         if (state.filter.watchedOnly) {
             Text(
-                "Watched only",
+                appText(R.string.live_screens_watched_only),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -218,7 +226,7 @@ fun LivePane(
         }
         if (state.filter.customNamesOnly) {
             Text(
-                "Named radios only",
+                appText(R.string.live_screens_named_radios_only),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -229,8 +237,8 @@ fun LivePane(
             val now = System.currentTimeMillis()
             val dur = Sit.fmtDuration(openSit.durationMs(now))
             val cap = when {
-                state.sit.memoryTight -> " · memory cap"
-                state.sit.atCap -> " · ${Sit.RADIO_CAP} cap"
+                state.sit.memoryTight -> appText(R.string.live_screens_memory_cap)
+                state.sit.atCap -> appText(R.string.live_screens_cap, Sit.RADIO_CAP)
                 else -> ""
             }
             Row(
@@ -240,7 +248,7 @@ fun LivePane(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "Sit · ${openSit.name} · $dur · ${state.sit.radioCount} radios$cap",
+                    appText(R.string.live_screens_sit_radios, openSit.name, dur, state.sit.radioCount, cap),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
@@ -257,12 +265,12 @@ fun LivePane(
         if (renameSit && openSit != null) {
             AlertDialog(
                 onDismissRequest = { renameSit = false },
-                title = { Text("Rename sit") },
+                title = { Text(appText(R.string.live_screens_rename_sit)) },
                 text = {
                     FieldwatchOutlinedField(
                         value = renameDraft,
                         onValueChange = { renameDraft = it.take(Sit.NAME_MAX) },
-                        label = "Name",
+                        label = appText(R.string.live_screens_name),
                     )
                 },
                 confirmButton = {
@@ -271,10 +279,10 @@ fun LivePane(
                             renameSit = false
                             vm.renameSit(openSit.id, renameDraft)
                         },
-                    ) { Text("Save") }
+                    ) { Text(appText(R.string.live_screens_save)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { renameSit = false }) { Text("Cancel") }
+                    TextButton(onClick = { renameSit = false }) { Text(appText(R.string.live_screens_cancel)) }
                 },
             )
         }
@@ -302,36 +310,34 @@ private fun arrivalsEmpty(state: FieldwatchUi): String? {
     if (state.filter.movingWithYou) {
         return when {
             !state.settings.tagLocation ->
-                "Moving with you needs Settings → Tag detections with GPS, then a walk or drive."
+                appText(R.string.live_screens_moving_with_you_needs_settings_tag_detections)
             state.operatorSpanM < 45.0 ->
-                "GPS path ${state.operatorSpanM.toInt()} m — too short. Keep moving. " +
-                    "If this stays 0, Location is not updating (use high accuracy)."
+                appText(R.string.live_screens_gps_path_m_too_short_keep_moving, state.operatorSpanM.toInt())
             state.filter.customNamesOnly || state.filter.watchedOnly ||
                 state.filter.namedOnly || state.filter.namedOnlyImplied() ->
-                "No loud BLE has stayed with you among the radios still allowed. " +
-                    "Tap the Moving with you preset to test BLE, or turn off Signatures only / Show only / Named radios only / Watched only."
+                appText(R.string.live_screens_no_loud_ble_has_stayed_with_you)
             else ->
                 if (state.filter.hideMine) {
-                    "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. Radios marked Mine stay off this list."
+                    appText(R.string.live_screens_no_loud_ble_has_stayed_with_you_2)
                 } else {
-                    "No loud BLE has stayed with you along this path. Wi-Fi access points stay hidden. A tag in your bag or car should show. Find My MAC rotation will not stitch."
+                    appText(R.string.live_screens_no_loud_ble_has_stayed_with_you_3)
                 }
         }
     }
     if (state.filter.arrivalsOnly) {
         return when {
-            state.arrivalsLearning -> "Hiding sitting access points until the next Wi-Fi scan. New Bluetooth still shows right away."
+            state.arrivalsLearning -> appText(R.string.live_screens_hiding_sitting_access_points_until_the_next)
             state.hiddenKnown > 0 ->
-                "${state.hiddenKnown} already seen are hidden. A new radio stays while we hear it, then at least as long as Brief hold after the last packet."
+                appText(R.string.live_screens_already_seen_are_hidden_a_new_radio, state.hiddenKnown)
             else ->
-                "Waiting for a new Wi-Fi or BLE radio. It stays while we hear it, then at least as long as Brief hold after the last packet."
+                appText(R.string.live_screens_waiting_for_a_new_wi_fi_or)
         }
     }
     if (state.filter.watchedOnly) {
-        return "No watched radios on the air. Bookmark a signature, turn Alert on a Named radio, or turn off Filters → Watched only."
+        return appText(R.string.live_screens_no_watched_radios_on_the_air_bookmark)
     }
     if (state.filter.customNamesOnly) {
-        return "No named radios on the air. Set a custom name on detail, or turn off Filters → Named radios only."
+        return appText(R.string.live_screens_no_named_radios_on_the_air_set)
     }
     return null
 }
@@ -410,13 +416,13 @@ private fun ClassOutlineView(
                 FieldwatchFilterChip(
                     selected = !hideEmpty,
                     onClick = { vm.updateSettings { it.copy(outlineHideEmpty = false) } },
-                    label = { Text("Show all") },
+                    label = { Text(appText(R.string.live_screens_show_all)) },
                     modifier = Modifier.weight(1f),
                 )
                 FieldwatchFilterChip(
                     selected = hideEmpty,
                     onClick = { vm.updateSettings { it.copy(outlineHideEmpty = true) } },
-                    label = { Text("Collapse empty") },
+                    label = { Text(appText(R.string.live_screens_collapse_empty)) },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -425,7 +431,7 @@ private fun ClassOutlineView(
             item {
                 Text(
                     emptyHint
-                        ?: "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst.",
+                        ?: appText(R.string.live_screens_no_live_emitters_match_the_current_filter),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(24.dp),
@@ -436,10 +442,10 @@ private fun ClassOutlineView(
         item(key = "outline-summary") {
             val hidden = slices.count { it.radios.isEmpty() }
             val summary = buildString {
-                append("${devices.size} radios")
-                if (unmatched > 0) append(" · $unmatched unmatched")
-                if (multi > 0) append(" · $multi in more than one class")
-                if (hideEmpty && hidden > 0) append(" · $hidden empty hidden")
+                append(appText(R.string.live_screens_radios, devices.size))
+                if (unmatched > 0) append(appText(R.string.live_screens_unmatched, unmatched))
+                if (multi > 0) append(appText(R.string.live_screens_in_more_than_one_class, multi))
+                if (hideEmpty && hidden > 0) append(appText(R.string.live_screens_empty_hidden, hidden))
             }
             Text(
                 summary,
@@ -450,13 +456,13 @@ private fun ClassOutlineView(
         visible.forEach { slice ->
             item(key = "class-${slice.id}") {
                 OutlineGroupRow(
-                    title = slice.label(),
+                    title = slice.displayLabel(),
                     count = slice.radios.size,
                     subtitle = when {
                         slice.radios.isEmpty() -> null
-                        slice.kind == null -> "no signature"
-                        slice.signatures.size == 1 -> vm.fleetName(slice.signatures.first().fleetId)
-                        else -> "${slice.signatures.size} signatures"
+                        slice.kind == null -> appText(R.string.live_screens_no_signature)
+                        slice.signatures.size == 1 -> vm.fleetDisplayName(slice.signatures.first().fleetId)
+                        else -> appText(R.string.live_screens_signatures, slice.signatures.size)
                     },
                     accent = slice.accent(vm).nightIf(LocalNightMode.current),
                     expanded = slice.id in openClasses,
@@ -482,7 +488,7 @@ private fun ClassOutlineView(
                     val sigKey = "${slice.id}/${sig.fleetId}"
                     item(key = "sig-$sigKey") {
                         OutlineGroupRow(
-                            title = vm.fleetName(sig.fleetId),
+                            title = vm.fleetDisplayName(sig.fleetId),
                             count = sig.radios.size,
                             subtitle = null,
                             accent = Color(Palette.color(vm.fleetColor(sig.fleetId)))
@@ -913,7 +919,7 @@ private fun RadarView(
                 }
                 val rad = if (named) 11f else 7f
                 val label = when {
-                    showFleet && named -> device.fleetIds.firstOrNull()?.let { vm.fleetName(it) }?.take(14)
+                    showFleet && named -> device.fleetIds.firstOrNull()?.let { vm.fleetDisplayName(it) }?.take(14)
                         ?: MacUtil.redactMacIn(device.rowTitle(vm), device.mac, demoMode).take(14)
                     named -> MacUtil.redactMacIn(device.rowTitle(vm), device.mac, demoMode).take(14)
                     devices.size <= 24 -> MacUtil.redactMacIn(device.rowTitle(vm), device.mac, demoMode).take(12)
@@ -945,7 +951,7 @@ private fun RadarView(
 
             drawCircle(youColor, radius = 7f, center = c)
             drawCircle(youColor.copy(alpha = 0.2f), radius = 16f, center = c)
-            val you = measurer.measure("YOU", ringStyle.copy(color = youColor, fontWeight = FontWeight.Bold))
+            val you = measurer.measure(appText(R.string.live_screens_you), ringStyle.copy(color = youColor, fontWeight = FontWeight.Bold))
             drawText(you, topLeft = Offset(c.x - you.size.width / 2f, c.y + 12f))
         }
 
@@ -956,14 +962,14 @@ private fun RadarView(
         ) {
             Text(
                 if (devices.isEmpty()) {
-                    emptyHint ?: "No devices match the current filter"
+                    emptyHint ?: appText(R.string.live_screens_no_devices_match_the_current_filter)
                 } else {
                     val zoomBit = if (zoom > 1.04f) {
-                        " · ×${"%.1f".format(Locale.US, zoom)} · double-tap reset"
+                        appText(R.string.live_screens_double_tap_reset, "%.1f".format(Locale.US, zoom))
                     } else {
-                        " · pinch to zoom"
+                        appText(R.string.live_screens_pinch_to_zoom)
                     }
-                    "$onAir on-air · ${devices.size} in filter · dim = gone · tap a blip$zoomBit"
+                    appText(R.string.live_screens_on_air_in_filter_dim_gone_tap, onAir, devices.size, zoomBit)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1129,7 +1135,7 @@ private fun RankedList(
             item {
                 Text(
                     emptyHint
-                        ?: "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst. Use Timeline for recent disappearances.",
+                        ?: appText(R.string.live_screens_no_live_emitters_match_the_current_filter_2),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(24.dp),
@@ -1258,13 +1264,13 @@ fun DeviceRow(
                     if (showNewAge) {
                         val ageSec = ((now - device.firstSeen) / 1000L).coerceAtLeast(0L)
                         Text(
-                            if (ageSec < 60L) "new ${ageSec}s" else "new ${ageSec / 60L}m",
+                            if (ageSec < 60L) appText(R.string.live_screens_new_s, ageSec) else appText(R.string.live_screens_new_m, ageSec / 60L),
                             style = compactLine(10.sp, 11.sp).copy(fontFamily = FontFamily.Monospace),
                             color = MaterialTheme.colorScheme.primary,
                         )
                     } else if (sort == StrengthSort.AVERAGE) {
                         Text(
-                            "avg $rankRssi",
+                            appText(R.string.live_screens_avg, rankRssi),
                             style = compactLine(10.sp, 11.sp).copy(fontFamily = FontFamily.Monospace),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -1339,7 +1345,7 @@ private fun FleetNameChips(
                 color = ink.copy(alpha = 0.12f),
             ) {
                 Text(
-                    "Mine",
+                    appText(R.string.live_screens_mine),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 0.dp),
                     maxLines = 1,
                     style = TextStyle(
@@ -1364,7 +1370,7 @@ private fun FleetNameChips(
             ) {
                 Icon(
                     Icons.AutoMirrored.Outlined.Notes,
-                    contentDescription = "Observer notes",
+                    contentDescription = appText(R.string.live_screens_observer_notes),
                     modifier = Modifier
                         .padding(horizontal = 5.dp, vertical = 1.dp)
                         .size(11.dp),
@@ -1380,7 +1386,7 @@ private fun FleetNameChips(
             ) {
                 Icon(
                     Icons.Outlined.Notifications,
-                    contentDescription = "Alerted this session",
+                    contentDescription = appText(R.string.live_screens_alerted_this_session),
                     modifier = Modifier
                         .padding(horizontal = 5.dp, vertical = 1.dp)
                         .size(11.dp),
@@ -1403,7 +1409,7 @@ private fun FleetNameChips(
                 ) {
                     Text(
                         if (id == FastPair.FLEET_ID) FastPair.liveLabel(device.fastPairPairing)
-                        else vm.fleetName(id),
+                        else vm.fleetDisplayName(id),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = TextStyle(
@@ -1423,7 +1429,8 @@ private fun FleetNameChips(
                 }
             }
         }
-        device.liveDecode.forEach { chip ->
+        val currentUi by vm.ui.collectAsStateWithLifecycle()
+        device.displayLiveDecode(currentUi.fleets).forEach { chip ->
             val id = device.fleetIds.firstOrNull()
             val color = (id?.let { Color(Palette.color(vm.fleetColor(it))) }
                 ?: MaterialTheme.colorScheme.primary)
@@ -1524,7 +1531,7 @@ private fun TimelineView(
     ) {
         item {
             Text(
-                "Last 15 minutes · solid bars are on-air windows",
+                appText(R.string.live_screens_last_15_minutes_solid_bars_are_on),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1664,7 +1671,7 @@ private fun listSubtitle(
     watchName: String? = null,
 ): String {
     val raw = MacUtil.redactMacIn(device.listLineText(subtitleLine, names, watchName), device.mac, demoMode)
-    val body = if (raw.equals("unnamed LE", ignoreCase = true)) "unnamed" else raw
+    val body = if (raw.equals(appText(R.string.live_screens_unnamed_le), ignoreCase = true)) appText(R.string.live_screens_unnamed) else raw
     val crumbs = device.statusCrumbs()
     return buildString {
         if (body.isNotEmpty()) append(body)
@@ -1676,7 +1683,7 @@ private fun listSubtitle(
 }
 
 private fun radioFactLine(device: Sighting): String? {
-    val ch = if (device.channel != 0) "ch${device.channel}" else null
+    val ch = if (device.channel != 0) appText(R.string.live_channel_compact, device.channel) else null
     val mhz = if (device.frequencyMhz != 0) "${device.frequencyMhz}MHz" else null
     return listOfNotNull(ch, mhz).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
@@ -1684,23 +1691,23 @@ private fun radioFactLine(device: Sighting): String? {
 private fun seenTimesLabel(device: Sighting, now: Long): String {
     val first = formatAge(now - device.firstSeen)
     val lastMs = now - device.lastSeen
-    val last = if (lastMs < 1_000L) "now" else formatAge(lastMs)
-    return "first $first  ·  last $last"
+    val last = if (lastMs < 1_000L) appText(R.string.live_screens_now) else formatAge(lastMs)
+    return appText(R.string.live_screens_first_last, first, last)
 }
 
 private fun formatAge(ms: Long): String {
     val sec = (ms / 1000L).coerceAtLeast(0L)
     return when {
-        sec < 60L -> "${sec}s"
+        sec < 60L -> appText(R.string.report_duration_seconds, sec)
         sec < 3600L -> {
             val m = sec / 60L
             val s = sec % 60L
-            if (s == 0L) "${m}m" else "${m}m ${s}s"
+            appText(R.string.report_duration_minutes, m, s)
         }
         else -> {
             val h = sec / 3600L
             val m = (sec % 3600L) / 60L
-            if (m == 0L) "${h}h" else "${h}h ${m}m"
+            appText(R.string.report_duration_hours, h, m)
         }
     }
 }

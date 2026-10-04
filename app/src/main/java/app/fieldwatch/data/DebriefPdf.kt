@@ -1,5 +1,7 @@
 package app.fieldwatch.data
 
+import app.fieldwatch.i18n.localized
+
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
@@ -22,6 +24,7 @@ import androidx.compose.ui.graphics.vector.VectorNode
 import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.graphics.vector.toPath
 import app.fieldwatch.domain.DebriefDoc
+import app.fieldwatch.domain.ReportSectionKind
 import app.fieldwatch.domain.ExtraAttentionHit
 import app.fieldwatch.domain.ReportBar
 import app.fieldwatch.domain.ReportChart
@@ -75,7 +78,7 @@ object DebriefPdf {
     private const val MARK_PILOT = 7
     private const val MARK_ALERT = 8
     private val CONTENT_W = (PAGE_W - 2 * MARGIN).toInt()
-    private val TIME_FMT = SimpleDateFormat("HH:mm", Locale.getDefault())
+    private val TIME_FMT get() = SimpleDateFormat("HH:mm", app.fieldwatch.i18n.TextRuntime.localeProvider())
     private val BODY_TOP = HEADER_H + 18f
     private val BODY_BOT = PAGE_H - FOOTER_H - 8f
     private val USABLE = BODY_BOT - BODY_TOP
@@ -128,7 +131,7 @@ object DebriefPdf {
         val out = ArrayList<Block>()
         out += titleBlock(doc.pdfTitle)
         out += spacer(6f)
-        out += sectionHead("", "Disclaimer", alert = false)
+        out += sectionHead("", localized("debrief_pdf_disclaimer", "Disclaimer"), alert = false)
         doc.disclaimer.split("\n\n").forEach { para ->
             chunkText(para.trim().ifBlank { " " }, CONTENT_W, 9f, muted = true).forEach { sl ->
                 out += textBlock(sl)
@@ -153,11 +156,11 @@ object DebriefPdf {
             out += spacer(10f)
         }
         for (section in doc.sections) {
-            if (section.title == "Extra attention" && doc.extraAttention.isNotEmpty()) {
+            if (section.kind == ReportSectionKind.EXTRA_ATTENTION && doc.extraAttention.isNotEmpty()) {
                 out += sectionHead(section.number, section.title, alert = true)
                 out += spacer(4f)
                 doc.extraAttention.forEach { hit ->
-                    out += attentionNoteBlock(hit)
+                    out += attentionNoteBlocks(hit)
                     out += spacer(8f)
                 }
                 continue
@@ -391,7 +394,7 @@ object DebriefPdf {
             canvas.drawRoundRect(panel, 7f, 7f, fill)
             canvas.drawRoundRect(panel, 7f, 7f, stroke)
             val kicker = Paint().apply {
-                color = if (fig.kicker == "AIRCRAFT") AIRCRAFT else PHOS
+                color = if (fig.kicker == localized("debrief_pdf_aircraft", "AIRCRAFT")) AIRCRAFT else PHOS
                 textSize = 8f
                 typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
                 isAntiAlias = true
@@ -400,18 +403,18 @@ object DebriefPdf {
             canvas.drawText(fig.kicker, MARGIN + 8f, y + 15f, kicker)
             val stats = Paint().apply { color = MUTED; textSize = 8f; isAntiAlias = true }
             val span = if (fig.spanM >= 1000) {
-                "${"%.1f".format(Locale.US, fig.spanM / 1000)} km span"
+                localized("debrief_pdf_km_span", "%1\$s km span", "%.1f".format(Locale.US, fig.spanM / 1000))
             } else {
-                "${fig.spanM.toInt()} m span"
+                localized("debrief_pdf_m_span", "%1\$s m span", fig.spanM.toInt())
             }
             val len = if (fig.lengthM >= 1000) {
-                "${"%.1f".format(Locale.US, fig.lengthM / 1000)} km path"
+                localized("debrief_pdf_km_path", "%1\$s km path", "%.1f".format(Locale.US, fig.lengthM / 1000))
             } else {
-                "${fig.lengthM.toInt()} m path"
+                localized("debrief_pdf_m_path", "%1\$s m path", fig.lengthM.toInt())
             }
             val fixes = fig.tracks.filter { it.aircraft }.sumOf { it.samples.size }
             val right = if (fig.tracks.all { it.aircraft } && fixes == 1) {
-                "1 advertised fix"
+                localized("debrief_pdf_1_advertised_fix", "1 advertised fix")
             } else {
                 "$len  ·  $span"
             }
@@ -664,8 +667,8 @@ object DebriefPdf {
                 textSize = 7.5f
                 isAntiAlias = true
             }
-            canvas.drawText("Start", ox(pts.first().x) + 6f, oy(pts.first().y) - 4f, lab)
-            canvas.drawText("End", ox(pts.last().x) + 6f, oy(pts.last().y) - 4f, lab)
+            canvas.drawText(localized("debrief_pdf_start", "Start"), ox(pts.first().x) + 6f, oy(pts.first().y) - 4f, lab)
+            canvas.drawText(localized("debrief_pdf_end", "End"), ox(pts.last().x) + 6f, oy(pts.last().y) - 4f, lab)
         }
     }
 
@@ -676,20 +679,20 @@ object DebriefPdf {
         val out = ArrayList<LegendSwatch>()
         when {
             phone.size >= 2 -> {
-                out += LegendSwatch("This sit", MARK_STAY)
-                out += LegendSwatch("Second sit", MARK_SLATE)
+                out += LegendSwatch(localized("debrief_pdf_this_sit", "This sit"), MARK_STAY)
+                out += LegendSwatch(localized("debrief_pdf_second_sit", "Second sit"), MARK_SLATE)
             }
-            phone.any { it.samples.size >= 2 } -> out += LegendSwatch("Stay", MARK_STAY)
+            phone.any { it.samples.size >= 2 } -> out += LegendSwatch(localized("debrief_pdf_stay", "Stay"), MARK_STAY)
         }
         val craft = fig.tracks.filter { it.aircraft }
         if (craft.isNotEmpty()) {
-            out += LegendSwatch("Advertised", MARK_AMBER)
-            if (craft.any { it.secondary }) out += LegendSwatch("Second advertised", MARK_AMBER_DASH)
+            out += LegendSwatch(localized("debrief_pdf_advertised", "Advertised"), MARK_AMBER)
+            if (craft.any { it.secondary }) out += LegendSwatch(localized("debrief_pdf_second_advertised", "Second advertised"), MARK_AMBER_DASH)
         }
-        if (fig.dots.any { it.extraAttention }) out += LegendSwatch("Extra attention", MARK_RED)
-        if (fig.dots.any { it.named }) out += LegendSwatch("MAC alert", MARK_BLUE)
-        if (fig.dots.any { !it.extraAttention && !it.named }) out += LegendSwatch("Signature alert", MARK_ALERT)
-        if (fig.pilots.isNotEmpty()) out += LegendSwatch("Pilot", MARK_PILOT)
+        if (fig.dots.any { it.extraAttention }) out += LegendSwatch(localized("debrief_pdf_extra_attention", "Extra attention"), MARK_RED)
+        if (fig.dots.any { it.named }) out += LegendSwatch(localized("debrief_pdf_mac_alert", "MAC alert"), MARK_BLUE)
+        if (fig.dots.any { !it.extraAttention && !it.named }) out += LegendSwatch(localized("debrief_pdf_signature_alert", "Signature alert"), MARK_ALERT)
+        if (fig.pilots.isNotEmpty()) out += LegendSwatch(localized("debrief_pdf_pilot", "Pilot"), MARK_PILOT)
         return out
     }
 
@@ -934,7 +937,7 @@ object DebriefPdf {
         val craft = fig.craftKeys.filter { it.isNotBlank() }
         if (piles.isEmpty() && craft.isEmpty()) return emptyList()
         val out = ArrayList<Block>()
-        out += sectionHead("", "Path key", alert = false)
+        out += sectionHead("", localized("debrief_pdf_path_key", "Path key"), alert = false)
         out += spacer(4f)
         piles.forEachIndexed { i, pile ->
             out += pathKeyRow(i + 1, pile)
@@ -951,16 +954,16 @@ object DebriefPdf {
         val radios = pile.members.joinToString("  ·  ") { m ->
             val d = m.dot
             val kind = if (d.kind.name == "WIFI") "WIFI" else "BLE"
-            val tag = if (d.extraAttention) "Extra attention" else null
+            val tag = if (d.extraAttention) localized("debrief_pdf_extra_attention", "Extra attention") else null
             val fleets = d.fleetNames.filter { it.isNotBlank() }.joinToString(", ")
-            val obs = d.observerNotes.trim().takeIf { it.isNotEmpty() }?.let { "Observer: $it" }
+            val obs = d.observerNotes.trim().takeIf { it.isNotEmpty() }?.let { localized("debrief_pdf_observer", "Observer: %1\$s", it) }
             val who = listOfNotNull(kind, d.label.ifBlank { d.mac }, fleets.ifBlank { null }, tag, obs)
                 .joinToString(" ")
             val advertised = d.advertisedNote.trim()
             if (advertised.isEmpty()) who else "$who — $advertised"
         }
         return if (pile.stacked) {
-            "$n  ${pile.members.size} radios at this stop — $radios"
+            localized("debrief_pdf_radios_at_this_stop", "%1\$s  %2\$s radios at this stop — %3\$s", n, pile.members.size, radios)
         } else {
             "$n  $radios"
         }
@@ -975,7 +978,7 @@ object DebriefPdf {
 
     private fun isStayHead(line: String): Boolean {
         val t = line.trim()
-        return t.matches(Regex("""^\d+\.\s+(Stay|Transit)\b.*""")) ||
+        return t.matches(Regex("""^\d+\.\s+(Stay|Transit|停留|途经)(?:\s|$).*""")) ||
             t.startsWith("• ")
     }
 
@@ -983,7 +986,7 @@ object DebriefPdf {
         val t = line.trim()
         if (t.startsWith("Phone GPS")) return true
         if (t.contains(". ")) return false
-        return t.matches(Regex("""^[A-Z][A-Za-z0-9 +/'()&.,-]{0,48}:(\s.*)?$"""))
+        return t.matches(Regex("""^[\p{L}][\p{L}\p{N} +/'()&.,，·-]{0,48}[:：](\s.*)?$"""))
     }
 
     private fun isBullet(line: String): Boolean {
@@ -1103,28 +1106,33 @@ object DebriefPdf {
         }
     }
 
-    private fun attentionNoteBlock(hit: ExtraAttentionHit): Block {
+    private fun attentionNoteBlocks(hit: ExtraAttentionHit): List<Block> {
         val innerW = CONTENT_W - 24
+        val label = localized("debrief_pdf_extra_attention_2", "EXTRA ATTENTION  ·  %1\$s", hit.signature).uppercase()
+        val kicker = layout(label, innerW, 8f, muted = false, bold = true).apply { paint.color = ALERT_BAR }
         val radio = layout(hit.radioLabel, innerW, 9f, muted = false, bold = true)
         val note = layout(hit.note, innerW, 9.5f, muted = false)
-        val foot = layout("Pattern match, not identity. Not a safety finding.", innerW, 8f, muted = true)
-        val h = 22f + radio.height + 6f + note.height + 8f + foot.height + 12f
-        return Block(h) { canvas, y ->
+        val foot = layout(localized("debrief_pdf_pattern_match_not_identity_not_a_safety", "Pattern match, not identity. Not a safety finding."), innerW, 8f, muted = true)
+        val headH = kicker.height + 8f
+        val h = headH + radio.height + 6f + note.height + 8f + foot.height + 12f
+        // A user note can exceed a whole page. Split it before pagination rather than clip it.
+        if (h > USABLE) return buildList {
+            chunkText(label, innerW, 8f, muted = false).forEach { add(bodyBlock(it, alert = true)) }
+            chunkText(hit.radioLabel, innerW, 9f, muted = false).forEach { add(bodyBlock(it, alert = true)) }
+            chunkText(hit.note, innerW, 9.5f, muted = false).forEach { add(bodyBlock(it, alert = true)) }
+            add(bodyBlock(foot, alert = true))
+        }
+        return listOf(Block(h) { canvas, y ->
             val box = RectF(MARGIN - 6f, y, PAGE_W - MARGIN + 6f, y + h - 4f)
             val fill = Paint().apply { color = ALERT_BG; style = Paint.Style.FILL }
             val bar = Paint().apply { color = ALERT_BAR; style = Paint.Style.FILL }
             canvas.drawRoundRect(box, 4f, 4f, fill)
             canvas.drawRect(box.left, box.top, box.left + 4f, box.bottom, bar)
-            val kicker = Paint().apply {
-                color = ALERT_BAR
-                textSize = 8f
-                typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-                isAntiAlias = true
-                letterSpacing = 0.06f
-            }
-            val label = "EXTRA ATTENTION  ·  ${hit.signature}".uppercase()
-            canvas.drawText(label, MARGIN + 10f, y + 14f, kicker)
-            var ty = y + 20f
+            canvas.save()
+            canvas.translate(MARGIN + 10f, y + 4f)
+            kicker.draw(canvas)
+            canvas.restore()
+            var ty = y + headH
             canvas.save()
             canvas.translate(MARGIN + 10f, ty)
             radio.draw(canvas)
@@ -1139,7 +1147,7 @@ object DebriefPdf {
             canvas.translate(MARGIN + 10f, ty)
             foot.draw(canvas)
             canvas.restore()
-        }
+        })
     }
 
     private fun takeawayBlock(text: String): Block {
@@ -1157,7 +1165,7 @@ object DebriefPdf {
                 typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
                 isAntiAlias = true
             }
-            canvas.drawText("TAKEAWAY", MARGIN + 10f, y + 14f, k)
+            canvas.drawText(localized("debrief_pdf_takeaway", "TAKEAWAY"), MARGIN + 10f, y + 14f, k)
             canvas.save()
             canvas.translate(MARGIN + 10f, y + 20f)
             body.draw(canvas)
@@ -1195,7 +1203,7 @@ object DebriefPdf {
             textSize = 8f
             isAntiAlias = true
         }
-        canvas.drawText("Off Grid Pete LLC  ·  operationally sensitive", MARGIN, PAGE_H - 18f, f)
+        canvas.drawText(localized("debrief_pdf_off_grid_pete_llc_operationally_sensitive", "Off Grid Pete LLC  ·  operationally sensitive"), MARGIN, PAGE_H - 18f, f)
         val pn = "$page / $total"
         canvas.drawText(pn, PAGE_W - MARGIN - f.measureText(pn), PAGE_H - 18f, f)
     }

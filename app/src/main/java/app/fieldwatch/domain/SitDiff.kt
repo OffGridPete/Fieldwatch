@@ -1,5 +1,11 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.displayAttentionNotes
+import app.fieldwatch.i18n.displayName
+import app.fieldwatch.i18n.displayLiveDecode
+
+import app.fieldwatch.i18n.localized
+
 /** Two sit windows, keyed kind + MAC. BLE rotation is a new row. */
 object SitDiff {
     data class Radio(
@@ -31,7 +37,12 @@ object SitDiff {
         val payloadTrail: List<PayloadFix> = emptyList(),
         val payloadAircraft: String = "",
         val mine: Boolean = false,
-    )
+        val displayFleetNames: List<String>? = null,
+        val displayDecode: List<LiveDecodeChip>? = null,
+    ) {
+        val renderedFleetNames: List<String> get() = displayFleetNames ?: fleetNames
+        val renderedDecode: List<LiveDecodeChip> get() = displayDecode ?: liveDecode
+    }
 
     data class Side(
         val name: String,
@@ -75,10 +86,12 @@ object SitDiff {
         kind = device.kind,
         mac = device.mac,
         name = device.reportName(customNames),
-        extraAttention = device.attentionNotes(fleets).isNotEmpty(),
+        extraAttention = device.displayAttentionNotes(fleets).isNotEmpty(),
         named = device.key in customNames,
         bookmarked = device.key in bookmarkedKeys,
         fleetNames = device.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
+        displayFleetNames = device.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.displayName() ?: id },
+        displayDecode = device.displayLiveDecode(fleets),
         fleetIds = device.fleetIds.toList(),
         randomized = device.randomized,
         lat = SitPathPlot.loudestFix(device)?.lat ?: device.latitude,
@@ -117,6 +130,8 @@ object SitDiff {
         named = row.key in customNames,
         bookmarked = row.key in bookmarkedKeys,
         fleetNames = row.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.name ?: id },
+        displayFleetNames = row.fleetIds.map { id -> fleets.firstOrNull { it.id == id }?.displayName() ?: id },
+        displayDecode = row.toSighting().displayLiveDecode(fleets),
         fleetIds = row.fleetIds.toList(),
         randomized = row.randomized,
         lat = SitPathPlot.loudestFix(row.gpsTrail)?.lat,
@@ -167,8 +182,7 @@ object SitDiff {
         val onlySecond = secondKeys.minus(thisKeys)
         val both = thisKeys.intersect(secondKeys)
         val ramNote = if (thisSit.ram || second.ram) {
-            "Last 15 minutes is the Live RAM set (about 400 radios). " +
-                "A named sit keeps up to ${Sit.RADIO_CAP}. Counts are not the same net."
+            localized("sit_diff_last_15_minutes_is_the_live_ram", "Last 15 minutes is the Live RAM set (about 400 radios). A named sit keeps up to %1\$s. Counts are not the same net.", Sit.RADIO_CAP)
         } else {
             null
         }
@@ -178,15 +192,15 @@ object SitDiff {
         fun next() = n++.toString()
         sections += DebriefSection(
             next(),
-            "Windows",
+            localized("sit_diff_windows", "Windows"),
             buildString {
-                append(sideBlock("This sit", thisSit))
-                append(sideBlock("Second sit", second))
+                append(sideBlock(localized("sit_diff_this_sit", "This sit"), thisSit))
+                append(sideBlock(localized("sit_diff_second_sit", "Second sit"), second))
                 if (ramNote != null) {
                     appendLine(ramNote)
                     appendLine()
                 }
-                append("Radios this phone heard. Kind + MAC. BLE rotation is a new row. Not a radio fix.")
+                append(localized("sit_diff_radios_this_phone_heard_kind_mac_ble", "Radios this phone heard. Kind + MAC. BLE rotation is a new row. Not a radio fix."))
             },
             chart = presenceChart(onlyThis, onlySecond, both, byKey),
         )
@@ -194,47 +208,47 @@ object SitDiff {
         val secondCraft = AircraftTrail.pictures(second.radios.mapNotNull { it.toCraftSource() }, second.path)
         val aircraftBody = AircraftTrail.compareBody(thisSit.name, thisCraft, second.name, secondCraft)
         if (aircraftBody.isNotEmpty()) {
-            sections += DebriefSection(next(), "Aircraft", aircraftBody)
+            sections += DebriefSection(next(), localized("sit_diff_aircraft", "Aircraft"), aircraftBody)
         }
         observerNotesSection(thisSit, second)?.let { body ->
-            sections += DebriefSection(next(), "Observer notes", body)
+            sections += DebriefSection(next(), localized("sit_diff_observer_notes", "Observer notes"), body)
         }
         markedMineSection(thisSit, second)?.let { body ->
-            sections += DebriefSection(next(), "Marked mine", body)
+            sections += DebriefSection(next(), localized("sit_diff_marked_mine", "Marked mine"), body)
         }
         if (extraHits.isNotEmpty()) {
             sections += DebriefSection(
                 next(),
-                "Extra attention",
+                localized("sit_diff_extra_attention", "Extra attention"),
                 extraHits.joinToString("\n") { "${it.radioLabel}\n${it.note}" },
                 alert = true,
             )
         }
         floodSection(thisSit, second)?.let { body ->
-            sections += DebriefSection(next(), "Flood", body)
+            sections += DebriefSection(next(), localized("sit_diff_flood", "Flood"), body)
         }
-        sections += rosterSection(next(), "Only in this sit (${onlyThis.size})", onlyThis, byKey, showAllRadios)
-        sections += rosterSection(next(), "Only in second sit (${onlySecond.size})", onlySecond, byKey, showAllRadios)
-        sections += bothSection(next(), "In both (${both.size})", both, thisSit, second, byKey, showAllRadios)
+        sections += rosterSection(next(), localized("sit_diff_only_in_this_sit", "Only in this sit (%1\$s)", onlyThis.size), onlyThis, byKey, showAllRadios)
+        sections += rosterSection(next(), localized("sit_diff_only_in_second_sit", "Only in second sit (%1\$s)", onlySecond.size), onlySecond, byKey, showAllRadios)
+        sections += bothSection(next(), localized("sit_diff_in_both", "In both (%1\$s)", both.size), both, thisSit, second, byKey, showAllRadios)
         val meta = buildList {
-            add("This sit" to thisSit.name)
-            add("Second sit" to second.name)
-            add("This radios" to thisSit.radios.size.toString())
-            add("Second radios" to second.radios.size.toString())
-            if (ramNote != null) add("Caps" to "RAM ~400 vs sit ${Sit.RADIO_CAP}")
+            add(localized("sit_diff_this_sit", "This sit") to thisSit.name)
+            add(localized("sit_diff_second_sit", "Second sit") to second.name)
+            add(localized("sit_diff_this_radios", "This radios") to thisSit.radios.size.toString())
+            add(localized("sit_diff_second_radios", "Second radios") to second.radios.size.toString())
+            if (ramNote != null) add(localized("sit_diff_caps", "Caps") to localized("sit_diff_ram_400_vs_sit", "RAM ~400 vs sit %1\$s", Sit.RADIO_CAP))
         }
         return DebriefDoc(
             generatedUtc = "",
-            windowLine = "${thisSit.name} vs ${second.name}",
+            windowLine = localized("sit_diff_vs", "%1\$s vs %2\$s", thisSit.name, second.name),
             meta = meta,
             disclaimer = FieldwatchDisclaimer.compare(),
             trackingAlert = extraHits.isNotEmpty(),
             takeaway = compareTakeaway(onlyThis.size, onlySecond.size, both.size, mineCount(thisSit, second)),
             sections = sections,
             extraAttention = extraHits,
-            heading = "FIELDWATCH SIT COMPARE",
-            pdfKicker = "SIT COMPARE",
-            pdfTitle = "Sit compare",
+            heading = localized("sit_diff_fieldwatch_sit_compare", "FIELDWATCH SIT COMPARE"),
+            pdfKicker = localized("sit_diff_sit_compare_2", "SIT COMPARE"),
+            pdfTitle = localized("sit_diff_sit_compare", "Sit compare"),
             pathFigure = AircraftTrail.applyWalk(
                 AircraftTrail.applyWalk(
                     pathFigure(thisSit, second, watchedFleetIds),
@@ -262,7 +276,7 @@ object SitDiff {
             },
         )
         if (tracks.isEmpty()) return null
-        val pinNote = "A MAC alert or a signature alert is drawn once. A decoded latitude and longitude is the last advertised position. Anything else is the strongest hear. A number is that place (Path key)."
+        val pinNote = localized("sit_diff_a_mac_alert_or_a_signature_alert", "A MAC alert or a signature alert is drawn once. A decoded latitude and longitude is the last advertised position. Anything else is the strongest hear. A number is that place (Path key).")
         val points = (thisSit.radios + second.radios)
             .filter { it.bookmarked || it.fleetIds.any { id -> id in watchedFleetIds } }
             .distinctBy { it.key }
@@ -308,12 +322,12 @@ object SitDiff {
         val dots = points
         val all = tracks.flatMap { it.samples }
         val cap = if (tracks.size == 2) {
-            "Two walks on one north-up frame. Green = this sit. Slate = second sit. $pinNote"
+            localized("sit_diff_two_walks_on_one_north_up_frame", "Two walks on one north-up frame. Green = this sit. Slate = second sit. %1\$s", pinNote)
         } else {
-            "North-up. Line is this phone. $pinNote"
+            localized("sit_diff_north_up_line_is_this_phone", "North-up. Line is this phone. %1\$s", pinNote)
         }
         return SitPathPlot.Figure(
-            kicker = if (tracks.size == 2) "OPERATOR PATHS" else "OPERATOR PATH",
+            kicker = if (tracks.size == 2) localized("sit_diff_operator_paths", "OPERATOR PATHS") else localized("sit_diff_operator_path", "OPERATOR PATH"),
             tracks = tracks,
             dots = dots,
             lengthM = Geo.pathLengthM(all),
@@ -362,11 +376,11 @@ object SitDiff {
 
     private fun sideBlock(heading: String, side: Side): String {
         val net = if (side.ram) {
-            "last 15 minutes in memory (about 400 radios)"
+            localized("sit_diff_last_15_minutes_in_memory_about_400", "last 15 minutes in memory (about 400 radios)")
         } else {
-            "named window (up to ${Sit.RADIO_CAP})"
+            localized("sit_diff_named_window_up_to", "named window (up to %1\$s)", Sit.RADIO_CAP)
         }
-        return "$heading: ${side.name}\n${side.radios.size} radios · $net\n"
+        return localized("sit_diff_n_radios_n", "%1\$s: %2\$s\n%3\$s radios · %4\$s\n", heading, side.name, side.radios.size, net)
     }
 
     private fun exclusiveExtra(
@@ -378,12 +392,12 @@ object SitDiff {
             val row = byKey[key] ?: return@mapNotNull null
             if (!row.extraAttention) return@mapNotNull null
             ExtraAttentionHit(
-                signature = row.fleetNames.firstOrNull() ?: "Extra attention",
+                signature = row.renderedFleetNames.firstOrNull() ?: localized("sit_diff_extra_attention", "Extra attention"),
                 radioLabel = line(row),
                 note = where,
             )
         }
-        return hits(onlyThis, "Only in this sit.") + hits(onlySecond, "Only in second sit.")
+        return hits(onlyThis, localized("sit_diff_only_in_this_sit_2", "Only in this sit.")) + hits(onlySecond, localized("sit_diff_only_in_second_sit_2", "Only in second sit."))
     }
 
     private fun presenceChart(
@@ -404,9 +418,9 @@ object SitDiff {
         return ReportChart(
             split = true,
             rows = listOf(
-                row("Only in this sit", onlyThis),
-                row("In both", both),
-                row("Only in second sit", onlySecond),
+                row(localized("sit_diff_only_in_this_sit_3", "Only in this sit"), onlyThis),
+                row(localized("sit_diff_in_both_2", "In both"), both),
+                row(localized("sit_diff_only_in_second_sit_3", "Only in second sit"), onlySecond),
             ),
         )
     }
@@ -418,7 +432,7 @@ object SitDiff {
         byKey: Map<String, Radio>,
         showAll: Boolean,
     ): DebriefSection {
-        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        if (keys.isEmpty()) return DebriefSection(number, title, localized("sit_diff_none", "(none)"))
         val radios = keys.mapNotNull { byKey[it] }
         val shown = if (showAll) keys else keys.filter { byKey[it]?.keepShort() == true }.toSet()
         return DebriefSection(
@@ -439,7 +453,7 @@ object SitDiff {
         byKey: Map<String, Radio>,
         showAll: Boolean,
     ): DebriefSection {
-        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        if (keys.isEmpty()) return DebriefSection(number, title, localized("sit_diff_none", "(none)"))
         val earlier = thisSit.radios.associateBy { it.key }
         val later = second.radios.associateBy { it.key }
         val shown = if (showAll) {
@@ -464,8 +478,8 @@ object SitDiff {
         if (radios.isEmpty()) return null
         val counts = linkedMapOf<String, Int>()
         for (radio in radios) {
-            val sigs = radio.fleetNames.filter { it.isNotBlank() }.distinct()
-            val key = if (sigs.isEmpty()) "Unmatched" else sigs.joinToString(" + ")
+            val sigs = radio.renderedFleetNames.filter { it.isNotBlank() }.distinct()
+            val key = if (sigs.isEmpty()) localized("sit_diff_unmatched", "Unmatched") else sigs.joinToString(" + ")
             counts[key] = (counts[key] ?: 0) + 1
         }
         val rows = counts.entries
@@ -484,7 +498,7 @@ object SitDiff {
     }
 
     private fun listBody(keys: Set<String>, byKey: Map<String, Radio>): String {
-        if (keys.isEmpty()) return "(none)"
+        if (keys.isEmpty()) return localized("sit_diff_none", "(none)")
         return keys.mapNotNull { byKey[it] }
             .sortedWith(
                 compareByDescending<Radio> { it.extraAttention }
@@ -497,7 +511,7 @@ object SitDiff {
 
     /** Kind + MAC is the same radio. A live label can still change between windows. */
     private fun bothBody(keys: Set<String>, thisSit: Side, second: Side): String {
-        if (keys.isEmpty()) return "(none)"
+        if (keys.isEmpty()) return localized("sit_diff_none", "(none)")
         val earlier = thisSit.radios.associateBy { it.key }
         val later = second.radios.associateBy { it.key }
         return keys.mapNotNull { key ->
@@ -518,12 +532,12 @@ object SitDiff {
         val right = later.liveDecode.reportLabels()
         when {
             left.isNotEmpty() && right.isNotEmpty() && left != right -> {
-                append("  decoded value changed: ")
-                append(left.joinToString(", "))
+                append(localized("sit_diff_decoded_value_changed", "  decoded value changed: "))
+                append(earlier.renderedDecode.reportLabels().joinToString(", "))
                 append(" → ")
-                append(right.joinToString(", "))
+                append(later.renderedDecode.reportLabels().joinToString(", "))
             }
-            else -> append(chipSuffix(if (right.isNotEmpty()) later.liveDecode else earlier.liveDecode))
+            else -> append(chipSuffix(if (right.isNotEmpty()) later.renderedDecode else earlier.renderedDecode))
         }
     }
 
@@ -536,13 +550,13 @@ object SitDiff {
             append("  ")
             append(label)
         }
-        if (row.mine) append("  Marked mine")
-        row.fleetNames.filter { it.isNotBlank() }.forEach { name ->
+        if (row.mine) append(localized("sit_diff_marked_mine_2", "  Marked mine"))
+        row.renderedFleetNames.filter { it.isNotBlank() }.forEach { name ->
             append("  ")
             append(name)
         }
-        if (row.extraAttention) append("  Extra attention")
-        if (chips) append(chipSuffix(row.liveDecode))
+        if (row.extraAttention) append(localized("sit_diff_extra_attention_2", "  Extra attention"))
+        if (chips) append(chipSuffix(row.renderedDecode))
     }
 
     private fun chipSuffix(chips: List<LiveDecodeChip>): String {
@@ -565,8 +579,8 @@ object SitDiff {
         (thisSit.radios + second.radios).distinctBy { it.key }.count { it.mine }
 
     private fun compareTakeaway(onlyThis: Int, onlySecond: Int, both: Int, mine: Int): String {
-        val counts = "$onlyThis only in this sit · $onlySecond only in the second · $both in both."
-        return if (mine > 0) "$counts · $mine marked mine." else counts
+        val counts = localized("sit_diff_only_in_this_sit_only_in_the", "%1\$s only in this sit · %2\$s only in the second · %3\$s in both.", onlyThis, onlySecond, both)
+        return if (mine > 0) localized("sit_diff_marked_mine_3", "%1\$s · %2\$s marked mine.", counts, mine) else counts
     }
 
     private fun floodSection(thisSit: Side, second: Side): String? {
@@ -590,13 +604,13 @@ object SitDiff {
     private fun markedMineSection(thisSit: Side, second: Side): String? {
         fun where(key: String): String = when {
             key in thisSit.keys && key in second.keys -> "both"
-            key in thisSit.keys -> "this sit"
-            else -> "second sit"
+            key in thisSit.keys -> localized("sit_diff_this_sit_2", "this sit")
+            else -> localized("sit_diff_second_sit_2", "second sit")
         }
         val rows = (thisSit.radios + second.radios).distinctBy { it.key }.filter { it.mine }
         if (rows.isEmpty()) return null
         return buildString {
-            appendLine("Radios you marked mine. Heard in either window. Still listed.")
+            appendLine(localized("sit_diff_radios_you_marked_mine_heard_in_either", "Radios you marked mine. Heard in either window. Still listed."))
             rows.sortedWith(
                 compareBy<Radio> { where(it.key) }.thenBy { it.mac },
             ).forEach { r ->
@@ -613,8 +627,8 @@ object SitDiff {
     private fun observerNotesSection(thisSit: Side, second: Side): String? {
         fun where(key: String): String = when {
             key in thisSit.keys && key in second.keys -> "both"
-            key in thisSit.keys -> "this sit"
-            else -> "second sit"
+            key in thisSit.keys -> localized("sit_diff_this_sit_2", "this sit")
+            else -> localized("sit_diff_second_sit_2", "second sit")
         }
         val rows = (thisSit.radios + second.radios)
             .distinctBy { it.key }
@@ -624,7 +638,7 @@ object SitDiff {
             }
         if (rows.isEmpty()) return null
         return buildString {
-            appendLine("Your captions on radios heard in either window. Same KIND+MAC as Named radios. Not catalog Notes.")
+            appendLine(localized("sit_diff_your_captions_on_radios_heard_in_either", "Your captions on radios heard in either window. Same KIND+MAC as Named radios. Not catalog Notes."))
             rows.sortedWith(
                 compareBy<Pair<Radio, String>> { where(it.first.key) }.thenBy { it.first.mac },
             ).forEach { (r, note) ->

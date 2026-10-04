@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import java.util.UUID
 
 object RadioBookmarks {
@@ -29,7 +31,7 @@ object RadioBookmarks {
     fun clipNotes(text: String): String = text.trim().take(MAX_NOTES)
 
     fun observerNotesHint(): String =
-        "Pinned to this MAC. Shows on Debrief, Compare, Path, and AI Export. Does not turn Alert on."
+        localized("radio_bookmarks_pinned_to_this_mac_shows_on_debrief", "Pinned to this MAC. Shows on Debrief, Compare, Path, and AI Export. Does not turn Alert on.")
 
     fun watchedFleetIds(watchlist: List<WatchTarget>): Set<String> =
         watchlist.mapNotNull { row ->
@@ -56,8 +58,8 @@ object RadioBookmarks {
     fun pathNote(bookmarked: Boolean, observerNotes: String, mine: Boolean): String {
         val obs = if (bookmarked) observerNotes.trim() else ""
         return when {
-            obs.isNotEmpty() && mine -> "$obs\nMarked mine"
-            mine -> "Marked mine"
+            obs.isNotEmpty() && mine -> localized("radio_bookmarks_nmarked_mine", "%1\$s\nMarked mine", obs)
+            mine -> localized("radio_bookmarks_marked_mine", "Marked mine")
             else -> obs
         }
     }
@@ -81,10 +83,10 @@ object RadioBookmarks {
         if (title.isNotEmpty() && !title.equals(device.mac, ignoreCase = true)) {
             return clip(title)
         }
-        return if (device.kind == RadioKind.BLE) "unnamed LE" else clip(device.mac.takeLast(8))
+        return if (device.kind == RadioKind.BLE) localized("radio_bookmarks_unnamed_le", "unnamed LE") else clip(device.mac.takeLast(8))
     }
 
-    fun clip(name: String): String = name.trim().take(MAX_NAME).ifBlank { "Radio" }
+    fun clip(name: String): String = name.trim().take(MAX_NAME).ifBlank { localized("radio_bookmarks_radio", "Radio") }
 
     /**
      * BLE privacy addresses rotate; a name would stick to a dead key.
@@ -97,9 +99,9 @@ object RadioBookmarks {
     }
 
     fun customNameHint(device: Sighting): String {
-        val base = "Shows on Live. Bookmark (top-right) is the alert; this does not turn it on."
+        val base = localized("radio_bookmarks_shows_on_live_bookmark_top_right_is", "Shows on Live. Bookmark (top-right) is the alert; this does not turn it on.")
         return if (device.kind == RadioKind.WIFI && device.randomized) {
-            "$base Pinned to this BSSID. Vehicle, mesh, and guest APs often keep a locally administered address."
+            localized("radio_bookmarks_pinned_to_this_bssid_vehicle_mesh_and", "%1\$s Pinned to this BSSID. Vehicle, mesh, and guest APs often keep a locally administered address.", base)
         } else {
             base
         }
@@ -173,7 +175,7 @@ object RadioBookmarks {
         val key = row.deviceKey ?: return watchlist
         val suggest = row.label.trim().ifBlank {
             val mac = key.substringAfter(':')
-            if (key.startsWith("BLE:")) "unnamed LE" else mac.takeLast(8)
+            if (key.startsWith("BLE:")) localized("radio_bookmarks_unnamed_le", "unnamed LE") else mac.takeLast(8)
         }
         return setMine(watchlist, key, on, suggest)
     }

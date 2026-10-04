@@ -1,5 +1,9 @@
 package app.fieldwatch.ui
 
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -81,7 +85,7 @@ fun LiveChromeTour(
         val fitted = spots.map { spot ->
             val h = measuredH[spot.title] ?: return@map spot
             val box = Rect(spot.box.left, spot.box.top, spot.box.right, spot.box.top + h)
-            val fromY = if (spot.title == "Tune") box.top else box.bottom
+            val fromY = if (spot.title == appText(R.string.live_chrome_tour_tune)) box.top else box.bottom
             spot.copy(box = box, from = Offset(spot.from.x, fromY))
         }
         val placed = separateBubbles(fitted, pad, with(density) { 8.dp.toPx() })
@@ -128,7 +132,7 @@ fun LiveChromeTour(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset { IntOffset(0, gotItY.roundToInt()) },
-        ) { Text("Got it") }
+        ) { Text(appText(R.string.live_chrome_tour_got_it)) }
     }
 }
 
@@ -179,11 +183,11 @@ private fun layoutSpots(
 
     val tune = targets.tune!!
     val tabs = listOf(
-        Triple(targets.pause!!, "Pause", "Freeze the picture. Tap Live again to run."),
-        Triple(targets.filters!!, "Filters", "Who is shown."),
-        Triple(targets.signatures!!, "Signatures", "Pattern catalog."),
-        Triple(targets.reports!!, "Reports", "Debrief, sits, log."),
-        Triple(targets.settings!!, "Settings", "Scan, GPS, TAK."),
+        Triple(targets.pause!!, appText(R.string.live_chrome_tour_pause), appText(R.string.live_chrome_tour_freeze_the_picture_tap_live_again_to)),
+        Triple(targets.filters!!, appText(R.string.live_chrome_tour_filters), appText(R.string.live_chrome_tour_who_is_shown)),
+        Triple(targets.signatures!!, appText(R.string.live_chrome_tour_signatures), appText(R.string.live_chrome_tour_pattern_catalog)),
+        Triple(targets.reports!!, appText(R.string.live_chrome_tour_reports), appText(R.string.live_chrome_tour_debrief_sits_log)),
+        Triple(targets.settings!!, appText(R.string.live_chrome_tour_settings), appText(R.string.live_chrome_tour_scan_gps_tak)),
     )
     val heights = floatArrayOf(topH, bodyH, bodyH, bodyH, topH)
     val tabTop = tabs.minOf { it.first.top }
@@ -279,7 +283,7 @@ private fun layoutSpots(
     }
     val tuneFromX = tune.center.x.coerceIn(tuneBox.left + inset, tuneBox.right - inset)
     return listOf(
-        Spot(tune, "Tune", "Display — Radar, list, timeline, hybrid, By class.", tuneBox, Offset(tuneFromX, tuneBox.top)),
+        Spot(tune, appText(R.string.live_chrome_tour_tune), appText(R.string.live_chrome_tour_display_radar_list_timeline_hybrid_by_class), tuneBox, Offset(tuneFromX, tuneBox.top)),
     ) + tabs.mapIndexed { i, t ->
         Spot(t.first, t.second, t.third, boxes[i], fromOn(boxes[i], t.first, i))
     }
@@ -306,7 +310,7 @@ private fun separateBubbles(spots: List<Spot>, pad: Float, edge: Float): List<Sp
     }
     return spots.mapIndexed { i, s ->
         val b = boxes[i]
-        val fromY = if (s.title == "Tune") b.top else b.bottom
+        val fromY = if (s.title == appText(R.string.live_chrome_tour_tune)) b.top else b.bottom
         s.copy(box = b, from = Offset(s.from.x, fromY))
     }
 }

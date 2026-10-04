@@ -1,5 +1,7 @@
 package app.fieldwatch.data
 
+import app.fieldwatch.i18n.localized
+
 import android.content.Context
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.LogExportRadios
@@ -158,7 +160,7 @@ class LogStore(context: Context) {
             withContext(Dispatchers.IO) {
                 flushWriter()
                 val stream = resolver.openOutputStream(uri)
-                    ?: error("Could not open the selected location")
+                    ?: error(localized("log_selected_location_unavailable", "Could not open the selected location"))
                 stream.buffered(64 * 1024).use { dest ->
                     writeExport(dest, asJsonl, radios, onProgress)
                 }

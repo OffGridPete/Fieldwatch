@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import java.util.UUID
 
 data class SignatureCandidate(
@@ -26,7 +28,7 @@ data class CandidateReport(
     val skippedRandomized: Int,
     val skippedHouseLike: Int,
     val skippedOther: Int,
-    val sourceLabel: String = "Rotating log",
+    val sourceLabel: String = localized("signature_candidates_rotating_log", "Rotating log"),
 )
 
 enum class FamilyVerdict { STRONG, POSSIBLE, SINGLE, TAGGED }
@@ -44,14 +46,14 @@ data class SignatureFamilyHint(
 
 internal fun ruleShortLabel(rule: MatchRule): String = when (rule.kind) {
     RuleKind.NAME_GLOB, RuleKind.NAME_CONTAINS -> rule.text
-    RuleKind.VENDOR_IE_OUI -> "vendor IE ${rule.text}"
+    RuleKind.VENDOR_IE_OUI -> localized("signature_candidates_vendor_ie_2", "vendor IE %1\$s", rule.text)
     RuleKind.OUI, RuleKind.MAC_PREFIX -> "OUI ${rule.text}"
     RuleKind.SERVICE_UUID -> "UUID ${rule.text}"
     RuleKind.SERVICE_DATA ->
-        if (rule.text.isBlank()) "svc contains ${rule.dataPrefixHex}"
+        if (rule.text.isBlank()) localized("signature_candidates_svc_contains", "svc contains %1\$s", rule.dataPrefixHex)
         else "UUID ${rule.text} ${rule.dataPrefixHex}"
-    RuleKind.MANUFACTURER_DATA -> "mfg 0x%04X %s".format(rule.companyId, rule.dataPrefixHex)
-    RuleKind.MANUFACTURER_ID -> "mfg 0x%04X".format(rule.companyId)
+    RuleKind.MANUFACTURER_DATA -> localized("signature_candidates_mfg_data", "mfg %1\$s %2\$s", "0x%04X".format(rule.companyId), rule.dataPrefixHex)
+    RuleKind.MANUFACTURER_ID -> localized("signature_candidates_mfg_id", "mfg %1\$s", "0x%04X".format(rule.companyId))
     else -> rule.kind.name
 }
 
@@ -68,7 +70,7 @@ object SignatureCandidates {
         radios: List<LogRadio>,
         fleets: List<Fleet>,
         engine: SignatureEngine = SignatureEngine(),
-        sourceLabel: String = "Rotating log",
+        sourceLabel: String = localized("signature_candidates_rotating_log", "Rotating log"),
     ): CandidateReport {
         val sightings = radios.map { it.toSighting() }
         val hits = if (sightings.isEmpty()) emptyMap() else engine.match(sightings, fleets)
@@ -123,11 +125,11 @@ object SignatureCandidates {
     ): SignatureFamilyHint {
         val tagged = fleets.filter { it.id in device.fleetIds }.map { it.name.trim() }.filter { it.isNotEmpty() }
         if (device.fleetIds.isNotEmpty()) {
-            val names = tagged.ifEmpty { listOf("a catalog signature") }
+            val names = tagged.ifEmpty { listOf(localized("signature_candidates_a_catalog_signature", "a catalog signature")) }
             return SignatureFamilyHint(
                 verdict = FamilyVerdict.TAGGED,
-                title = "Already tagged",
-                body = "Matched ${names.joinToString(", ")}. A second signature can still dual-label this radio (store UUID, product OUI).",
+                title = localized("signature_candidates_already_tagged", "Already tagged"),
+                body = localized("signature_candidates_matched_a_second_signature_can_still_dual", "Matched %1\$s. A second signature can still dual-label this radio (store UUID, product OUI).", names.joinToString(", ")),
                 logCount = 0,
                 liveCount = 0,
                 displayCount = 0,
@@ -140,8 +142,8 @@ object SignatureCandidates {
         if (prints.isEmpty()) {
             return SignatureFamilyHint(
                 verdict = FamilyVerdict.SINGLE,
-                title = "This radio only",
-                body = "No unique on-air ID to cluster on. Randomized addresses, house-like names, and generic chips are skipped.",
+                title = localized("signature_candidates_this_radio_only", "This radio only"),
+                body = localized("signature_candidates_no_unique_on_air_id_to_cluster", "No unique on-air ID to cluster on. Randomized addresses, house-like names, and generic chips are skipped."),
                 logCount = 0,
                 liveCount = 0,
                 displayCount = 0,
@@ -166,8 +168,8 @@ object SignatureCandidates {
         if (best == null) {
             return SignatureFamilyHint(
                 verdict = FamilyVerdict.SINGLE,
-                title = "This radio only",
-                body = "No unique on-air ID to cluster on. Randomized addresses, house-like names, and generic chips are skipped.",
+                title = localized("signature_candidates_this_radio_only", "This radio only"),
+                body = localized("signature_candidates_no_unique_on_air_id_to_cluster", "No unique on-air ID to cluster on. Randomized addresses, house-like names, and generic chips are skipped."),
                 logCount = 0,
                 liveCount = 0,
                 displayCount = 0,
@@ -185,8 +187,8 @@ object SignatureCandidates {
         if (familyN < MIN_RADIOS) {
             return SignatureFamilyHint(
                 verdict = FamilyVerdict.SINGLE,
-                title = "This radio only",
-                body = "No other MAC in the log or on the air shares this $kindLabel. A signature from here will mostly tag this address.",
+                title = localized("signature_candidates_this_radio_only", "This radio only"),
+                body = localized("signature_candidates_no_other_mac_in_the_log_or", "No other MAC in the log or on the air shares this %1\$s. A signature from here will mostly tag this address.", kindLabel),
                 logCount = logN,
                 liveCount = liveN,
                 displayCount = 0,
@@ -197,11 +199,11 @@ object SignatureCandidates {
         val strong = familyN >= STRONG_MIN_RADIOS
         return SignatureFamilyHint(
             verdict = if (strong) FamilyVerdict.STRONG else FamilyVerdict.POSSIBLE,
-            title = if (strong) "Strong family" else "Possible family",
+            title = if (strong) localized("signature_candidates_strong_family", "Strong family") else localized("signature_candidates_possible_family", "Possible family"),
             body = if (strong) {
-                "Same $kindLabel on $clause. That is a catalog pattern, not this MAC."
+                localized("signature_candidates_same_on_that_is_a_catalog_pattern", "Same %1\$s on %2\$s. That is a catalog pattern, not this MAC.", kindLabel, clause)
             } else {
-                "Same $kindLabel on $clause. Thin sample — a possible catalog family."
+                localized("signature_candidates_same_on_thin_sample_a_possible_catalog", "Same %1\$s on %2\$s. Thin sample — a possible catalog family.", kindLabel, clause)
             },
             logCount = logN,
             liveCount = liveN,
@@ -311,7 +313,7 @@ object SignatureCandidates {
                     radios = distinct,
                     proposedName = glob.takeWhile { it != '*' && it != '?' && it != '-' && it != '_' }
                         .ifBlank { glob.trimEnd('*') },
-                    why = "Same name glob on ${distinct.size} ${kind.radioWord(distinct.size)} — not a house SSID.",
+                    why = localized("signature_candidates_same_name_glob_on_not_a_house", "Same name glob on %1\$s %2\$s — not a house SSID.", distinct.size, kind.radioWord(distinct.size)),
                 )
             }
             RuleKind.VENDOR_IE_OUI -> {
@@ -324,8 +326,8 @@ object SignatureCandidates {
                     radioKind = RadioKind.WIFI,
                     members = members,
                     radios = distinct,
-                    proposedName = vendor?.take(22) ?: "Vendor IE $oui",
-                    why = "Same vendor IE on ${distinct.size} BSSIDs. Not WPS / P2P.",
+                    proposedName = vendor?.take(22) ?: localized("signature_candidates_vendor_ie_3", "Vendor IE %1\$s", oui),
+                    why = localized("signature_candidates_same_vendor_ie_on_bssids_not_wps", "Same vendor IE on %1\$s BSSIDs. Not WPS / P2P.", distinct.size),
                 )
             }
             RuleKind.SERVICE_UUID -> {
@@ -338,7 +340,7 @@ object SignatureCandidates {
                     members = members,
                     radios = distinct,
                     proposedName = named?.take(22) ?: "UUID $short",
-                    why = "Same service UUID on ${distinct.size} BLE advertisers.",
+                    why = localized("signature_candidates_same_service_uuid_on_ble_advertisers", "Same service UUID on %1\$s BLE advertisers.", distinct.size),
                 )
             }
             RuleKind.MANUFACTURER_DATA, RuleKind.MANUFACTURER_ID -> {
@@ -350,8 +352,8 @@ object SignatureCandidates {
                     radioKind = RadioKind.BLE,
                     members = members,
                     radios = distinct,
-                    proposedName = named?.take(22) ?: "Company 0x%04X".format(company),
-                    why = "Same manufacturer data prefix on ${distinct.size} BLE advertisers.",
+                    proposedName = named?.take(22) ?: localized("signature_candidates_company_0x_04x", "Company 0x%04X").format(company),
+                    why = localized("signature_candidates_same_manufacturer_data_prefix_on_ble_advertisers", "Same manufacturer data prefix on %1\$s BLE advertisers.", distinct.size),
                 )
             }
             RuleKind.OUI, RuleKind.MAC_PREFIX -> {
@@ -365,7 +367,7 @@ object SignatureCandidates {
                     members = members,
                     radios = distinct,
                     proposedName = vendor?.take(22) ?: oui,
-                    why = "Same IEEE OUI on ${distinct.size} stable BSSIDs. Not a chip-module prefix.",
+                    why = localized("signature_candidates_same_ieee_oui_on_stable_bssids_not", "Same IEEE OUI on %1\$s stable BSSIDs. Not a chip-module prefix.", distinct.size),
                 )
             }
             else -> null
@@ -440,21 +442,21 @@ object SignatureCandidates {
     }
 
     private fun idKindLabel(rule: MatchRule): String = when (rule.kind) {
-        RuleKind.NAME_GLOB, RuleKind.NAME_CONTAINS -> "name glob"
-        RuleKind.VENDOR_IE_OUI -> "vendor IE"
-        RuleKind.SERVICE_UUID -> "service UUID"
-        RuleKind.MANUFACTURER_DATA, RuleKind.MANUFACTURER_ID -> "manufacturer data prefix"
-        RuleKind.OUI, RuleKind.MAC_PREFIX -> "IEEE OUI"
-        else -> "on-air ID"
+        RuleKind.NAME_GLOB, RuleKind.NAME_CONTAINS -> localized("signature_candidates_name_glob", "name glob")
+        RuleKind.VENDOR_IE_OUI -> localized("signature_candidates_vendor_ie", "vendor IE")
+        RuleKind.SERVICE_UUID -> localized("signature_candidates_service_uuid", "service UUID")
+        RuleKind.MANUFACTURER_DATA, RuleKind.MANUFACTURER_ID -> localized("signature_candidates_manufacturer_data_prefix", "manufacturer data prefix")
+        RuleKind.OUI, RuleKind.MAC_PREFIX -> localized("signature_candidates_ieee_oui", "IEEE OUI")
+        else -> localized("signature_candidates_on_air_id", "on-air ID")
     }
 
     private fun countClause(kind: RadioKind, logN: Int, liveN: Int): String {
         val logWord = kind.radioWord(logN)
         val liveWord = kind.radioWord(liveN)
         return when {
-            logN > 0 && liveN > 0 -> "$logN $logWord in the log ($liveN on the air now)"
-            logN > 0 -> "$logN $logWord in the log"
-            liveN > 0 -> "$liveN $liveWord on the air now"
+            logN > 0 && liveN > 0 -> localized("signature_candidates_in_the_log_on_the_air_now", "%1\$s %2\$s in the log (%3\$s on the air now)", logN, logWord, liveN)
+            logN > 0 -> localized("signature_candidates_in_the_log", "%1\$s %2\$s in the log", logN, logWord)
+            liveN > 0 -> localized("signature_candidates_on_the_air_now", "%1\$s %2\$s on the air now", liveN, liveWord)
             else -> "1 ${kind.radioWord(1)}"
         }
     }
@@ -522,7 +524,7 @@ object SignatureCandidates {
             why = why,
             examples = shown,
             extraCount = extraN,
-            notes = "${members.size} $word in the log matched ${ruleShortLabel(primary)}. Shared on-air ID, not a one-radio MAC. Change the name or class, then Save.",
+            notes = localized("signature_candidates_in_the_log_matched_shared_on_air", "%1\$s %2\$s in the log matched %3\$s. Shared on-air ID, not a one-radio MAC. Change the name or class, then Save.", members.size, word, ruleShortLabel(primary)),
             colorIndex = colorFor(kind),
         )
     }
@@ -627,10 +629,10 @@ object SignatureCandidates {
     }
 
     private fun RadioKind.radioWord(n: Int): String = when {
-        this == RadioKind.WIFI && n == 1 -> "AP"
-        this == RadioKind.WIFI -> "APs"
-        n == 1 -> "advertiser"
-        else -> "advertisers"
+        this == RadioKind.WIFI && n == 1 -> localized("signature_candidates_ap", "AP")
+        this == RadioKind.WIFI -> localized("signature_candidates_aps", "APs")
+        n == 1 -> localized("signature_candidates_advertiser", "advertiser")
+        else -> localized("signature_candidates_advertisers", "advertisers")
     }
 
     private data class Fingerprint(

@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -29,11 +31,13 @@ data class SettingsImportResult(
 ) {
     fun summary(): String {
         error?.let { return it }
-        val presetWord = if (presets == 1) "preset" else "presets"
-        val radioWord = if (namedRadios == 1) "named radio" else "named radios"
-        val watchWord = if (signatureWatches == 1) "signature watch" else "signature watches"
-        return "Restored Settings, the current filter, and $presets $presetWord. " +
-            "$namedRadios $radioWord, $signatureWatches $watchWord."
+        val preset = if (presets == 1) localized("restore_preset_one", "Restored Settings, the current filter, and %1\$s preset.", presets)
+            else localized("restore_preset_many", "Restored Settings, the current filter, and %1\$s presets.", presets)
+        val radio = if (namedRadios == 1) localized("restore_radio_one", "%1\$s named radio", namedRadios)
+            else localized("restore_radio_many", "%1\$s named radios", namedRadios)
+        val watch = if (signatureWatches == 1) localized("restore_watch_one", "%1\$s signature watch", signatureWatches)
+            else localized("restore_watch_many", "%1\$s signature watches", signatureWatches)
+        return "$preset $radio, $watch."
     }
 }
 
@@ -69,24 +73,24 @@ object SettingsExchange {
     fun parse(text: String): SettingsPack {
         val trimmed = text.trim().trimStart('\uFEFF')
         if (trimmed.isEmpty()) {
-            throw IllegalArgumentException("This file is empty.")
+            throw IllegalArgumentException(localized("settings_exchange_this_file_is_empty", "This file is empty."))
         }
         val pack = try {
             json.decodeFromString(SettingsPack.serializer(), trimmed)
         } catch (e: Exception) {
             throw IllegalArgumentException(
-                "Not a Fieldwatch settings pack. Export from Settings → Export settings.",
+                localized("settings_exchange_not_a_fieldwatch_settings_pack_export_from", "Not a Fieldwatch settings pack. Export from Settings → Export settings."),
                 e,
             )
         }
         if (pack.format == SignaturePack.FORMAT || pack.format == SignaturePack.LEGACY_FORMAT) {
             throw IllegalArgumentException(
-                "That is a signature pack. Use Import signatures.",
+                localized("settings_exchange_that_is_a_signature_pack_use_import", "That is a signature pack. Use Import signatures."),
             )
         }
         if (pack.format != SettingsPack.FORMAT) {
             throw IllegalArgumentException(
-                "Not a Fieldwatch settings pack (open a fieldwatch-settings JSON file).",
+                localized("settings_exchange_not_a_fieldwatch_settings_pack_open_a", "Not a Fieldwatch settings pack (open a fieldwatch-settings JSON file)."),
             )
         }
         return pack

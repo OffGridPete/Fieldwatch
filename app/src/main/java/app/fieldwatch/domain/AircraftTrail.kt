@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlinx.serialization.Serializable
 
 /** One advertised position stored on a sit. Not the phone's GPS. */
@@ -86,7 +88,7 @@ object AircraftTrail {
         val near = walkReady && fixes.isNotEmpty() && fixes.all { fix ->
             path.any { sample -> Geo.meters(fix.lat, fix.lon, sample.lat, sample.lon) <= NEAR_M }
         }
-        val titled = uasId.ifBlank { latest.title.ifBlank { "Advertised position" } }
+        val titled = uasId.ifBlank { latest.title.ifBlank { localized("aircraft_trail_advertised_position", "Advertised position") } }
         val aircraft = rows.filter { it.aircraft.isNotBlank() }.maxByOrNull { it.lastSeen }?.aircraft.orEmpty()
         return Picture(
             uasId = uasId,
@@ -151,26 +153,26 @@ object AircraftTrail {
                 appendLine("• $head")
                 if (pic.aircraft.isNotBlank()) appendLine("  ${pic.aircraft}")
                 val last = pic.fixes.last()
-                appendLine("  Last ${fmtCoord(last.lat, last.lon)}")
+                appendLine(localized("aircraft_trail_last", "  Last %1\$s", fmtCoord(last.lat, last.lon)))
                 val motion = listOfNotNull(
                     pic.alt?.let { "${fmtNum(it)} m" },
-                    pic.heading?.let { "course ${fmtNum(it)}°" },
+                    pic.heading?.let { localized("aircraft_trail_course", "course %1\$s°", fmtNum(it)) },
                     pic.speed?.let { "${fmtNum(it)} m/s" },
                 )
                 if (motion.isNotEmpty()) appendLine("  ${motion.joinToString("  ·  ")}")
                 val length = lengthM(pic.fixes)
                 val count = pic.fixes.size
-                val shape = if (count == 1) "1 advertised fix" else "$count advertised fixes, ${fmtDist(length)}"
+                val shape = if (count == 1) localized("aircraft_trail_1_advertised_fix", "1 advertised fix") else localized("aircraft_trail_advertised_fixes", "%1\$s advertised fixes, %2\$s", count, fmtDist(length))
                 appendLine("  $shape")
                 if (pic.pilotLat != null && pic.pilotLon != null) {
-                    appendLine("  Pilot ${fmtCoord(pic.pilotLat, pic.pilotLon)}")
+                    appendLine(localized("aircraft_trail_pilot", "  Pilot %1\$s", fmtCoord(pic.pilotLat, pic.pilotLon)))
                 }
             }
             val hidden = (pictures.count { it.ownFigure } - MAX_OWN_FIGURES).coerceAtLeast(0)
             if (hidden > 0) {
-                appendLine("$hidden more aircraft tracks are listed here and left off the map.")
+                appendLine(localized("aircraft_trail_more_aircraft_tracks_are_listed_here_and", "%1\$s more aircraft tracks are listed here and left off the map.", hidden))
             }
-            append("These positions were broadcast by the radio. They are not this phone's GPS.")
+            append(localized("aircraft_trail_these_positions_were_broadcast_by_the_radio", "These positions were broadcast by the radio. They are not this phone's GPS."))
         }.trimEnd()
     }
 
@@ -190,12 +192,12 @@ object AircraftTrail {
                 val aStatus = a?.status.orEmpty()
                 val bStatus = b?.status.orEmpty()
                 if (aStatus.isNotBlank() && bStatus.isNotBlank() && aStatus != bStatus) {
-                    appendLine("  Status changed: $aStatus → $bStatus")
+                    appendLine(localized("aircraft_trail_status_changed", "  Status changed: %1\$s → %2\$s", aStatus, bStatus))
                 }
             }
-            looseLeft.forEach { appendLine("$leftName, no UAS id: ${sideBit(it)} (${it.title})") }
-            looseRight.forEach { appendLine("$rightName, no UAS id: ${sideBit(it)} (${it.title})") }
-            append("These positions were broadcast by the radio. They are not this phone's GPS.")
+            looseLeft.forEach { appendLine(localized("aircraft_trail_no_uas_id", "%1\$s, no UAS id: %2\$s (%3\$s)", leftName, sideBit(it), it.title)) }
+            looseRight.forEach { appendLine(localized("aircraft_trail_no_uas_id_2", "%1\$s, no UAS id: %2\$s (%3\$s)", rightName, sideBit(it), it.title)) }
+            append(localized("aircraft_trail_these_positions_were_broadcast_by_the_radio", "These positions were broadcast by the radio. They are not this phone's GPS."))
         }.trimEnd()
     }
 
@@ -209,7 +211,7 @@ object AircraftTrail {
 
     fun pilotMark(pic: Picture): SitPathPlot.Mark? {
         if (!pic.pilotOnMap || pic.pilotLat == null || pic.pilotLon == null) return null
-        return SitPathPlot.Mark(pic.pilotLat, pic.pilotLon, "Pilot")
+        return SitPathPlot.Mark(pic.pilotLat, pic.pilotLon, localized("aircraft_trail_pilot_2", "Pilot"))
     }
 
     fun applyWalk(base: SitPathPlot.Figure?, pictures: List<Picture>, secondary: Boolean): SitPathPlot.Figure? {
@@ -226,15 +228,15 @@ object AircraftTrail {
             craftKeys = base.craftKeys + near.map { pathKeyLine(it) },
             spanM = Geo.spanM(framed),
             caption = if (secondary) {
-                if ("second sit’s advertised track" in base.caption) {
+                if (localized("aircraft_trail_second_sit_s_advertised_track", "second sit’s advertised track") in base.caption) {
                     base.caption
                 } else {
-                    base.caption + " A blue dotted line is the second sit’s advertised track within 2 km of this path."
+                    base.caption + localized("aircraft_trail_a_blue_dotted_line_is_the_second", " A blue dotted line is the second sit’s advertised track within 2 km of this path.")
                 }
-            } else if ("black dotted line is an advertised track" in base.caption) {
+            } else if (localized("aircraft_trail_black_dotted_line_is_an_advertised_track", "black dotted line is an advertised track") in base.caption) {
                 base.caption
             } else {
-                base.caption + " A black dotted line is an advertised track within 2 km of this path."
+                base.caption + localized("aircraft_trail_a_black_dotted_line_is_an_advertised", " A black dotted line is an advertised track within 2 km of this path.")
             },
         )
     }
@@ -245,7 +247,7 @@ object AircraftTrail {
     private fun pictureFigure(pic: Picture, secondary: Boolean = false): SitPathPlot.Figure {
         val samples = samples(pic.fixes)
         return SitPathPlot.Figure(
-            kicker = "AIRCRAFT",
+            kicker = localized("aircraft_trail_aircraft", "AIRCRAFT"),
             tracks = listOf(track(pic, secondary)),
             dots = emptyList(),
             lengthM = lengthM(pic.fixes),
@@ -265,16 +267,16 @@ object AircraftTrail {
             val lenA = a?.let { lengthM(it.fixes) } ?: 0.0
             val lenB = b?.let { lengthM(it.fixes) } ?: 0.0
             SitPathPlot.Figure(
-                kicker = "AIRCRAFT",
+                kicker = localized("aircraft_trail_aircraft", "AIRCRAFT"),
                 tracks = tracks,
                 dots = emptyList(),
                 lengthM = maxOf(lenA, lenB),
                 spanM = Geo.spanM(samples),
                 caption = when {
                     a != null && b != null ->
-                        "North-up. Black dots are this sit. Blue dots are the second sit. The marker is the last advertised position."
+                        localized("aircraft_trail_north_up_black_dots_are_this_sit", "North-up. Black dots are this sit. Blue dots are the second sit. The marker is the last advertised position.")
                     b != null ->
-                        "North-up. The blue dotted line is the advertised track for ${b.title}. The marker is the last advertised position."
+                        localized("aircraft_trail_north_up_the_blue_dotted_line_is", "North-up. The blue dotted line is the advertised track for %1\$s. The marker is the last advertised position.", b.title)
                     else -> aircraftCaption(a!!)
                 },
                 pilots = listOfNotNull(a?.let { pilotMark(it) }, b?.let { pilotMark(it) }),
@@ -331,7 +333,7 @@ object AircraftTrail {
         val tracks = fig.tracks.filter { it.aircraft }.ifEmpty { fig.tracks }
         val fixes = tracks.flatMap { it.samples }
         val frames = fixes + fig.pilots.map { GpsSample(0L, it.lat, it.lon, 0) }
-        val title = tracks.firstOrNull()?.name?.takeIf { it.isNotBlank() } ?: "Aircraft"
+        val title = tracks.firstOrNull()?.name?.takeIf { it.isNotBlank() } ?: localized("aircraft_trail_aircraft_2", "Aircraft")
         return SitPathPlot.Model(
             samples = emptyList(),
             dots = dots,
@@ -360,9 +362,9 @@ object AircraftTrail {
 
     private fun aircraftCaption(pic: Picture): String {
         return if (pic.fixes.size < 2) {
-            "Last advertised position for ${pic.title}. The marker is that position."
+            localized("aircraft_trail_last_advertised_position_for_the_marker_is", "Last advertised position for %1\$s. The marker is that position.", pic.title)
         } else {
-            "North-up. The black dotted line is the advertised track for ${pic.title}. The marker is the last advertised position."
+            localized("aircraft_trail_north_up_the_black_dotted_line_is", "North-up. The black dotted line is the advertised track for %1\$s. The marker is the last advertised position.", pic.title)
         }
     }
 
@@ -390,12 +392,12 @@ object AircraftTrail {
         if (state.isNotEmpty()) bits += state
         val id = uasId.trim()
         if (id.isNotEmpty() && !id.equals(label.trim(), ignoreCase = true)) bits += "UAS $id"
-        bits += "last ${fmtCoord(lat, lon)}"
+        bits += localized("aircraft_trail_last_2", "last %1\$s", fmtCoord(lat, lon))
         alt?.let { bits += "${fmtNum(it)} m" }
-        heading?.let { bits += "course ${fmtNum(it)}°" }
+        heading?.let { bits += localized("aircraft_trail_course", "course %1\$s°", fmtNum(it)) }
         speed?.let { bits += "${fmtNum(it)} m/s" }
         if (PayloadLocation.validCoord(pilotLat, pilotLon)) {
-            bits += "pilot ${fmtCoord(pilotLat!!, pilotLon!!)}"
+            bits += localized("aircraft_trail_pilot_3", "pilot %1\$s", fmtCoord(pilotLat!!, pilotLon!!))
         }
         return bits.joinToString(" · ")
     }
@@ -408,7 +410,7 @@ object AircraftTrail {
             .filter { it.isNotEmpty() }
             .distinct()
             .joinToString(" ")
-            .ifBlank { "Advertised position" }
+            .ifBlank { localized("aircraft_trail_advertised_position", "Advertised position") }
         if (last == null) return head
         val note = advertisedNote(
             status = pic.status,
@@ -430,8 +432,8 @@ object AircraftTrail {
         val craft = if (pic.aircraft.isBlank()) "" else "${pic.aircraft}, "
         val status = if (pic.status.isBlank()) "" else "${pic.status}, "
         val last = pic.fixes.lastOrNull()
-        val where = if (last == null) "" else " last ${fmtCoord(last.lat, last.lon)}"
-        val count = if (pic.fixes.size == 1) "1 fix" else "${pic.fixes.size} fixes"
+        val where = if (last == null) "" else localized("aircraft_trail_last_3", " last %1\$s", fmtCoord(last.lat, last.lon))
+        val count = if (pic.fixes.size == 1) localized("aircraft_trail_1_fix", "1 fix") else localized("aircraft_trail_fixes", "%1\$s fixes", pic.fixes.size)
         return "$craft$status$count$where".trim()
     }
 

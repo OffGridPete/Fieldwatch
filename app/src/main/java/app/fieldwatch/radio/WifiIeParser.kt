@@ -210,6 +210,7 @@ object WifiIeParser {
         return (bytes[offset].toInt() and 0xFF) or ((bytes[offset + 1].toInt() and 0xFF) shl 8)
     }
 
+    @androidx.annotation.RequiresApi(30)
     private fun ieBytes(ie: ScanResult.InformationElement): ByteArray? {
         val raw = runCatching { ie.bytes }.getOrNull() ?: return null
         val copy = ByteArray(raw.remaining())
