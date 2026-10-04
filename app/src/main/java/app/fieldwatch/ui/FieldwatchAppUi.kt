@@ -1,5 +1,11 @@
 package app.fieldwatch.ui
 
+import app.fieldwatch.i18n.displayLabel
+
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -154,14 +160,15 @@ private fun DisclaimerGate(onAccept: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 28.dp, vertical = 24.dp),
     ) {
+        app.fieldwatch.ui.component.LanguagePicker()
         Text(
-            "Disclaimer and license",
+            appText(R.string.fieldwatch_app_ui_disclaimer_and_license),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = ink,
         )
         Text(
-            "Disclaimer",
+            appText(R.string.fieldwatch_app_ui_disclaimer),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = ink,
@@ -205,7 +212,7 @@ private fun DisclaimerGate(onAccept: () -> Unit) {
         ) {
             Checkbox(checked = agreed, onCheckedChange = null)
             Text(
-                "I have read this and I agree",
+                appText(R.string.fieldwatch_app_ui_i_have_read_this_and_i_agree),
                 style = MaterialTheme.typography.bodyMedium,
                 color = ink,
                 modifier = Modifier.padding(start = 8.dp),
@@ -217,7 +224,7 @@ private fun DisclaimerGate(onAccept: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-        ) { Text("Continue") }
+        ) { Text(appText(R.string.fieldwatch_app_ui_continue)) }
     }
 }
 
@@ -228,14 +235,14 @@ private fun PermissionGate(onRequest: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Fieldwatch needs the radios", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+        Text(appText(R.string.fieldwatch_app_ui_fieldwatch_needs_the_radios), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         Text(
-            "Location, nearby Wi-Fi, Bluetooth scan, and notifications let Fieldwatch passively watch advertised networks and BLE devices. Nothing is transmitted.",
+            appText(R.string.fieldwatch_app_ui_location_nearby_wi_fi_bluetooth_scan_and),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 12.dp, bottom = 20.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Button(onClick = onRequest) { Text("Grant permissions") }
+        Button(onClick = onRequest) { Text(appText(R.string.fieldwatch_app_ui_grant_permissions)) }
     }
 }
 
@@ -266,29 +273,13 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     if (export.active) {
         AlertDialog(
             onDismissRequest = { },
-            title = {
-                val m = export.message.lowercase()
-                Text(
-                    when {
-                        "sit compare" in m && "pdf" in m -> "Sit compare PDF"
-                        "sit compare" in m && "ai" in m -> "Sit compare AI Export"
-                        "sit compare" in m -> "Sit compare"
-                        "ai export" in m || "ai export" in m -> "AI Export"
-                        "pdf" in m -> "Debrief PDF"
-                        "debrief" in m -> "Debrief"
-                        else -> "Export"
-                    },
-                )
-            },
+            title = { Text(appText(export.job.title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(export.message.ifBlank { "Please wait…" })
-                    if ("debrief" !in export.message.lowercase() &&
-                        "ai export" !in export.message.lowercase() &&
-                        "sit compare" !in export.message.lowercase()
-                    ) {
+                    Text(export.message.ifBlank { appText(R.string.fieldwatch_app_ui_please_wait) })
+                    if (export.job.pausesLogging) {
                         Text(
-                            "Live logging is paused until this finishes. Scanning continues.",
+                            appText(R.string.fieldwatch_app_ui_live_logging_is_paused_until_this_finishes),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -310,32 +301,32 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     if (export.error != null) {
         AlertDialog(
             onDismissRequest = vm::consumeExportNotice,
-            title = { Text(export.errorTitle ?: "Could not export") },
+            title = { Text(export.errorTitle ?: appText(R.string.fieldwatch_app_ui_could_not_export)) },
             text = { Text(export.error ?: "") },
             confirmButton = {
-                TextButton(onClick = vm::consumeExportNotice) { Text("OK") }
+                TextButton(onClick = vm::consumeExportNotice) { Text(appText(R.string.fieldwatch_app_ui_ok)) }
             },
         )
     }
     if (export.saved) {
         AlertDialog(
             onDismissRequest = vm::consumeExportNotice,
-            title = { Text("Log saved") },
+            title = { Text(appText(R.string.fieldwatch_app_ui_log_saved)) },
             text = {
-                Text("The file was written to the folder you picked. In the system picker, use the menu to choose the SD card if you want it off internal storage.")
+                Text(appText(R.string.fieldwatch_app_ui_the_file_was_written_to_the_folder))
             },
             confirmButton = {
-                TextButton(onClick = vm::consumeExportNotice) { Text("OK") }
+                TextButton(onClick = vm::consumeExportNotice) { Text(appText(R.string.fieldwatch_app_ui_ok)) }
             },
         )
     }
     if (export.cleared) {
         AlertDialog(
             onDismissRequest = vm::consumeExportNotice,
-            title = { Text("Log cleared") },
-            text = { Text("Rotated files were deleted. New detections will start a fresh log.") },
+            title = { Text(appText(R.string.fieldwatch_app_ui_log_cleared)) },
+            text = { Text(appText(R.string.fieldwatch_app_ui_rotated_files_were_deleted_new_detections_will)) },
             confirmButton = {
-                TextButton(onClick = vm::consumeExportNotice) { Text("OK") }
+                TextButton(onClick = vm::consumeExportNotice) { Text(appText(R.string.fieldwatch_app_ui_ok)) }
             },
         )
     }
@@ -345,7 +336,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             title = { Text(export.noticeTitle ?: "") },
             text = { Text(export.noticeMessage.orEmpty()) },
             confirmButton = {
-                TextButton(onClick = vm::consumeExportNotice) { Text("OK") }
+                TextButton(onClick = vm::consumeExportNotice) { Text(appText(R.string.fieldwatch_app_ui_ok)) }
             },
         )
     }
@@ -396,9 +387,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             Text(
                                 when {
                                     state.sit.open != null && state.displayPaused ->
-                                        "FIELDWATCH  ·  SIT  ·  PAUSED"
-                                    state.sit.open != null -> "FIELDWATCH  ·  SIT"
-                                    state.displayPaused -> "FIELDWATCH  ·  PAUSED"
+                                        appText(R.string.fieldwatch_app_ui_fieldwatch_sit_paused)
+                                    state.sit.open != null -> appText(R.string.fieldwatch_app_ui_fieldwatch_sit)
+                                    state.displayPaused -> appText(R.string.fieldwatch_app_ui_fieldwatch_paused)
                                     else -> "FIELDWATCH"
                                 },
                                 style = MaterialTheme.typography.titleMedium,
@@ -415,7 +406,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 val muted = MaterialTheme.colorScheme.onSurfaceVariant
                                 HeaderCount(state.wifiNow, Icons.Outlined.Wifi, "Wi-Fi")
                                 HeaderCount(state.bleNow, Icons.Outlined.Bluetooth, "BLE")
-                                HeaderCount(state.namedNow, Icons.Outlined.Hub, "signatures")
+                                HeaderCount(state.namedNow, Icons.Outlined.Hub, appText(R.string.fieldwatch_app_ui_signatures))
                                 if (state.throttleHint.isNotBlank()) {
                                     Text(
                                         "·  ${state.throttleHint}",
@@ -445,9 +436,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                         Icons.Outlined.Tune
                                     },
                                     if (state.settings.scanControlsExpanded) {
-                                        "Hide scan options"
+                                        appText(R.string.fieldwatch_app_ui_hide_scan_options)
                                     } else {
-                                        "Show scan options"
+                                        appText(R.string.fieldwatch_app_ui_show_scan_options)
                                     },
                                     modifier = Modifier.onGloballyPositioned {
                                         tourTargets = tourTargets.copy(tune = it.boundsInRoot())
@@ -503,10 +494,10 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                         route == "live" && state.displayPaused -> Icons.Outlined.PlayArrow
                                         else -> Icons.Outlined.CellTower
                                     },
-                                    if (route == "live" && !state.displayPaused) "Pause display" else "Live",
+                                    if (route == "live" && !state.displayPaused) appText(R.string.fieldwatch_app_ui_pause_display) else appText(R.string.fieldwatch_app_ui_live),
                                 )
                             },
-                            label = if (route == "live" && !state.displayPaused) "Pause" else "Live",
+                            label = if (route == "live" && !state.displayPaused) appText(R.string.fieldwatch_app_ui_pause) else appText(R.string.fieldwatch_app_ui_live),
                         )
                         FieldwatchNavTab(
                             weight = 1f,
@@ -514,7 +505,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onBounds = { tourTargets = tourTargets.copy(filters = it) },
                             onClick = { nav.navigate("filters") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.FilterAlt, null) },
-                            label = "Filters",
+                            label = appText(R.string.fieldwatch_app_ui_filters),
                         )
                         FieldwatchNavTab(
                             weight = 1.45f,
@@ -522,7 +513,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onBounds = { tourTargets = tourTargets.copy(signatures = it) },
                             onClick = { nav.navigate("fleets") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Hub, null) },
-                            label = "Signatures",
+                            label = appText(R.string.fieldwatch_app_ui_signatures),
                         )
                         FieldwatchNavTab(
                             weight = 1f,
@@ -530,7 +521,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onBounds = { tourTargets = tourTargets.copy(reports = it) },
                             onClick = { nav.navigate("reports") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Description, null) },
-                            label = "Reports",
+                            label = appText(R.string.fieldwatch_app_ui_reports),
                         )
                         FieldwatchNavTab(
                             weight = 1.05f,
@@ -538,7 +529,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                             onBounds = { tourTargets = tourTargets.copy(settings = it) },
                             onClick = { nav.navigate("settings") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Settings, null) },
-                            label = "Settings",
+                            label = appText(R.string.fieldwatch_app_ui_settings),
                         )
                         }
                     }
@@ -683,17 +674,17 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     Scaffold(
                         topBar = {
                             TopAppBar(
-                                title = { Text("Detail") },
+                                title = { Text(appText(R.string.fieldwatch_app_ui_detail)) },
                                 navigationIcon = {
                                     IconButton(onClick = onBack) {
-                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, appText(R.string.fieldwatch_app_ui_back))
                                     }
                                 },
                             )
                         },
                     ) { pad ->
                         Text(
-                            "No radio selected.",
+                            appText(R.string.fieldwatch_app_ui_no_radio_selected),
                             Modifier.padding(pad).padding(24.dp),
                         )
                     }
@@ -825,20 +816,20 @@ private fun ViewPicker(
 ) {
     var openView by remember { mutableStateOf(false) }
     var openSort by remember { mutableStateOf(false) }
-    val viewLabel = mode.label()
+    val viewLabel = mode.displayLabel()
     var openDecay by remember { mutableStateOf(false) }
     var openTitle by remember { mutableStateOf(false) }
     var openSubtitle by remember { mutableStateOf(false) }
     val sortLabel = when (listSort) {
-        ListSort.STRENGTH -> if (sort == StrengthSort.AVERAGE) "Strongest · avg ${windowSec}s" else "Strongest"
-        ListSort.NEWEST -> "Newest heard"
-        ListSort.NEWEST_ALERT -> "Newest alert"
-        ListSort.FIRST_SEEN -> "Newest arrival"
-        ListSort.ARRIVAL -> "New at bottom"
-        ListSort.NAME -> "Name A–Z"
-        ListSort.SIGNATURES -> "Signatures first"
+        ListSort.STRENGTH -> if (sort == StrengthSort.AVERAGE) appText(R.string.fieldwatch_app_ui_strongest_avg_s, windowSec) else appText(R.string.fieldwatch_app_ui_strongest)
+        ListSort.NEWEST -> appText(R.string.fieldwatch_app_ui_newest_heard)
+        ListSort.NEWEST_ALERT -> appText(R.string.fieldwatch_app_ui_newest_alert)
+        ListSort.FIRST_SEEN -> appText(R.string.fieldwatch_app_ui_newest_arrival)
+        ListSort.ARRIVAL -> appText(R.string.fieldwatch_app_ui_new_at_bottom)
+        ListSort.NAME -> appText(R.string.fieldwatch_app_ui_name_a_z)
+        ListSort.SIGNATURES -> appText(R.string.fieldwatch_app_ui_signatures_first)
     }
-    val decayLabel = if (decaySec <= 0) "Off" else "Hold ${decaySec}s"
+    val decayLabel = if (decaySec <= 0) appText(R.string.fieldwatch_app_ui_off) else appText(R.string.fieldwatch_app_ui_hold_s, decaySec)
     val scroll = rememberScrollState()
     val panelMax = (maxHeight - 8.dp).coerceAtLeast(140.dp)
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -861,76 +852,76 @@ private fun ViewPicker(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                "Display",
+                appText(R.string.fieldwatch_app_ui_display),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             val dropdownPad = Modifier.fillMaxWidth().padding(vertical = 6.dp)
             ExposedDropdownMenuBox(openView, { openView = it }, dropdownPad) {
-                FieldwatchDropdownField("View", viewLabel, openView)
+                FieldwatchDropdownField(appText(R.string.fieldwatch_app_ui_view), viewLabel, openView)
                 ExposedDropdownMenu(openView, { openView = false }) {
                     ViewMode.entries.forEach { item ->
                         DropdownMenuItem(
-                            text = { Text(item.label()) },
+                            text = { Text(item.displayLabel()) },
                             onClick = { onChangeView(item); openView = false },
                         )
                     }
                 }
             }
             ExposedDropdownMenuBox(openSort, { openSort = it }, dropdownPad) {
-                FieldwatchDropdownField("Sort", sortLabel, openSort)
+                FieldwatchDropdownField(appText(R.string.fieldwatch_app_ui_sort), sortLabel, openSort)
                 ExposedDropdownMenu(openSort, { openSort = false }) {
                     DropdownMenuItem(
-                        text = { Text("Strongest signal") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_strongest_signal)) },
                         onClick = { onChangeSort(StrengthSort.INSTANT, null); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Strongest (avg 30s)") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_strongest_avg_30s)) },
                         onClick = { onChangeSort(StrengthSort.AVERAGE, 30); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Newest heard") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_newest_heard)) },
                         onClick = { onChangeListSort(ListSort.NEWEST); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Newest alert") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_newest_alert)) },
                         onClick = { onChangeListSort(ListSort.NEWEST_ALERT); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Newest arrival") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_newest_arrival)) },
                         onClick = { onChangeListSort(ListSort.FIRST_SEEN); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("New at bottom") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_new_at_bottom)) },
                         onClick = { onChangeListSort(ListSort.ARRIVAL); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Name A–Z") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_name_a_z)) },
                         onClick = { onChangeListSort(ListSort.NAME); openSort = false },
                     )
                     DropdownMenuItem(
-                        text = { Text("Signatures first") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_signatures_first)) },
                         onClick = { onChangeListSort(ListSort.SIGNATURES); openSort = false },
                     )
                 }
             }
             ExposedDropdownMenuBox(openDecay, { openDecay = it }, dropdownPad) {
-                FieldwatchDropdownField("Brief hold", decayLabel, openDecay)
+                FieldwatchDropdownField(appText(R.string.fieldwatch_app_ui_brief_hold), decayLabel, openDecay)
                 ExposedDropdownMenu(openDecay, { openDecay = false }) {
                     DropdownMenuItem(
-                        text = { Text("Off — Stale after only") },
+                        text = { Text(appText(R.string.fieldwatch_app_ui_off_stale_after_only)) },
                         onClick = { onChangeDecay(0); openDecay = false },
                     )
                     listOf(10, 30, 60).forEach { sec ->
                         DropdownMenuItem(
-                            text = { Text("Hold ${sec}s after last packet") },
+                            text = { Text(appText(R.string.fieldwatch_app_ui_hold_s_after_last_packet, sec)) },
                             onClick = { onChangeDecay(sec); openDecay = false },
                         )
                     }
                 }
             }
             ExposedDropdownMenuBox(openTitle, { openTitle = it }, dropdownPad) {
-                FieldwatchDropdownField("Title line", listLineLabel(titleLine), openTitle)
+                FieldwatchDropdownField(appText(R.string.fieldwatch_app_ui_title_line), listLineLabel(titleLine), openTitle)
                 ExposedDropdownMenu(openTitle, { openTitle = false }) {
                     listOf(ListLine.ADVERTISED_NAME, ListLine.NAME_AND_TYPE, ListLine.MAC).forEach { item ->
                         DropdownMenuItem(
@@ -941,7 +932,7 @@ private fun ViewPicker(
                 }
             }
             ExposedDropdownMenuBox(openSubtitle, { openSubtitle = it }, dropdownPad) {
-                FieldwatchDropdownField("Subtitle line", listLineLabel(subtitleLine), openSubtitle)
+                FieldwatchDropdownField(appText(R.string.fieldwatch_app_ui_subtitle_line), listLineLabel(subtitleLine), openSubtitle)
                 ExposedDropdownMenu(openSubtitle, { openSubtitle = false }) {
                     listOf(
                         ListLine.ADVERTISED_NAME,
@@ -956,10 +947,10 @@ private fun ViewPicker(
                     }
                 }
             }
-            OptionSwitch("RSSI bars", showBar, onToggleBar)
-            OptionSwitch("Signature names", showFleet, onToggleFleet)
-            OptionSwitch("Frequency", showFrequency, onToggleFrequency)
-            OptionSwitch("First / last seen", showSeenTimes, onToggleSeenTimes)
+            OptionSwitch(appText(R.string.fieldwatch_app_ui_rssi_bars), showBar, onToggleBar)
+            OptionSwitch(appText(R.string.fieldwatch_app_ui_signature_names), showFleet, onToggleFleet)
+            OptionSwitch(appText(R.string.fieldwatch_app_ui_frequency), showFrequency, onToggleFrequency)
+            OptionSwitch(appText(R.string.fieldwatch_app_ui_first_last_seen), showSeenTimes, onToggleSeenTimes)
         }
         if (scroll.canScrollForward) {
             Box(
@@ -976,7 +967,7 @@ private fun ViewPicker(
             ) {
                 Icon(
                     Icons.Outlined.ExpandMore,
-                    contentDescription = "More display options below",
+                    contentDescription = appText(R.string.fieldwatch_app_ui_more_display_options_below),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
@@ -987,10 +978,10 @@ private fun ViewPicker(
 }
 
 private fun listLineLabel(line: ListLine): String = when (line) {
-    ListLine.ADVERTISED_NAME -> "Advertised name"
-    ListLine.NAME_AND_TYPE -> "Name + type"
-    ListLine.MAC -> "MAC address"
-    ListLine.NONE -> "None"
+    ListLine.ADVERTISED_NAME -> appText(R.string.fieldwatch_app_ui_advertised_name)
+    ListLine.NAME_AND_TYPE -> appText(R.string.fieldwatch_app_ui_name_type)
+    ListLine.MAC -> appText(R.string.fieldwatch_app_ui_mac_address)
+    ListLine.NONE -> appText(R.string.fieldwatch_app_ui_none)
 }
 
 @Composable
@@ -1021,12 +1012,12 @@ private fun LiveSessionBar(
                         onClick = onMarkSeen,
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    ) { Text("Mark seen") }
+                    ) { Text(appText(R.string.fieldwatch_app_ui_mark_seen)) }
                     FieldwatchActionButton(
                         onClick = onResetSeen,
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    ) { Text("Reset seen") }
+                    ) { Text(appText(R.string.fieldwatch_app_ui_reset_seen)) }
                 }
             }
             if (movingWithYou) {
@@ -1034,7 +1025,7 @@ private fun LiveSessionBar(
                     onClick = onStartOverFollow,
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                ) { Text("Start over") }
+                ) { Text(appText(R.string.fieldwatch_app_ui_start_over)) }
             }
         }
     }

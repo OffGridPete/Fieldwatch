@@ -78,6 +78,7 @@ class FieldwatchApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        app.fieldwatch.i18n.AppLanguage.initialize(this)
         config = ConfigStore(this)
         RadioDb.init(this)
         devices = DeviceStore()
@@ -233,6 +234,8 @@ class FieldwatchApp : Application() {
         else stopLocationUpdates()
     }
 
+    // Fine-location permission is checked below; runCatching also handles revocation during a call.
+    @android.annotation.SuppressLint("MissingPermission")
     fun startLocationUpdates() {
         if (locating || !hasFineLocation()) return
         val lm = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -267,6 +270,8 @@ class FieldwatchApp : Application() {
         }
     }
 
+    // Both callers check fine-location permission; each read handles a concurrent revocation.
+    @android.annotation.SuppressLint("MissingPermission")
     private fun seedLastKnown(lm: LocationManager) {
         val now = System.currentTimeMillis()
         val cands = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)

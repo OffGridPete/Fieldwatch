@@ -14,6 +14,7 @@ import android.util.Log
 import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.ScanIntensity
+import app.fieldwatch.i18n.localized
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -67,7 +68,7 @@ class BleRadio(
             failStreak = (failStreak + 1).coerceAtMost(5)
             val backoff = (4_000L * (1L shl (failStreak - 1))).coerceAtMost(30_000L)
             nextRetryAt.set(System.currentTimeMillis() + backoff)
-            lastError = "BLE scan failed ($errorCode)"
+            lastError = localized("ble_radio_scan_failed", "BLE scan failed (%1\$s)", errorCode)
             hint = "BLE retrying"
             demoted = true
             onError(lastError!!)
@@ -81,7 +82,7 @@ class BleRadio(
         val adapter = manager.adapter
         if (adapter == null || !adapter.isEnabled) {
             running.set(false)
-            lastError = "Bluetooth is off"
+            lastError = localized("ble_radio_bluetooth_off", "Bluetooth is off")
             hint = "Bluetooth is off"
             onError(lastError!!)
             nextRetryAt.set(now + 8_000L)
@@ -90,7 +91,7 @@ class BleRadio(
         val next = adapter.bluetoothLeScanner
         if (next == null) {
             running.set(false)
-            lastError = "BLE scanner unavailable"
+            lastError = localized("ble_radio_scanner_unavailable", "BLE scanner unavailable")
             hint = "BLE unavailable"
             onError(lastError!!)
             nextRetryAt.set(now + 8_000L)
@@ -121,7 +122,7 @@ class BleRadio(
             failStreak = (failStreak + 1).coerceAtMost(5)
             val backoff = (4_000L * (1L shl (failStreak - 1))).coerceAtMost(30_000L)
             nextRetryAt.set(System.currentTimeMillis() + backoff)
-            lastError = ok.exceptionOrNull()?.message ?: "BLE start failed"
+            lastError = ok.exceptionOrNull()?.message ?: localized("ble_radio_start_failed", "BLE start failed")
             hint = "BLE retrying"
             demoted = true
             onError(lastError!!)
@@ -140,7 +141,15 @@ class BleRadio(
 
     fun holding(): Boolean = !running.get()
 
-    fun statusHint(): String = hint
+    // Keep the radio state independent of translated text and render the current language on read.
+    fun statusHint(): String = when (hint) {
+        "BLE retrying" -> localized("ble_radio_retrying", "BLE retrying")
+        "Bluetooth is off" -> localized("ble_radio_bluetooth_off", "Bluetooth is off")
+        "BLE unavailable" -> localized("ble_radio_unavailable", "BLE unavailable")
+        "BLE cycling" -> localized("ble_radio_cycling", "BLE cycling")
+        "BLE parked · restarting" -> localized("ble_radio_restarting", "BLE parked · restarting")
+        else -> hint
+    }
 
     fun restartBackoffMs(): Long = restMs
 

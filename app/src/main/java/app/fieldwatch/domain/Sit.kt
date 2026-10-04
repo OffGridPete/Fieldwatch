@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import app.fieldwatch.i18n.localized
+import app.fieldwatch.i18n.TextRuntime
 import kotlin.math.max
 import kotlin.math.min
 
@@ -25,10 +27,10 @@ object Sit {
     fun clipName(raw: String): String =
         raw.trim().replace('\n', ' ').replace('\r', ' ').take(NAME_MAX)
 
-    fun defaultName(at: Long, locale: Locale = Locale.US): String =
-        SimpleDateFormat("d MMM HH:mm", locale).format(Date(at))
+    fun defaultName(at: Long, locale: Locale = TextRuntime.localeProvider()): String =
+        SimpleDateFormat(localized("sit_default_name_pattern", "d MMM HH:mm"), locale).format(Date(at))
 
-    fun resolveName(raw: String, at: Long, locale: Locale = Locale.US): String =
+    fun resolveName(raw: String, at: Long, locale: Locale = TextRuntime.localeProvider()): String =
         clipName(raw).ifBlank { defaultName(at, locale) }
 
     fun fmtDuration(ms: Long): String {
@@ -36,9 +38,9 @@ object Sit {
         val h = s / 3600L
         val m = (s % 3600L) / 60L
         return when {
-            h > 0L -> "$h h $m min"
-            m > 0L -> "$m min"
-            else -> "$s s"
+            h > 0L -> localized("sit_duration_hours", "%1\$s h %2\$s min", h, m)
+            m > 0L -> localized("sit_duration_minutes", "%1\$s min", m)
+            else -> localized("sit_duration_seconds", "%1\$s s", s)
         }
     }
 
@@ -48,7 +50,7 @@ object Sit {
     fun dropWarning(closed: List<SitSummary>): String? {
         if (closed.size < CLOSED_CAP) return null
         val oldest = closed.lastOrNull() ?: return null
-        return "You already have $CLOSED_CAP saved sits. When you end this one, the oldest (“${oldest.name}”) will be deleted."
+        return localized("sit_drop_warning", "You already have %1\$s saved sits. When you end this one, the oldest (“%2\$s”) will be deleted.", CLOSED_CAP, oldest.name)
     }
 
     fun pinned(

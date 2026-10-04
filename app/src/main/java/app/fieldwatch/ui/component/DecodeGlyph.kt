@@ -1,5 +1,9 @@
 package app.fieldwatch.ui.component
 
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -25,7 +29,7 @@ fun DecodeGlyph(
     tint: Color,
     modifier: Modifier = Modifier,
     size: Dp = 12.dp,
-    contentDescription: String = "Decode fields",
+    contentDescription: String = appText(R.string.decode_glyph_decode_fields),
 ) {
     Canvas(
         modifier

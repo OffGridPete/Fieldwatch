@@ -1,5 +1,7 @@
 package app.fieldwatch.radio
 
+import app.fieldwatch.i18n.localized
+
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -120,11 +122,11 @@ class WifiRadio(
     fun throttleHint(): String {
         val now = System.currentTimeMillis()
         return when {
-            failStreak.get() > 0 -> "Wi-Fi waiting on OS"
-            awaitingScan.get() -> "Wi-Fi scanning"
+            failStreak.get() > 0 -> localized("wifi_radio_wi_fi_waiting_on_os", "Wi-Fi waiting on OS")
+            awaitingScan.get() -> localized("wifi_radio_wi_fi_scanning", "Wi-Fi scanning")
             nextAllowedAt.get() - now > 1_500L -> {
                 val sec = ((nextAllowedAt.get() - now + 999L) / 1000L).toInt().coerceAtLeast(1)
-                "Wi-Fi next ${sec}s"
+                localized("wifi_radio_wi_fi_next_s", "Wi-Fi next %1\$ss", sec)
             }
             else -> ""
         }

@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 /**
  * Google Fast Pair (UUID FE2C) has two Live-relevant shapes:
  * 3-byte model ID = pairing mode; longer = account-key plaza noise.
@@ -20,7 +22,7 @@ object FastPair {
     }
 
     fun liveLabel(pairing: Boolean): String =
-        if (pairing) "Fast Pair pairing" else "Fast Pair"
+        if (pairing) localized("fast_pair_fast_pair_pairing", "Fast Pair pairing") else "Fast Pair"
 
     fun isFastPairUuid(uuid: String): Boolean {
         val hex = uuid.filter { it.isLetterOrDigit() }.uppercase()

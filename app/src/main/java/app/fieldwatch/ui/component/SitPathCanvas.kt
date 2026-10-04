@@ -1,5 +1,15 @@
 package app.fieldwatch.ui.component
 
+import app.fieldwatch.i18n.displayLiveDecode
+
+import app.fieldwatch.i18n.forDisplay
+
+import app.fieldwatch.i18n.appQuantity
+
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -198,9 +208,9 @@ fun SitPathCanvas(
                 val start = lay.path.first()
                 val end = lay.path.last()
                 drawStartDot(start.x, start.y)
-                val startT = measurer.measure("Start", labelStyle)
+                val startT = measurer.measure(appText(R.string.sit_path_canvas_start), labelStyle)
                 drawText(startT, topLeft = Offset((start.x + 8f).coerceAtMost(size.width - startT.size.width), start.y - 6f))
-                val endLabel = if (model.live) "Now" else "End"
+                val endLabel = if (model.live) appText(R.string.sit_path_canvas_now) else appText(R.string.sit_path_canvas_end)
                 val endT = measurer.measure(endLabel, labelStyle)
                 drawText(
                     endT,
@@ -265,7 +275,7 @@ fun SitPathCanvas(
                     .padding(8.dp),
             ) {
                 Text(
-                    if (selected.members.size == 1) "1 alert here" else "${selected.members.size} alerts here",
+                    appQuantity(R.plurals.alerts_here, selected.members.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = muted,
                 )
@@ -341,8 +351,8 @@ private fun pathMarkers(
     if (lay.path.size < 2 || width < 8f) return emptyList()
     val start = lay.path.first()
     val end = lay.path.last()
-    val startText = measurer.measure("Start", labelStyle)
-    val endText = measurer.measure(if (live) "Now" else "End", labelStyle)
+    val startText = measurer.measure(appText(R.string.sit_path_canvas_start), labelStyle)
+    val endText = measurer.measure(if (live) appText(R.string.sit_path_canvas_now) else appText(R.string.sit_path_canvas_end), labelStyle)
     return listOf(
         hitMarker(start, 12f, startText, width, dx = 8f, dy = -6f),
         hitMarker(end, 12f, endText, width, dx = 10f, dy = -(endText.size.height + 4f).toFloat()),
@@ -478,4 +488,5 @@ private fun DrawScope.drawPilotMark(center: Offset, painter: Painter) {
 private fun scaleLabel(m: Double): String =
     if (m >= 1000) "${(m / 1000).toInt()} km" else "${m.toInt()} m"
 
-private val TIME_FMT = SimpleDateFormat("HH:mm", Locale.getDefault())
+private val TIME_FMT: SimpleDateFormat
+    get() = SimpleDateFormat("HH:mm", app.fieldwatch.i18n.TextRuntime.localeProvider())

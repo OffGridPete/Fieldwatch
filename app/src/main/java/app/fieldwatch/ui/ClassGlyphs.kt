@@ -1,5 +1,11 @@
 package app.fieldwatch.ui
 
+import app.fieldwatch.i18n.displayLabel
+
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -83,7 +89,7 @@ fun RadioClassBadge(
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 ClassGlyphs.of(classKind),
-                contentDescription = classKind?.label() ?: "Unmatched",
+                contentDescription = classKind?.displayLabel() ?: appText(R.string.class_glyphs_unmatched),
                 modifier = Modifier.size(if (compact) 14.dp else 16.dp),
                 tint = accent,
             )
@@ -99,7 +105,7 @@ fun RadioKindMark(
 ) {
     Icon(
         if (kind == RadioKind.WIFI) Icons.Outlined.Wifi else Icons.Outlined.Bluetooth,
-        contentDescription = if (kind == RadioKind.WIFI) "Wi-Fi access point" else "BLE advertiser",
+        contentDescription = if (kind == RadioKind.WIFI) appText(R.string.class_glyphs_wi_fi_access_point) else appText(R.string.class_glyphs_ble_advertiser),
         modifier = modifier.size(size),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )

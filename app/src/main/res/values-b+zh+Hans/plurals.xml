@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="candidate_families"><item quantity="other">%1$d 个特征组</item></plurals>
+    <plurals name="advertised_fixes"><item quantity="other">%1$d 个广播定位点</item></plurals>
+    <plurals name="alerts_here"><item quantity="other">此处有 %1$d 条警报</item></plurals>
+</resources>

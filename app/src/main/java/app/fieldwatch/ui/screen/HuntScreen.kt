@@ -1,5 +1,9 @@
 package app.fieldwatch.ui.screen
 
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -112,11 +116,11 @@ fun HuntScreen(
             TopAppBar(
                 title = {
                     val shown = hunt.device?.let { MacUtil.redactMacIn(hunt.title, it.mac, demoMode) } ?: hunt.title
-                    Text(shown.ifBlank { "Hunt" }, maxLines = 1)
+                    Text(shown.ifBlank { appText(R.string.hunt_screen_hunt) }, maxLines = 1)
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, appText(R.string.hunt_screen_back))
                     }
                 },
             )
@@ -134,13 +138,13 @@ fun HuntScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = hunt.active,
                 ) {
-                    Text("Reset this hunt")
+                    Text(appText(R.string.hunt_screen_reset_this_hunt))
                 }
                 FieldwatchActionButton(
                     onClick = onBack,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Back to detail")
+                    Text(appText(R.string.hunt_screen_back_to_detail))
                 }
                 Row(
                     Modifier.fillMaxWidth(),
@@ -151,7 +155,7 @@ fun HuntScreen(
                         Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Beep", Modifier.weight(1f))
+                        Text(appText(R.string.hunt_screen_beep), Modifier.weight(1f))
                         FieldwatchSwitch(
                             huntBeep,
                             { on ->
@@ -164,7 +168,7 @@ fun HuntScreen(
                         Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Vibrate", Modifier.weight(1f))
+                        Text(appText(R.string.hunt_screen_vibrate), Modifier.weight(1f))
                         FieldwatchSwitch(
                             huntVibrate,
                             { on ->
@@ -226,24 +230,24 @@ fun HuntScreen(
                 color = accent,
             )
             Text(
-                rssi?.let { DeviceExplain.rssiExplain(it) } ?: "no live RSSI",
+                rssi?.let { DeviceExplain.rssiExplain(it) } ?: appText(R.string.hunt_screen_no_live_rssi),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 if (hunt.peakRssi > -127) {
-                    "Loudest this hunt  ${hunt.peakRssi} dBm"
+                    appText(R.string.hunt_screen_loudest_this_hunt_dbm, hunt.peakRssi)
                 } else {
-                    "Loudest this hunt  —"
+                    appText(R.string.hunt_screen_loudest_this_hunt)
                 },
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
                 when {
-                    heardAgo == null -> "last heard  —"
-                    heardAgo < 60L -> "last heard ${heardAgo}s ago"
-                    else -> "last heard ${heardAgo / 60L}m ago"
+                    heardAgo == null -> appText(R.string.hunt_screen_last_heard)
+                    heardAgo < 60L -> appText(R.string.hunt_screen_last_heard_s_ago, heardAgo)
+                    else -> appText(R.string.hunt_screen_last_heard_m_ago, heardAgo / 60L)
                 },
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.labelMedium,
@@ -344,7 +348,7 @@ private fun HuntNeedle(
             HuntCue.GONE -> pulse(0.88f, 0.28f, 2.2f)
         }
         drawCircle(color.copy(alpha = 0.95f), radius = 5.5f, center = c)
-        val you = measurer.measure("YOU", youStyle)
+        val you = measurer.measure(appText(R.string.hunt_screen_you), youStyle)
         drawText(
             you,
             topLeft = Offset(c.x - you.size.width / 2f, c.y + 10f),

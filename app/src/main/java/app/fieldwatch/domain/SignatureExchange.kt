@@ -1,5 +1,7 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.i18n.localized
+
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.UUID
@@ -45,15 +47,15 @@ data class SignatureImportResult(
     fun summary(): String {
         error?.let { return it }
         if (added == 0 && merged == 0) {
-            return if (skipped == 0) "Nothing to import."
-            else "Nothing new. $skipped already on this phone."
+            return if (skipped == 0) localized("signature_exchange_nothing_to_import", "Nothing to import.")
+            else localized("signature_exchange_nothing_new_already_on_this_phone", "Nothing new. %1\$s already on this phone.", skipped)
         }
         val parts = mutableListOf<String>()
         if (added > 0) {
-            parts += if (renamed > 0) "Added $added ($renamed renamed)" else "Added $added"
+            parts += if (renamed > 0) localized("signature_exchange_added_renamed", "Added %1\$s (%2\$s renamed)", added, renamed) else localized("signature_exchange_added", "Added %1\$s", added)
         }
-        if (merged > 0) parts += "merged extra rules on $merged"
-        if (skipped > 0) parts += "skipped $skipped already present"
+        if (merged > 0) parts += localized("signature_exchange_merged_extra_rules_on", "merged extra rules on %1\$s", merged)
+        if (skipped > 0) parts += localized("signature_exchange_skipped_already_present", "skipped %1\$s already present", skipped)
         return parts.joinToString(" · ").replaceFirstChar { it.uppercase() } + "."
     }
 }
@@ -90,23 +92,23 @@ object SignatureExchange {
     fun parsePack(text: String): ParsedSignaturePack {
         val trimmed = text.trim().trimStart('\uFEFF')
         if (trimmed.isEmpty()) {
-            throw IllegalArgumentException("This file is empty.")
+            throw IllegalArgumentException(localized("signature_exchange_this_file_is_empty", "This file is empty."))
         }
         val pack = try {
             json.decodeFromString(SignaturePack.serializer(), trimmed)
         } catch (e: Exception) {
             throw IllegalArgumentException(
-                "Not a Fieldwatch signature pack. Export from Settings → Export signatures.",
+                localized("signature_exchange_not_a_fieldwatch_signature_pack_export_from", "Not a Fieldwatch signature pack. Export from Settings → Export signatures."),
                 e,
             )
         }
         if (pack.format != SignaturePack.FORMAT && pack.format != SignaturePack.LEGACY_FORMAT) {
             throw IllegalArgumentException(
-                "Not a Fieldwatch signature pack (open a fieldwatch-signatures JSON file; spectre-signatures still imports).",
+                localized("signature_exchange_not_a_fieldwatch_signature_pack_open_a", "Not a Fieldwatch signature pack (open a fieldwatch-signatures JSON file; spectre-signatures still imports)."),
             )
         }
         if (pack.fleets.isEmpty()) {
-            throw IllegalArgumentException("This pack has no signatures.")
+            throw IllegalArgumentException(localized("signature_exchange_this_pack_has_no_signatures", "This pack has no signatures."))
         }
         var skipped = 0
         val fleets = pack.fleets.map { fleet ->
@@ -122,7 +124,7 @@ object SignatureExchange {
 
     fun merge(existing: List<Fleet>, incoming: List<Fleet>): Pair<List<Fleet>, SignatureImportResult> {
         if (incoming.isEmpty()) {
-            return existing to SignatureImportResult(error = "This pack has no signatures.")
+            return existing to SignatureImportResult(error = localized("signature_exchange_this_pack_has_no_signatures", "This pack has no signatures."))
         }
         val stockIds = DefaultCatalog.fleets().map { it.id }.toSet()
         val next = existing.toMutableList()
@@ -230,7 +232,7 @@ object SignatureExchange {
             .filter { it.rules.isNotEmpty() }
             .map { it.copy(kind = it.kind.folded(), builtIn = true) }
         if (stockIn.isEmpty()) {
-            return existing to StockCatalogUpdateResult(error = "This pack has no stock signatures.")
+            return existing to StockCatalogUpdateResult(error = localized("signature_exchange_this_pack_has_no_stock_signatures", "This pack has no stock signatures."))
         }
         val byId = existing.mapIndexed { index, fleet -> fleet.id to index }.toMap().toMutableMap()
         val next = existing.toMutableList()

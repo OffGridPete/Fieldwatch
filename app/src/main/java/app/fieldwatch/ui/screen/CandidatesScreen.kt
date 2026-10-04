@@ -1,5 +1,17 @@
 package app.fieldwatch.ui.screen
 
+import app.fieldwatch.i18n.displayLiveDecode
+
+import app.fieldwatch.i18n.forDisplay
+
+import app.fieldwatch.i18n.appQuantity
+
+import app.fieldwatch.i18n.displayLabel
+
+import app.fieldwatch.i18n.appText
+
+import app.fieldwatch.R
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,10 +76,10 @@ fun CandidatesScreen(
         contentWindowInsets = NestedTabInsets,
         topBar = {
             NestedTopBar(
-                title = "Signature candidates",
+                title = appText(R.string.candidates_screen_signature_candidates),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, appText(R.string.candidates_screen_back))
                     }
                 },
             )
@@ -83,7 +95,7 @@ fun CandidatesScreen(
                     CircularProgressIndicator()
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "Reading the log and re-matching the catalog…",
+                        appText(R.string.candidates_screen_reading_the_log_and_re_matching_the),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -103,9 +115,9 @@ fun CandidatesScreen(
                 ) {
                     item {
                         Text(
-                            (report?.sourceLabel ?: "Rotating log") +
-                                " · re-matched now" +
-                                (report?.let { " · ${it.families.size} ${if (it.families.size == 1) "family" else "families"}" } ?: ""),
+                            (report?.sourceLabel ?: appText(R.string.candidates_screen_rotating_log)) +
+                                appText(R.string.candidates_screen_re_matched_now) +
+                                (report?.let { appQuantity(R.plurals.candidate_families, it.families.size) } ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -129,7 +141,7 @@ fun CandidatesScreen(
                     if (report == null || report.families.isEmpty()) {
                         item {
                             Text(
-                                "No signature families in this log. Randomized addresses and house-like names are skipped. A candidate needs a unique on-air ID on two or more radios.",
+                                appText(R.string.candidates_screen_no_signature_families_in_this_log_randomized),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 12.dp),
@@ -176,7 +188,7 @@ private fun CandidateCard(
                         modifier = Modifier.padding(top = 4.dp),
                     ) {
                         Text(
-                            cand.kind.label(),
+                            cand.kind.displayLabel(),
                             style = compact(11.sp, 13.sp, FontWeight.SemiBold),
                             color = accent,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -205,7 +217,7 @@ private fun CandidateCard(
             )
             val examples = cand.examples.map { MacUtil.redactMacIn(it, it, demoMode && looksLikeMac(it)) }
             if (examples.isNotEmpty()) {
-                val extra = if (cand.extraCount > 0) "\nand ${cand.extraCount} more" else ""
+                val extra = if (cand.extraCount > 0) appText(R.string.candidates_screen_nand_more, cand.extraCount) else ""
                 Text(
                     examples.joinToString(" · ") + extra,
                     style = compact(12.sp, 15.sp),
@@ -220,7 +232,7 @@ private fun CandidateCard(
                 FieldwatchActionButton(onClick = { onCreate(cand) }) {
                     Icon(Icons.Outlined.GroupAdd, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Create signature")
+                    Text(appText(R.string.candidates_screen_create_signature))
                 }
             }
         }
@@ -228,12 +240,12 @@ private fun CandidateCard(
 }
 
 private fun skipLine(report: app.fieldwatch.domain.CandidateReport): String = buildString {
-    append("Skipped ")
+    append(appText(R.string.candidates_screen_skipped))
     val bits = ArrayList<String>(2)
-    if (report.skippedRandomized > 0) bits += "${report.skippedRandomized} randomized addresses"
-    if (report.skippedHouseLike > 0) bits += "${report.skippedHouseLike} house-like names"
-    append(bits.joinToString(" and "))
-    append(". Those are not catalog families.")
+    if (report.skippedRandomized > 0) bits += appText(R.string.candidates_screen_randomized_addresses, report.skippedRandomized)
+    if (report.skippedHouseLike > 0) bits += appText(R.string.candidates_screen_house_like_names, report.skippedHouseLike)
+    append(bits.joinToString(appText(R.string.candidates_screen_and)))
+    append(appText(R.string.candidates_screen_those_are_not_catalog_families))
 }
 
 private fun looksLikeMac(text: String): Boolean =

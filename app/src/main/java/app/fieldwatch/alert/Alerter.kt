@@ -1,5 +1,8 @@
 package app.fieldwatch.alert
 
+import app.fieldwatch.i18n.localized
+import app.fieldwatch.i18n.displayName
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -51,6 +54,18 @@ class Alerter(private val context: Context) {
     private var ttsSpeakTries = 0
     private var pendingSpeak: String? = null
     private var speakAfterBeep: String? = null
+    private val voiceEpoch = VoiceEpoch()
+    @Volatile private var currentUtterance: String? = null
+    private var utteranceSerial = 0L
+
+    private fun postVoice(delayMs: Long, action: () -> Unit) {
+        val ticket = voiceEpoch.ticket()
+        main.postDelayed({ if (voiceEpoch.isCurrent(ticket)) action() }, delayMs)
+    }
+
+    private fun voiceCallback(id: String?, action: () -> Unit) {
+        main.post { if (id != null && id == currentUtterance) action() }
+    }
     private val speakWatchdog = Runnable {
         if (!speaking) return@Runnable
         val retry = pendingSpeak
@@ -96,7 +111,7 @@ class Alerter(private val context: Context) {
             beep(holdFocus = !speakClass)
             vibrate()
         }
-        if (speakClass) queueVoice(testWatchPhrase(voiceWhat), afterBeep = beepOn)
+        if (speakClass) queueVoice(app.fieldwatch.i18n.localizedTestWatchPhrase(voiceWhat), afterBeep = beepOn)
     }
 
     /** Warm the TTS engine on the main thread so the first alert is not silent. */
@@ -144,10 +159,12 @@ class Alerter(private val context: Context) {
                 if (token in announced) continue
                 if (!arrivalsOnly && !isNewAppearance(device, now)) continue
                 announced.add(token)
+                val fleet = fleetNames[target.fleetId]
+                val targetLabel = if (target.deviceKey == null && fleet != null &&
+                    (target.label.isBlank() || target.label == fleet.name)) fleet.displayName()
+                    else target.label.ifBlank { device.displayName }
                 val label = MacUtil.redactMacIn(
-                    target.label.ifBlank {
-                        fleetNames[target.fleetId]?.name ?: device.displayName
-                    },
+                    targetLabel,
                     device.mac,
                     demoMode,
                 )
@@ -159,7 +176,7 @@ class Alerter(private val context: Context) {
                 }
                 if (beepOn || voiceOn) _flashes.tryEmit(device.key)
                 if (voiceOn && voicePhrase == null) {
-                    voicePhrase = spokenWatchPhrase(device, fleets, voiceWhat, target)
+                    voicePhrase = app.fieldwatch.i18n.localizedWatchPhrase(device, fleets, voiceWhat, target)
                 }
             }
         }
@@ -172,7 +189,7 @@ class Alerter(private val context: Context) {
         if (afterBeep) {
             speakAfterBeep = phrase
         } else {
-            main.post { speakClassName(phrase) }
+            postVoice(0) { speakClassName(phrase) }
         }
     }
 
@@ -195,11 +212,11 @@ class Alerter(private val context: Context) {
         )
         val note = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_fieldwatch)
-            .setContentTitle("Fieldwatch watchlist")
+            .setContentTitle(localized("alerter_fieldwatch_watchlist", "Fieldwatch watchlist"))
             .setContentText("$label  ${device.rssi} dBm  ${MacUtil.screenMac(device.mac, demoMode)}")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "$label appeared\n${device.kind}  ${MacUtil.screenMac(device.mac, demoMode)}\n${device.rssi} dBm  ${MacUtil.redactMacIn(device.displayName, device.mac, demoMode)}",
+                    localized("alerter_appeared_n_n_dbm", "%1\$s appeared\n%2\$s  %3\$s\n%4\$s dBm  %5\$s", label, device.kind, MacUtil.screenMac(device.mac, demoMode), device.rssi, MacUtil.redactMacIn(device.displayName, device.mac, demoMode)),
                 ),
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -294,7 +311,7 @@ class Alerter(private val context: Context) {
         val phrase = speakAfterBeep ?: return
         speakAfterBeep = null
         releaseFocus()
-        main.postDelayed({ speakClassName(phrase) }, VOICE_AFTER_TRACK_MS)
+        postVoice(VOICE_AFTER_TRACK_MS) { speakClassName(phrase) }
     }
 
     private fun writeSine(dest: ShortArray, offset: Int, n: Int, sampleRate: Int, freqHz: Double) {
@@ -396,7 +413,14 @@ class Alerter(private val context: Context) {
         if (tts != null) return
         tts = TextToSpeech(context) { status ->
             ttsReady = status == TextToSpeech.SUCCESS
-            if (!ttsReady) return@TextToSpeech
+            if (!ttsReady) {
+                postVoice(0) {
+                    pendingSpeak = null
+                    releaseFocus()
+                    android.widget.Toast.makeText(context, app.fieldwatch.i18n.appText(R.string.voice_initialization_failed), android.widget.Toast.LENGTH_LONG).show()
+                }
+                return@TextToSpeech
+            }
             val engine = tts ?: return@TextToSpeech
             engine.setAudioAttributes(
                 AudioAttributes.Builder()
@@ -404,42 +428,63 @@ class Alerter(private val context: Context) {
                     .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                     .build(),
             )
-            runCatching {
-                val lang = engine.setLanguage(Locale.getDefault())
-                if (lang == TextToSpeech.LANG_MISSING_DATA || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    engine.language = Locale.US
-                }
-            }
             engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {
+                    voiceCallback(utteranceId) {
                     utteranceStarted = true
                     speaking = true
                     main.removeCallbacks(speakWatchdog)
                     main.postDelayed(speakWatchdog, SPEAK_TIMEOUT_MS)
+                    }
                 }
                 override fun onDone(utteranceId: String?) {
+                    voiceCallback(utteranceId) {
                     speaking = false
                     utteranceStarted = false
                     pendingSpeak = null
                     ttsSpeakTries = 0
                     main.removeCallbacks(speakWatchdog)
+                    }
                 }
                 @Deprecated("Deprecated in Java")
                 override fun onError(utteranceId: String?) {
+                    voiceCallback(utteranceId) {
                     speaking = false
                     utteranceStarted = false
                     main.removeCallbacks(speakWatchdog)
+                    }
                 }
                 override fun onError(utteranceId: String?, errorCode: Int) {
+                    voiceCallback(utteranceId) {
                     speaking = false
                     utteranceStarted = false
                     main.removeCallbacks(speakWatchdog)
+                    }
                 }
             })
             // Samsung often drops the first speak() if it runs inside onInit.
-            main.postDelayed({
+            postVoice(TTS_AFTER_INIT_MS) {
                 pendingSpeak?.let { startSpeak(it) }
-            }, TTS_AFTER_INIT_MS)
+            }
+        }
+    }
+
+    private var missingVoice: String? = null
+
+    fun refreshLanguage() {
+        voiceEpoch.advance()
+        currentUtterance = null
+        ensureChannel()
+        main.post {
+            tts?.stop()
+            pendingSpeak = null
+            speakAfterBeep = null
+            speaking = false
+            utteranceStarted = false
+            ttsSpeakTries = 0
+            main.removeCallbacks(speakWatchdog)
+            releaseFocus()
+            missingVoice = null
         }
     }
 
@@ -450,20 +495,49 @@ class Alerter(private val context: Context) {
             return
         }
         if (speaking && utteranceStarted) return
+        val language = app.fieldwatch.i18n.AppLanguage.locale()
+        val id = "$UTTERANCE-${voiceEpoch.ticket()}-${++utteranceSerial}"
+        currentUtterance = id
         pendingSpeak = text
         ttsSpeakTries++
         speaking = true
         utteranceStarted = false
-        val ok = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE)
-        if (ok != TextToSpeech.SUCCESS) {
+        val outcome = deliverVoice(object : VoiceOutput {
+            override fun setLanguage(locale: Locale) = engine.setLanguage(locale)
+            override fun speak(text: String, utteranceId: String) =
+                engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId) == TextToSpeech.SUCCESS
+        }, language, text, id)
+        if (outcome == VoiceOutcome.UNAVAILABLE) {
+            pendingSpeak = null
+            currentUtterance = null
+            speaking = false
+            utteranceStarted = false
+            ttsSpeakTries = 0
+            main.removeCallbacks(speakWatchdog)
+            releaseFocus()
+            if (missingVoice != language.toLanguageTag()) {
+                missingVoice = language.toLanguageTag()
+                android.widget.Toast.makeText(context, app.fieldwatch.i18n.appText(R.string.voice_language_unavailable), android.widget.Toast.LENGTH_LONG).show()
+            }
+            return
+        }
+        missingVoice = null
+        if (outcome == VoiceOutcome.FAILED) {
             speaking = false
             if (ttsSpeakTries < 2) {
-                main.postDelayed({ startSpeak(text) }, TTS_AFTER_INIT_MS)
+                postVoice(TTS_AFTER_INIT_MS) { startSpeak(text) }
+            } else {
+                pendingSpeak = null
+                currentUtterance = null
+                ttsSpeakTries = 0
+                releaseFocus()
+                android.widget.Toast.makeText(context, app.fieldwatch.i18n.appText(R.string.voice_playback_failed), android.widget.Toast.LENGTH_LONG).show()
             }
             return
         }
         main.removeCallbacks(speakWatchdog)
-        main.postDelayed({
+        postVoice(TTS_START_WAIT_MS) {
+            if (currentUtterance != id) return@postVoice
             if (speaking && !utteranceStarted && ttsSpeakTries < 2) {
                 speaking = false
                 startSpeak(text)
@@ -472,7 +546,7 @@ class Alerter(private val context: Context) {
                 pendingSpeak = null
                 ttsSpeakTries = 0
             }
-        }, TTS_START_WAIT_MS)
+        }
     }
 
     private fun vibrate() {
@@ -490,10 +564,16 @@ class Alerter(private val context: Context) {
     private fun ensureChannel() {
         if (Build.VERSION.SDK_INT < 26) return
         runCatching { manager.deleteNotificationChannel("fieldwatch_watch_v2") }
-        if (manager.getNotificationChannel(CHANNEL) != null) return
+        val existing = manager.getNotificationChannel(CHANNEL)
+        if (existing != null) {
+            existing.name = localized("alerter_watchlist", "Watchlist")
+            existing.description = localized("alerter_appearing_signatures_and_devices_on_your_watchlist", "Appearing signatures and devices on your watchlist. Beep is played separately.")
+            manager.createNotificationChannel(existing)
+            return
+        }
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Watchlist", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Appearing signatures and devices on your watchlist. Beep is played separately."
+            NotificationChannel(CHANNEL, localized("alerter_watchlist", "Watchlist"), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = localized("alerter_appearing_signatures_and_devices_on_your_watchlist", "Appearing signatures and devices on your watchlist. Beep is played separately.")
                 enableVibration(true)
                 enableLights(true)
                 setSound(null, null)

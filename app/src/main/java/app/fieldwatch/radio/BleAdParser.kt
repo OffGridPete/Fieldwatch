@@ -28,7 +28,11 @@ object BleAdParser {
             val raw = result.periodicAdvertisingInterval
             if (raw > 0) raw * 1.25 else null
         } else null
-        val deviceClass = parsed.deviceClass ?: result.device?.bluetoothClass?.let { btClass24(it) }
+        val deviceClass = parsed.deviceClass ?: try {
+            result.device?.bluetoothClass?.let { btClass24(it) }
+        } catch (_: SecurityException) {
+            null
+        }
         return RadioFacts(
             txPowerDbm = txScan ?: txAdv,
             advFlags = flags,

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="candidate_families">
+        <item quantity="one">%1$d family</item>
+        <item quantity="other">%1$d families</item>
+    </plurals>
+    <plurals name="advertised_fixes">
+        <item quantity="one">%1$d advertised fix</item>
+        <item quantity="other">%1$d advertised fixes</item>
+    </plurals>
+    <plurals name="alerts_here">
+        <item quantity="one">%1$d alert here</item>
+        <item quantity="other">%1$d alerts here</item>
+    </plurals>
+</resources>
