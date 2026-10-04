@@ -384,6 +384,54 @@ class DefaultCatalogTest {
         }
     }
 
+    @Test
+    fun catalog91DjiPowerIsHomeNotDrone() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val power = stock.single { it.id == "fleet-dji-power" }
+        assertEquals(SignatureClass.HOME, power.kind)
+        assertTrue(power.matchAny)
+        assertTrue(power.attentionNote.isBlank())
+        assertEquals(RadioKind.BLE, power.rules.single().radio)
+        assertEquals("Power2000*", power.rules.single().text)
+        assertFalse(
+            "DJI Power is not bookmarked",
+            "fleet-dji-power" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId },
+        )
+        assertTrue(stock.single { it.id == "fleet-dji" }.notes.contains("DJI Power"))
+
+        val named = tagged("01", "Power2000-1006HZ", 0x08AA)
+            .copy(manufacturerDataHex = "941110E4B063D0AA76")
+        val lower = tagged("02", "power2000-1006hz", 0x08AA)
+            .copy(manufacturerDataHex = "9411")
+        val nameOnly = tagged("03", "Power2000", null)
+        val mid = tagged("04", "my Power2000", 0x08AA)
+            .copy(manufacturerDataHex = "9411")
+        val bare = tagged("05", "", 0x08AA)
+            .copy(manufacturerDataHex = "9411")
+        val djiName = tagged("06", "DJI Mini 4", 0x08AA)
+            .copy(manufacturerDataHex = "7000")
+        val wifiPower = wifi("02:00:00:00:00:77", "Power2000-1006HZ")
+        val hits = engine.match(listOf(named, lower, nameOnly, mid, bare, djiName, wifiPower), stock)
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("named power", "fleet-dji-power" in ids(named))
+        assertFalse("named power is not the drone row", "fleet-dji" in ids(named))
+        assertTrue("lowercase name", "fleet-dji-power" in ids(lower))
+        assertFalse("lowercase name is not the drone row", "fleet-dji" in ids(lower))
+        assertTrue("name only", "fleet-dji-power" in ids(nameOnly))
+        assertFalse("name only is not the drone row", "fleet-dji" in ids(nameOnly))
+        assertFalse("Power2000 in the middle", "fleet-dji-power" in ids(mid))
+        assertTrue("middle name with company stays DJI", "fleet-dji" in ids(mid))
+        assertFalse("bare company is not Power", "fleet-dji-power" in ids(bare))
+        assertTrue("bare company stays DJI", "fleet-dji" in ids(bare))
+        assertTrue("DJI name", "fleet-dji" in ids(djiName))
+        assertFalse("DJI name is not Power", "fleet-dji-power" in ids(djiName))
+        assertFalse("Wi-Fi Power2000", "fleet-dji-power" in ids(wifiPower))
+        val guess = DeviceExplain.guess(named, listOf("DJI Power"))
+        assertTrue(guess.headline, guess.headline.contains("Power station", ignoreCase = true))
+        assertFalse(guess.headline, guess.headline.contains("drone", ignoreCase = true))
+    }
+
     private fun tagged(tail: String, name: String, manufacturerId: Int?) =
         ble(name = name, manufacturerId = manufacturerId)
             .copy(key = "BLE:$tail", mac = "AA:BB:CC:DD:EE:$tail")

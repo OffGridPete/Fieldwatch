@@ -24,7 +24,8 @@ data class FloodBurst(
     val wifi: Boolean = false,
 ) {
     fun reportLine(clock: String): String {
-        val pairing = !wifi && popupCount >= PairingFlood.POPUP_MIN
+        // Families are stored only when the live pairing line was crossed, so an older sit keeps that label.
+        val pairing = !wifi && (families.isNotEmpty() || popupCount >= PairingFlood.POPUP_MIN)
         val head = when {
             wifi -> "Wi-Fi beacon flood"
             pairing -> "Pairing flood"
@@ -49,7 +50,7 @@ data class FloodBurst(
 
     companion object {
         const val INTRO =
-            "A burst of new Bluetooth addresses in a few seconds. A handheld can do this by advertising a pairing request or a new name and changing the address every packet. The advertisement does not name the tool."
+            "A burst of new Bluetooth addresses in a few seconds. A handheld can do this by advertising a pairing request or a new name and changing the address every packet. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The advertisement does not name the tool."
 
         const val WIFI_INTRO =
             "A burst of new Wi-Fi names in one scan, about the same loudness, gone by the next scan. A repeated name, a mesh, an extender, or a guest network is not counted. The advertisement does not name the tool."
@@ -101,7 +102,9 @@ data class FloodBurst(
  * Nearby Action (0x0F), a 3-byte Fast Pair model, a Swift Pair beacon, a
  * Nearby Sharing scenario, Samsung Easy Setup buds or watch, and a LoveSpouse
  * advertisement (company 0x00FF plus its fixed prefix).
- * A separate counter is a new address that only advertises a name.
+ * A separate counter is a new randomized address that only advertises a name.
+ * A factory address with a stable name stays out of that count.
+ * Pairing popups still count every address.
  * Similar loudness keeps a spread-out crowd from tripping it.
  * The advertisement does not name the tool.
  */
@@ -113,6 +116,8 @@ class PairingFlood {
         val families: List<String>,
         val medianRssi: Int?,
         val wifi: Boolean = false,
+        /** A sit is open, so Continue and Hide these hold until that sit ends. */
+        val duringSit: Boolean = false,
     ) {
         fun title(): String = when {
             wifi -> "Wi-Fi beacon flood"
@@ -135,6 +140,11 @@ class PairingFlood {
         }
 
         fun body(): String {
+            val choice = if (duringSit) {
+                "Continue leaves them on Live for the rest of this sit. Hide these takes this burst, and later bursts in this sit, off Live. The sit and the log still keep them."
+            } else {
+                "Continue leaves them on Live for about the next 15 minutes. Hide these takes this burst, and later bursts in that time, off Live. The sit and the log still keep them."
+            }
             if (wifi) {
                 val loud = if (medianRssi != null) {
                     ", about the same loudness, about $medianRssi dBm,"
@@ -144,7 +154,7 @@ class PairingFlood {
                 val what = "$popupCount new Wi-Fi names showed up in one scan$loud and they were gone on the next scan. " +
                     "A repeated name, a mesh, an extender, or a guest network is not counted."
                 val how = "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising many network names. The advertisement does not name the tool."
-                return what + "\n\n" + how
+                return what + "\n\n" + how + "\n\n" + choice
             }
             val popupHot = popupCount >= POPUP_MIN
             val nameHot = nameCount >= NAME_MIN
@@ -169,13 +179,13 @@ class PairingFlood {
                 if (medianRssi != null) {
                     append(" They are about the same loudness, about ")
                     append(medianRssi)
-                    append(" dBm, which reads as one nearby radio.")
+                    append(" dBm.")
                 }
             }
             val how = if (popupHot) {
-                "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a pairing request and changing the address every packet. The advertisement does not name the tool."
+                "This can be many radios already advertising pairing, such as in a store, or one radio changing its address on every packet. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool.\n\n$choice"
             } else {
-                "A handheld such as a Flipper Zero, or an ESP32 running Marauder or Bruce, does this by advertising a new name and changing the address every packet. The advertisement does not name the tool."
+                "This can be many radios already advertising a name, such as tags in a store, or one radio changing its name and address on every packet. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool.\n\n$choice"
             }
             return what + "\n\n" + how
         }
@@ -199,6 +209,12 @@ class PairingFlood {
     private var episode = false
     private var hidingEpisode = false
     private var acknowledged = false
+    /** Open sit. Continue and Hide these then hold until the sit ends. */
+    private var sitOpen = false
+    private var sitHold: SitHold? = null
+    /** Clock time when a no-sit hold ends. A sit hold uses [Long.MAX_VALUE]. */
+    private var holdUntil = 0L
+    private var lastNow = 0L
     private val _notice = MutableStateFlow<Notice?>(null)
     val notice: StateFlow<Notice?> = _notice.asStateFlow()
     private val _hide = MutableStateFlow(FloodHide())
@@ -211,6 +227,8 @@ class PairingFlood {
         if (obs.kind != RadioKind.BLE) return
         val kind = classify(obs) ?: return
         synchronized(lock) {
+            lastNow = now
+            expireHold(now)
             val dropped = evict(now)
             val mac = MacUtil.normalize(obs.mac)
             if (mac.isBlank() || !macs.add(mac)) {
@@ -226,6 +244,8 @@ class PairingFlood {
     /** Drops addresses that have left the window. Cheap when the window is empty. */
     fun tick(now: Long) {
         synchronized(lock) {
+            lastNow = now
+            expireHold(now)
             if (window.isEmpty()) {
                 finishEpisode()
                 return
@@ -235,10 +255,32 @@ class PairingFlood {
         }
     }
 
+    /**
+     * An open sit keeps the answer until [setSitOpen] goes off.
+     * A running 15-minute answer carries into a sit that starts while it still holds.
+     * With no sit, the answer holds for [HOLD_MS] from the tap and does not slide.
+     * The burst already on screen stays quiet when that time ends. The next one asks.
+     */
+    fun setSitOpen(open: Boolean) {
+        synchronized(lock) {
+            if (sitOpen == open) return
+            if (open) expireHold(lastNow)
+            sitOpen = open
+            if (open) {
+                if (sitHold != null) holdUntil = Long.MAX_VALUE
+            } else {
+                sitHold = null
+                holdUntil = 0L
+            }
+        }
+    }
+
     fun dismiss() {
         synchronized(lock) {
             val cur = _notice.value ?: return
             acknowledged = true
+            sitHold = if (hidingEpisode) SitHold.HIDE else SitHold.LEAVE
+            holdUntil = if (sitOpen) Long.MAX_VALUE else lastNow + HOLD_MS
             if (cur.showDialog) _notice.value = cur.copy(showDialog = false)
         }
     }
@@ -253,9 +295,11 @@ class PairingFlood {
             } else if (episode) {
                 hidingEpisode = false
                 hiddenKeys.removeAll(episodeKeys)
+                if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             } else {
                 hidingEpisode = false
                 hiddenKeys.clear()
+                if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             }
             publishHide()
         }
@@ -265,6 +309,7 @@ class PairingFlood {
     fun clearHidden() {
         synchronized(lock) {
             hidingEpisode = false
+            if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             if (hiddenKeys.isEmpty() && _hide.value.keys.isEmpty() && !_hide.value.episodeOn) return
             hiddenKeys.clear()
             publishHide()
@@ -328,7 +373,7 @@ class PairingFlood {
         if (starting) {
             episodeKeys.clear()
             reportKeys.clear()
-            hidingEpisode = false
+            hidingEpisode = sitHold == SitHold.HIDE
         }
         var grew = false
         if (popupHot) grew = remember(pop.hits) || grew
@@ -343,11 +388,12 @@ class PairingFlood {
         }
         if (grew && hidingEpisode) publishHide()
         _notice.value = Notice(
-            showDialog = !acknowledged,
+            showDialog = sitHold == null && !acknowledged,
             popupCount = pop.count,
             nameCount = nam.count,
             families = families,
             medianRssi = median,
+            duringSit = sitOpen,
         )
     }
 
@@ -370,6 +416,13 @@ class PairingFlood {
             }
         }
         return grew
+    }
+
+    private fun expireHold(now: Long) {
+        if (sitHold != null && now >= holdUntil) {
+            sitHold = null
+            holdUntil = 0L
+        }
     }
 
     private fun finishEpisode() {
@@ -440,7 +493,9 @@ class PairingFlood {
         }
         if (FastPair.pairingAdvertised(obs.facts)) bits = bits or BIT_FAST
         if (bits != 0) return Kind(popup = true, families = bits)
-        if (obs.name.isNotBlank()) return Kind(popup = false, families = 0)
+        if (obs.name.isNotBlank() && MacUtil.isRandomized(obs.mac)) {
+            return Kind(popup = false, families = 0)
+        }
         return null
     }
 
@@ -539,9 +594,14 @@ class PairingFlood {
 
     private class Band(val count: Int, val median: Int?, val hits: List<Hit>)
 
+    /** What Continue or Hide these means for the rest of an open sit. */
+    private enum class SitHold { LEAVE, HIDE }
+
     companion object {
         const val WINDOW_MS = 10_000L
-        const val POPUP_MIN = 6
+        /** Same length as the last-15-minutes path. Starts at the answer and does not slide. */
+        const val HOLD_MS = 15 * 60_000L
+        const val POPUP_MIN = 10
         const val NAME_MIN = 15
         const val RSSI_BAND_DB = 12
         private const val CAP = 96

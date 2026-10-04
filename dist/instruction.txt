@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.1.18 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.1.19 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  b9857c9edba2cfe77eb21895f9ffc2733d483316cbf92ab7a604f51c3eafa058
+  ebf6550efde40613090ce9a246379760ab9a31c5667f53e0966d26db7fd26486
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
@@ -256,7 +256,7 @@ Max collection (battery is the cost) — full walk-through:
                  green  mesh / LoRa (Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK)
                  amber  cameras / ALPR / municipal / UniFi Protect / BlueTOAD / BlipTrack / DJI
                  purple phones / Find My (Apple Device, Fast Pair, AirTags, Chipolo, Google)
-                 cyan   wearable trackers / beacons (SmartTag, Tile, iBeacon, Target Atrius basket, Minew)
+                 cyan   wearable trackers / beacons (SmartTag, Tile, iBeacon, Atrius cart tag, Minew)
                  orange glasses and audio (same color; class splits them)
                  teal   public safety (body-cam / public-safety AP) and vehicle (same color; class splits them).
                         Public safety class is used in law enforcement, not exclusive to it —

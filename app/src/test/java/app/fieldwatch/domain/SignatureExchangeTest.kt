@@ -80,7 +80,7 @@ class SignatureExchangeTest {
         val hits = SignatureEngine().match(listOf(car), stock).getValue(car.key)
         assertTrue("Tesla", "fleet-tesla" in hits)
         assertFalse("not a mall iBeacon", "fleet-ibeacon" in hits)
-        assertFalse("not Target Atrius", "fleet-target-atrius" in hits)
+        assertFalse("not an Atrius cart tag", "fleet-target-atrius" in hits)
     }
 
     @Test
@@ -94,7 +94,7 @@ class SignatureExchangeTest {
             serviceUuids = listOf("0000B1BB-0000-1000-8000-00805F9B34FB"),
         )
         val hits = SignatureEngine().match(listOf(tag), stock).getValue(tag.key)
-        assertTrue("Target Atrius basket", "fleet-target-atrius" in hits)
+        assertTrue("Atrius cart tag", "fleet-target-atrius" in hits)
         assertTrue("still dual-labels iBeacon", "fleet-ibeacon" in hits)
         val fleet = stock.first { it.id == "fleet-target-atrius" }
         assertEquals(SignatureClass.BEACON, fleet.kind)
@@ -107,7 +107,7 @@ class SignatureExchangeTest {
             serviceUuids = listOf("B1BB"),
         )
         val hits = SignatureEngine().match(listOf(tag), stock).getValue(tag.key)
-        assertTrue("B1BB hits Target Atrius", "fleet-target-atrius" in hits)
+        assertTrue("B1BB hits Atrius cart tag", "fleet-target-atrius" in hits)
     }
 
     @Test

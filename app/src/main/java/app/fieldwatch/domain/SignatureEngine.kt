@@ -31,7 +31,7 @@ class SignatureEngine {
                 }
             }
             dropProtocolIBeacon(hits, compiled)
-            dropDjiWhenOsmoCamera(hits)
+            dropDjiWhenSpecificRow(hits)
             dropAirTagsWhenAppleDevice(hits, device)
             dropCiscoWhenMeraki(hits)
             byKey[device.key] = hits
@@ -280,7 +280,7 @@ class SignatureEngine {
     /**
      * iBeacon is a payload layout, not a product. If a radio already matched a
      * non-beacon signature (Sony TV, Tesla phone-key, …), drop the iBeacon chip.
-     * Minew / Estimote / Kontakt / Target Atrius basket stay dual-labeled — those rows are beacon class.
+     * Minew / Estimote / Kontakt / Atrius cart tag stay dual-labeled — those rows are beacon class.
      */
     private fun dropProtocolIBeacon(hits: MutableSet<String>, compiled: Compiled) {
         if ("fleet-ibeacon" !in hits) return
@@ -291,9 +291,9 @@ class SignatureEngine {
         if (otherProduct) hits.remove("fleet-ibeacon")
     }
 
-    /** Osmo cameras share DJI company 0x08AA. Prefer the Osmo Cameras row over DJI. */
-    private fun dropDjiWhenOsmoCamera(hits: MutableSet<String>) {
-        if ("fleet-osmo" in hits) hits.remove("fleet-dji")
+    /** Osmo cameras and DJI Power stations share company 0x08AA. Prefer those rows over DJI. */
+    private fun dropDjiWhenSpecificRow(hits: MutableSet<String>) {
+        if ("fleet-osmo" in hits || "fleet-dji-power" in hits) hits.remove("fleet-dji")
     }
 
     /**

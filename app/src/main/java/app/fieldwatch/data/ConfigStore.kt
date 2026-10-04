@@ -171,10 +171,19 @@ class ConfigStore(context: Context) {
             val renamed = when {
                 fleet.id == "fleet-unknown" && fleet.name == "Unknown Fleet" -> stock.name
                 fleet.id == "fleet-seos" && fleet.name == "Seos" -> stock.name
+                fleet.id == "fleet-target-atrius" && fleet.name == "Target Atrius basket" -> stock.name
                 else -> fleet.name
             }
-            if (missing.isEmpty() && renamed == fleet.name) fleet
-            else fleet.copy(name = renamed, rules = fleet.rules + missing)
+            val notes = if (
+                fleet.id == "fleet-target-atrius" &&
+                fleet.notes == "Target shopping-basket tag. Dual-labels with generic iBeacon; this row is the store basket."
+            ) {
+                stock.notes
+            } else {
+                fleet.notes
+            }
+            if (missing.isEmpty() && renamed == fleet.name && notes == fleet.notes) fleet
+            else fleet.copy(name = renamed, notes = notes, rules = fleet.rules + missing)
         }
         var presets = cfg.presets.map { preset ->
             if (preset.id == "named" && preset.name == "Named only") {
@@ -1090,6 +1099,20 @@ class ConfigStore(context: Context) {
             if (addWatch.isNotEmpty()) watchlist = watchlist + addWatch
             version = CATALOG_V90
         }
+        if (version < CATALOG_V91) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V91.mapNotNull { catalog[it] }.filter { it.id !in have }
+            if (extras.isNotEmpty()) fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            fleets = fleets.map { fleet ->
+                if (!fleet.builtIn) return@map fleet
+                val stock = catalog[fleet.id] ?: return@map fleet
+                when (fleet.id) {
+                    "fleet-dji", "fleet-osmo" -> fleet.copy(decode = stock.decode, notes = stock.notes)
+                    else -> fleet
+                }
+            }
+            version = CATALOG_V91
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1134,7 +1157,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 90
+        const val CATALOG_VERSION = 91
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1223,7 +1246,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V87 = 87
         private const val CATALOG_V88 = 88
         private const val CATALOG_V89 = 89
-        private const val CATALOG_V90 = CATALOG_VERSION
+        private const val CATALOG_V90 = 90
+        private const val CATALOG_V91 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1582,6 +1606,9 @@ class ConfigStore(context: Context) {
             "fleet-yuneec",
             "fleet-swellpro",
             "fleet-crazyflie",
+        )
+        private val ADDED_IN_V91 = listOf(
+            "fleet-dji-power",
         )
     }
 }

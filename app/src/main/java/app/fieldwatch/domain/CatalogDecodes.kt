@@ -37,6 +37,8 @@ internal object CatalogDecodes {
         "34" to "Osmo Pocket 4 Pro",
         "112" to "Mavic 3",
         "126" to "Neo 2",
+        // Power2000-1006HZ, 2026-10-04. u16 LE 0x1194. The name selects the row.
+        "4500" to "Power 2000",
     )
 
     /**
@@ -275,7 +277,7 @@ internal object CatalogDecodes {
         ),
     )
 
-    /** DJI 0x08AA manufacturer-data model id (u16 LE). Osmo 0x0006–0x0022; some aircraft known. */
+    /** DJI 0x08AA manufacturer-data model id (u16 LE). Osmo 0x0006–0x0022; some aircraft; Power 2000 is 4500. */
     val djiModel: FleetDecode = FleetDecode(
         source = DecodeSource.MANUFACTURER_DATA,
         companyId = 0x08AA,

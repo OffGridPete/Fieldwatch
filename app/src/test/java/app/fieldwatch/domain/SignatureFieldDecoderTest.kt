@@ -556,6 +556,16 @@ class SignatureFieldDecoderTest {
     }
 
     @Test
+    fun catalogDjiPower2000ModelLabel() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-dji-power" }
+        val rows = SignatureFieldDecoder.decodeSighting(
+            ble(0x08AA, "941110E4B063D0AA76", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("Power 2000", rows.display("model"))
+    }
+
+    @Test
     fun catalogRuuviRawV1() {
         val fleet = DefaultCatalog.fleets().single { it.id == "fleet-ruuvi" }
         val rows = SignatureFieldDecoder.decodeSighting(
@@ -741,6 +751,7 @@ class SignatureFieldDecoderTest {
         assertTrue(byId.getValue("fleet-gopro").decode != null)
         assertTrue(byId.getValue("fleet-osmo").decode != null)
         assertTrue(byId.getValue("fleet-dji").decode != null)
+        assertTrue(byId.getValue("fleet-dji-power").decode != null)
         assertTrue(byId.getValue("fleet-govee").decode != null)
         assertTrue(byId.getValue("fleet-kontakt").decode != null)
         assertTrue(byId.getValue("fleet-estimote").decode != null)

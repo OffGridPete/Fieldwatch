@@ -56754,7 +56754,7 @@
         },
         {
             "id": "fleet-target-atrius",
-            "name": "Target Atrius basket",
+            "name": "Atrius cart tag",
             "enabled": true,
             "matchAny": true,
             "colorIndex": 3,
@@ -56780,7 +56780,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Target shopping-basket tag. Dual-labels with generic iBeacon; this row is the store basket.",
+            "notes": "Atrius cart tag. The advertisement does not name the store. Dual-labels with generic iBeacon.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "BEACON"

@@ -29,6 +29,12 @@ class WifiBeaconFlood {
     private var episodeAt = 0L
     private var hidingEpisode = false
     private var acknowledged = false
+    /** Open sit. Continue and Hide these then hold until the sit ends. */
+    private var sitOpen = false
+    private var sitHold: SitHold? = null
+    /** Clock time when a no-sit hold ends. A sit hold uses [Long.MAX_VALUE]. */
+    private var holdUntil = 0L
+    private var lastNow = 0L
     private var medianRssi: Int? = null
     private val _notice = MutableStateFlow<PairingFlood.Notice?>(null)
     val notice: StateFlow<PairingFlood.Notice?> = _notice.asStateFlow()
@@ -44,6 +50,8 @@ class WifiBeaconFlood {
         synchronized(lock) {
             if (lastAcceptedAt != 0L && now - lastAcceptedAt < SCAN_GAP_MS) return
             lastAcceptedAt = now
+            lastNow = now
+            expireHold(now)
             if (!primed) {
                 absorb(rows)
                 primed = true
@@ -78,10 +86,32 @@ class WifiBeaconFlood {
         }
     }
 
+    /**
+     * An open sit keeps the answer until [setSitOpen] goes off.
+     * A running 15-minute answer carries into a sit that starts while it still holds.
+     * With no sit, the answer holds for [HOLD_MS] from the tap and does not slide.
+     * The burst already on screen stays quiet when that time ends. The next one asks.
+     */
+    fun setSitOpen(open: Boolean) {
+        synchronized(lock) {
+            if (sitOpen == open) return
+            if (open) expireHold(lastNow)
+            sitOpen = open
+            if (open) {
+                if (sitHold != null) holdUntil = Long.MAX_VALUE
+            } else {
+                sitHold = null
+                holdUntil = 0L
+            }
+        }
+    }
+
     fun dismiss() {
         synchronized(lock) {
             val cur = _notice.value ?: return
             acknowledged = true
+            sitHold = if (hidingEpisode) SitHold.HIDE else SitHold.LEAVE
+            holdUntil = if (sitOpen) Long.MAX_VALUE else lastNow + HOLD_MS
             if (cur.showDialog) _notice.value = cur.copy(showDialog = false)
         }
     }
@@ -96,9 +126,11 @@ class WifiBeaconFlood {
             } else if (episode) {
                 hidingEpisode = false
                 hiddenKeys.removeAll(episodeKeys)
+                if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             } else {
                 hidingEpisode = false
                 hiddenKeys.clear()
+                if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             }
             publishHide()
         }
@@ -108,6 +140,7 @@ class WifiBeaconFlood {
     fun clearHidden() {
         synchronized(lock) {
             hidingEpisode = false
+            if (sitHold == SitHold.HIDE) sitHold = SitHold.LEAVE
             if (hiddenKeys.isEmpty() && _hide.value.keys.isEmpty() && !_hide.value.episodeOn) return
             hiddenKeys.clear()
             publishHide()
@@ -138,12 +171,19 @@ class WifiBeaconFlood {
         }
     }
 
+    private fun expireHold(now: Long) {
+        if (sitHold != null && now >= holdUntil) {
+            sitHold = null
+            holdUntil = 0L
+        }
+    }
+
     private fun confirm(open: Pending) {
         val starting = !episode || bursts.isEmpty()
         if (starting) {
             episodeKeys.clear()
             reportKeys.clear()
-            hidingEpisode = false
+            hidingEpisode = sitHold == SitHold.HIDE
             episodeAt = lastAcceptedAt
             medianRssi = open.median
         }
@@ -168,12 +208,13 @@ class WifiBeaconFlood {
         }
         if (grew && hidingEpisode) publishHide()
         _notice.value = PairingFlood.Notice(
-            showDialog = !acknowledged,
+            showDialog = sitHold == null && !acknowledged,
             popupCount = reportKeys.size,
             nameCount = 0,
             families = emptyList(),
             medianRssi = medianRssi,
             wifi = true,
+            duringSit = sitOpen,
         )
     }
 
@@ -316,6 +357,11 @@ class WifiBeaconFlood {
         const val MIN_NAMES = 15
         const val RSSI_BAND_DB = 6
         const val SCAN_GAP_MS = 3_000L
+        /** Same length as the last-15-minutes path. Starts at the answer and does not slide. */
+        const val HOLD_MS = 15 * 60_000L
+
+        /** What Continue or Hide these means for the rest of an open sit. */
+        private enum class SitHold { LEAVE, HIDE }
         private const val BURST_CAP = 40
         private const val EPISODE_CAP = 900
         private val SUFFIXES = hashSetOf(

@@ -93,6 +93,9 @@ class FieldwatchApp : Application() {
                 config.settings.loggingEnabled,
             )
             sits.load()
+            val sitOpen = sits.ui.value.open != null
+            pairingFlood.setSitOpen(sitOpen)
+            wifiFlood.setSitOpen(sitOpen)
         }
         sits.startFlusher()
         syncLocationUpdates()

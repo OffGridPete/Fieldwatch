@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.18")
+    c.drawString(48, 108, "Version 1.1.19")
     c.drawString(48, 94, "3 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.18  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.19  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1224,31 +1224,44 @@ def story():
         ),
         figure_wrap(
             "fig-flood.png",
-            "Fig. 1 — Pairing flood. Hide these takes those new addresses off the Live display. "
-            "Continue leaves them up. The line behind the dialog is an earlier burst still hidden.",
-            "A burst of new Bluetooth addresses in a few seconds raises one dialog, then a single red line. "
+            "Fig. 1 — Pairing flood. The burst can be many radios already advertising pairing, such as in a store, "
+            "or one radio changing its address. Hide these takes them off Live. Continue leaves them up.",
+            "A burst of new Bluetooth addresses in a few seconds raises one dialog, as in this figure, then a single red line. "
             "<b>Pairing flood</b> is many new addresses advertising a pairing popup at about the same loudness. "
-            "<b>Name flood</b> is many new addresses that only advertise a name. "
+            "<b>Name flood</b> is many new randomized addresses that only advertise a name. "
+            "A factory address with a stable name stays out of that count. "
             "The dialog names the pairing kinds in that burst. "
-            "<b>Hide these</b> dismisses the dialog and turns <b>Hide this burst</b> on. "
-            "<b>Continue</b> dismisses it and leaves the radios on the Live display. "
-            "The switch on the red line starts off for each new burst.",
-            "Hide this burst takes that burst’s new addresses off the list, the radar, the timeline, and By class "
-            "until they would have left on their own. "
-            "The sit file and the log still keep those packets. "
-            "Alerts stay quiet for those addresses. "
+            "It says this can be many radios already advertising pairing, such as in a store, "
+            "or one radio changing its address on every packet. "
+            "A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. "
+            "A name flood can be tags in a store, or one radio changing its name and address. "
+            "The advertisement does not name the tool.",
+            "<b>Continue</b> leaves the radios on the Live display and closes the dialog. "
+            "<b>Hide these</b> takes this burst off the list, the radar, the timeline, and By class, and turns <b>Hide this burst</b> on. "
+            "The sit file and the log still keep those packets. Alerts stay quiet for those addresses. "
+            "With a sit open, that choice holds for the rest of the sit. "
+            "Later bursts in the sit keep the red line and do not ask again. "
+            "Hide these also takes those later bursts off Live. "
+            "End sit clears the answer, and the next burst asks again. "
+            "With no sit open, the choice holds for about the next 15 minutes, counted from the tap. "
+            "That time does not slide when another burst arrives. "
+            "A later burst in those 15 minutes keeps the red line and does not ask again. "
+            "After 15 minutes, the next burst asks again. The burst already on screen when the time ends stays quiet. "
+            "Starting a sit while those 15 minutes are still running keeps the same answer until End sit.",
+            "After you answer, the red line stays while the burst is going. "
+            "The switch on that line hides or shows the addresses in the open burst. "
+            "Turning it off brings them back, and later bursts in the same hold stay on Live. "
+            "The dialog stays down until the hold ends. "
             "After the red line clears, <b>Hiding N flood radios</b> stays while any of them remain and the switch is on. "
-            "Turn that switch off and they come back. "
-            "The next burst starts with its own switch off. "
-            "A burst still hidden from earlier keeps its line, as in this figure. "
             "Debrief and Compare print one Flood line per burst and leave those addresses out of the radio counts and lists. "
             "The line says how many were set aside. Compare names the sit. "
-            "A sit saved before those addresses were stored still counts them with the other radios. "
-            "The advertisement does not name the tool.",
-            "A Wi-Fi beacon flood is the same shape on Live. Many new Wi-Fi names in one scan, about the same loudness, "
-            "gone by the next scan. The first scan of a session stays quiet. "
+            "A sit saved before those addresses were stored still counts them with the other radios.",
+            "A Wi-Fi beacon flood is the same shape, with its own answer. "
+            "Many new Wi-Fi names in one scan, about the same loudness, gone by the next scan. "
+            "The first scan of a session stays quiet. "
             "A repeated name, a mesh, an extender, or a guest network is not counted. "
             "One dialog, then one red line, then the same Flood note. "
+            "Continue and Hide these follow the same sit and 15-minute rules. "
             "Those addresses are left out of the radio counts and lists. The sit file and the log still keep them.",
         ),
         figure_wrap(
@@ -1601,9 +1614,9 @@ def story():
             "Walk into a shop with hundreds of iBeacons and they often share one proximity UUID "
             "(wayfinding, baskets, asset tags). Create a custom signature on that UUID and the "
             "same radios dual-label: iBeacon <b>and</b> your store row. The Live display shows up to three "
-            "chips; detail lists every match. Stock <b>Target Atrius basket</b> is this pattern "
+            "chips; detail lists every match. Stock <b>Atrius cart tag</b> is this pattern "
             "(UUID 5993A94C-… plus service 0xB1BB) — mute generic iBeacon in a mall and the "
-            "Target UUID still labels those baskets. Minew / Estimote / Kontakt.io also "
+            "that UUID still labels those carts. Minew / Estimote / Kontakt.io also "
             "dual-label with iBeacon. Fieldwatch drops the iBeacon chip only when a "
             "<i>non-beacon</i> product already labeled the radio (Sony TV, Tesla phone-key)."
         ),
@@ -3000,7 +3013,7 @@ def story():
             "shows a store-wide iBeacon UUID (or another ID tighter than the stock row), keep "
             "Create from device, delete the MAC pin, and lengthen the manufacturer-data prefix "
             "to type 0x02 / length 0x15 plus that UUID (hex <font face='Courier'>0215</font> + "
-            "32 UUID digits) — the same shape as Target Atrius basket. The stock iBeacon row "
+            "32 UUID digits) — the same shape as Atrius cart tag. The stock iBeacon row "
             "stays; your row is the second chip. The draft’s first manufacturer byte alone "
             "(<font face='Courier'>02</font>) would match every iBeacon, not this store."
         ),
@@ -3096,7 +3109,7 @@ def story():
             ["Filter class", "Stock signatures (abbreviated)"],
             [
                 ["Finder tags", "Apple AirTags, Samsung SmartTags, Tile, Chipolo, Pebblebee / moto tag, Google Find Hub, DULT tracker"],
-                ["Retail beacons", "iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
+                ["Retail beacons", "iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
                 ["Signage", "Retail LED sign, Electronic shelf label"],
                 ["Wearables", "Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note"],
                 ["Surveillance", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack"],
@@ -3110,7 +3123,7 @@ def story():
                 ["Thermostats", "Nest Thermostat, ecobee, Sensi, Honeywell Home"],
                 ["Access control", "August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton"],
                 ["Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
-                ["Home IoT", "Nest Weave, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, Samsung appliance, EcoWater, Amazon, Logitech, HP, Epson, LG webOS TV, Roku, Nespresso, RadiaCode, Ruuvi, Blue Maestro, SensorPush, SnapAV"],
+                ["Home IoT", "Nest Weave, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, Samsung appliance, EcoWater, Amazon, DJI Power, Logitech, HP, Epson, LG webOS TV, Roku, Nespresso, RadiaCode, Ruuvi, Blue Maestro, SensorPush, SnapAV"],
                 ["ISP / routers", "UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Ruijie, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR, TP-Link, ASUS, Linksys, Eero, Google Wifi, Huawei, Plume, D-Link, DWnet, Belkin, Xfinity, Spectrum, AT&amp;T, Verizon, Starlink, GL.iNet, MikroTik, EnGenius, Zyxel, Peplink, OpenWrt, Arris, T-Mobile, HUMAX, Sagemcom, Arcadyan, Askey, Calix, Nokia, AirTies, Tenda, WAVLINK, Sercomm, Luxul, CenturyLink, Adtran, Cambium, TRENDnet, Cudy, Vantiva, Hitron, Actiontec, Buffalo, Grandstream, Inseego, Franklin, Synology"],
                 ["Mesh", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Phones / PCs", "Apple Device, Fast Pair, Google, Microsoft Device, Phone hotspot"],
@@ -3125,12 +3138,12 @@ def story():
                 ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
                 ["Purple", "Phones / Find My tags", "Apple Device, Apple AirTags, Chipolo, Google Find Hub, DULT tracker, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
-                ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io"],
+                ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
                 ["Green", "Mesh / LoRa", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Orange", "Glasses and audio (same chip color; class splits them)", "Ray-Ban / Meta glasses, Snap Spectacles, Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO / Aftermarket / SYTPMS / TireCheck / TPMS service"],
                 ["Blue", "Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
-                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris"],
+                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, DJI Power, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris"],
             ],
             [0.95 * inch, 1.7 * inch, 3.85 * inch],
         ),
@@ -3210,7 +3223,7 @@ def story():
         ),
         P(
             "Brand BLE rows in the stock catalog include Tesla, Rivian, Google, Sony, Bose, Garmin, "
-            "Amazon, Fitbit, Oura, Logitech, HP, Epson, JBL / Harman, Sonos, Shokz, GoPro, Osmo, Insta360, DJI, "
+            "Amazon, Fitbit, Oura, Logitech, HP, Epson, JBL / Harman, Sonos, Shokz, GoPro, Osmo, Insta360, DJI, DJI Power, "
             "Microsoft Device, Apple Device, Apple audio, Fast Pair, Tuya, Govee, Haiku Fan, myQ, LG webOS TV, "
             "Nespresso, and RadiaCode. Exact match IDs are in Appendix B. A few cautions: Google is "
             "company 0x00E0 / Pixel / Chromecast. Fast Pair is a separate Phones / PCs row (next paragraph). Apple Device is Continuity types, "
@@ -3221,6 +3234,7 @@ def story():
             "temp / humidity / battery (§9.6). "
             "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi). "
             "Osmo Action / Pocket / 360 / Nano are the Osmo row (0x08AA model IDs 0x0006–0x0022 plus OsmoAction* names), not DJI. "
+            "DJI Power is a Bluetooth name that starts with Power2000, the Power 2000 station. It is Home IoT, not the DJI drone row. "
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
             "In-flight drones also hit <b>Remote ID</b> (BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC, and the French plate vendor IE 6A:5C:35). "
             "Skydio / Autel / Parrot ANAFI-Bebop-Skycontroller / HOVERAir / Tello / Potensic / Holy Stone / Hubsan / Yuneec / SwellPro / Crazyflie "
@@ -3257,7 +3271,7 @@ def story():
         ),
         P(
             "<b>Drones vs surveillance.</b> Drones is Remote ID (BLE FFFA, Wi-Fi FA:0B:BC, and French vendor IE 6A:5C:35), DJI, Skydio, Autel, Parrot, "
-            "HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, and Crazyflie. Osmo / Insta360 action cameras are Cameras, not Drones. Surveillance is poles, ALPR, and commercial readers — not aircraft and not campus access points. "
+            "HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, and Crazyflie. Osmo / Insta360 action cameras are Cameras, not Drones. A Bluetooth name that starts with Power2000 is DJI Power, Home IoT, not Drones. Surveillance is poles, ALPR, and commercial readers — not aircraft and not campus access points. "
             "Same amber chip; class splits them."
         ),
         P(
@@ -3268,9 +3282,9 @@ def story():
         ),
         P(
             "<b>Signage vs retail beacons.</b> Signage is LED message displays and Bluetooth ESL 0x1857. "
-            "Retail beacons is iBeacon / Target Atrius basket / Minew / Estimote / Kontakt.io. The advertised name on a LED sign "
+            "Retail beacons is iBeacon / Atrius cart tag / Minew / Estimote / Kontakt.io. The advertised name on a LED sign "
             "is the sign text, not a product name. iBeacon is Apple 0x004C type 0x02/0x15 (any vendor can "
-            "send it — mute in a mall). Target Atrius basket is iBeacon UUID 5993A94C-… plus service 0xB1BB (shopping-cart tags; not Acuity 0x0346 on those radios). Minew is IEEE OUI AC:23:3F; Estimote is 0x015D; Kontakt.io is 0x01FD. "
+            "send it — mute in a mall). Atrius cart tag is iBeacon UUID 5993A94C-… plus service 0xB1BB (shopping-cart tags; not Acuity 0x0346 on those radios). Minew is IEEE OUI AC:23:3F; Estimote is 0x015D; Kontakt.io is 0x01FD. "
             "Not Eddystone FEAA (JBL, printers, and others use it)."
         ),
         P(
@@ -3487,7 +3501,7 @@ def story():
                 ["Remote ID", "BLE FFFA and Wi-Fi FA:0B:BC", "Same Decode fields map on both. Open Drone ID app code, counter, message type. Protocol 0–2: Basic ID, location (latitude / longitude / alt_geo / heading / hspeed). Heading is direction 0–179 plus 180 when flags bit 1 (east/west) is set — not ×2. hspeed is ×0.25, or ×0.75 + 63.75 when flags bit 0 (SpeedMult) is set. Self ID, System (op_lat / op_lon = pilot). Wi-Fi packs are framed as FFFA. Location status is a Live row chip while that message is stored: Undeclared, Ground, Airborne, Emergency, RID failure. Emergency is strong. TAK Payload location uses the lat/lon ids plus track course/speed. Not a tail number. §5.4.1."],
                 ["Blue Maestro", "Mfr 0x0133", "Tempo Disc battery, log interval, stored logs, temperature, humidity."],
                 ["GoPro", "Mfr 0xF202", "Schema, processor awake/asleep, Wi-Fi AP, pairing, model name, media offload."],
-                ["Osmo / DJI", "Mfr 0x08AA", "Model id (Osmo Action / Pocket / 360 and some aircraft). Osmo and DJI rows share the map; identity rules still split cameras from drones."],
+                ["Osmo / DJI / DJI Power", "Mfr 0x08AA", "Model id (Osmo Action / Pocket / 360, some aircraft, and Power 2000). Those rows share the map; identity rules still split cameras, the power station, and drones."],
                 ["Govee", "Mfr 0xEC88 / 0x0001", "H5074 / H5075 / H510x temperature, humidity, battery — after the name match. Lights with a Govee name may not fit those layouts; then the map does not apply."],
                 ["Kontakt.io", "Service FE6A", "Location packet: battery, TX, channel, moving."],
                 ["Estimote", "Mfr 0x015D", "Frame type (Nearable / Telemetry). Packed sensor bytes are not expanded."],
@@ -3882,7 +3896,7 @@ def story():
             "the radio’s GPS trail covers about half your path, at least two-thirds of those stamps are −75 dBm or louder "
             "(same idea as Filters → Moving with you), and the last stamp is not 12 dB below the loudest. "
             "A house Find My heard only on a sidewalk arc, or that faded as you walked a loop, is omitted — not a tail. "
-            "<b>Retail beacons with you</b> (amber, separate): iBeacon, Target Atrius basket, Minew, Estimote, Kontakt.io that stayed with the path. "
+            "<b>Retail beacons with you</b> (amber, separate): iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io that stayed with the path. "
             "Store beacons are usually fixtures — they do not typically move with you. If one did, account for a test tag, a badge, or a short overlap with a fixture. Not a Find My tail. "
             "<b>Wearables with you</b> (amber, separate): Garmin, Fitbit, Oura that stayed with the path. Usually your own watch/ring or someone walking with you. Not typically a planted tracker. "
             "Find My and iPhone addresses rotate; each MAC is this session, not a unique ID. "
@@ -4067,7 +4081,7 @@ def story():
         P("<b>What you should see.</b> Only loud radios (most GPS-stamped samples about −75 dBm or stronger) that cover a large share of <i>your</i> path in both distance and time. A tag in your bag or car will match — that is the confidence check that the filter is working. House APs that only appear when you arrive should stay hidden. Passing cars on a highway will still come and go; a radio that is actually with you should stay. The “still here” window is not a fixed 50 m circle: it grows with how fast you have been moving, and it is longer for Wi-Fi (slow scans) than for BLE, so a cup-holder tag does not blink off between advertisements. Walking still uses a tight house-length. The checklist and the speed table are §8.5.", "body_left"),
         P("<b>What it is not.</b> Not direction finding. Not the other device’s GPS — it is your phone’s fix at hear-time. Find My / Offline Finding MAC rotation will not stitch a tail that changes address every minute. A radio that is quiet, weak, or only heard at one end of the path will not qualify.", "body_left"),
         P(
-            "<b>Write it down.</b> After ~45 m, Reports → Debrief (text) or Debrief (PDF). Tracking assessment is a short “did the test run.” Amber callouts list only radios that stayed with you, split by class: <b>Possible trackers with you</b> / <b>Possible tail</b> (finder tags), <b>Retail beacons with you</b> (iBeacon / Target Atrius basket / Minew / Estimote / Kontakt.io — fixtures; a Target basket you pushed will co-travel), <b>Wearables with you</b> (Garmin / Fitbit / Oura — usually own kit). House tags you passed are omitted. Plus overall distance — for the last 15 minutes in memory, whether you leave Moving with you on, hide the family, or switch to radar / timeline / hybrid / By class. Filters and view do not shrink Debrief. Carry an AirTag or iPhone: it should land in Possible trackers with you if it stayed loud on you (about −55 to −70 dBm). Find My MACs rotate, so you will see this session’s address, not one ID for the hour. A neighborhood loop is a special case: Debrief will not call a house Find My a tail unless that radio covered about half your path, stayed loud (−75 dBm on most GPS stamps), and did not fade 12 dB from its loudest. Car drive-bys still need three GPS stamps. Optional Online place names if you want streets. AI Export if you want a chat to read those callouts plus the inventory — tell it “apply §12.2; do not dismiss whole-sit radios as yours; do not list radios I only passed; do not treat a retail beacon as a Find My tail.” A longer drive: tap Debrief again at the next stop (§11.4.1) — radios that stayed with you will still be there; the first few kilometers of unnamed roadside radios will not. Not a legal finding and not identity.",
+            "<b>Write it down.</b> After ~45 m, Reports → Debrief (text) or Debrief (PDF). Tracking assessment is a short “did the test run.” Amber callouts list only radios that stayed with you, split by class: <b>Possible trackers with you</b> / <b>Possible tail</b> (finder tags), <b>Retail beacons with you</b> (iBeacon / Atrius cart tag / Minew / Estimote / Kontakt.io — fixtures; a cart you pushed will co-travel), <b>Wearables with you</b> (Garmin / Fitbit / Oura — usually own kit). House tags you passed are omitted. Plus overall distance — for the last 15 minutes in memory, whether you leave Moving with you on, hide the family, or switch to radar / timeline / hybrid / By class. Filters and view do not shrink Debrief. Carry an AirTag or iPhone: it should land in Possible trackers with you if it stayed loud on you (about −55 to −70 dBm). Find My MACs rotate, so you will see this session’s address, not one ID for the hour. A neighborhood loop is a special case: Debrief will not call a house Find My a tail unless that radio covered about half your path, stayed loud (−75 dBm on most GPS stamps), and did not fade 12 dB from its loudest. Car drive-bys still need three GPS stamps. Optional Online place names if you want streets. AI Export if you want a chat to read those callouts plus the inventory — tell it “apply §12.2; do not dismiss whole-sit radios as yours; do not list radios I only passed; do not treat a retail beacon as a Find My tail.” A longer drive: tap Debrief again at the next stop (§11.4.1) — radios that stayed with you will still be there; the first few kilometers of unnamed roadside radios will not. Not a legal finding and not identity.",
             "body_left",
         ),
         callout(
@@ -4716,7 +4730,7 @@ def story():
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
             ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. A blank name is filled. Filters → Hide my radios takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
-            ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. Hide these turns Hide this burst on. Continue leaves the radios up. The switch starts off on each new burst. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. The advertisement does not name the tool. §5.1, §5.6."],
+            ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Reports → Path still loads map tiles when Online place names and maps is on. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
@@ -4863,7 +4877,8 @@ def story():
             ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
-            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
+            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
+            ["DJI Power", "BLE name Power2000*", "DJI Power 2000 portable power station. Home IoT, not Drones. A radio that also carries company 0x08AA keeps this row and drops DJI. Other DJI radios stay on DJI. Not bookmarked. Decode fields: model id 4500 reads Power 2000 (§9.6)."],
             ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and pilot. The French plate labels the row and does not fill position or pilot. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. Not a tail number. Drones class. Stock bookmark."],
             ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],
             ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
@@ -4946,8 +4961,8 @@ def story():
             ["Tile Trackers", "Name Tile; UUIDs FEED, FEDD; mfg 0x00C7", "Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
             ["Google Find Hub", "BLE service FEAA, data prefix 40 (nearby) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. The list shows Nearby or Separated. Separated is the heavier chip and can hold a MAC about a day. Finder tags class. Decode: mode plus 20-byte EID. Chipolo / Pebblebee / moto tag name rows may dual-label. §5.4.1."],
             ["DULT tracker", "BLE service data FCB2 (any payload). Finder tags class. No Extra attention.", "IETF Detecting Unwanted Location Trackers location-enabled advertisement. The list shows Near owner or Separated. Separated is the heavier chip and can hold a MAC about a day. Decode: Network ID plus that bit. A bare FCB2 UUID list does not match. Chipolo / Pebblebee / moto tag names may dual-label. §5.4.1."],
-            ["iBeacon", "Apple 0x004C type 0x02 length 0x15; names *iBeacon*", "Protocol, not a vendor. Dropped when a product signature already labeled the radio (Sony TV, Tesla phone-key). Minew / Estimote / Kontakt / Target Atrius basket still dual-label. Not Nearby Info 0x10 / AirTags 0x12 / AirPods 0x07. Not Eddystone FEAA."],
-            ["Target Atrius basket", "Apple iBeacon UUID 5993A94C-7D97-4DF7-9ABF-E493BFD5D000; service 0xB1BB", "Target shopping-basket / Atrius tags. Two stores: hundreds of unnamed radios, unique major/minor, TX 0xC3. Not Acuity company 0x0346 on those radios. Dual-labels with iBeacon. Retail beacons class."],
+            ["iBeacon", "Apple 0x004C type 0x02 length 0x15; names *iBeacon*", "Protocol, not a vendor. Dropped when a product signature already labeled the radio (Sony TV, Tesla phone-key). Minew / Estimote / Kontakt / Atrius cart tag still dual-label. Not Nearby Info 0x10 / AirTags 0x12 / AirPods 0x07. Not Eddystone FEAA."],
+            ["Atrius cart tag", "Apple iBeacon UUID 5993A94C-7D97-4DF7-9ABF-E493BFD5D000; service 0xB1BB", "Atrius cart tag. The advertisement does not name the store. Hundreds of unnamed radios, unique major/minor, TX 0xC3. Not Acuity company 0x0346 on those radios. Dual-labels with iBeacon. Retail beacons class."],
             ["Minew", "IEEE OUI AC:23:3F; names Minew*", "Shenzhen Minew beacons / sensors. Field AC:23:3F often also iBeacon or Eddystone."],
             ["Estimote", "BLE company 0x015D; names Estimote*", "Location beacons / stickers. Decode fields: frame type (Nearable / Telemetry). Packed sensors are not expanded. §9.6."],
             ["Kontakt.io", "BLE company 0x01FD; names Kontakt*", "Kontakt Micro-Location beacons. Decode fields: UUID FE6A Location packet (battery / TX / channel / moving). §9.6."],
@@ -5218,8 +5233,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.18 (versionCode 28), field build of 3 October 2026"],
-                ["Document version", "1.1.18"],
+                ["Software version", "1.1.19 (versionCode 29), field build of 4 October 2026"],
+                ["Document version", "1.1.19"],
                 ["Document date", "3 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

@@ -359,6 +359,8 @@ object DeviceExplain {
                     Hint("camera", "a DJI Osmo action camera", "Matched signature $raw.", 7)
                 n == "insta360" ->
                     Hint("camera", "an Insta360 camera", "Matched signature $raw.", 7)
+                n == "dji power" ->
+                    Hint("iot", "a DJI Power station", "Matched signature $raw.", 7)
                 n == "dji" ->
                     Hint("drone", "a DJI drone or controller", "Matched signature $raw.", 7)
                 n == "remote id" ->
@@ -627,8 +629,8 @@ object DeviceExplain {
                     Hint("tag", "a Tile tracker", "Matched signature $raw.", 8)
                 n == "ibeacon" ->
                     Hint("beacon", "an iBeacon", "Matched signature $raw.", 7)
-                "target atrius" in n ->
-                    Hint("beacon", "a Target Atrius basket tag", "Matched signature $raw.", 8)
+                "atrius" in n ->
+                    Hint("beacon", "an Atrius cart tag", "Matched signature $raw.", 8)
                 n == "minew" ->
                     Hint("beacon", "a Minew BLE beacon or sensor", "Matched signature $raw.", 7)
                 n == "estimote" ->

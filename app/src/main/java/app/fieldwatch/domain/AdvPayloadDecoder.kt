@@ -60,8 +60,8 @@ object AdvPayloadDecoder {
                         } else if (hex.startsWith(targetPrefix) || hex.startsWith(targetPrefix.drop(4))) {
                             out += RoleHint(
                                 "beacon",
-                                "a Target Atrius basket tag",
-                                "Target / Atrius iBeacon UUID (shopping-basket asset tag).",
+                                "an Atrius cart tag",
+                                "Atrius cart-tag iBeacon. The advertisement does not name the store.",
                                 8,
                             )
                         } else {

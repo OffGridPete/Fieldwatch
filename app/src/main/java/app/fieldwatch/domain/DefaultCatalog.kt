@@ -10,16 +10,19 @@ object DefaultCatalog {
     const val TESLA_IBEACON_MFG_PREFIX = "021574278BDAB64445208F0C720EAF059935"
 
     /**
-     * Target Atrius basket tags advertise Apple iBeacon layout (0x004C type 0x02
+     * Atrius cart tags advertise Apple iBeacon layout (0x004C type 0x02
      * length 0x15) with this UUID, plus service 0xB1BB. Not Acuity company 0x0346
-     * on the hundreds of basket radios (two Florida stores, 2026-09-02).
+     * on the hundreds of cart radios (Florida stores, 2026-09-02; a Walmart, 2026-10-04).
+     * The advertisement does not name the store.
      */
     const val TARGET_ATRIUS_IBEACON_MFG_PREFIX = "02155993A94C7D974DF79ABFE493BFD5D000"
 
     /**
      * DJI company 0x08AA manufacturer-data model id (u16 LE). Osmo cameras sit
      * in 0x0006–0x0022. Aircraft (Mavic 3 0x0070, Neo 2 0x007e, …) do not.
-     * Do not put bare mfg(0x08AA) on the Osmo row — that is every DJI radio.
+     * Power 2000 advertised 0x1194 (4500) once (Power2000-1006HZ, 2026-10-04).
+     * That id is a decode label only. The DJI Power row matches the name.
+     * Do not put bare mfg(0x08AA) on the Osmo or DJI Power row — that is every DJI radio.
      */
     val OSMO_CAMERA_MFG_PREFIXES = listOf(
         "0600", // Osmo Action 1
@@ -117,6 +120,7 @@ object DefaultCatalog {
         osmo(),
         insta360(),
         dji(),
+        djiPower(),
         remoteId(),
         skydio(),
         autel(),
@@ -442,12 +446,12 @@ object DefaultCatalog {
 
     private fun targetAtriusBasket() = Fleet(
         id = "fleet-target-atrius",
-        name = "Target Atrius basket",
+        name = "Atrius cart tag",
         enabled = true,
         colorIndex = Hue.TRACKER,
         kind = SignatureClass.BEACON,
         matchAny = true,
-        notes = "Target shopping-basket tag. Dual-labels with generic iBeacon; this row is the store basket.",
+        notes = "Atrius cart tag. The advertisement does not name the store. Dual-labels with generic iBeacon.",
         builtIn = true,
         rules = listOf(
             mfgData(0x004C, TARGET_ATRIUS_IBEACON_MFG_PREFIX),
@@ -1058,7 +1062,7 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. In-flight digital license plate is the Remote ID row.",
+        notes = "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. In-flight digital license plate is the Remote ID row.",
         builtIn = true,
         decode = CatalogDecodes.djiModel,
         rules = listOf(
@@ -1067,6 +1071,21 @@ object DefaultCatalog {
             bleGlob("DJI*"),
             wifiName("DJI"),
             wifiGlob("DJI*"),
+        ),
+    )
+
+    private fun djiPower() = Fleet(
+        id = "fleet-dji-power",
+        name = "DJI Power",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "DJI Power 2000 portable power station. The Bluetooth name starts with Power2000. Not an aircraft. A DJI radio without that name stays on the DJI row.",
+        builtIn = true,
+        decode = CatalogDecodes.djiModel,
+        rules = listOf(
+            bleGlob("Power2000*"),
         ),
     )
 

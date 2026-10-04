@@ -4,6 +4,14 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.19 — 4 October 2026
+
+- Catalog 91: DJI Power matches a Bluetooth name that starts with Power2000. It is a power station, Home IoT, and it is not bookmarked. Osmo cameras stay on the Osmo row. A DJI Power hit drops the DJI drone row. Other DJI radios stay on DJI. Model id 4500 reads Power 2000. The name is what selects the row.
+- Atrius cart tag is the name of that iBeacon UUID. The advertisement does not name the store, so the row no longer says Target.
+- A name flood counts randomized Bluetooth addresses. A factory address with a stable name stays out of that count. Pairing popups still count every address. A smaller cluster of pairing popups stays quiet.
+- The pairing flood dialog says the burst can be many radios already advertising pairing, such as in a store, or one radio changing its address on every packet. A name flood can be tags in a store, or one radio changing its name and address. Continue leaves them on Live. Hide these takes them off Live. The sit and the log still keep them. The advertisement does not name the tool.
+- During a sit, Continue or Hide these holds until the sit ends. The first burst still asks. Later bursts keep the red line and do not open the dialog. Hide these also takes later bursts in that sit off Live. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while that hold is running keeps the answer until the sit ends. Pairing and name floods share the answer. A Wi-Fi beacon flood asks once on its own.
+
 ## 1.1.18 — 3 October 2026
 
 - Live warns when many new Bluetooth addresses advertise a pairing popup, or many new names, within a few seconds at about the same loudness. One dialog, then a single line until that burst goes quiet. The advertisement does not name the tool.

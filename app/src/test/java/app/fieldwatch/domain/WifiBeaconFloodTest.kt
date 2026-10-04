@@ -232,6 +232,75 @@ class WifiBeaconFloodTest {
     }
 
     @Test
+    fun continueDuringASitDoesNotAskAgain() {
+        val flood = WifiBeaconFlood()
+        flood.setSitOpen(true)
+        flood.scan(listOf(anchor()), at(0))
+        flood.scan(listOf(anchor()) + spam(start = 100), at(1))
+        flood.scan(listOf(anchor()), at(2))
+        assertTrue(flood.notice.value!!.showDialog)
+        assertTrue(flood.notice.value!!.duringSit)
+        flood.dismiss()
+        flood.scan(listOf(anchor()), at(3))
+        assertNull(flood.notice.value)
+        flood.scan(listOf(anchor()) + spam(start = 300), at(4))
+        flood.scan(listOf(anchor()), at(5))
+        assertFalse(flood.notice.value!!.showDialog)
+        assertEquals(2, flood.bursts().size)
+        assertFalse(flood.hide.value.episodeOn)
+        flood.setSitOpen(false)
+        flood.scan(listOf(anchor()), at(6))
+        flood.scan(listOf(anchor()) + spam(start = 500), at(7))
+        flood.scan(listOf(anchor()), at(8))
+        assertTrue(flood.notice.value!!.showDialog)
+    }
+
+    @Test
+    fun continueHoldsForFifteenMinutesThenAsksAgain() {
+        val flood = WifiBeaconFlood()
+        flood.scan(listOf(anchor()), 1_000L)
+        flood.scan(listOf(anchor()) + spam(start = 100), 10_000L)
+        flood.scan(listOf(anchor()), 20_000L)
+        assertTrue(flood.notice.value!!.showDialog)
+        assertTrue(flood.notice.value!!.body().contains("for about the next 15 minutes"))
+        flood.dismiss()
+        flood.scan(listOf(anchor()), 30_000L)
+        assertNull(flood.notice.value)
+        flood.scan(listOf(anchor()) + spam(start = 300), 40_000L)
+        flood.scan(listOf(anchor()), 50_000L)
+        assertFalse(flood.notice.value!!.showDialog)
+        assertTrue(flood.notice.value!!.line().startsWith("Wi-Fi beacon flood"))
+        flood.scan(listOf(anchor()), 60_000L)
+        assertNull(flood.notice.value)
+        val later = 20_000L + WifiBeaconFlood.HOLD_MS
+        flood.scan(listOf(anchor()) + spam(start = 500), later)
+        flood.scan(listOf(anchor()), later + 10_000L)
+        assertTrue(flood.notice.value!!.showDialog)
+    }
+
+    @Test
+    fun hideDuringASitHidesTheNextBurst() {
+        val flood = WifiBeaconFlood()
+        flood.setSitOpen(true)
+        val first = spam(start = 100)
+        flood.scan(listOf(anchor()), at(0))
+        flood.scan(listOf(anchor()) + first, at(1))
+        flood.scan(listOf(anchor()), at(2))
+        flood.setHideBurst(true)
+        flood.dismiss()
+        assertEquals(15, flood.hide.value.keys.size)
+        flood.scan(listOf(anchor()), at(3))
+        assertNull(flood.notice.value)
+        val second = spam(start = 300)
+        flood.scan(listOf(anchor()) + second, at(4))
+        flood.scan(listOf(anchor()), at(5))
+        assertFalse(flood.notice.value!!.showDialog)
+        assertTrue(flood.hide.value.episodeOn)
+        assertEquals(30, flood.hide.value.keys.size)
+        assertTrue(flood.hide.value.keys.contains("WIFI:${macOf(second.first())}"))
+    }
+
+    @Test
     fun theLowerChannelWinsATie() {
         val flood = WifiBeaconFlood()
         val low = (0 until 15).map { ap(100 + it, "Low$it", channel = 1) }

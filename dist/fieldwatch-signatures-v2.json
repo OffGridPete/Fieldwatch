@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 90,
+    "catalogVersion": 91,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -7874,6 +7874,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-target-atrius",
+            "name": "Atrius cart tag",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 76,
+                    "dataPrefixHex": "02155993A94C7D974DF79ABFE493BFD5D000",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "B1BB",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Atrius cart tag. The advertisement does not name the store. Dual-labels with generic iBeacon.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "BEACON"
         },
         {
             "id": "fleet-audi-mmi",
@@ -21509,7 +21542,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. In-flight digital license plate is the Remote ID row.",
+            "notes": "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. In-flight digital license plate is the Remote ID row.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE",
@@ -21544,7 +21577,71 @@
                             "33": "Osmo Pocket 4",
                             "34": "Osmo Pocket 4 Pro",
                             "112": "Mavic 3",
-                            "126": "Neo 2"
+                            "126": "Neo 2",
+                            "4500": "Power 2000"
+                        },
+                        "when": null
+                    }
+                ]
+            }
+        },
+        {
+            "id": "fleet-dji-power",
+            "name": "DJI Power",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Power2000*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "DJI Power 2000 portable power station. The Bluetooth name starts with Power2000. Not an aircraft. A DJI radio without that name stays on the DJI row.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
+            "decode": {
+                "source": "manufacturerData",
+                "serviceUuid": null,
+                "companyId": 2218,
+                "fields": [
+                    {
+                        "id": "model",
+                        "label": "Model",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u16",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "6": "Osmo Action 1",
+                            "16": "Osmo Action 2",
+                            "18": "Osmo Action 3",
+                            "20": "Osmo Action 4",
+                            "21": "Osmo Action 5 Pro",
+                            "23": "Osmo 360",
+                            "24": "Osmo Action 6",
+                            "25": "Osmo Nano",
+                            "32": "Osmo Pocket 3",
+                            "33": "Osmo Pocket 4",
+                            "34": "Osmo Pocket 4 Pro",
+                            "112": "Mavic 3",
+                            "126": "Neo 2",
+                            "4500": "Power 2000"
                         },
                         "when": null
                     }
@@ -49259,7 +49356,8 @@
                             "33": "Osmo Pocket 4",
                             "34": "Osmo Pocket 4 Pro",
                             "112": "Mavic 3",
-                            "126": "Neo 2"
+                            "126": "Neo 2",
+                            "4500": "Power 2000"
                         },
                         "when": null
                     }
@@ -57524,39 +57622,6 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
-        },
-        {
-            "id": "fleet-target-atrius",
-            "name": "Target Atrius basket",
-            "enabled": true,
-            "matchAny": true,
-            "colorIndex": 3,
-            "rules": [
-                {
-                    "kind": "MANUFACTURER_DATA",
-                    "text": "",
-                    "companyId": 76,
-                    "dataPrefixHex": "02155993A94C7D974DF79ABFE493BFD5D000",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "SERVICE_UUID",
-                    "text": "B1BB",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                }
-            ],
-            "minPeers": 0,
-            "peerWindowSec": 60,
-            "clusterByOui": false,
-            "sequentialMac": false,
-            "notes": "Target shopping-basket tag. Dual-labels with generic iBeacon; this row is the store basket.",
-            "attentionNote": "",
-            "builtIn": true,
-            "kind": "BEACON"
         },
         {
             "id": "fleet-tattile",

@@ -469,9 +469,9 @@ object DebriefReport {
                         next(),
                         "Retail beacons with you",
                         trackerCallout(
-                            "iBeacon / Minew / Estimote / Kontakt.io / Target Atrius basket radios that stayed with your GPS path. " +
+                            "iBeacon / Minew / Estimote / Kontakt.io / Atrius cart tag radios that stayed with your GPS path. " +
                                 "Location beacons are usually fixtures in a store or venue — they do not typically move with you. " +
-                                "If one did, account for it (a Target basket you pushed, your own test tag, a badge, or a short path that still overlaps a fixture). " +
+                                "If one did, account for it (a cart you pushed, your own test tag, a badge, or a short path that still overlaps a fixture). " +
                                 "Not the same as a Find My tail. Not a finding and not identity.",
                             beaconsWithYou,
                             customNames,
@@ -727,7 +727,7 @@ object DebriefReport {
                 followingMd,
             )
             dump(
-                "Retail beacons with you (iBeacon / Minew / Estimote / Kontakt.io / Target Atrius basket — fixtures; a pushed cart will co-travel)",
+                "Retail beacons with you (iBeacon / Minew / Estimote / Kontakt.io / Atrius cart tag — fixtures; a pushed cart will co-travel)",
                 beaconsOpen,
             )
             dump(
@@ -981,7 +981,7 @@ object DebriefReport {
             return@buildString
         }
         appendLine("Overall distance traveled: ${fmtDist(pathLen)} along the GPS path (${path.size} samples). Straight-line span ${fmtDist(pathSpan)}.")
-        appendLine("Co-travel is split by class: finder tags (AirTag / Find My, SmartTag, Tile, Chipolo, Pebblebee, loud pocket Apple), retail beacons (iBeacon, Minew, Estimote, Kontakt.io, Target Atrius basket), and wearables (Garmin, Fitbit, Oura).")
+        appendLine("Co-travel is split by class: finder tags (AirTag / Find My, SmartTag, Tile, Chipolo, Pebblebee, loud pocket Apple), retail beacons (iBeacon, Minew, Estimote, Kontakt.io, Atrius cart tag), and wearables (Garmin, Fitbit, Oura).")
         if (path.size < 2 || pathSpan < MOVE_M) {
             appendLine("Insufficient movement to distinguish a radio that stayed with you from one you passed. Walk or drive farther and re-run.")
             return@buildString

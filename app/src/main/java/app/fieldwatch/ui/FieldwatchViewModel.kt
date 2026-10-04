@@ -435,7 +435,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             }
         }
         viewModelScope.launch {
-            app.sits.ui.collect { refreshSitPath() }
+            app.sits.ui.collect { sit ->
+                val open = sit.open != null
+                app.pairingFlood.setSitOpen(open)
+                app.wifiFlood.setSitOpen(open)
+                refreshSitPath()
+            }
         }
         viewModelScope.launch {
             selectedKey.collect { key ->
