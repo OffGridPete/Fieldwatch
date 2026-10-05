@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.19")
+    c.drawString(48, 108, "Version 1.1.20")
     c.drawString(48, 94, "3 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.19  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.20  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1968,7 +1968,7 @@ def story():
             "<b>Signatures — export / import</b> — Export signatures shares a JSON pack of the whole catalog (stock plus any you added or edited, including Decode fields). Save signatures to SD card / storage… writes the same file through the system picker. Import signatures… reads a pack from another Fieldwatch. Same id or the same match rules are skipped, so importing twice does not clone the catalog. Extra rules on a stock row (for example a glob you added to Govee) merge onto the local row; a missing Decode fields map on that stock id is filled from the pack. A new name that already exists is imported as “Name (imported)”. Watchlist, filters, settings, logs, and GPS are not in the pack. A settings pack is a different file — use Import settings. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-signatures-YYYYMMDD.json</font>.",
             "<b>Update stock catalog from GitHub</b> — Needs internet. Pulls <font face='Courier'>dist/fieldwatch-signatures-v2.json</font> from the Fieldwatch GitHub (1.1.12+). 1.1.11 still reads <font face='Courier'>dist/fieldwatch-signatures.json</font>. Replaces stock rows, including Extra attention text. Bookmarks, Settings, muted stock rows, extra rules you added on a stock id, and signatures you added stay. Dialogs: no internet, could not reach GitHub, could not import catalog, already on the latest catalog, catalog updated. If a field map uses a decode source this APK does not know, the signature still imports and a second dialog (Signature decoding skipped) asks you to install a newer Fieldwatch APK. Offline: Import signatures from a file. A new APK still applies default watches; this button does not. Settings footer shows Catalog N under the app version.",
             "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
-            "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
+            "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks before it imports. A file that leaves the feed and the destination as they are imports with no extra step. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
             "<b>Show Live tour</b> — Opens Live with the first-launch overlay again: Tune is Display, Pause, Filters, Signatures, Reports, Settings. The same overlay runs once after the license on a new install. Got it dismisses it.",
         ]),
         P(
@@ -2058,7 +2058,7 @@ def story():
             "<b>BLE.</b> UUID FFFA in service data. One 25-byte message per advertisement. Types rotate: Basic ID, Location, System, Self ID, Operator ID. Protocol versions 0, 1, and 2 decode. The BLE address often rotates; Basic ID <font face='Courier'>uas_id</font> is the sticky identity.",
             "<b>Wi-Fi.</b> A normal AP beacon with vendor IE FA:0B:BC type 0x0D. Android 11+ exposes that IE; Android 10 does not, so a Wi-Fi-only drone will not label on Android 10. A Wi-Fi beacon can send one 25-byte message or an ASTM message pack (type 0xF, several messages). Identity is the vendor IE. The parser frames each 25-byte message as BLE FFFA (app code 0x0D, counter, message) so the stock Remote ID Decode fields map, detail, and TAK run the same as BLE.",
             "<b>French plate.</b> Vendor IE 6A:5C:35 labels the same Remote ID row. It does not fill position, heading, or the pilot pin. Those still come from the ASTM advertisement.",
-            "<b>Serial.</b> When Basic ID says the ID type is a serial, a known manufacturer prefix adds a line on that same Remote ID row. Freefly, BRINC, and Teal. A session ID does not. The French plate does not.",
+            "<b>Serial.</b> When Basic ID says the ID type is a serial, a known manufacturer prefix adds a line on that same Remote ID row. Freefly, BRINC, Teal, Autel, and Skydio. The Autel stem is 1748C and the Skydio stem is 1668B. A shorter prefix does not. A session ID does not. The French plate does not.",
         ]),
         P("<b>What still misses.</b>", "body_left"),
         bullets([
@@ -2607,7 +2607,7 @@ def story():
             "rules will not fire until the SSID is visible).", "body_left"),
         P("<b>Only one OUI is actually Flock’s.</b> IEEE MA-L <font face='Courier'>B4:1E:52</font> "
             "is registered to Flock Safety. Treat that, especially with a Flock-* SSID, as high "
-            "confidence. The other ~28 prefixes in the catalog are LiteOn, Espressif, and similar "
+            "confidence. The other 25 prefixes in the catalog are LiteOn, Espressif, and similar "
             "module vendors. Those chips ship in printers, plugs, toys, and cameras that are not "
             "Flock. An OUI-only hit on 3C:71:BF (Espressif) is a weak hypothesis. Silicon Labs "
             "OUIs on FS Ext Battery are the same story: lots of unrelated IoT. "
@@ -4750,9 +4750,9 @@ def story():
             ["Notes (signature)", "Editor field on a signature. Shows on radio detail as a quiet Notes card for matching radios, and in Share / AI Export. Stock copy is what the family is and how it is typically used — not the match recipe (company IDs, UUIDs). Not Extra attention: no Live “!”, not amber, not Debrief. Dual-chip radios list each family. §5.5, §9.3."],
             ["Extra attention", "Optional field on a signature, separate from Notes. If it is not empty, a match gets a “!” on the Live display, an amber Extra attention card on detail, and a line in Debrief / AI Export (amber PDF callout). Empty = no mark. The “!” is its own chip, not the decode hexagon, not the cyan Observer notes chip, and not the phosphor alerted bell. Stock fills it on Hobby BLE serial, Axon, WatchGuard Video, Digital Ally, Reveal Media, Wolfcom, Ray-Ban / Meta glasses, Snap Spectacles, Brilliant Frame, Even G1, RayNeo, Fieldy, Plaud Note, Limitless, Bee, Omi, Friend, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Panasonic i-PRO / Arbitrator, and roadside / public camera + ALPR (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, Hayden AI, Miovision, Tattile, LVT LiveView) — those rows also ship with the bookmark on. Many camera/ALPR rows are name-only; cellular units stay quiet. Pattern match, not identity, not a safety finding. §5.5, §9.3, §9.5, §12.14."],
             ["Hobby BLE serial", "Catalog signature (on). BLE advertised names for cheap UART modules (HMSoft, JDY, CC41, AT-09, BT05, ESP32 BLE). Not Classic HC-05/HC-06. Extra attention cautions that the same boards have been used in some pump/ATM overlays; look with your eyes if it is loud next to a card reader. Not proof. Turn the row off if those names are local noise."],
-            ["Axon", "Catalog signature (on). IEEE OUI 00:25:DF plus Axon Body / Fleet / Dock names, UUIDs, and BWCDEVICE in BLE service data. Extra attention: body-worn, in-car, dock, or TASER. Public safety class — used in law enforcement, not exclusive to it. Not that officer. Quiet LTE units will not appear."],
+            ["Axon", "Catalog signature (on). IEEE OUI 00:25:DF plus Axon Body / Fleet / Dock names, UUIDs, and BWCDEVICE in BLE service data. Extra attention: body-worn or fixed ALPR, in-car, dock, or TASER. That public address prefix is shared by body cameras and fixed readers. BWCDEVICE is on this same row, so that text alone is not a body camera. Public safety class — used in law enforcement, not exclusive to it. Not that officer. Quiet LTE units will not appear."],
             ["WatchGuard Video", "Catalog signature (on). IEEE OUI 00:1D:96 (WatchGuard Video, not the firewall company). Extra attention: body-worn / in-car. Now Motorola. Public safety class — used in law enforcement, not exclusive to it."],
-            ["Ray-Ban / Meta glasses", "Catalog signature (on). BLE company IDs 0x01AB / 0x058E / 0x0D53 and Ray-Ban names. Extra attention. Quest and other Meta wearables can match the same IDs."],
+            ["Ray-Ban / Meta glasses", "Catalog signature (on). BLE company IDs 0x01AB / 0x058E / 0x0D53, Ray-Ban names, and a Bluetooth name that starts with Meta RB Display. Extra attention. Quest and other Meta wearables can match the same company IDs."],
             ["Snap Spectacles", "Catalog signature (on). BLE company ID 0x03C2 plus Spectacles names. Extra attention. Not proof of recording."],
             ["Hak5 Pineapple", "Catalog signature (on). Setup SSID Pineapple_XXXX. Extra attention: admin AP, not every cloned café SSID."],
             ["Flipper Zero", "Catalog signature (on). OUI 0C:FA:22 and BLE name Flipper*. Extra attention. Custom firmware can hide it."],
@@ -4841,7 +4841,7 @@ def story():
     ]
     stock_sigs = [
             ["Flock Safety Cameras", "OUI B4:1E:52; names Flock, FLCK, CONDOR, FALCON, SPARROW; globs Flock-*, Flock-??????. Extra attention filled. Stock bookmark.", "Roadside ALPR / camera pole. High for B4:1E:52 or a Flock-* SSID. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
-            ["LiteOn camera radio", "LiteOn / related module OUIs (UGSI E0:4F:43 dropped; Espressif A4:CF:12 and 3C:71:BF already dropped); vendor IEs 00:80:19 / 00:0A:EB. Cameras class. No Extra attention. Not a stock bookmark.", "Camera-board prefixes. Doorbells and other OEM radios use these chips. A Flock name or B4:1E:52 is Flock Safety Cameras."],
+            ["LiteOn camera radio", "LiteOn / related module OUIs (dropped: UGSI E0:4F:43, Espressif A4:CF:12 and 3C:71:BF, Samsung 48:27:EA, local 82:6B:F2); vendor IEs 00:80:19 / 00:0A:EB. Cameras class. No Extra attention. Not a stock bookmark.", "Camera-board prefixes. Doorbells and other OEM radios use these chips. A Flock name or B4:1E:52 is Flock Safety Cameras. F8:A2:D6 stays."],
             ["Raven / ShotSpotter", "Names RAVEN, ShotSpotter, SoundThinking; UUIDs 3100–3500; OUI D4:11:D6", "UUID range is the stronger digital fingerprint. 0x09C8 is Penguin."],
             ["Apple AirTags", "Name AirTag / Find My; mfg data 0x004C / 12; UUID FD44", "Offline Finding. iPhones also send 0x12 — dropped when Continuity (Apple Device) is on the same radio unless the name is AirTag or UUID FD44. Not Continuity 0x10 and not AirPods (0x07)."],
             ["Apple Device", "Apple 0x004C types 0x10 / 0x0F / 0x0B / 0x05 / 0x0C–0x0E / 0x08 / 0x0A; names iPhone, iPad, MacBook", "Phone / tablet / Mac Continuity. OF 0x12 on the same radio is not a second AirTag chip. A street of iPhones will light this up."],
@@ -5068,9 +5068,9 @@ def story():
             ["GhostESP", "Wi-Fi GhostNet / GhostNet*. Extra attention filled. Stock bookmark.", "GhostESP ESP32 audit firmware default AP. Same boards are DIY. Not proof of an attack. Beeps on a new match."],
             ["Bruce", "Wi-Fi BruceNet / BruceNet*. Extra attention filled. Stock bookmark.", "Bruce ESP32 pentest firmware default AP. Evil-portal SSIDs look like ordinary Wi-Fi and miss. Not proof of an attack. Beeps on a new match."],
             ["Rekor", "Rekor / Rekor*. Extra attention filled. Stock bookmark.", "Highway / transit ALPR. Name-only. Beeps on a new match."],
-            ["Axon", "OUI 00:25:DF (Axon Enterprise); names Axon Body / Fleet / Dock / Axon*; UUIDs FE6B/FE6C/FC81; company TASER International 0x034D; service data contains BWCDEVICE (any UUID, also byte-reversed). Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). Body-worn, in-car, dock, or TASER. Body 3/4 often advertise BLE on the public OUI. BWCDEVICE is in the service payload, not the local name. Not that officer. Not Axon Networks 00:58:28. ZTE Axon phones can hit the name. Beeps on a new match."],
+            ["Axon", "OUI 00:25:DF (Axon Enterprise); names Axon Body / Fleet / Dock / Axon*; UUIDs FE6B/FE6C/FC81; company TASER International 0x034D; service data contains BWCDEVICE (any UUID, also byte-reversed). Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). Body-worn or fixed ALPR, in-car, dock, or TASER. 00:25:DF is shared by body cameras and fixed readers. BWCDEVICE is on this same row, so that text alone is not a body camera. Body 3/4 often advertise BLE on the public OUI. Not that officer. Not Axon Networks 00:58:28. ZTE Axon phones can hit the name. Beeps on a new match."],
             ["WatchGuard Video", "OUI 00:1D:96; names WatchGuard / VISTA WiFi / VISTA XLT. Extra attention filled. Stock bookmark.", "Public safety class — used in law enforcement, not exclusive to it (government, municipal, and other corporate fleets likely run some of the same kit). WatchGuard Video (now Motorola) body-worn / in-car. Not WatchGuard firewall 00:01:21. Patrol units may stay quiet. Beeps on a new match."],
-            ["Ray-Ban / Meta glasses", "BLE company IDs 0x01AB, 0x058E, 0x0D53; UUIDs FEB7/FEB8; names Ray-Ban / Meta View / Oakley Meta. Extra attention filled. Stock bookmark.", "Often Ray-Ban Meta. Same IDs on Quest and other Meta wearables. Not proof of recording. Beeps on a new match."],
+            ["Ray-Ban / Meta glasses", "BLE company IDs 0x01AB, 0x058E, 0x0D53; UUIDs FEB7/FEB8; names Ray-Ban / Meta View / Oakley Meta / Meta RB Display. Extra attention filled. Stock bookmark.", "Often Ray-Ban Meta or Meta Display glasses. Same company IDs on Quest and other Meta wearables. A name that starts with Meta RB Display is these glasses. Not proof of recording. Beeps on a new match."],
             ["Snap Spectacles", "BLE company ID 0x03C2; UUID FE45; Spectacles names. Extra attention filled. Stock bookmark.", "Snap Spectacles or other Snap BLE. Not proof of recording. Beeps on a new match."],
             ["Vuzix", "BLE company ID 0x060C; names Vuzix*. Extra attention filled. Stock bookmark on new installs.", "Vuzix smart glasses. Not proof of recording. Beeps on a new match if bookmarked."],
             ["RayNeo", "Match-all: TCL company id 0x0BC6 and BLE name RayNeo*. Extra attention filled. Stock bookmark on new installs.", "RayNeo glasses. A TCL phone without a RayNeo name does not match. Not proof of recording. Beeps on a new match if bookmarked."],
@@ -5097,7 +5097,7 @@ def story():
         "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32", "14:5A:FC", "74:4C:A1",
         "08:3A:88", "9C:2F:9D", "C0:35:32", "94:08:53", "E0:0A:F6", "14:B5:CD", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6",
         "24:B2:B9", "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4", "70:08:94",
-        "58:00:E3", "5C:93:A2", "64:6E:69", "48:27:EA", "82:6B:F2",
+        "58:00:E3", "5C:93:A2", "64:6E:69",
     ]
     oui_cols = 4
     oui_w = 6.5 * inch / oui_cols
@@ -5233,8 +5233,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.19 (versionCode 29), field build of 4 October 2026"],
-                ["Document version", "1.1.19"],
+                ["Software version", "1.1.20 (versionCode 30), field build of 5 October 2026"],
+                ["Document version", "1.1.20"],
                 ["Document date", "3 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

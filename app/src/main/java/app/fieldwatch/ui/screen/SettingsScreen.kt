@@ -42,6 +42,7 @@ import app.fieldwatch.ui.component.FieldwatchSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -102,6 +103,7 @@ fun SettingsScreen(
         ActivityResultContracts.OpenDocument(),
     ) { uri -> uri?.let(vm::importSettingsFromUri) }
     var confirmRestore by remember { mutableStateOf(false) }
+    val pendingSettingsImport by vm.pendingSettingsImport.collectAsStateWithLifecycle()
     Scaffold(
         contentWindowInsets = NestedTabInsets,
         topBar = { NestedTopBar("Settings") },
@@ -584,6 +586,7 @@ fun SettingsScreen(
                 "Settings switches, the current filter, filter presets, named radios, and signature watches. " +
                     "Not the catalog — that is Export signatures. Not logs or GPS. " +
                     "Import replaces those on this phone; the catalog stays. " +
+                    "If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks first. " +
                     "Use this after a factory reset or on a new phone.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -647,6 +650,19 @@ fun SettingsScreen(
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.45f))
             CreditFooter()
         }
+    }
+    pendingSettingsImport?.let { pending ->
+        AlertDialog(
+            onDismissRequest = vm::dismissPendingSettingsImport,
+            title = { Text("Import settings?") },
+            text = { Text(pending.message) },
+            confirmButton = {
+                TextButton(onClick = vm::confirmPendingSettingsImport) { Text("Import") }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::dismissPendingSettingsImport) { Text("Cancel") }
+            },
+        )
     }
     if (confirmRestore) {
         AlertDialog(

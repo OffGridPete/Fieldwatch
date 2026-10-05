@@ -24,5 +24,8 @@ internal object Cta2063 {
         "1914" to "BRINC",
         "1839FTD" to "Teal 2",
         "1839" to "Teal",
+        // Declared stems. Bare 1748 and 1668 are not these makers.
+        "1748C" to "Autel",
+        "1668B" to "Skydio",
     )
 }

@@ -159,6 +159,28 @@ class SettingsExchangeTest {
     }
 
     @Test
+    fun takImportWarningOnlyWhenFeedOrDestinationChanges() {
+        val local = AppSettings(takEnabled = false, takHost = "239.2.3.1", takPort = 10011)
+        assertEquals(null, SettingsExchange.takImportWarning(local, local.copy()))
+        val sameOn = SettingsExchange.takImportWarning(
+            local.copy(takEnabled = true, takHost = "192.168.0.9", takPort = 10011),
+            local.copy(takEnabled = true, takHost = "192.168.0.9", takPort = 10011),
+        )
+        assertEquals(null, sameOn)
+        val turnsOn = SettingsExchange.takImportWarning(local, local.copy(takEnabled = true))
+        assertTrue(turnsOn!!.contains("turns the TAK / CoT feed on"))
+        assertTrue(turnsOn.contains("239.2.3.1:10011"))
+        val newHost = SettingsExchange.takImportWarning(local, local.copy(takHost = "10.0.0.8", takPort = 4242))
+        assertTrue(newHost!!.contains("10.0.0.8:4242"))
+        assertTrue(newHost.contains("stays off"))
+        val caseOnly = SettingsExchange.takImportWarning(
+            local.copy(takHost = "ata.example"),
+            local.copy(takHost = "ATA.example"),
+        )
+        assertEquals(null, caseOnly)
+    }
+
+    @Test
     fun parseRejectsSignaturePackAndEmpty() {
         val signatures = SignatureExchange.encode(
             SignatureExchange.pack(

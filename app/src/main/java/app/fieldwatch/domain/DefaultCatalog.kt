@@ -366,7 +366,6 @@ object DefaultCatalog {
                 "94:08:53", "E0:0A:F6", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6", "24:B2:B9",
                 "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4",
                 "70:08:94", "58:00:E3", "5C:93:A2", "64:6E:69",
-                "48:27:EA", "82:6B:F2",
             ).forEach { add(oui(it)) }
             add(vendorIe("00:80:19"))
             add(vendorIe("00:0A:EB"))
@@ -2707,8 +2706,8 @@ object DefaultCatalog {
         colorIndex = Hue.LAW,
         kind = SignatureClass.LAW_ENFORCEMENT,
         matchAny = true,
-        notes = "Axon body-worn camera, in-car system, dock, or TASER. Quiet or LTE-only units will not appear.",
-        attentionNote = "Axon body-worn, in-car (Fleet), dock, or TASER gear. IEEE OUI 00:25:DF is Axon Enterprise. Body 3/4 often advertise BLE on that public OUI while worn. A name like Axon Body is a pattern, not that officer. Quiet or LTE-only units will not appear. The word Axon also hits some ZTE phones. Look with your eyes. Not identity.",
+        notes = "Axon body-worn camera or fixed ALPR, in-car system, dock, or TASER. Quiet or LTE-only units will not appear.",
+        attentionNote = "Axon body-worn or fixed ALPR, in-car (Fleet), dock, or TASER gear. IEEE OUI 00:25:DF is Axon Enterprise and is shared by body cameras and fixed readers. Body 3/4 often advertise BLE on that public OUI while worn. A name like Axon Body is a pattern, not that officer. A service payload with BWCDEVICE is on this same row, so that text alone is not a body camera. Quiet or LTE-only units will not appear. The word Axon also hits some ZTE phones. Look with your eyes. Not identity.",
         builtIn = true,
         rules = listOf(
             oui("00:25:DF"),
@@ -3007,8 +3006,8 @@ object DefaultCatalog {
         colorIndex = Hue.GLASSES,
         kind = SignatureClass.GLASSES,
         matchAny = true,
-        notes = "Ray-Ban Meta / Oakley Meta smart glasses, or a Quest / other Meta wearable.",
-        attentionNote = "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
+        notes = "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses, or a Quest / other Meta wearable.",
+        attentionNote = "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. A Bluetooth name that starts with Meta RB Display is these glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
         builtIn = true,
         rules = listOf(
             mfg(0x01AB),
@@ -3020,6 +3019,7 @@ object DefaultCatalog {
             bleGlob("RayBan*"),
             bleName("Meta View"),
             bleName("Oakley Meta"),
+            bleGlob("Meta RB Display*"),
             uuid("FEB7"),
             uuid("FEB8"),
         ),

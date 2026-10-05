@@ -56,6 +56,7 @@ import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
 import app.fieldwatch.domain.SettingsExchange
+import app.fieldwatch.domain.SettingsPack
 import app.fieldwatch.domain.SignatureExchange
 import app.fieldwatch.domain.TakFeedStatus
 import app.fieldwatch.domain.ListLine
@@ -96,6 +97,11 @@ data class CandidatesUi(
 private data class FamilyLogSnap(
     val radios: List<LogRadio> = emptyList(),
     val loaded: Boolean = false,
+)
+
+data class PendingSettingsImport(
+    val pack: SettingsPack,
+    val message: String,
 )
 
 data class ExportUi(
@@ -152,6 +158,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private var draftFromCandidates = false
     private val _export = MutableStateFlow(ExportUi())
     val export: StateFlow<ExportUi> = _export
+    private val _pendingSettingsImport = MutableStateFlow<PendingSettingsImport?>(null)
+    val pendingSettingsImport: StateFlow<PendingSettingsImport?> = _pendingSettingsImport
     private val _candidates = MutableStateFlow(CandidatesUi())
     val candidates: StateFlow<CandidatesUi> = _candidates
     private val _logExportKind = MutableStateFlow(LogExportKind.LOG_CSV)
@@ -1514,28 +1522,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     } ?: error("Could not read that file.")
                 }
                 val pack = SettingsExchange.parse(text)
-                val prev = app.config.settings
-                val result = app.config.importSettings(pack)
-                if (result.error != null) error(result.error)
-                val next = app.config.settings
-                app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
-                if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
-                if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
-                    app.startScanning()
+                val warning = SettingsExchange.takImportWarning(app.config.settings, pack.settings)
+                if (warning != null) {
+                    _pendingSettingsImport.value = PendingSettingsImport(pack, warning)
+                } else {
+                    finishSettingsImport(pack)
                 }
-                app.devices.refresh(
-                    app.config.fleets,
-                    next.staleSec,
-                    policy = next.detectionPolicy(),
-                    decaySec = next.decaySec,
-                )
-                if (next.alertVoice) app.alerter.prepareVoice()
-                result.summary()
-            }.onSuccess { summary ->
-                _export.value = ExportUi(
-                    noticeTitle = "Settings imported",
-                    noticeMessage = summary,
-                )
             }.onFailure { err ->
                 _export.value = ExportUi(
                     error = err.message ?: "Could not import settings",
@@ -1543,6 +1535,46 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
         }
+    }
+
+    fun confirmPendingSettingsImport() {
+        val pending = _pendingSettingsImport.value ?: return
+        _pendingSettingsImport.value = null
+        viewModelScope.launch {
+            runCatching { finishSettingsImport(pending.pack) }.onFailure { err ->
+                _export.value = ExportUi(
+                    error = err.message ?: "Could not import settings",
+                    errorTitle = "Could not import settings",
+                )
+            }
+        }
+    }
+
+    fun dismissPendingSettingsImport() {
+        _pendingSettingsImport.value = null
+    }
+
+    private suspend fun finishSettingsImport(pack: SettingsPack) {
+        val prev = app.config.settings
+        val result = app.config.importSettings(pack)
+        if (result.error != null) error(result.error)
+        val next = app.config.settings
+        app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
+        if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
+        if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
+            app.startScanning()
+        }
+        app.devices.refresh(
+            app.config.fleets,
+            next.staleSec,
+            policy = next.detectionPolicy(),
+            decaySec = next.decaySec,
+        )
+        if (next.alertVoice) app.alerter.prepareVoice()
+        _export.value = ExportUi(
+            noticeTitle = "Settings imported",
+            noticeMessage = result.summary(),
+        )
     }
 
     fun setLogExportKind(kind: LogExportKind) {

@@ -432,6 +432,58 @@ class DefaultCatalogTest {
         assertFalse(guess.headline, guess.headline.contains("drone", ignoreCase = true))
     }
 
+    @Test
+    fun catalog92DropsBadLiteOnOuisNamesMetaDisplayAndSoftensAxon() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val lite = stock.single { it.id == "fleet-liteon-camera-radio" }
+        val meta = stock.single { it.id == "fleet-meta-glasses" }
+        val axon = stock.single { it.id == "fleet-axon" }
+        val liteOuis = lite.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        assertTrue(liteOuis.contains("F8:A2:D6"))
+        assertTrue(liteOuis.contains("E0:0A:F6"))
+        assertTrue(liteOuis.contains("14:B5:CD"))
+        assertFalse(liteOuis.contains("48:27:EA"))
+        assertFalse(liteOuis.contains("82:6B:F2"))
+        assertTrue(lite.attentionNote.isBlank())
+        assertEquals(SignatureClass.CAMERA, lite.kind)
+        assertFalse("fleet-liteon-camera-radio" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        assertTrue(meta.rules.any { it.kind == RuleKind.NAME_GLOB && it.text == "Meta RB Display*" && it.radio == RadioKind.BLE })
+        assertFalse(meta.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FD5F", true) })
+        assertTrue(meta.notes.contains("Meta Display"))
+        assertTrue(axon.notes.contains("fixed ALPR"))
+        assertTrue(axon.attentionNote.contains("fixed readers"))
+        assertTrue(axon.attentionNote.contains("BWCDEVICE"))
+        assertTrue(axon.rules.any { it.kind == RuleKind.OUI && it.text.equals("00:25:DF", true) })
+        assertTrue(axon.rules.any {
+            it.kind == RuleKind.SERVICE_DATA && it.dataPrefixHex.equals("425743444556494345", true)
+        })
+        assertFalse(stock.any { fleet ->
+            fleet.rules.any { rule ->
+                (rule.kind == RuleKind.MANUFACTURER_ID && rule.companyId == 0xFD5F) ||
+                    (rule.kind == RuleKind.SERVICE_UUID && rule.text.equals("FD5F", true))
+            }
+        })
+
+        val samsung = wifi("48:27:EA:11:22:33")
+        val local = wifi("82:6B:F2:11:22:33")
+        val kept = wifi("F8:A2:D6:11:22:33")
+        val display = ble(name = "Meta RB Display 0053").copy(key = "BLE:21", mac = "AA:BB:CC:DD:EE:21")
+        val short = ble(name = "Meta RB").copy(key = "BLE:22", mac = "AA:BB:CC:DD:EE:22")
+        val mid = ble(name = "my Meta RB Display").copy(key = "BLE:23", mac = "AA:BB:CC:DD:EE:23")
+        val fd5f = ble(name = "", serviceUuids = listOf("0000FD5F-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:24", mac = "AA:BB:CC:DD:EE:24")
+        val hits = engine.match(listOf(samsung, local, kept, display, short, mid, fd5f), stock)
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertFalse("Samsung prefix", "fleet-liteon-camera-radio" in ids(samsung))
+        assertFalse("local prefix", "fleet-liteon-camera-radio" in ids(local))
+        assertTrue("LiteOn F8:A2:D6", "fleet-liteon-camera-radio" in ids(kept))
+        assertTrue("Meta Display name", "fleet-meta-glasses" in ids(display))
+        assertFalse("short Meta RB", "fleet-meta-glasses" in ids(short))
+        assertFalse("Display not at the start", "fleet-meta-glasses" in ids(mid))
+        assertFalse("FD5F alone", "fleet-meta-glasses" in ids(fd5f))
+    }
+
     private fun tagged(tail: String, name: String, manufacturerId: Int?) =
         ble(name = name, manufacturerId = manufacturerId)
             .copy(key = "BLE:$tail", mac = "AA:BB:CC:DD:EE:$tail")

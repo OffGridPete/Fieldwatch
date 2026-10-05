@@ -4,6 +4,12 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.20 — 5 October 2026
+
+- Sit CSV and log CSV prefix a cell whose first character is =, +, -, or @, so a spreadsheet keeps the name or note as text. A plain number, including a negative coordinate, stays as it was. WiGLE CSV is unchanged.
+- Import settings asks before it applies a file that would turn the TAK / CoT feed on or change its destination. A file that leaves the feed and the destination as they are still imports with no extra step. Cancel leaves the phone as it was.
+- Catalog 92: LiteOn camera radio drops 48:27:EA (Samsung) and 82:6B:F2 (a local address, not a factory block). F8:A2:D6 stays. Ray-Ban / Meta glasses also matches a Bluetooth name that starts with Meta RB Display. Axon notes say body-worn or fixed ALPR. That public address prefix is shared by body cameras and fixed readers. Remote ID names Autel from a serial that starts with 1748C, and Skydio from 1668B, when the ID type is a serial. A shorter prefix does not get that name.
+
 ## 1.1.19 — 4 October 2026
 
 - Catalog 91: DJI Power matches a Bluetooth name that starts with Power2000. It is a power station, Home IoT, and it is not bookmarked. Osmo cameras stay on the Osmo row. A DJI Power hit drops the DJI drone row. Other DJI radios stay on DJI. Model id 4500 reads Power 2000. The name is what selects the row.

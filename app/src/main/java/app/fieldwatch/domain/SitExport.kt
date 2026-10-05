@@ -189,10 +189,7 @@ object SitExport {
     private fun joinedAttention(d: Sighting, fleets: List<Fleet>): String =
         d.attentionNotes(fleets).map { it.first }.joinToString("; ")
 
-    private fun csv(s: String): String =
-        if (s.any { it == ',' || it == '"' || it == '\n' || it == '\r' }) {
-            "\"${s.replace("\"", "\"\"")}\""
-        } else s
+    private fun csv(s: String): String = CsvCells.quote(s)
 
     private fun coord(v: Double): String = String.format(Locale.US, "%.6f", v)
 

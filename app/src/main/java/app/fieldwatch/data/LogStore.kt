@@ -1,6 +1,7 @@
 package app.fieldwatch.data
 
 import android.content.Context
+import app.fieldwatch.domain.CsvCells
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.LogExportRadios
 import app.fieldwatch.domain.LogFormat
@@ -275,7 +276,7 @@ class LogStore(context: Context) {
     }
 
     private fun csvLine(device: Sighting, names: String): String {
-        fun esc(v: String) = v.replace(',', ' ').replace('\n', ' ').replace('"', ' ')
+        fun esc(v: String) = CsvCells.plain(v)
         return listOf(
             device.lastSeen.toString(),
             iso.format(Date(device.lastSeen)),

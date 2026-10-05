@@ -118,4 +118,28 @@ object SettingsExchange {
         )
         return next to result
     }
+
+    /**
+     * Null when this import would not turn the TAK / CoT feed on and would not
+     * change its destination. The feed is plain UDP.
+     */
+    fun takImportWarning(local: AppSettings, incoming: AppSettings): String? {
+        val turnsOn = incoming.takEnabled && !local.takEnabled
+        val host = incoming.takHost.trim().ifBlank { "(blank)" }
+        val localHost = local.takHost.trim()
+        val destChanges = !incoming.takHost.trim().equals(localHost, ignoreCase = true) ||
+            incoming.takPort != local.takPort
+        if (!turnsOn && !destChanges) return null
+        val dest = "$host:${incoming.takPort}"
+        return when {
+            turnsOn && destChanges ->
+                "This file turns the TAK / CoT feed on and sets the destination to $dest. The feed is plain UDP."
+            turnsOn ->
+                "This file turns the TAK / CoT feed on. It sends plain UDP to $dest."
+            incoming.takEnabled ->
+                "This file changes the TAK / CoT destination to $dest. The feed is plain UDP and stays on."
+            else ->
+                "This file changes the TAK / CoT destination to $dest. The feed stays off until you turn it on."
+        }
+    }
 }

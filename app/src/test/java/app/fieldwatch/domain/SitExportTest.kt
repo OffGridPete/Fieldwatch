@@ -104,6 +104,25 @@ class SitExportTest {
     }
 
     @Test
+    fun csvPrefixesFormulaTextAndLeavesNumbers() {
+        val hostile = wifi.copy(name = "=HYPERLINK(\"http://example\")")
+        val negative = wifi.copy(name = "-122.143000")
+        val csv = SitExport.csv(
+            listOf(hostile, negative),
+            LogExportRadios.BOTH,
+            mapOf(hostile.key to "+cmd"),
+            mapOf(hostile.key to "lot, B"),
+            emptySet(),
+        )
+        assertTrue(csv.contains("\"'=HYPERLINK(\"\"http://example\"\")\""))
+        assertTrue(csv.contains("-122.143000"))
+        assertFalse(csv.contains("'-122.143000"))
+        assertTrue(csv.contains("'+cmd"))
+        assertTrue(csv.contains("\"lot, B\""))
+        assertTrue(csv.contains("-122.143000,-122.143000") || csv.contains(",-122.143000,"))
+    }
+
+    @Test
     fun suggestedNameSlugsSitTitle() {
         val name = SitExport.suggestedName(LogExportKind.GPX, "Drive through Target!", "20260925-120000")
         assertEquals("fieldwatch-sit-drive-through-target-20260925-120000.gpx", name)

@@ -53,7 +53,14 @@ class StockCatalogFileTest {
         val ouis = lite.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
         assertTrue(ouis.contains("E0:0A:F6"))
         assertTrue(ouis.contains("14:B5:CD"))
+        assertTrue(ouis.contains("F8:A2:D6"))
+        assertFalse(ouis.contains("48:27:EA"))
+        assertFalse(ouis.contains("82:6B:F2"))
         assertTrue(lite.attentionNote.isBlank())
+        val meta = pack.fleets.single { it.id == "fleet-meta-glasses" }
+        assertTrue(meta.rules.any { it.kind == RuleKind.NAME_GLOB && it.text == "Meta RB Display*" })
+        assertFalse(meta.rules.any { it.text.equals("FD5F", true) })
+        assertTrue(pack.fleets.single { it.id == "fleet-axon" }.notes.contains("fixed ALPR"))
         val remote = pack.fleets.single { it.id == "fleet-remote-id" }
         assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("6A:5C:35", true) })
         assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("FA:0B:BC", true) })

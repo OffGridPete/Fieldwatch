@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 91,
+    "catalogVersion": 92,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -8390,8 +8390,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Axon body-worn camera, in-car system, dock, or TASER. Quiet or LTE-only units will not appear.",
-            "attentionNote": "Axon body-worn, in-car (Fleet), dock, or TASER gear. IEEE OUI 00:25:DF is Axon Enterprise. Body 3/4 often advertise BLE on that public OUI while worn. A name like Axon Body is a pattern, not that officer. Quiet or LTE-only units will not appear. The word Axon also hits some ZTE phones. Look with your eyes. Not identity.",
+            "notes": "Axon body-worn camera or fixed ALPR, in-car system, dock, or TASER. Quiet or LTE-only units will not appear.",
+            "attentionNote": "Axon body-worn or fixed ALPR, in-car (Fleet), dock, or TASER gear. IEEE OUI 00:25:DF is Axon Enterprise and is shared by body cameras and fixed readers. Body 3/4 often advertise BLE on that public OUI while worn. A name like Axon Body is a pattern, not that officer. A service payload with BWCDEVICE is on this same row, so that text alone is not a body camera. Quiet or LTE-only units will not appear. The word Axon also hits some ZTE phones. Look with your eyes. Not identity.",
             "builtIn": true,
             "kind": "LAW_ENFORCEMENT"
         },
@@ -45786,22 +45786,6 @@
                     "enabled": true
                 },
                 {
-                    "kind": "OUI",
-                    "text": "48:27:EA",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "82:6B:F2",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
                     "kind": "VENDOR_IE_OUI",
                     "text": "00:80:19",
                     "companyId": 0,
@@ -50626,6 +50610,14 @@
                     "enabled": true
                 },
                 {
+                    "kind": "NAME_GLOB",
+                    "text": "Meta RB Display*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
                     "kind": "SERVICE_UUID",
                     "text": "FEB7",
                     "companyId": 0,
@@ -50646,8 +50638,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Ray-Ban Meta / Oakley Meta smart glasses, or a Quest / other Meta wearable.",
-            "attentionNote": "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
+            "notes": "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses, or a Quest / other Meta wearable.",
+            "attentionNote": "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. A Bluetooth name that starts with Meta RB Display is these glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
         },

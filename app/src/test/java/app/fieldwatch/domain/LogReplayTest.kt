@@ -79,6 +79,13 @@ class LogReplayTest {
         assertEquals("00:11:22:33:44:55", cols[3])
         assertEquals("37.500000", cols[15])
         assertEquals("-122.100000", cols[16])
+        val hostile = LogReplay.jsonRowToCsv(
+            """{"kind":"WIFI","mac":"00:11:22:33:44:55","name":"=cmd","vendor":"@sum","fleets":"ok","lat":37.5,"lon":-122.1}""",
+        )!!
+        val hostileCols = hostile.split(',')
+        assertEquals("'=cmd", hostileCols[4])
+        assertEquals("'@sum", hostileCols[9])
+        assertEquals("-122.100000", hostileCols[16])
         assertTrue(cols[13].contains("RAND"))
     }
 
