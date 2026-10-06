@@ -18,6 +18,7 @@ import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.detectionPolicy
+import app.fieldwatch.ui.translateAppText
 import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.CancellationException
@@ -37,6 +38,7 @@ class ScanService : LifecycleService() {
     private var bleStartJob: Job? = null
     private var lastIntensity: ScanIntensity? = null
     private var lastNotifAt = 0L
+    private var channelLanguage: app.fieldwatch.domain.AppLanguage? = null
     private val inbound = Channel<Observation>(512, BufferOverflow.DROP_OLDEST)
     private val publishGate = Any()
     private var publishJob: Job? = null
@@ -45,8 +47,8 @@ class ScanService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        ensureChannel()
         val app = application as FieldwatchApp
+        ensureChannel(app.config.settings.language)
         wifi = WifiRadio(
             this,
             onObservation = { offer(it) },
@@ -256,6 +258,7 @@ class ScanService : LifecycleService() {
                     visibleOnLive = app::wouldShowOnLive,
                     arrivalsOnly = app.config.filter.arrivalsOnly,
                     demoMode = settings.demoMode,
+                    language = settings.language,
                 )
             }
             app.tak.publish(
@@ -273,7 +276,10 @@ class ScanService : LifecycleService() {
     }
 
     private fun startAsForeground() {
-        val notification = buildNotification("Starting radios…")
+        val app = application as FieldwatchApp
+        val language = app.config.settings.language
+        ensureChannel(language)
+        val notification = buildNotification(translateAppText("Starting radios…", language))
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(
                 NOTIF_ID,
@@ -296,13 +302,20 @@ class ScanService : LifecycleService() {
         val now = System.currentTimeMillis()
         if (now - lastNotifAt < 2_500L) return
         lastNotifAt = now
-        val stats = (application as FieldwatchApp).devices.stats.value
-        val text = "${stats.wifiNow} Wi-Fi · ${stats.bleNow} BLE · ${stats.namedNow} signatures"
+        val app = application as FieldwatchApp
+        val language = app.config.settings.language
+        ensureChannel(language)
+        val stats = app.devices.stats.value
+        val text = translateAppText(
+            "${stats.wifiNow} Wi-Fi · ${stats.bleNow} BLE · ${stats.namedNow} signatures",
+            language,
+        )
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIF_ID, buildNotification(text))
     }
 
     private fun buildNotification(text: String): Notification {
+        val language = (application as FieldwatchApp).config.settings.language
         val launch = PendingIntent.getActivity(
             this,
             0,
@@ -317,12 +330,12 @@ class ScanService : LifecycleService() {
         )
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_fieldwatch)
-            .setContentTitle("Fieldwatch scanning")
+            .setContentTitle(translateAppText("Fieldwatch scanning", language))
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(launch)
-            .addAction(0, "Stop", stop)
+            .addAction(0, translateAppText("Stop", language), stop)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
     }
@@ -373,15 +386,21 @@ class ScanService : LifecycleService() {
         return null
     }
 
-    private fun ensureChannel() {
+    private fun ensureChannel(language: app.fieldwatch.domain.AppLanguage) {
         if (Build.VERSION.SDK_INT < 26) return
+        if (channelLanguage == language) return
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Scanning", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Passive Wi-Fi and Bluetooth scan status"
+            NotificationChannel(
+                CHANNEL,
+                translateAppText("Scanning", language),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = translateAppText("Passive Wi-Fi and Bluetooth scan status", language)
                 setShowBadge(false)
             },
         )
+        channelLanguage = language
     }
 
     companion object {

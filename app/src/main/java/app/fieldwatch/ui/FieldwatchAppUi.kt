@@ -74,7 +74,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -130,16 +130,18 @@ import app.fieldwatch.ui.theme.FieldwatchTheme
 @Composable
 fun FieldwatchRoot(vm: FieldwatchViewModel, onRequestPermissions: () -> Unit) {
     val state by vm.ui.collectAsStateWithLifecycle()
-    FieldwatchTheme(
-        darkTheme = true,
-        nightMode = state.settings.nightMode,
-    ) {
-        if (!state.settings.disclaimerOk()) {
-            DisclaimerGate(onAccept = vm::acceptDisclaimer)
-        } else if (!state.permissionsOk) {
-            PermissionGate(onRequestPermissions)
-        } else {
-            FieldwatchShell(state, vm)
+    CompositionLocalProvider(LocalAppLanguage provides state.settings.language) {
+        FieldwatchTheme(
+            darkTheme = true,
+            nightMode = state.settings.nightMode,
+        ) {
+            if (!state.settings.disclaimerOk()) {
+                DisclaimerGate(onAccept = vm::acceptDisclaimer)
+            } else if (!state.permissionsOk) {
+                PermissionGate(onRequestPermissions)
+            } else {
+                FieldwatchShell(state, vm)
+            }
         }
     }
 }
@@ -691,7 +693,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 title = { Text("Detail") },
                                 navigationIcon = {
                                     IconButton(onClick = onBack) {
-                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, localizeAppText("Back"))
                                     }
                                 },
                             )
@@ -981,7 +983,7 @@ private fun ViewPicker(
             ) {
                 Icon(
                     Icons.Outlined.ExpandMore,
-                    contentDescription = "More display options below",
+                    contentDescription = localizeAppText("More display options below"),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )

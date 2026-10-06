@@ -44,7 +44,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -144,7 +144,7 @@ fun FleetsScreen(
         topBar = { NestedTopBar("Signatures (${state.fleets.size})") },
         floatingActionButton = {
             FloatingActionButton(onClick = vm::beginNewFleet) {
-                Icon(Icons.Outlined.Add, "New signature")
+                Icon(Icons.Outlined.Add, app.fieldwatch.ui.localizeAppText("New signature"))
             }
         },
     ) { pad ->
@@ -545,7 +545,7 @@ private fun ColorPicker(selected: Int, onSelect: (Int) -> Unit) {
                         if (on) {
                             Icon(
                                 Icons.Outlined.Check,
-                                contentDescription = "Selected color",
+                                contentDescription = app.fieldwatch.ui.localizeAppText("Selected color"),
                                 tint = if (fill.luminance() > 0.45f) {
                                     Color(0xFF12171C)
                                 } else {
@@ -592,7 +592,9 @@ private fun RuleEditor(rule: MatchRule, onChange: (MatchRule) -> Unit, onDelete:
                     }
                 }
             }
-            IconButton(onClick = onDelete) { Icon(Icons.Outlined.Delete, "Delete rule") }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.Delete, app.fieldwatch.ui.localizeAppText("Delete rule"))
+            }
         }
         Column(
             Modifier.padding(top = 12.dp, start = 8.dp),

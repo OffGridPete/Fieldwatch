@@ -30,7 +30,7 @@ import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -77,7 +77,7 @@ fun RadioBookmarksScreen(
                 title = "Named radios (${radios.size})",
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, app.fieldwatch.ui.localizeAppText("Back"))
                     }
                 },
             )
@@ -230,10 +230,10 @@ private fun BookmarkCard(
                 )
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                     IconButton(onClick = onRename, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Outlined.Edit, "Edit", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Edit, app.fieldwatch.ui.localizeAppText("Edit"), modifier = Modifier.size(18.dp))
                     }
                     IconButton(onClick = onRemove, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Outlined.Delete, "Remove", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.Delete, app.fieldwatch.ui.localizeAppText("Remove"), modifier = Modifier.size(18.dp))
                     }
                 }
             }

@@ -18,7 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +58,7 @@ import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.SitPathPlot
 import app.fieldwatch.ui.ClassGlyphs
 import app.fieldwatch.ui.RadioClassBadge
+import app.fieldwatch.ui.localizeAppText
 import app.fieldwatch.ui.theme.Cyan
 import app.fieldwatch.ui.theme.LocalNightMode
 import app.fieldwatch.ui.theme.PhosphorActive
@@ -85,6 +86,9 @@ fun SitPathCanvas(
     val surface = MaterialTheme.colorScheme.surface
     val outline = MaterialTheme.colorScheme.outline
     val measurer = rememberTextMeasurer()
+    val startLabel = localizeAppText("Path start")
+    val nowLabel = localizeAppText("Now")
+    val endLabelText = localizeAppText("End")
     val labelStyle = TextStyle(fontSize = 10.sp, color = muted)
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var selectedId by remember { mutableStateOf<String?>(null) }
@@ -198,9 +202,9 @@ fun SitPathCanvas(
                 val start = lay.path.first()
                 val end = lay.path.last()
                 drawStartDot(start.x, start.y)
-                val startT = measurer.measure("Start", labelStyle)
+                val startT = measurer.measure(startLabel, labelStyle)
                 drawText(startT, topLeft = Offset((start.x + 8f).coerceAtMost(size.width - startT.size.width), start.y - 6f))
-                val endLabel = if (model.live) "Now" else "End"
+                val endLabel = if (model.live) nowLabel else endLabelText
                 val endT = measurer.measure(endLabel, labelStyle)
                 drawText(
                     endT,

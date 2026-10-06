@@ -34,6 +34,12 @@ enum class ScanIntensity { SAVER, BALANCED, PERFORMANCE }
 enum class LogFormat { CSV, JSON }
 
 @Serializable
+enum class AppLanguage {
+    ENGLISH,
+    SPANISH,
+}
+
+@Serializable
 enum class FilterLogic { AND, OR }
 
 /** Live filter / Signatures bulk on-off. Independent of [Fleet.colorIndex]. */
@@ -648,6 +654,8 @@ data class AppSettings(
     val signatureListSort: SignatureListSort = SignatureListSort.NAME,
     /** By class: hide class headers with 0 radios. Off = show all (zeros stay). */
     val outlineHideEmpty: Boolean = false,
+    /** Language used by the app UI. Missing from older configs means English. */
+    val language: AppLanguage = AppLanguage.ENGLISH,
 )
 
 const val DISCLAIMER_REV = 3

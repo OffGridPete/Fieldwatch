@@ -26,7 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import app.fieldwatch.ui.component.FieldwatchActionButton
 import androidx.compose.material3.Scaffold
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,7 +116,7 @@ fun HuntScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, app.fieldwatch.ui.localizeAppText("Back"))
                     }
                 },
             )
@@ -295,6 +295,7 @@ private fun HuntNeedle(
     val youColor = MaterialTheme.colorScheme.onSurface
     val ringIdle = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
     val measurer = rememberTextMeasurer()
+    val youLabel = app.fieldwatch.ui.localizeAppText("YOU")
     val youStyle = androidx.compose.ui.text.TextStyle(
         color = youColor,
         fontSize = 11.sp,
@@ -344,7 +345,7 @@ private fun HuntNeedle(
             HuntCue.GONE -> pulse(0.88f, 0.28f, 2.2f)
         }
         drawCircle(color.copy(alpha = 0.95f), radius = 5.5f, center = c)
-        val you = measurer.measure("YOU", youStyle)
+        val you = measurer.measure(youLabel, youStyle)
         drawText(
             you,
             topLeft = Offset(c.x - you.size.width / 2f, c.y + 10f),
