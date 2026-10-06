@@ -28,7 +28,7 @@ import androidx.compose.material3.Scaffold
 import app.fieldwatch.ui.component.FieldwatchSlider
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

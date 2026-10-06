@@ -24,13 +24,16 @@ import androidx.core.app.NotificationCompat
 import app.fieldwatch.MainActivity
 import app.fieldwatch.R
 import app.fieldwatch.domain.AlertVoiceWhat
+import app.fieldwatch.domain.AppLanguage
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sighting
+import app.fieldwatch.domain.label
 import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.spokenWatchPhrase
 import app.fieldwatch.domain.testWatchPhrase
+import app.fieldwatch.ui.translateAppText
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -47,6 +50,8 @@ class Alerter(private val context: Context) {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var speaking = false
+    private var legacyChannelCleanupDone = false
+    private var channelLanguage: AppLanguage? = null
     private var utteranceStarted = false
     private var ttsSpeakTries = 0
     private var pendingSpeak: String? = null
@@ -63,7 +68,7 @@ class Alerter(private val context: Context) {
     val flashes: SharedFlow<String> = _flashes.asSharedFlow()
 
     init {
-        ensureChannel()
+        ensureChannel(AppLanguage.ENGLISH)
     }
 
     fun checkLive(
@@ -78,11 +83,12 @@ class Alerter(private val context: Context) {
         visibleOnLive: (Sighting) -> Boolean = { !it.gone },
         arrivalsOnly: Boolean = false,
         demoMode: Boolean = false,
+        language: AppLanguage = AppLanguage.ENGLISH,
     ) {
         if (!alertsOn || watchlist.isEmpty()) return
         fireNewAppearances(
             devices, fleets, watchlist, beepOn, voiceOn, voiceWhat, shadeOn,
-            visibleOnLive, arrivalsOnly, demoMode,
+            visibleOnLive, arrivalsOnly, demoMode, language,
         )
     }
 
@@ -126,6 +132,7 @@ class Alerter(private val context: Context) {
         visibleOnLive: (Sighting) -> Boolean,
         arrivalsOnly: Boolean,
         demoMode: Boolean,
+        language: AppLanguage,
     ) {
         val now = System.currentTimeMillis()
         val onAir = devices.filter { !it.gone }
@@ -151,7 +158,7 @@ class Alerter(private val context: Context) {
                     device.mac,
                     demoMode,
                 )
-                if (shadeOn && target.notify) notify(label, device, demoMode)
+                if (shadeOn && target.notify) notify(label, device, demoMode, language)
                 if (target.vibrate) vibrate()
                 if (beepOn && !beepFired) {
                     beep(holdFocus = !voiceOn)
@@ -182,7 +189,8 @@ class Alerter(private val context: Context) {
         return now - spanStart <= NEW_WINDOW_MS
     }
 
-    private fun notify(label: String, device: Sighting, demoMode: Boolean) {
+    private fun notify(label: String, device: Sighting, demoMode: Boolean, language: AppLanguage) {
+        ensureChannel(language)
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_DEVICE_KEY, device.key)
@@ -195,11 +203,11 @@ class Alerter(private val context: Context) {
         )
         val note = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_fieldwatch)
-            .setContentTitle("Fieldwatch watchlist")
+            .setContentTitle(translateAppText("Fieldwatch watchlist", language))
             .setContentText("$label  ${device.rssi} dBm  ${MacUtil.screenMac(device.mac, demoMode)}")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "$label appeared\n${device.kind}  ${MacUtil.screenMac(device.mac, demoMode)}\n${device.rssi} dBm  ${MacUtil.redactMacIn(device.displayName, device.mac, demoMode)}",
+                    "$label ${translateAppText("appeared", language)}\n${translateAppText(device.kind.label(), language)}  ${MacUtil.screenMac(device.mac, demoMode)}\n${device.rssi} dBm  ${MacUtil.redactMacIn(device.displayName, device.mac, demoMode)}",
                 ),
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -487,18 +495,29 @@ class Alerter(private val context: Context) {
         vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 60, 80), -1))
     }
 
-    private fun ensureChannel() {
+    private fun ensureChannel(language: AppLanguage) {
         if (Build.VERSION.SDK_INT < 26) return
-        runCatching { manager.deleteNotificationChannel("fieldwatch_watch_v2") }
-        if (manager.getNotificationChannel(CHANNEL) != null) return
+        if (!legacyChannelCleanupDone) {
+            runCatching { manager.deleteNotificationChannel("fieldwatch_watch_v2") }
+            legacyChannelCleanupDone = true
+        }
+        if (channelLanguage == language) return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Watchlist", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Appearing signatures and devices on your watchlist. Beep is played separately."
+            NotificationChannel(
+                CHANNEL,
+                translateAppText("Watchlist alerts", language),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = translateAppText(
+                    "Appearing signatures and devices on your watchlist. Beep is played separately.",
+                    language,
+                )
                 enableVibration(true)
                 enableLights(true)
                 setSound(null, null)
             },
         )
+        channelLanguage = language
     }
 
     companion object {

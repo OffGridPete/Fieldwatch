@@ -31,6 +31,15 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
+internal fun restoreConfigDefaults(current: PersistedConfig, defaults: PersistedConfig): PersistedConfig =
+    defaults.copy(
+        settings = defaults.settings.copy(
+            disclaimerAccepted = current.settings.disclaimerAccepted,
+            disclaimerRev = current.settings.disclaimerRev,
+            language = current.settings.language,
+        ),
+    )
+
 class ConfigStore(context: Context) {
     private val file = File(context.filesDir, "config.json")
     private val json = Json {
@@ -92,17 +101,7 @@ class ConfigStore(context: Context) {
     }
 
     suspend fun restoreDefaults() {
-        val accepted = _config.value.settings.disclaimerAccepted
-        val rev = _config.value.settings.disclaimerRev
-        update {
-            val fresh = seed()
-            fresh.copy(
-                settings = fresh.settings.copy(
-                    disclaimerAccepted = accepted,
-                    disclaimerRev = rev,
-                ),
-            )
-        }
+        update { current -> restoreConfigDefaults(current, seed()) }
     }
 
     suspend fun importFleets(incoming: List<Fleet>): SignatureImportResult = mutex.withLock {

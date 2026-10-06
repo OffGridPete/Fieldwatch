@@ -36,7 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -100,6 +100,7 @@ fun DeviceDetailScreen(
         ?: rssiColor(device.rssi))
         .nightIf(LocalNightMode.current)
     val facts = device.facts
+    val appLanguage = app.fieldwatch.ui.LocalAppLanguage.current
     val familyHint by vm.familyHint.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -114,7 +115,9 @@ fun DeviceDetailScreen(
                     Text(MacUtil.redactMacIn(title, device.mac, demoMode), maxLines = 1)
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, app.fieldwatch.ui.localizeAppText("Back"))
+                    }
                 },
                 actions = {
                     IconButton(onClick = { vm.toggleWatchDevice(device) }) {
@@ -212,7 +215,9 @@ fun DeviceDetailScreen(
                         nameDraft = draftLabel
                         lastSaved = draftLabel
                         scope.launch {
-                            snackbarHostState.showSnackbar("Saved as $draftLabel")
+                            snackbarHostState.showSnackbar(
+                                app.fieldwatch.ui.translateAppText("Saved as $draftLabel", appLanguage),
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -260,7 +265,10 @@ fun DeviceDetailScreen(
                         editingNotes = false
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                if (draftNotes.isBlank()) "Observer notes cleared" else "Observer notes saved",
+                                app.fieldwatch.ui.translateAppText(
+                                    if (draftNotes.isBlank()) "Observer notes cleared" else "Observer notes saved",
+                                    appLanguage,
+                                ),
                             )
                         }
                     },

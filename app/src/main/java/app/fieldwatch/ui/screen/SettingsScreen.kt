@@ -39,7 +39,7 @@ import androidx.compose.material3.Scaffold
 import app.fieldwatch.ui.component.FieldwatchSlider
 import androidx.compose.material3.Surface
 import app.fieldwatch.ui.component.FieldwatchSwitch
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,6 +62,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.fieldwatch.domain.AlertVoiceWhat
+import app.fieldwatch.domain.AppLanguage
 import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.TakDefaults
@@ -118,6 +119,19 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SectionCard("Appearance") {
+            Text("Language", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FieldwatchFilterChip(
+                    selected = settings.language == AppLanguage.ENGLISH,
+                    onClick = { vm.updateSettings { it.copy(language = AppLanguage.ENGLISH) } },
+                    label = { Text("English") },
+                )
+                FieldwatchFilterChip(
+                    selected = settings.language == AppLanguage.SPANISH,
+                    onClick = { vm.updateSettings { it.copy(language = AppLanguage.SPANISH) } },
+                    label = { Text("Spanish") },
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Night mode", Modifier.weight(1f))
                 FieldwatchSwitch(settings.nightMode, { on -> vm.updateSettings { it.copy(nightMode = on) } })
@@ -755,7 +769,7 @@ private fun SocialChip(
         ) {
             Icon(
                 painter = painterResource(icon),
-                contentDescription = label,
+                contentDescription = app.fieldwatch.ui.localizeAppText(label),
                 tint = tint,
                 modifier = Modifier.size(14.dp),
             )

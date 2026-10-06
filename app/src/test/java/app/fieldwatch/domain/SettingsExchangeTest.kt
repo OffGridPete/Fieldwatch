@@ -15,6 +15,7 @@ class SettingsExchangeTest {
         assertTrue(stock.darkTheme)
         assertTrue(stock.keepScreenOn)
         assertTrue(stock.alertBeep)
+        assertEquals(AppLanguage.ENGLISH, stock.language)
         assertEquals(ViewMode.BY_CLASS, stock.viewMode)
         assertTrue(stock.showRssiBar)
         assertTrue(stock.showFleetName)
@@ -58,6 +59,7 @@ class SettingsExchangeTest {
             keepScreenOn = false,
             takEnabled = true,
             takHost = "192.168.0.9",
+            language = AppLanguage.SPANISH,
         ),
         filter = FilterState(showWifi = false, showBle = true),
         presets = stockPresets + FilterPreset(
@@ -92,6 +94,7 @@ class SettingsExchangeTest {
         assertFalse(json.contains("\"fleets\""))
         val pack = SettingsExchange.parse(json)
         assertEquals(SettingsPack.FORMAT, pack.format)
+        assertEquals(AppLanguage.SPANISH, pack.settings.language)
         assertEquals(1, pack.watchlist.count { it.deviceKey == "BLE:C3:A6:A9:11:22:33" })
         assertEquals("in the bag", pack.watchlist.single { it.deviceKey != null }.observerNotes)
         assertTrue(pack.watchlist.single { it.deviceKey != null }.mine)
@@ -135,6 +138,7 @@ class SettingsExchangeTest {
         assertTrue(next.settings.nightMode)
         assertTrue(next.settings.darkTheme)
         assertTrue(next.settings.demoMode)
+        assertEquals(AppLanguage.SPANISH, next.settings.language)
         assertEquals("192.168.0.9", next.settings.takHost)
         assertTrue(next.settings.disclaimerAccepted)
         assertEquals(DISCLAIMER_REV, next.settings.disclaimerRev)
@@ -147,6 +151,17 @@ class SettingsExchangeTest {
         assertTrue(next.fleets.any { it.id == "custom-keep-me" })
         assertEquals(local.fleets.size, next.fleets.size)
         assertEquals(setOf("BLE:AA:BB:CC:DD:EE:FF"), next.arrivalKnownKeys)
+    }
+
+    @Test
+    fun olderSettingsWithoutLanguageDefaultToEnglish() {
+        val old = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"nightMode":true,"keepScreenOn":false}""",
+        )
+        assertEquals(AppLanguage.ENGLISH, old.language)
+        assertTrue(old.nightMode)
+        assertFalse(old.keepScreenOn)
     }
 
     @Test

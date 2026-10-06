@@ -40,7 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import app.fieldwatch.ui.AppText as Text
 import androidx.compose.material3.TextButton
 import app.fieldwatch.domain.Sit
 import androidx.compose.runtime.Composable
@@ -811,6 +811,7 @@ private fun RadarView(
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val youColor = MaterialTheme.colorScheme.primary
     val measurer = rememberTextMeasurer()
+    val youLabel = app.fieldwatch.ui.localizeAppText("YOU")
     val onAir = devices.count { !it.gone }
     val ringStyle = TextStyle(
         color = labelColor,
@@ -959,7 +960,7 @@ private fun RadarView(
 
             drawCircle(youColor, radius = 7f, center = c)
             drawCircle(youColor.copy(alpha = 0.2f), radius = 16f, center = c)
-            val you = measurer.measure("YOU", ringStyle.copy(color = youColor, fontWeight = FontWeight.Bold))
+            val you = measurer.measure(youLabel, ringStyle.copy(color = youColor, fontWeight = FontWeight.Bold))
             drawText(you, topLeft = Offset(c.x - you.size.width / 2f, c.y + 12f))
         }
 
@@ -1377,7 +1378,7 @@ private fun FleetNameChips(
             ) {
                 Icon(
                     Icons.AutoMirrored.Outlined.Notes,
-                    contentDescription = "Observer notes",
+                    contentDescription = app.fieldwatch.ui.localizeAppText("Observer notes"),
                     modifier = Modifier
                         .padding(horizontal = 5.dp, vertical = 1.dp)
                         .size(11.dp),
@@ -1393,7 +1394,7 @@ private fun FleetNameChips(
             ) {
                 Icon(
                     Icons.Outlined.Notifications,
-                    contentDescription = "Alerted this session",
+                    contentDescription = app.fieldwatch.ui.localizeAppText("Alerted this session"),
                     modifier = Modifier
                         .padding(horizontal = 5.dp, vertical = 1.dp)
                         .size(11.dp),
