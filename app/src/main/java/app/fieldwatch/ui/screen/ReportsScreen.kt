@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.ui.RadioClassBadge
 import app.fieldwatch.ui.RadioKindMark
@@ -105,7 +106,7 @@ fun ReportsScreen(
         ) {
             if (settings.demoMode) {
                 Text(
-                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates are masked. The log file, sit export, and GPX / KML / WiGLE files still have full addresses and lat/lon.",
+                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates and a Remote ID UAS id in those reports are masked. The log file, sit export, and GPX / KML / WiGLE files still have full addresses and lat/lon.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -323,7 +324,7 @@ fun ReportsScreen(
                     model.aircraftCards.forEachIndexed { index, card ->
                         val fixes = card.craft.sumOf { it.samples.size }
                         Text(
-                            card.title,
+                            privacyAircraftHeading(card.title, settings.demoMode),
                             style = MaterialTheme.typography.titleSmall,
                             color = AircraftAmber,
                             modifier = Modifier.padding(top = 12.dp),
@@ -363,7 +364,7 @@ fun ReportsScreen(
                         }
                         if (card.caption.isNotBlank()) {
                             Text(
-                                card.caption,
+                                privacyAircraftCaption(card.caption, card.title, settings.demoMode),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -770,6 +771,21 @@ private fun PilotSwatch() {
     }
 }
 
+/** A one-token serial is the UAS id. A name with a space stays. A MAC keeps its prefix. */
+private fun privacyAircraftHeading(title: String, demo: Boolean): String {
+    if (!demo || title.isBlank()) return title
+    val serial = !title.contains(' ') && !title.contains(':') &&
+        title.length >= 6 && title.any { it.isDigit() } && title.any { it.isLetter() }
+    if (serial) return "Aircraft"
+    return MacUtil.redactMacIn(title, title, true)
+}
+
+private fun privacyAircraftCaption(caption: String, title: String, demo: Boolean): String {
+    if (!demo || caption.isBlank()) return caption
+    val stripped = if (title.isBlank()) caption else caption.replace(title, "masked", ignoreCase = true)
+    return Geo.redactCoordsIn(MacUtil.redactMacIn(stripped, title, true), true)
+}
+
 @Composable
 private fun PathRadioRow(
     index: Int,
@@ -778,7 +794,8 @@ private fun PathRadioRow(
     onOpen: () -> Unit,
 ) {
     val mac = MacUtil.screenMac(dot.mac, demoMode)
-    val named = dot.label.isNotBlank() && !dot.label.equals(mac, ignoreCase = true)
+    val named = dot.label.isNotBlank() && !dot.label.equals(dot.mac, ignoreCase = true)
+    val label = MacUtil.redactMacIn(dot.label, dot.mac, demoMode)
     val fleets = dot.fleetNames.joinToString(" · ")
     val note = dot.observerNotes.trim()
     val accent = (if (dot.accentArgb != 0) Color(dot.accentArgb) else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -801,7 +818,7 @@ private fun PathRadioRow(
         Column(Modifier.weight(1f)) {
             if (named) {
                 Text(
-                    dot.label,
+                    label,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

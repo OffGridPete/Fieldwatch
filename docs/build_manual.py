@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.20")
+    c.drawString(48, 108, "Version 1.1.21")
     c.drawString(48, 94, "3 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.20  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.21  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1066,7 +1066,7 @@ def story():
                 ["Filters", "Which radios appear on Live. Presets (BLE only, Watched only, …), class Show only / Hide these, Show only selected / Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. Logging is unchanged."],
                 ["Signatures", "The pattern catalog — which radios get a name. Tap a row to edit. Bookmark a row to beep (and/or speak) when that family appears. Hide a family on Filters, not here."],
                 ["Reports", "Named sits, Path, Debrief, Sit export, Compare, AI Export, Signature candidates, Log export. Start and End sit live here."],
-                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, watchlist voice, TAK / CoT, logging, catalog export / import, Update stock catalog from GitHub, Restore defaults, Show Live tour. Row layout is Live → Display, not here."],
+                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, watchlist voice, TAK / CoT, logging, catalog export / import, Update stock catalog from GitHub, Restore defaults, Show Live tour, Diagnostics. Row layout is Live → Display, not here."],
                 ["Tune (top right on Live)", "The sliders icon. Opens <b>Display</b> over Live: View (Radar, Strength list, Timeline, Hybrid, By class), Sort, Brief hold, Title line, Subtitle line, then switches for RSSI bars, signature names, Frequency, first/last. This is how you change the picture — appearance, sorting, and which fields each row shows. Tap Tune again, or tap the dimmed list, to close it. Not on Settings. §5.3."],
             ],
             [1.7 * inch, 4.8 * inch],
@@ -1280,7 +1280,7 @@ def story():
                 ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide my radios, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). Each row shows the class glyph, and a hexagon when that row has a Decode fields map (§9.6). Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). Bookmark = watch (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Sits (optional named window), Path, Debrief (text / PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Signature candidates mines the rotating log. GPS / place names / logging on-off stay on Settings."],
-                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Update stock catalog from GitHub, Settings backup, restore defaults, Show Live tour. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
+                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Update stock catalog from GitHub, Settings backup, restore defaults, Show Live tour, Diagnostics. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
             ],
             [1.2 * inch, 5.3 * inch],
         ),
@@ -1293,6 +1293,7 @@ def story():
                 ["Less text on each row", "Live display → Tune → Display (§5.3)"],
                 ["Stop seeing a family on the Live display", "Filters → Hide these (class) or Hide selected (one family)"],
                 ["Hide MAC tails on the screen", "Settings → Privacy mode"],
+                ["See why the Live list is empty, or paste phone facts into an issue", "Settings → Diagnostics"],
                 ["Put radios on an ATAK map", "Settings → TAK / CoT feed (§5.8, §12.15)"],
             ],
             [2.4 * inch, 4.1 * inch],
@@ -1778,7 +1779,8 @@ def story():
             "Tag detections with GPS must have been on, and the sit needs a GPS fix, "
             "or the card says so. One fix or a short sit still shows about 400 m of ground so the street is readable. "
             "A longer walk fills the plot. Start sit for a longer track than Live’s last 15 minutes. "
-            "Privacy mode still draws the line; coordinate text is masked.",
+            "Privacy mode still draws the line; coordinate text is masked. "
+            "An aircraft card title that is a UAS id is shown as Aircraft.",
         ),
         P(
             "<b>Watch it live.</b> Leave Reports in front while you walk or drive. The plot redraws "
@@ -1841,6 +1843,7 @@ def story():
             "Extra attention is red, a MAC alert is blue, and a signature alert with neither is green. "
             "Stacked radios at one place share a Path-key number. "
             "An advertised aircraft on that figure is the drone class icon in the Path key, not a number, with the live status, UAS id, last position, motion, and the pilot position when the radio sent them. "
+            "Privacy mode masks the MAC tail, the UAS id, and those coordinates in that key and in the Aircraft section. Altitude, course, and speed stay. The track still draws. "
             "The letter figure draws that advertised track as a black dotted line, "
             "with a class icon at the last position. The pilot is a person icon, with no word on the figure. "
             "Offline: the north-up trace only. Compare overlays this sit "
@@ -1874,7 +1877,7 @@ def story():
         bullets([
             "<b>Log file — CSV / JSON lines</b> — One line per unique radio: kind, MAC, advertised name, custom name, Observer notes, RSSI min/max, channel, first/last, hits, lat/lon when tagged, Extra attention, matched signatures, Extra attention families, mine.",
             "<b>GPX / KML</b> — This phone’s path as a track, plus a hear-point per unique radio (loudest GPS-trail sample). Log export’s GPX/KML are hear-point waypoints only — no operator track.",
-            "<b>WiGLE CSV</b> — One row per unique radio at that hear-point. Weaker than a log WiGLE file, which has many hears. Advertised SSID, not the custom name.",
+            "<b>WiGLE CSV</b> — One row per unique radio at that hear-point. Weaker than a log WiGLE file, which has many hears. Advertised SSID, not the custom name. A formula-like name gets a leading apostrophe, same as the log WiGLE file.",
         ]),
         P(
             "Privacy mode does <b>not</b> mask Sit export files (full MACs and lat/lon), same as Log export. Debrief / Compare / AI Export still mask. "
@@ -1894,7 +1897,7 @@ def story():
             "<b>Log file — JSON lines</b> — Same rows as the on-disk file.",
             "<b>GPX — GPS Exchange</b> — Waypoints where this phone heard each radio. Custom names on pin titles. Needs Tag detections with GPS; untagged rows are omitted.",
             "<b>KML — Google Earth</b> — Same hear-points as Placemarks.",
-            "<b>WiGLE CSV — wigle.net</b> — WigleWifi-1.4 upload schema. Advertised SSID (not the custom name) so a WiGLE import still matches the air. You would upload; Fieldwatch does not.",
+            "<b>WiGLE CSV — wigle.net</b> — WigleWifi-1.4 upload schema. Advertised SSID (not the custom name) so a WiGLE import still matches the air. A name a spreadsheet would treat as a formula gets a leading apostrophe; a plain number stays as it was. You would upload; Fieldwatch does not.",
         ]),
         P(
             "Radios chips: Both radios, Wi-Fi only, BLE only. Empty GPS-tagged set after a map format "
@@ -1948,7 +1951,7 @@ def story():
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
         ),
         bullets([
-            "<b>Appearance</b> — Night mode (off by default): red-on-black field display so chips, text, RSSI, Hunt, and Extra attention do not dump green or blue into a dark sit. Phone brightness is unchanged. Restore defaults turns it off. Fig. 9. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
+            "<b>Appearance</b> — Night mode (off by default): red-on-black field display so chips, text, RSSI, Hunt, and Extra attention do not dump green or blue into a dark sit. Phone brightness is unchanged. Restore defaults turns it off. Fig. 9. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
         ]),
         figure_wrap(
             "fig-settings-night.png",
@@ -1970,6 +1973,7 @@ def story():
             "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
             "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks before it imports. A file that leaves the feed and the destination as they are imports with no extra step. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
             "<b>Show Live tour</b> — Opens Live with the first-launch overlay again: Tune is Display, Pause, Filters, Signatures, Reports, Settings. The same overlay runs once after the license on a new install. Got it dismisses it.",
+            "<b>Diagnostics</b> — Under Show Live tour. Phone maker and model, Android version and build fingerprint, catalog, Wi-Fi and Bluetooth on or off, how old the last Wi-Fi scan is, whether BLE is running, BLE results in the last minute, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, system Location, location permission, and how old the GPS fix is. It refreshes about once a second. Copy puts the same lines on the clipboard. No network names, no addresses, and no GPS coordinates. An empty Live list adds “Settings → Diagnostics” when a scan is blocked (Location off, permission missing, or neither radio is delivering). A filter that hides the list is not a blocked scan. A quiet minute with BLE still running is not a failure.",
         ]),
         P(
             "How the Live display row looks — View (Radar, list, timeline, hybrid, By class), Sort, "
@@ -4731,9 +4735,10 @@ def story():
             ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Named radios only (any custom name). Watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. A blank name is filled. Filters → Hide my radios takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
             ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
-            ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Reports → Path still loads map tiles when Online place names and maps is on. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
+            ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
+            ["Diagnostics", "Settings, under Show Live tour. Phone, Android version, catalog, whether Wi-Fi, Bluetooth, and Location are scanning, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. Copy pastes that into an issue. No network names, addresses, or GPS coordinates. An empty Live list points here when a scan is blocked. §5.7."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
             ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
@@ -5142,7 +5147,8 @@ def story():
         [
             ["Permission gate on every launch", "A required runtime permission was denied or reset by the OS.", "Grant Location (Precise), Nearby Wi-Fi, Bluetooth scan/connect, Notifications. Turn system Location on. Full list: §4.5.2."],
             ["I want max hear / the phone gets hot", "High performance, Keep screen on, and Faster Wi-Fi use the radios and the display hard.", "Expected for a sit. Walk through §4.5. Plug in or use a pack. Drop to Balanced and turn Faster Wi-Fi off when you are done. Empty list is still not “safe.”"],
-            ["Zero Wi-Fi rows, BLE works", "Between OS scan windows, throttle, Wi-Fi off, or Location off.", "Enable Wi-Fi and Location. Read the header: Wi-Fi next Ns or waiting on OS. Last APs should stay held; a new batch arrives about every 30 s on high performance, or ~8 s if Faster Wi-Fi AP scans is on and Developer options Wi-Fi scan throttling is off."],
+            ["Live list is empty", "The air is quiet, a filter is hiding radios, or Android is not delivering scans.", "Settings → Diagnostics, under Show Live tour. Copy that page into an issue. It names the phone, Android version, and whether Location and the radios are scanning. It does not include network names or GPS coordinates."],
+            ["Zero Wi-Fi rows, BLE works", "Between OS scan windows, throttle, Wi-Fi off, or Location off.", "Enable Wi-Fi and Location. Read the header: Wi-Fi next Ns or waiting on OS. Last APs should stay held; a new batch arrives about every 30 s on high performance, or ~8 s if Faster Wi-Fi AP scans is on and Developer options Wi-Fi scan throttling is off. Settings → Diagnostics shows the same facts."],
             ["Zero BLE rows after it was working", "Samsung parked the scanner.", "Watch for BLE cycling or BLE parked · restarting in the header. Keep screen on while you watch. Allow background usage and Unrestricted battery if you leave the app. Toggle intensity only if it stays dead."],
             ["UI freeze then both lists empty in a crowd", "A plaza of rotating BLE addresses filled memory.", "The live set is capped at about 400 radios. Turn logging off if you do not need the file. Prefer Strength list over Hybrid in a dense crowd."],
             ["Radar looks empty, list does not", "Gone radios are drawn dim on radar, or a Live display filter is hiding them.", "Dim blips are radios past Stale / Brief hold. Check that the Live display filter is not Signatures only with no matches."],
@@ -5233,8 +5239,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.20 (versionCode 30), field build of 5 October 2026"],
-                ["Document version", "1.1.20"],
+                ["Software version", "1.1.21 (versionCode 31), field build of 6 October 2026"],
+                ["Document version", "1.1.21"],
                 ["Document date", "3 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

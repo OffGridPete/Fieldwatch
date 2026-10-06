@@ -402,6 +402,23 @@ class DeviceStoreTest {
     }
 
     @Test
+    fun freshWifiBatchSetsTheScanClockWithoutATick() {
+        val store = DeviceStore()
+        val before = System.currentTimeMillis()
+        store.ingestBatch(listOf(wifi("00:11:22:33:44:55", name = "Cafe")), fleets, 30)
+        store.refresh(fleets, 30)
+        val at = store.stats.value.lastWifiScanAt
+        assertTrue(at >= before)
+        store.ingestBatch(
+            listOf(wifi("00:11:22:33:44:55", name = "Cafe").copy(fresh = false, rssi = -40)),
+            fleets,
+            30,
+        )
+        store.refresh(fleets, 30)
+        assertEquals(at, store.stats.value.lastWifiScanAt)
+    }
+
+    @Test
     fun refreshEmitsWithoutDroppingTags() {
         val store = DeviceStore()
         val mac = "00:00:0C:11:22:33"

@@ -145,9 +145,9 @@ object SitDiff {
         demoMode: Boolean,
         showAllRadios: Boolean = false,
     ): String {
-        val macs = (thisSit.radios + second.radios).map { it.mac }
+        val radios = thisSit.radios + second.radios
         return document(thisSit, second, showAllRadios = showAllRadios)
-            .withDemoMacs(macs, demoMode)
+            .withDemoMacs(radios.map { it.mac }, demoMode, radios.map { it.payloadUasId })
             .toPlainText()
     }
 

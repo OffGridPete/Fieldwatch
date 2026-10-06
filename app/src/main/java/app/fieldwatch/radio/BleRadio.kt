@@ -14,6 +14,7 @@ import android.util.Log
 import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.ScanIntensity
+import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -34,6 +35,7 @@ class BleRadio(
     @Volatile private var demoted = false
     @Volatile private var restMs = 2_500L
     @Volatile private var hint = ""
+    private val hitAt = ArrayDeque<Long>()
 
     // Empty filter matches every advertisement but is not an "unfiltered" list,
     // which Samsung refuses while the screen is off.
@@ -41,7 +43,9 @@ class BleRadio(
 
     private val callback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            lastCallbackAt.set(System.currentTimeMillis())
+            val now = System.currentTimeMillis()
+            recordHit(now)
+            lastCallbackAt.set(now)
             failStreak = 0
             lastError = null
             hint = ""
@@ -50,7 +54,9 @@ class BleRadio(
 
         override fun onBatchScanResults(results: MutableList<ScanResult>) {
             if (results.isNotEmpty()) {
-                lastCallbackAt.set(System.currentTimeMillis())
+                val now = System.currentTimeMillis()
+                repeat(results.size) { recordHit(now) }
+                lastCallbackAt.set(now)
                 failStreak = 0
                 lastError = null
                 hint = ""
@@ -137,6 +143,23 @@ class BleRadio(
     }
 
     fun isRunning(): Boolean = running.get()
+
+    fun radioOn(): Boolean = manager.adapter?.isEnabled == true
+
+    fun hitsLastMinute(now: Long): Int = synchronized(hitAt) {
+        val cut = now - 60_000L
+        while (hitAt.isNotEmpty() && hitAt.first() < cut) hitAt.removeFirst()
+        hitAt.size
+    }
+
+    private fun recordHit(now: Long) {
+        synchronized(hitAt) {
+            hitAt.addLast(now)
+            val cut = now - 60_000L
+            while (hitAt.isNotEmpty() && hitAt.first() < cut) hitAt.removeFirst()
+            while (hitAt.size > 4_000) hitAt.removeFirst()
+        }
+    }
 
     fun holding(): Boolean = !running.get()
 

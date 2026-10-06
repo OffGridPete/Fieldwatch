@@ -15,8 +15,10 @@ object SitDiffPrompt {
     ): String {
         val thisSit = thisSit.withoutFloodRadios()
         val second = second.withoutFloodRadios()
-        val macs = (thisSit.radios + second.radios).map { it.mac }
-        val onboard = SitDiff.document(thisSit, second).withDemoMacs(macs, demoMode)
+        val radios = thisSit.radios + second.radios
+        val macs = radios.map { it.mac }
+        val uasIds = radios.map { it.payloadUasId }
+        val onboard = SitDiff.document(thisSit, second).withDemoMacs(macs, demoMode, uasIds)
         val thisKeys = thisSit.keys
         val secondKeys = second.keys
         val byKey = (thisSit.radios + second.radios).associateBy { it.key }
@@ -136,9 +138,9 @@ object SitDiffPrompt {
             appendLine("## End of working data")
             appendLine("Write the addendum now, following **Your output** at the top. Do not rewrite the onboard Compare.")
         }
-        val masked = MacUtil.redactMacsIn(body, macs, demoMode)
+        val masked = MacUtil.redactPrivateText(body, macs, uasIds, demoMode)
         val withPrivacy = if (demoMode) {
-            "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
+            "Privacy mode: MAC tails are **:**:**. UAS ids and GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
         } else {
             masked
         }

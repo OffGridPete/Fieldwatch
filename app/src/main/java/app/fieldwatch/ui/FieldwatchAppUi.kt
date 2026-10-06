@@ -123,6 +123,7 @@ import app.fieldwatch.ui.screen.LivePane
 import app.fieldwatch.ui.screen.CandidatesScreen
 import app.fieldwatch.ui.screen.RadioBookmarksScreen
 import app.fieldwatch.ui.screen.ReportsScreen
+import app.fieldwatch.ui.screen.ScanStatusScreen
 import app.fieldwatch.ui.screen.SettingsScreen
 import app.fieldwatch.ui.theme.FieldwatchTheme
 
@@ -534,7 +535,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         )
                         FieldwatchNavTab(
                             weight = 1.05f,
-                            selected = route == "settings" || route == "radio-bookmarks",
+                            selected = route == "settings" || route == "radio-bookmarks" || route == "scan-status",
                             onBounds = { tourTargets = tourTargets.copy(settings = it) },
                             onClick = { nav.navigate("settings") { launchSingleTop = true } },
                             icon = { Icon(Icons.Outlined.Settings, null) },
@@ -658,12 +659,16 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                     state = state,
                     vm = vm,
                     onRadioBookmarks = { nav.navigate("radio-bookmarks") },
+                    onScanStatus = { nav.navigate("scan-status") },
                     onShowLiveTour = {
                         vm.showLiveTour {
                             nav.navigate("live") { launchSingleTop = true }
                         }
                     },
                 )
+            }
+            composable("scan-status") {
+                ScanStatusScreen(state = state, onBack = { nav.popBackStack() })
             }
             composable("radio-bookmarks") {
                 RadioBookmarksScreen(

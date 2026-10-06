@@ -86,6 +86,37 @@ class GeoExportTest {
     }
 
     @Test
+    fun wigleNameGuardsFormulaAndKeepsNumbers() {
+        val hostile = cafe.copy(mac = "AA:BB:CC:DD:EE:FF", name = "=cmd|' /c calc'!A0", rssi = -50)
+        val numeric = cafe.copy(mac = "AA:BB:CC:DD:EE:10", name = "-50")
+        val sum = cafe.copy(mac = "AA:BB:CC:DD:EE:11", name = "-1+1")
+        val at = tag.copy(mac = "11:22:33:44:55:77", name = "@SUM(1+1)")
+        val spaced = cafe.copy(mac = "AA:BB:CC:DD:EE:12", name = " =HYPERLINK(\"http://evil\")")
+        val comma = cafe.copy(mac = "AA:BB:CC:DD:EE:13", name = "Cafe,WiFi")
+        val hidden = cafe.copy(mac = "AA:BB:CC:DD:EE:14", name = "=hidden", hiddenSsid = true)
+        val csv = GeoExport.render(
+            GeoExport.Format.WIGLE,
+            listOf(hostile, numeric, sum, at, spaced, comma, hidden),
+            emptyMap(),
+            "1.1.20",
+            "",
+        )
+        val lines = csv.lines()
+        assertTrue(lines[0].startsWith("WigleWifi-1.4,appRelease=Fieldwatch 1.1.20"))
+        val formula = lines.first { it.startsWith("AA:BB:CC:DD:EE:FF,") }
+        assertTrue(formula.startsWith("AA:BB:CC:DD:EE:FF,'=cmd|' /c calc'!A0,[ESS],"))
+        assertFalse(formula.contains(",=cmd|"))
+        assertTrue(formula.contains(",-50,"))
+        assertTrue(formula.contains(",-122.143000,"))
+        assertTrue(lines.first { it.startsWith("AA:BB:CC:DD:EE:10,") }.startsWith("AA:BB:CC:DD:EE:10,-50,[ESS],"))
+        assertTrue(lines.first { it.startsWith("AA:BB:CC:DD:EE:11,") }.startsWith("AA:BB:CC:DD:EE:11,'-1+1,[ESS],"))
+        assertTrue(lines.first { it.startsWith("11:22:33:44:55:77,") }.startsWith("11:22:33:44:55:77,'@SUM(1+1),,"))
+        assertTrue(lines.any { it.startsWith("AA:BB:CC:DD:EE:12,\"' =HYPERLINK(\"\"http://evil\"\")\",[ESS],") })
+        assertTrue(lines.any { it.startsWith("AA:BB:CC:DD:EE:13,\"Cafe,WiFi\",[ESS],") })
+        assertTrue(lines.first { it.startsWith("AA:BB:CC:DD:EE:14,") }.startsWith("AA:BB:CC:DD:EE:14,,[ESS],"))
+    }
+
+    @Test
     fun gpxAndKmlIncludeOperatorTrack() {
         val path = listOf(
             GpsSample(1_700_000_000_000L, 37.4419, -122.1430),

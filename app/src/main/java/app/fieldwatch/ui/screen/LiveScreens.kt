@@ -83,6 +83,7 @@ import app.fieldwatch.domain.FastPair
 import app.fieldwatch.domain.OutlineSnap
 import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
+import app.fieldwatch.domain.ScanStatus
 import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.Palette
 import app.fieldwatch.domain.RadarPlot
@@ -280,14 +281,14 @@ fun LivePane(
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when (state.settings.viewMode) {
-                ViewMode.RADAR -> RadarView(live, vm, sort, windowMs, onOpen, emptyHint = arrivalsEmpty(state), showFleet = showFleet, demoMode = demoMode, flashKeys = flashKeys, alertedKeys = alertedKeys)
-                ViewMode.LIST -> RankedList(live, vm, onOpen, sparklines = false, sort = sort, windowMs = windowMs, showBar = showBar, layoutEpoch = state.settings.scanControlsExpanded, emptyHint = arrivalsEmpty(state), showNewAge = state.filter.arrivalsOnly, showFleet = showFleet, showFrequency = showFrequency, showSeenTimes = showSeenTimes, flashKeys = flashKeys, alertedKeys = alertedKeys, pinEnd = pinEnd, titleLine = titleLine, subtitleLine = subtitleLine, demoMode = demoMode)
+                ViewMode.RADAR -> RadarView(live, vm, sort, windowMs, onOpen, emptyHint = liveEmpty(state, RADAR_EMPTY), showFleet = showFleet, demoMode = demoMode, flashKeys = flashKeys, alertedKeys = alertedKeys)
+                ViewMode.LIST -> RankedList(live, vm, onOpen, sparklines = false, sort = sort, windowMs = windowMs, showBar = showBar, layoutEpoch = state.settings.scanControlsExpanded, emptyHint = liveEmpty(state, LIST_EMPTY), showNewAge = state.filter.arrivalsOnly, showFleet = showFleet, showFrequency = showFrequency, showSeenTimes = showSeenTimes, flashKeys = flashKeys, alertedKeys = alertedKeys, pinEnd = pinEnd, titleLine = titleLine, subtitleLine = subtitleLine, demoMode = demoMode)
                 ViewMode.TIMELINE -> TimelineView(live, vm, onOpen, showFleet = showFleet, showFrequency = showFrequency, showSeenTimes = showSeenTimes, flashKeys = flashKeys, alertedKeys = alertedKeys, titleLine = titleLine, subtitleLine = subtitleLine, demoMode = demoMode)
-                ViewMode.HYBRID -> RankedList(live, vm, onOpen, sparklines = true, sort = sort, windowMs = windowMs, showBar = showBar, layoutEpoch = state.settings.scanControlsExpanded, emptyHint = arrivalsEmpty(state), showNewAge = state.filter.arrivalsOnly, showFleet = showFleet, showFrequency = showFrequency, showSeenTimes = showSeenTimes, flashKeys = flashKeys, alertedKeys = alertedKeys, pinEnd = pinEnd, titleLine = titleLine, subtitleLine = subtitleLine, demoMode = demoMode)
+                ViewMode.HYBRID -> RankedList(live, vm, onOpen, sparklines = true, sort = sort, windowMs = windowMs, showBar = showBar, layoutEpoch = state.settings.scanControlsExpanded, emptyHint = liveEmpty(state, LIST_EMPTY), showNewAge = state.filter.arrivalsOnly, showFleet = showFleet, showFrequency = showFrequency, showSeenTimes = showSeenTimes, flashKeys = flashKeys, alertedKeys = alertedKeys, pinEnd = pinEnd, titleLine = titleLine, subtitleLine = subtitleLine, demoMode = demoMode)
                 ViewMode.BY_CLASS -> ClassOutlineView(
                     live, vm, state, onOpen,
                     sort = sort, windowMs = windowMs, showBar = showBar,
-                    emptyHint = arrivalsEmpty(state),
+                    emptyHint = liveEmpty(state, CLASS_EMPTY),
                     showNewAge = state.filter.arrivalsOnly, showFleet = showFleet,
                     showFrequency = showFrequency, showSeenTimes = showSeenTimes,
                     flashKeys = flashKeys, alertedKeys = alertedKeys, titleLine = titleLine, subtitleLine = subtitleLine,
@@ -334,6 +335,20 @@ private fun arrivalsEmpty(state: FieldwatchUi): String? {
         return "No named radios on the air. Set a custom name on detail, or turn off Filters → Named radios only."
     }
     return null
+}
+
+private const val LIST_EMPTY =
+    "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst. Use Timeline for recent disappearances."
+
+private const val CLASS_EMPTY =
+    "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst."
+
+private const val RADAR_EMPTY = "No devices match the current filter"
+
+/** Keeps the filter sentence. Adds the Diagnostics pointer only while a scan is blocked. */
+private fun liveEmpty(state: FieldwatchUi, fallback: String): String {
+    val base = arrivalsEmpty(state) ?: fallback
+    return if (state.scanBlocked) "$base ${ScanStatus.EMPTY_POINTER}" else base
 }
 
 private fun Sighting.rowTitle(vm: FieldwatchViewModel): String {
@@ -424,8 +439,7 @@ private fun ClassOutlineView(
         if (devices.isEmpty()) {
             item {
                 Text(
-                    emptyHint
-                        ?: "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst.",
+                    emptyHint ?: CLASS_EMPTY,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(24.dp),
@@ -956,7 +970,7 @@ private fun RadarView(
         ) {
             Text(
                 if (devices.isEmpty()) {
-                    emptyHint ?: "No devices match the current filter"
+                    emptyHint ?: RADAR_EMPTY
                 } else {
                     val zoomBit = if (zoom > 1.04f) {
                         " · ×${"%.1f".format(Locale.US, zoom)} · double-tap reset"
@@ -1128,8 +1142,7 @@ private fun RankedList(
         if (devices.isEmpty()) {
             item {
                 Text(
-                    emptyHint
-                        ?: "No live emitters match the current filter. If this just emptied, the OS may be between scan windows — the last set is held and should return without a burst. Use Timeline for recent disappearances.",
+                    emptyHint ?: LIST_EMPTY,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(24.dp),

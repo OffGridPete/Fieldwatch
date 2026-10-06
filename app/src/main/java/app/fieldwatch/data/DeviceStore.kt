@@ -330,10 +330,10 @@ class DeviceStore(
                 bleNow = published.count {
                     it.kind == app.fieldwatch.domain.RadioKind.BLE && (!it.gone || bleHold)
                 },
-                lastWifiScanAt = if (tick?.kind == app.fieldwatch.domain.RadioKind.WIFI && tick.fresh) {
-                    now
-                } else {
-                    prev.lastWifiScanAt
+                lastWifiScanAt = when {
+                    lastWifiBatchAt > 0L -> lastWifiBatchAt
+                    tick?.kind == app.fieldwatch.domain.RadioKind.WIFI && tick.fresh -> now
+                    else -> prev.lastWifiScanAt
                 },
             )
         }
@@ -341,6 +341,30 @@ class DeviceStore(
 
     fun setScanning(on: Boolean, throttleHint: String = "") {
         _stats.update { it.copy(scanning = on, throttleHint = throttleHint) }
+    }
+
+    fun setScanRadio(
+        wifiOn: Boolean,
+        wifiWaiting: Boolean,
+        bleOn: Boolean,
+        bleRunning: Boolean,
+        bleParked: Boolean,
+        bleRetrying: Boolean,
+        bleStarting: Boolean,
+        bleHitsLastMin: Int,
+    ) {
+        _stats.update {
+            it.copy(
+                wifiRadioOn = wifiOn,
+                wifiWaitingOnOs = wifiWaiting,
+                bleRadioOn = bleOn,
+                bleRunning = bleRunning,
+                bleParked = bleParked,
+                bleRetrying = bleRetrying,
+                bleStarting = bleStarting,
+                bleHitsLastMin = bleHitsLastMin,
+            )
+        }
     }
 
     fun setRadioHold(wifi: Boolean = wifiHold, ble: Boolean = bleHold) {

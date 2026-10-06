@@ -86,6 +86,7 @@ fun SettingsScreen(
     state: FieldwatchUi,
     vm: FieldwatchViewModel,
     onRadioBookmarks: () -> Unit,
+    onScanStatus: () -> Unit,
     onShowLiveTour: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -616,6 +617,15 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            FieldwatchActionButton(
+                onClick = onScanStatus,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Diagnostics") }
+            Text(
+                "Phone model, Android version, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, and whether the radios and Location are actually scanning. Copy pastes that into an issue. No network names and no GPS coordinates.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             Text(
                 "Fieldwatch ${app.fieldwatch.BuildConfig.VERSION_NAME}  ·  Catalog ${state.catalogVersion}",
@@ -924,11 +934,11 @@ private fun localIpv4Addresses(): List<String> {
     return found.toList()
 }
 
-private fun isIgnoringBatteryOptimizations(context: Context): Boolean =
+internal fun isIgnoringBatteryOptimizations(context: Context): Boolean =
     context.getSystemService(PowerManager::class.java)
         ?.isIgnoringBatteryOptimizations(context.packageName) == true
 
-private fun isBackgroundUsageAllowed(context: Context): Boolean =
+internal fun isBackgroundUsageAllowed(context: Context): Boolean =
     context.getSystemService(ActivityManager::class.java)?.isBackgroundRestricted != true
 
 private enum class BatteryAndroidGate { BACKGROUND, UNRESTRICTED }

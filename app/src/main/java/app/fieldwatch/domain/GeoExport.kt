@@ -151,7 +151,7 @@ object GeoExport {
             append(
                 listOf(
                     r.mac.uppercase(Locale.US),
-                    csvField(if (r.hiddenSsid) "" else r.name),
+                    CsvCells.quote(if (r.hiddenSsid) "" else r.name),
                     if (r.kind == RadioKind.WIFI) "[ESS]" else "",
                     wigleTime(r.firstSeen),
                     if (r.kind == RadioKind.WIFI) r.channel else 0,
@@ -206,11 +206,6 @@ object GeoExport {
             }
         }
     }
-
-    private fun csvField(s: String): String =
-        if (s.any { it == ',' || it == '"' || it == '\n' }) {
-            "\"${s.replace("\"", "\"\"")}\""
-        } else s
 
     private fun csvRaw(s: String): String = s.filter { it != ',' && it != '\n' && it != '\r' }
 

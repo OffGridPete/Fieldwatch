@@ -880,6 +880,14 @@ data class ScanStats(
     val scanning: Boolean = false,
     val lastWifiScanAt: Long = 0,
     val throttleHint: String = "",
+    val wifiRadioOn: Boolean = false,
+    val wifiWaitingOnOs: Boolean = false,
+    val bleRadioOn: Boolean = false,
+    val bleRunning: Boolean = false,
+    val bleParked: Boolean = false,
+    val bleRetrying: Boolean = false,
+    val bleStarting: Boolean = false,
+    val bleHitsLastMin: Int = 0,
 )
 
 object MacUtil {
@@ -964,6 +972,38 @@ object MacUtil {
             if (mac.isNotBlank()) out = redactMacIn(out, mac, true)
         }
         return out
+    }
+
+    /**
+     * Replace each known identifier with "masked". Whole token only, longest first,
+     * so a shorter id does not eat the middle of a longer one. Blank and very short
+     * strings are left alone.
+     */
+    fun redactTokensIn(text: String, tokens: Collection<String>): String {
+        if (text.isEmpty()) return text
+        val ids = tokens
+            .map { it.trim() }
+            .filter { it.length >= 4 }
+            .distinct()
+            .sortedByDescending { it.length }
+        if (ids.isEmpty()) return text
+        var out = text
+        for (id in ids) {
+            val re = Regex("(?<![A-Za-z0-9])${Regex.escape(id)}(?![A-Za-z0-9])", RegexOption.IGNORE_CASE)
+            out = re.replace(out, "masked")
+        }
+        return out
+    }
+
+    /** Privacy-mode report text. MAC tails, known UAS ids, then coordinates. */
+    fun redactPrivateText(
+        text: String,
+        macs: Collection<String>,
+        uasIds: Collection<String>,
+        demo: Boolean,
+    ): String {
+        if (!demo || text.isEmpty()) return text
+        return Geo.redactCoordsIn(redactTokensIn(redactMacsIn(text, macs, true), uasIds), true)
     }
 }
 

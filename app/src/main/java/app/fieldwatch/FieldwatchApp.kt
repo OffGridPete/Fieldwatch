@@ -70,6 +70,8 @@ class FieldwatchApp : Application() {
 
     @Volatile
     var lastFix: Pair<Double, Double>? = null
+    @Volatile
+    var lastFixAt: Long = 0L
     private val pathLock = Any()
     private val operatorPath = ArrayList<GpsSample>(64)
     private var pathLengthM = 0.0
@@ -225,6 +227,21 @@ class FieldwatchApp : Application() {
         stopService(Intent(this, ScanService::class.java))
     }
 
+    fun systemLocationOn(): Boolean {
+        val lm = getSystemService(LOCATION_SERVICE) as LocationManager
+        return if (android.os.Build.VERSION.SDK_INT >= 28) {
+            lm.isLocationEnabled
+        } else {
+            runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false) ||
+                runCatching { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+        }
+    }
+
+    fun gpsFixAgeMs(now: Long): Long? {
+        val at = lastFixAt
+        return if (at <= 0L) null else (now - at).coerceAtLeast(0L)
+    }
+
     fun hasFineLocation(): Boolean =
         androidx.core.content.ContextCompat.checkSelfPermission(
             this,
@@ -284,6 +301,7 @@ class FieldwatchApp : Application() {
         val age = System.currentTimeMillis() - loc.time
         if (age > 30_000L) return
         lastFix = loc.latitude to loc.longitude
+        lastFixAt = loc.time
         recordOperatorFix(loc.latitude, loc.longitude, loc.time)
     }
 

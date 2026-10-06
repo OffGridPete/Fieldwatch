@@ -4,6 +4,12 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.21 — 6 October 2026
+
+- Privacy mode masks a Remote ID in the sit-report path key: the MAC tail, the UAS id, and the aircraft and pilot coordinates. Altitude, course, and speed stay. The map and the dotted track still draw. The same UAS id is masked in the rest of Debrief, Compare, and AI Export. The log, sit export, and GPX/KML/WiGLE files are unchanged.
+- WiGLE CSV prefixes a name whose first non-space character is =, +, -, or @ when that name is not a plain number, same as sit CSV and log CSV. RSSI, coordinates, and a normal network name stay as they were.
+- Settings → Diagnostics, under Show Live tour, lists the phone, Android version, catalog, and whether Wi-Fi, Bluetooth, and Location are scanning. It also lists Faster Wi-Fi AP scans, Allow background usage, and Unrestricted battery. Copy pastes those lines into an issue. It has no network names and no GPS coordinates. An empty Live list points there when a scan is blocked.
+
 ## 1.1.20 — 5 October 2026
 
 - Sit CSV and log CSV prefix a cell whose first character is =, +, -, or @, so a spreadsheet keeps the name or note as text. A plain number, including a negative coordinate, stays as it was. WiGLE CSV is unchanged.

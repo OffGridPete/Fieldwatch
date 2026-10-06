@@ -163,6 +163,84 @@ class AircraftTrailTest {
     }
 
     @Test
+    fun privacyModeMasksRemoteIdInThePathKey() {
+        val serial = "1581F6Z9D242C0018A7B"
+        val mac = "60:60:1F:3B:84:2E"
+        val heard = drone(40_000L, 28.004, -81.0).copy(
+            key = "BLE:$mac",
+            mac = mac,
+            name = "",
+            payloadUasId = serial,
+            payloadOpLat = 28.787120,
+            payloadOpLon = -81.360360,
+        )
+        val open = DebriefReport.document(
+            devices = listOf(heard),
+            fleets = emptyList(),
+            settings = AppSettings(tagLocation = true),
+            operatorPath = listOf(
+                GpsSample(1_000L, 28.0, -81.0, -50),
+                GpsSample(40_000L, 28.001, -81.0, -50),
+            ),
+            now = 40_000L,
+            window = DebriefWindow(1_000L, 40_000L, "flight"),
+            watchedFleetIds = setOf("fleet-remote-id"),
+        )
+        val row = open.pathFigure!!.craftKeys.single()
+        assertTrue(row.contains(mac))
+        assertTrue(row.contains(serial))
+        assertTrue(row.contains("28.004000, -81.000000"))
+        assertTrue(row.contains("28.787120, -81.360360"))
+        val masked = open.withDemoMacs(listOf(mac), true, listOf(serial))
+        val key = masked.pathFigure!!.craftKeys.single()
+        assertTrue(key.contains("60:60:1F:**:**:**"))
+        assertFalse(key.contains("3B:84:2E"))
+        assertFalse(key.contains(serial))
+        assertTrue(key.contains("UAS masked"))
+        assertFalse(key.contains("28.004000"))
+        assertFalse(key.contains("-81.000000"))
+        assertFalse(key.contains("28.787120"))
+        assertFalse(key.contains("-81.360360"))
+        assertTrue(key.contains("last masked"))
+        assertTrue(key.contains("pilot masked"))
+        assertTrue(key.contains("130 m"))
+        assertTrue(key.contains("course 90"))
+        val plain = masked.toPlainText()
+        assertFalse(plain.contains(serial))
+        assertFalse(plain.contains(mac))
+        assertFalse(plain.contains("28.004000"))
+        assertFalse(plain.contains("28.787120"))
+        assertTrue(plain.contains("Advertised position: masked"))
+        val dot = SitPathPlot.Dot(
+            key = "BLE:$mac",
+            lat = 28.004,
+            lon = -81.0,
+            label = mac,
+            extraAttention = false,
+            named = false,
+            mac = mac,
+            advertisedNote = "Airborne · UAS $serial · last 28.787120, -81.365491 · pilot 28.787120, -81.360360",
+        )
+        val figure = SitPathPlot.Figure(
+            kicker = "OPERATOR PATH",
+            tracks = emptyList(),
+            dots = listOf(dot),
+            lengthM = 0.0,
+            spanM = 0.0,
+            caption = "advertised track for $serial",
+            craftKeys = listOf(row),
+        )
+        val doc = masked.copy(pathFigure = figure).withDemoMacs(listOf(mac), true, listOf(serial))
+        val kept = doc.pathFigure!!
+        assertEquals("60:60:1F:**:**:**", kept.dots.single().mac)
+        assertEquals("60:60:1F:**:**:**", kept.dots.single().label)
+        assertFalse(kept.dots.single().advertisedNote.contains(serial))
+        assertFalse(kept.dots.single().advertisedNote.contains("28.787120"))
+        assertFalse(kept.caption.contains(serial))
+        assertEquals(28.004, kept.dots.single().lat, 0.0)
+    }
+
+    @Test
     fun advertisedNoteLeadsWithTheSerialMaker() {
         val note = AircraftTrail.advertisedNote(
             status = "Airborne",

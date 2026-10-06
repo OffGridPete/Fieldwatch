@@ -123,10 +123,14 @@ data class DebriefDoc(
         appendLine("Takeaway: $takeaway")
     }
 
-    fun withDemoMacs(macs: Collection<String>, demo: Boolean): DebriefDoc {
+    fun withDemoMacs(
+        macs: Collection<String>,
+        demo: Boolean,
+        uasIds: Collection<String> = emptyList(),
+    ): DebriefDoc {
         if (!demo) return this
-        fun t(s: String) = Geo.redactCoordsIn(MacUtil.redactMacsIn(s, macs, true), true)
-        val note = "MAC tails (**:**:**) and GPS coordinates masked. Logs on the phone are unchanged."
+        fun t(s: String) = MacUtil.redactPrivateText(s, macs, uasIds, true)
+        val note = "MAC tails (**:**:**), UAS ids, and GPS coordinates masked. Logs on the phone are unchanged."
         return copy(
             meta = listOf("Privacy" to note) + meta.map { it.first to t(it.second) },
             disclaimer = t(disclaimer),
@@ -149,9 +153,28 @@ data class DebriefDoc(
             extraAttention = extraAttention.map {
                 it.copy(signature = t(it.signature), radioLabel = t(it.radioLabel), note = t(it.note))
             },
+            pathFigure = pathFigure?.withDemoText(::t),
+            extraFigures = extraFigures.map { it.withDemoText(::t) },
         )
     }
 }
+
+/** Path-key and caption text. The drawn track keeps its coordinates. */
+private fun SitPathPlot.Figure.withDemoText(t: (String) -> String): SitPathPlot.Figure = copy(
+    caption = t(caption),
+    craftKeys = craftKeys.map(t),
+    tracks = tracks.map { track -> track.copy(name = t(track.name)) },
+    pilots = pilots.map { mark -> mark.copy(label = t(mark.label)) },
+    dots = dots.map { dot ->
+        dot.copy(
+            label = t(dot.label),
+            mac = MacUtil.screenMac(dot.mac, true),
+            fleetNames = dot.fleetNames.map(t),
+            observerNotes = t(dot.observerNotes),
+            advertisedNote = t(dot.advertisedNote),
+        )
+    },
+)
 
 /**
  * Standalone field debrief (not an AI prompt). Heuristic sit report from

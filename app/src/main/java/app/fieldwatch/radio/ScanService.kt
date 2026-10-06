@@ -67,6 +67,7 @@ class ScanService : LifecycleService() {
         )
         startAsForeground()
         app.devices.setScanning(true, wifi.throttleHint())
+        publishScanRadio()
         app.syncLocationUpdates()
         restartRadios()
         pump = lifecycleScope.launch(Dispatchers.Default) { drainInbound() }
@@ -104,6 +105,7 @@ class ScanService : LifecycleService() {
                     .filter { it.isNotBlank() }
                     .joinToString(" · ")
                 app.devices.setScanning(true, hint)
+                publishScanRadio()
                 app.pairingFlood.tick(System.currentTimeMillis())
                 app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.noteFloods(app.wifiFlood.bursts())
@@ -132,6 +134,20 @@ class ScanService : LifecycleService() {
 
     private fun bleStartPending(): Boolean =
         bleStartJob?.isActive == true && !ble.isRunning()
+
+    private fun publishScanRadio() {
+        val app = application as FieldwatchApp
+        app.devices.setScanRadio(
+            wifiOn = wifi.radioOn(),
+            wifiWaiting = wifi.waitingOnOs(),
+            bleOn = ble.radioOn(),
+            bleRunning = ble.isRunning(),
+            bleParked = ble.statusHint() == "BLE parked · restarting",
+            bleRetrying = ble.statusHint() == "BLE retrying" || ble.statusHint() == "BLE unavailable",
+            bleStarting = bleStartPending() && !ble.isRunning(),
+            bleHitsLastMin = ble.hitsLastMinute(System.currentTimeMillis()),
+        )
+    }
 
     private fun offer(observation: Observation) {
         if (observation.mac.isBlank()) return

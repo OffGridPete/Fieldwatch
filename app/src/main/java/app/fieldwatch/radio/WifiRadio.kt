@@ -115,6 +115,8 @@ class WifiRadio(
         return ok
     }
 
+    fun radioOn(): Boolean = runCatching { wifi.isWifiEnabled }.getOrDefault(false)
+
     fun waitingOnOs(): Boolean = failStreak.get() > 0
 
     fun throttleHint(): String {

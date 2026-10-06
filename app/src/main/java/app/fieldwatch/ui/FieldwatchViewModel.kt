@@ -33,6 +33,8 @@ import app.fieldwatch.domain.GeoExport
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.LogExportKind
 import app.fieldwatch.domain.LogExportRadios
+import app.fieldwatch.domain.ScanRadioFacts
+import app.fieldwatch.domain.ScanStatus
 import app.fieldwatch.domain.SitExport
 import app.fieldwatch.domain.ClassOutline
 import app.fieldwatch.domain.CoTravel
@@ -140,6 +142,8 @@ data class FieldwatchUi(
     val namedNow: Int = 0,
     val logLines: Long = 0,
     val throttleHint: String = "",
+    val scanRadio: ScanRadioFacts = ScanRadioFacts(),
+    val scanBlocked: Boolean = false,
     val hiddenKnown: Int = 0,
     val arrivalsLearning: Boolean = false,
     val displayPaused: Boolean = false,
@@ -327,6 +331,18 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         .thenByDescending { it.sortRssi(config.settings.strengthSort, windowMs, now) }
             },
         )
+        val scanRadio = ScanRadioFacts(
+            scanning = stats.scanning,
+            wifiOn = stats.wifiRadioOn,
+            wifiWaitingOnOs = stats.wifiWaitingOnOs,
+            lastWifiScanAt = stats.lastWifiScanAt,
+            bleOn = stats.bleRadioOn,
+            bleRunning = stats.bleRunning,
+            bleParked = stats.bleParked,
+            bleRetrying = stats.bleRetrying,
+            bleStarting = stats.bleStarting,
+            bleHitsLastMin = stats.bleHitsLastMin,
+        )
         FieldwatchUi(
             devices = labeled,
             filtered = filtered,
@@ -344,6 +360,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             namedNow = stats.namedNow,
             logLines = stats.logLines,
             throttleHint = stats.throttleHint,
+            scanRadio = scanRadio,
+            scanBlocked = ScanStatus.isBlocked(scanRadio, app.systemLocationOn(), app.hasFineLocation()),
             hiddenKnown = hiddenKnown,
             arrivalsLearning = learning,
             operatorSpanM = if (moveCtx.ready || config.filter.movingWithYou) {
@@ -880,14 +898,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     private suspend fun sitCompareDoc(): DebriefDoc {
         val (thisSide, second) = compareSides()
-        val macs = (thisSide.radios + second.radios).map { it.mac }
+        val radios = thisSide.radios + second.radios
         return SitDiff.document(
             thisSide,
             second,
             RadioBookmarks.watchedFleetIds(app.config.watchlist),
             showAllRadios = app.config.settings.debriefShowAllRadios,
         )
-            .withDemoMacs(macs, app.config.settings.demoMode)
+            .withDemoMacs(radios.map { it.mac }, app.config.settings.demoMode, radios.map { it.payloadUasId })
     }
 
     private suspend fun compareSides(): Pair<SitDiff.Side, SitDiff.Side> {
@@ -1866,7 +1884,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 watchedFleetIds = RadioBookmarks.watchedFleetIds(app.config.watchlist),
                 mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
                 floods = source?.floods ?: app.floodBursts(),
-            ).withDemoMacs(devices.map { it.mac }, settings.demoMode)
+            ).withDemoMacs(
+                devices.map { it.mac },
+                settings.demoMode,
+                devices.mapNotNull { it.payloadUasId },
+            )
         }
     }
 
@@ -1910,12 +1932,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
                         floods = source?.floods ?: app.floodBursts(),
                     )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacsIn(raw, devices.map { it.mac }, settings.demoMode),
+                    val masked = MacUtil.redactPrivateText(
+                        raw,
+                        devices.map { it.mac },
+                        devices.mapNotNull { it.payloadUasId },
                         settings.demoMode,
                     )
                     if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
+                        "Privacy mode: MAC tails are **:**:**. UAS ids and GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
                     } else {
                         masked
                     }
@@ -1971,17 +1995,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         fleets = app.config.fleets,
                         mine = isMine(device.key),
                     )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
+                    val masked = MacUtil.redactPrivateText(
+                        raw,
+                        listOf(device.mac),
+                        listOfNotNull(device.payloadUasId),
                         settings.demoMode,
                     )
                     if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
+                        "Privacy mode: MAC tails are **:**:**. UAS ids and GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
                     } else {
                         masked
                     }
                 }
-                val title = MacUtil.redactMacIn(device.listTitle(names), device.mac, settings.demoMode)
+                val title = MacUtil.redactPrivateText(
+                    device.listTitle(names),
+                    listOf(device.mac),
+                    listOfNotNull(device.payloadUasId),
+                    settings.demoMode,
+                )
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch AI export — $title")
@@ -2014,17 +2045,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         fleets = app.config.fleets,
                         mine = isMine(device.key),
                     )
-                    val masked = Geo.redactCoordsIn(
-                        MacUtil.redactMacIn(raw, device.mac, settings.demoMode),
+                    val masked = MacUtil.redactPrivateText(
+                        raw,
+                        listOf(device.mac),
+                        listOfNotNull(device.payloadUasId),
                         settings.demoMode,
                     )
                     if (settings.demoMode) {
-                        "Privacy mode: MAC tails are **:**:**. GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
+                        "Privacy mode: MAC tails are **:**:**. UAS ids and GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
                     } else {
                         masked
                     }
                 }
-                val title = MacUtil.redactMacIn(device.listTitle(names), device.mac, settings.demoMode)
+                val title = MacUtil.redactPrivateText(
+                    device.listTitle(names),
+                    listOf(device.mac),
+                    listOfNotNull(device.payloadUasId),
+                    settings.demoMode,
+                )
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_SUBJECT, "Fieldwatch device detail — $title")
