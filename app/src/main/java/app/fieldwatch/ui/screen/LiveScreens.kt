@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import java.util.Locale
+import app.fieldwatch.domain.GnssCopy
 import app.fieldwatch.ui.component.DecodeGlyph
 import app.fieldwatch.ui.component.FieldwatchSwitch
 import app.fieldwatch.ui.component.FieldwatchFilterChip
@@ -138,6 +139,7 @@ fun LivePane(
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
     val flood by vm.floodNotice.collectAsStateWithLifecycle()
     val gnss by vm.gnssNotice.collectAsStateWithLifecycle()
+    val gnssStatus by vm.gnssStatus.collectAsStateWithLifecycle()
     val floodHide by vm.floodHide.collectAsStateWithLifecycle()
     var renameSit by remember { mutableStateOf(false) }
     var renameDraft by remember { mutableStateOf("") }
@@ -155,6 +157,16 @@ fun LivePane(
             LocationOffBanner()
         }
         val gnssNotice = gnss
+        val gnssAlert = gnssNotice != null && gnssNotice.line.isNotBlank() &&
+            (gnssNotice.showDialog || !gnssNotice.ended)
+        if (gnssStatus == GnssCopy.PAUSED && !gnssAlert) {
+            Text(
+                gnssStatus,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+        }
         if (gnssNotice != null && !gnssNotice.showDialog && gnssNotice.line.isNotBlank()) {
             Text(
                 gnssNotice.line,

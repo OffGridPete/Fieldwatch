@@ -17,6 +17,7 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import androidx.core.location.GnssStatusCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.ExecutorCompat
 import app.fieldwatch.FieldwatchApp
@@ -57,6 +58,7 @@ data class GnssReading(
     val diagRows: List<Pair<String, String>> = listOf("GNSS monitor" to "off"),
     val marks: List<GnssMark> = emptyList(),
     val lives: List<GnssLive> = emptyList(),
+    val statusLine: String = "",
 )
 
 /**
@@ -84,8 +86,11 @@ class GnssMonitor(private val app: FieldwatchApp) {
     private val calEpochs = ArrayList<GnssEpoch>()
     private val calFixes = ArrayList<GnssCalFix>()
     private var callbackOn = false
+    private var statusOn = false
+    private var engineStopped = false
     private var fullTracking = false
     private var ownLocation = false
+    private var ownNetOn = false
     private var wantOwn = false
     private var receiverOn = false
     private var floor = GnssConfidence.MEDIUM
@@ -126,16 +131,35 @@ class GnssMonitor(private val app: FieldwatchApp) {
 
     private val main = Handler(Looper.getMainLooper())
 
+    private val stalled = Runnable {
+        if (!running || calibrating || !gotMeas) return@Runnable
+        deliver(detector.onEpoch(gapEpoch(), side()))
+    }
+
+    private val gnssStatus = object : GnssStatusCompat.Callback() {
+        override fun onStarted() {
+            engineStopped = false
+        }
+
+        override fun onStopped() {
+            engineStopped = true
+            if (!running || calibrating) return
+            deliver(detector.onEpoch(gapEpoch(), side()))
+        }
+    }
+
     private val callback = object : GnssMeasurementsEvent.Callback() {
         override fun onGnssMeasurementsReceived(event: GnssMeasurementsEvent) {
             gotMeas = true
             blocked = ""
+            handler?.removeCallbacks(stalled)
             if (calibrating) {
                 calEpochs += toEpoch(event)
                 return
             }
             val snap = detector.onEpoch(toEpoch(event), side())
             deliver(snap)
+            handler?.postDelayed(stalled, 3_000L)
         }
 
         override fun onStatusChanged(status: Int) {
@@ -206,6 +230,7 @@ class GnssMonitor(private val app: FieldwatchApp) {
                 notice = null,
                 lives = emptyList(),
                 diagRows = listOf("GNSS monitor" to "off"),
+                statusLine = "",
             )
             return
         }
@@ -215,6 +240,7 @@ class GnssMonitor(private val app: FieldwatchApp) {
                 notice = null,
                 lives = emptyList(),
                 diagRows = listOf("GNSS monitor" to "off"),
+                statusLine = "",
             )
         }
     }
@@ -268,6 +294,8 @@ class GnssMonitor(private val app: FieldwatchApp) {
 
     private fun teardown() {
         handler?.removeCallbacks(noData)
+        handler?.removeCallbacks(stalled)
+        engineStopped = false
         unregisterCallback()
         unregisterReceiver()
         releaseOwnLocation()
@@ -299,13 +327,22 @@ class GnssMonitor(private val app: FieldwatchApp) {
             callbackOn = true
             fullTracking = full
         }
+        runCatching {
+            LocationManagerCompat.registerGnssStatusCallback(lm, exec, gnssStatus)
+            statusOn = true
+        }
     }
 
     private fun unregisterCallback() {
         val lm = manager() ?: return
-        if (!callbackOn) return
-        runCatching { LocationManagerCompat.unregisterGnssMeasurementsCallback(lm, callback) }
-        callbackOn = false
+        if (callbackOn) {
+            runCatching { LocationManagerCompat.unregisterGnssMeasurementsCallback(lm, callback) }
+            callbackOn = false
+        }
+        if (statusOn) {
+            runCatching { LocationManagerCompat.unregisterGnssStatusCallback(lm, gnssStatus) }
+            statusOn = false
+        }
     }
 
     private fun registerReceiver() {
@@ -326,43 +363,57 @@ class GnssMonitor(private val app: FieldwatchApp) {
         receiverOn = false
     }
 
+    /**
+     * A GPS fix request stays up the whole time the check runs, including when path
+     * tagging already has its own request. That path request can wait for 8 m of
+     * movement, which lets the chip rest while the phone is still. Distance 0 keeps
+     * the session alive. Full tracking stays the Settings switch.
+     */
     @SuppressLint("MissingPermission")
     private fun syncOwnLocation() {
         val lm = manager() ?: return
-        if (!wantOwn || !fine()) {
+        if (!running || !fine()) {
             releaseOwnLocation()
             return
         }
-        if (ownLocation) return
         val looper = handler?.looper ?: return
-        runCatching {
-            if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2_000L, 0f, ownGps, looper)
+        val gpsOn = runCatching { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false)
+        if (!gpsOn) {
+            releaseOwnLocation()
+            return
+        }
+        if (!ownLocation) {
+            runCatching {
+                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1_000L, 0f, ownGps, looper)
+                ownLocation = true
             }
         }
-        runCatching {
-            if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+        val wantNet = wantOwn &&
+            runCatching { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+        if (wantNet && !ownNetOn) {
+            runCatching {
                 lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4_000L, 0f, ownNet, looper)
+                ownNetOn = true
             }
+        } else if (!wantNet && ownNetOn) {
+            runCatching { lm.removeUpdates(ownNet) }
+            ownNetOn = false
         }
-        ownLocation = true
     }
 
     private fun releaseOwnLocation() {
-        if (!ownLocation) return
+        if (!ownLocation && !ownNetOn) return
         val lm = manager() ?: return
-        runCatching { lm.removeUpdates(ownGps) }
-        runCatching { lm.removeUpdates(ownNet) }
+        if (ownLocation) runCatching { lm.removeUpdates(ownGps) }
+        if (ownNetOn) runCatching { lm.removeUpdates(ownNet) }
         ownLocation = false
+        ownNetOn = false
     }
 
     private fun refreshProviders() {
         val lm = manager() ?: return
         blocked = if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) "" else "GPS provider off"
-        if (wantOwn) {
-            releaseOwnLocation()
-            syncOwnLocation()
-        }
+        if (running) syncOwnLocation()
         publish(lastSnap, _reading.value.notice)
     }
 
@@ -418,6 +469,8 @@ class GnssMonitor(private val app: FieldwatchApp) {
         if (token != calToken) return
         calRun = token
         handler?.removeCallbacks(noData)
+        handler?.removeCallbacks(stalled)
+        engineStopped = false
         unregisterCallback()
         unregisterReceiver()
         releaseOwnLocation()
@@ -425,7 +478,7 @@ class GnssMonitor(private val app: FieldwatchApp) {
         alerts.reset()
         lastSnap = null
         running = false
-        _reading.value = _reading.value.copy(notice = null, lives = emptyList())
+        _reading.value = _reading.value.copy(notice = null, lives = emptyList(), statusLine = "")
         calEpochs.clear()
         calFixes.clear()
         calStart = SystemClock.elapsedRealtime()
@@ -499,6 +552,13 @@ class GnssMonitor(private val app: FieldwatchApp) {
         }
     }
 
+    private fun gapEpoch() = GnssEpoch(
+        elapsedMs = SystemClock.elapsedRealtime(),
+        wallMs = System.currentTimeMillis(),
+        clockDiscontinuity = 0,
+        bands = emptyMap(),
+    )
+
     private fun side(): GnssSide {
         val hop = hopLeft > 0
         if (hopLeft > 0) hopLeft--
@@ -510,6 +570,7 @@ class GnssMonitor(private val app: FieldwatchApp) {
             impossibleHop = hop,
             mock = mockOn,
             fixLost = lost,
+            engineStopped = engineStopped,
         )
     }
 
@@ -622,6 +683,7 @@ class GnssMonitor(private val app: FieldwatchApp) {
             diagRows = diag(snap),
             marks = snap?.marks ?: _reading.value.marks,
             lives = snap?.lives ?: emptyList(),
+            statusLine = snap?.statusLine.orEmpty(),
         )
     }
 

@@ -241,6 +241,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         .map { it.notice }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    val gnssStatus: StateFlow<String> = app.gnss.reading
+        .map { it.statusLine }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     fun dismissGnss() {
         app.gnss.dismiss()
     }

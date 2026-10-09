@@ -479,7 +479,7 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.22")
+    c.drawString(48, 108, "Version 1.1.23")
     c.drawString(48, 94, "9 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.22  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.23  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -2361,6 +2361,13 @@ def story():
             "Fieldwatch learns what this phone’s GPS looks like when it is steady. "
             "A warning can come after that. "
             "The first real detection is not until at least two minutes after the check starts."
+        ),
+        P(
+            "If this phone turns GPS off, or lets the receiver rest, the satellites and the gain disappear together. "
+            "Live shows <b>GNSS paused by the phone</b>. That is not interference. "
+            "There is no popup, no red line, and nothing is added on TAK. "
+            "Fieldwatch waits a few seconds after GPS returns before it watches for a drop again. "
+            "A real hit is still a gain drop while satellites are being tracked."
         ),
         P(
             "The wait starts when the check is on and Fieldwatch is scanning. "
@@ -5450,8 +5457,8 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.22 (versionCode 32), field build of 9 October 2026"],
-                ["Document version", "1.1.22"],
+                ["Software version", "1.1.23 (versionCode 33), field build of 9 October 2026"],
+                ["Document version", "1.1.23"],
                 ["Document date", "9 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],

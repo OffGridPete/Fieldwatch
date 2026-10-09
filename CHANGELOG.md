@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.23 — 9 October 2026
+
+- A GPS pause is not interference. If the satellites and the gain disappear together, or the phone reports the receiver stopped, Live says GNSS paused by the phone. There is no popup, red line, or TAK line. The check waits a few seconds after GPS returns before it watches for a drop again. A real drop is still a gain change while satellites are being tracked.
+
 ## 1.1.22 — 9 October 2026
 
 - Catalog 94. Flipper Zero also matches official-firmware services 3080–3083, so a renamed official unit still matches. Tile also matches FEEC, the pre-activation service. Polar is a new Wearable row: company 0x006B, service FEEE, or a Bluetooth name that starts with Polar. A Polar strap that also sends the GoPro heart-rate service stays on Polar.

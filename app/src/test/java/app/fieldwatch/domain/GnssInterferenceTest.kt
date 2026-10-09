@@ -80,6 +80,52 @@ class GnssInterferenceTest {
     }
 
     @Test
+    fun aSuddenLossOfMeasurementsIsAPause() {
+        val det = quiet()
+        feed(det, 70, 0L, agc = 2.0, cn0 = 40.0, sv = 11)
+        val paused = det.onEpoch(GnssEpoch(70_000L, 70_000L, 0, emptyMap()))
+        assertEquals(GnssCopy.PAUSED, paused.statusLine)
+        assertTrue(paused.lives.isEmpty())
+        assertTrue(paused.marks.isEmpty())
+        val back = feed(det, 20, 80_000L, agc = 2.0, cn0 = 40.0, sv = 11)
+        assertTrue(back.lives.isEmpty())
+        assertTrue(back.statusLine.startsWith("armed"))
+    }
+
+    @Test
+    fun engineStoppedDoesNotAlertAndDoesNotMoveTheBaseline() {
+        val det = quiet()
+        feed(det, 70, 0L, agc = 2.0, cn0 = 40.0, sv = 11)
+        val stopped = feed(
+            det,
+            3,
+            70_000L,
+            agc = -30.0,
+            cn0 = 8.0,
+            sv = 11,
+            side = GnssSide(engineStopped = true),
+        )
+        assertEquals(GnssCopy.PAUSED, stopped.statusLine)
+        assertTrue(stopped.lives.isEmpty())
+        assertTrue(stopped.marks.isEmpty())
+        val warming = feed(det, 5, 73_000L, agc = -12.0, cn0 = 30.0, sv = 11)
+        assertEquals(GnssCopy.PAUSED, warming.statusLine)
+        assertTrue(warming.lives.isEmpty())
+        val hit = feed(det, 20, 78_000L, agc = -12.0, cn0 = 30.0, sv = 11)
+        val live = hit.lives.single { it.kind == GnssKind.INTERFERENCE }
+        assertEquals(GnssConfidence.MEDIUM, live.confidence)
+    }
+
+    @Test
+    fun missingAgcIsNotAveragedAsZero() {
+        val det = quiet()
+        feed(det, 70, 0L, agc = 2.0, cn0 = 40.0, sv = 11)
+        val snap = feed(det, 20, 70_000L, agc = null, cn0 = 40.0, sv = 11)
+        assertTrue(snap.lives.none { it.kind == GnssKind.INTERFERENCE })
+        assertFalse(snap.statusLine == GnssCopy.PAUSED)
+    }
+
+    @Test
     fun signalDropWithoutAgcDropStaysQuiet() {
         val det = quiet()
         feed(det, 60, 0L, agc = 2.0, cn0 = 40.0, sv = 11)

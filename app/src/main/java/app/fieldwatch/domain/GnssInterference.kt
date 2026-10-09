@@ -125,6 +125,8 @@ data class GnssSide(
     val impossibleHop: Boolean = false,
     val mock: Boolean = false,
     val fixLost: Boolean = false,
+    /** GnssStatus reported the receiver stopped. Not a drop in the signals. */
+    val engineStopped: Boolean = false,
 )
 
 /**
@@ -170,7 +172,10 @@ data class GnssConfig(
     /** From this phone's calibration. 0 keeps the sensitivity bars. */
     val agcFloorDb: Double = 0.0,
     val cn0FloorDb: Double = 0.0,
-    /** Measurement gaps are normal on this phone. Do not treat them as Medium. */
+    /**
+     * Kept so an older phone profile still loads. A hard gap is a pause on every phone,
+     * including one graded Good, so this no longer changes the check.
+     */
     val ignoreStopped: Boolean = false,
     /** Readings in this span after the check starts are not stored as the baseline. */
     val settleMs: Long = 60_000L,
@@ -316,6 +321,7 @@ object GnssCopy {
         "Spoofing checks are partial. A careful spoofer can avoid them. A wrong position can also be a side effect of interference."
     const val MOCK =
         "A mock location app is on. That is the developer mock-location switch, not a radio spoofer."
+    const val PAUSED = "GNSS paused by the phone"
 
     fun utcHm(ms: Long): String = stamp(ms, utc = true)
 
@@ -393,7 +399,6 @@ object GnssCopy {
         bothDropped: Boolean,
         twoSystems: Boolean,
         lostSatellites: Boolean,
-        paused: Boolean,
         signalOnly: Boolean,
     ): String = when {
         lostSatellites ->
@@ -402,8 +407,6 @@ object GnssCopy {
             "This phone's GPS got weaker on more than one satellite system. The receiver turned its gain down and the signals dropped."
         bothDropped ->
             "This phone's GPS got weaker. The receiver turned its gain down and the satellite signals dropped."
-        paused ->
-            "GPS readings paused. On this phone that can look like interference."
         signalOnly ->
             "The satellite signals got weaker. This phone is not reporting receiver gain, so this hint is lighter."
         else ->
@@ -572,6 +575,9 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         corrStreak = 0
         recover = 0
         settleStart = Long.MIN_VALUE
+        sawLock = false
+        inGap = false
+        resumeLeft = 0
     }
 
     private val bands = LinkedHashMap<BandKey, Track>()
@@ -587,8 +593,27 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
     private var corrStreak = 0
     private var recover = 0
     private var settleStart = Long.MIN_VALUE
+    /** True after a locked satellite or a usable signal has been seen. */
+    private var sawLock = false
+    /** Receiver stopped, or every measurement disappeared. The baseline stays put. */
+    private var inGap = false
+    private var resumeLeft = 0
 
     fun onEpoch(epoch: GnssEpoch, side: GnssSide = GnssSide()): GnssSnapshot {
+        val present = hasMeasurements(epoch)
+        if (side.engineStopped || (!present && (sawLock || inGap))) {
+            inGap = true
+            resumeLeft = RESUME_EPOCHS
+            return pauseSnapshot()
+        }
+        if (inGap && present) {
+            if (resumeLeft > 0) {
+                resumeLeft--
+                return pauseSnapshot()
+            }
+            inGap = false
+        }
+        if (present) sawLock = true
         if (config.settleMs > 0L) {
             if (settleStart == Long.MIN_VALUE || epoch.elapsedMs < settleStart) {
                 settleStart = epoch.elapsedMs
@@ -637,15 +662,14 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         var anyJ1J2 = false
         var j3 = false
         var j4Groups = 0
-        var stopped = false
         val j12Groups = HashSet<BandKey>()
         for ((key, track) in bands) {
             val m = metrics[key] ?: continue
-            val j1Now = m.dAgc != null && m.dAgc <= -limits.agcDropDb
-            val j2Now = m.dCn0 != null && m.dCn0 <= -limits.cn0DropDb
+            val measured = m.sv > 0 || m.cn0 != null
+            val j1Now = measured && m.dAgc != null && m.dAgc <= -limits.agcDropDb
+            val j2Now = measured && m.dCn0 != null && m.dCn0 <= -limits.cn0DropDb
             val j1 = track.flag(track.j1, j1Now)
             val j2 = track.flag(track.j2, j2Now)
-            if (j1Now) track.lastJ1 = epoch.elapsedMs
             if (j1) anyJ1 = true
             if (j1 && j2) {
                 anyJ1J2 = true
@@ -654,12 +678,6 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
             val baseSv = m.baseSv
             val lostSv = m.sv == 0 || (baseSv != null && baseSv > 0.0 && m.sv <= baseSv * 0.25)
             if (j1 && m.eventAgc && (lostSv || side.fixLost)) j3 = true
-            if (!config.ignoreStopped &&
-                track.missing in 1..10 &&
-                epoch.elapsedMs - track.lastJ1 <= 10_000L
-            ) {
-                stopped = true
-            }
         }
         j4Groups = j12Groups.size
         val cn0Only = cn0Only(metrics, limits, armed)
@@ -667,7 +685,7 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         val interferenceLevel = when {
             !agcSeen && cn0Only -> GnssConfidence.LOW
             agcSeen && ((anyJ1J2 && j4Groups >= 2) || (eventLevel && anyJ1J2 && j3)) -> GnssConfidence.HIGH
-            agcSeen && (anyJ1J2 || stopped) -> GnssConfidence.MEDIUM
+            agcSeen && anyJ1J2 -> GnssConfidence.MEDIUM
             agcSeen && (anyJ1 || cn0Only) -> GnssConfidence.LOW
             else -> null
         }
@@ -683,7 +701,6 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
                 bothDropped = anyJ1J2,
                 twoSystems = j4Groups >= 2,
                 lostSatellites = j3 && anyJ1J2,
-                paused = stopped && !anyJ1J2,
                 signalOnly = cn0Only && !anyJ1,
             )
         }
@@ -731,10 +748,7 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         if (spoofing != null) upsert(spoofing!!, "spoofing")
         mockEp = mockEpisode(epoch, side)
         if (mockEp != null) upsert(mockEp!!, "mock")
-        val lives = ArrayList<GnssLive>()
-        interference?.let { lives += it.toLive(GnssKind.INTERFERENCE) }
-        spoofing?.let { lives += it.toLive(GnssKind.SPOOFING) }
-        mockEp?.let { lives += it.toLive(GnssKind.MOCK) }
+        val lives = openLives()
         val status = when {
             !armed -> "learning $learned/$ARM s"
             lives.isNotEmpty() -> {
@@ -1027,7 +1041,6 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         val j1 = ArrayDeque<Boolean>()
         val j2 = ArrayDeque<Boolean>()
         var missing = 0
-        var lastJ1 = Long.MIN_VALUE
         var freezeSet = false
         var frozenAgc: Double? = null
         var frozenCn0: Double? = null
@@ -1128,6 +1141,39 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
         const val S1_HIGH_MS = 10_000L
         const val S1_MED_MS = 30_000L
         const val CORR_WIN = 20
+        /** Clean epochs kept out of the baseline after the receiver comes back. */
+        const val RESUME_EPOCHS = 5
+    }
+
+    private fun hasMeasurements(epoch: GnssEpoch): Boolean {
+        for (band in epoch.bands.values) {
+            if (band.svTracked > 0) return true
+            val cn = band.cn0Top3
+            if (cn != null && cn.isFinite() && cn > 0.0) return true
+        }
+        return false
+    }
+
+    /** No new hit, and the samples already learned stay where they are. */
+    private fun pauseSnapshot(): GnssSnapshot {
+        val learned = bands.values.maxOfOrNull { it.samples.size } ?: 0
+        return GnssSnapshot(
+            statusLine = GnssCopy.PAUSED,
+            bandLines = emptyList(),
+            lives = openLives(),
+            marks = marks.toList(),
+            agcSeen = agcSeen,
+            armed = learned >= ARM,
+            learned = learned,
+        )
+    }
+
+    private fun openLives(): List<GnssLive> {
+        val lives = ArrayList<GnssLive>()
+        interference?.let { lives += it.toLive(GnssKind.INTERFERENCE) }
+        spoofing?.let { lives += it.toLive(GnssKind.SPOOFING) }
+        mockEp?.let { lives += it.toLive(GnssKind.MOCK) }
+        return lives
     }
 }
 
