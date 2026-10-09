@@ -480,7 +480,7 @@ def draw_cover(c, doc):
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
     c.drawString(48, 108, "Version 1.1.22")
-    c.drawString(48, 94, "8 October 2026")
+    c.drawString(48, 94, "9 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -5450,9 +5450,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.22 (versionCode 32), field build of 8 October 2026"],
+                ["Software version", "1.1.22 (versionCode 32), field build of 9 October 2026"],
                 ["Document version", "1.1.22"],
-                ["Document date", "8 October 2026"],
+                ["Document date", "9 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

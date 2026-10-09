@@ -4,7 +4,7 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
-## Unreleased
+## 1.1.22 — 9 October 2026
 
 - Catalog 94. Flipper Zero also matches official-firmware services 3080–3083, so a renamed official unit still matches. Tile also matches FEEC, the pre-activation service. Polar is a new Wearable row: company 0x006B, service FEEE, or a Bluetooth name that starts with Polar. A Polar strap that also sends the GoPro heart-rate service stays on Polar.
 - A GPS warning posts a phone notification only when Settings → GNSS interference → System notification is on. That switch is off until you turn it on, and it is separate from the watchlist switch. The popup, the red line, the beep, and the voice are unchanged.
@@ -19,9 +19,6 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 - Live shows a banner when Location is off. Turn on opens the phone’s Location screen when that screen exists. Android will not return Wi-Fi or Bluetooth results while Location is off.
 - Diagnostics stops naming Wi-Fi scanning and Bluetooth scanning when that radio is already on. A refused Wi-Fi scan or a parked Bluetooth scan says the radio is on.
 - Catalog 93. Flock Safety Cameras keeps B4:1E:52 and a name that starts with Flock-. A name that only contains Flock, FLCK, Condor, Falcon, or Sparrow no longer matches. FS Ext Battery keeps the name and a name that starts with FS Ext. Silicon Labs prefixes and FS_* are gone. Penguin keeps the XUNTONG manufacturer ID and a name that starts with Penguin-. LiteOn camera radio drops B8:35:32. 08:3A:88 stays. That prefix is Universal Global Scientific Industrial, not Lite-On.
-
-## 1.1.22 — 7 October 2026
-
 - Pairing flood leaves out the Windows background beacon (company 0x0006 starting with 01). Swift Pair still counts: beacon id 03, a pairing sub-scenario, and the reserved byte. Find My stays out, including a Find My advertisement whose later bytes look like proximity pairing.
 - Settings → Diagnostics starts with What to check. It names a switch that is off and needs to be on. If that does not explain an empty Live list, Copy still pastes the page.
 - Voice alerts can reach a speech engine on Android 11 and newer. Android 10 already could. The phone still needs a public engine with a downloaded voice, Voice on, and the media volume up.

@@ -11,7 +11,7 @@ This card
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  af940c24bf17d18e2b66ec6847988eeffff37f291bfb17535d7202a907118995
+  06c5030adc33ef09831e02603f25ddd4b006dbd494a8df8b166dc46833831fa4
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
