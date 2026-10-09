@@ -628,4 +628,44 @@ class SitPathPlotTest {
         assertEquals(samples.last().at, kept.last().at)
         assertTrue(kept.any { it.at in 20_000L..30_000L })
     }
+
+    @Test
+    fun gnssPinSitsOnTheSampleNearestInTime() {
+        val path = listOf(
+            GpsSample(1_000L, 28.7800, -81.3700),
+            GpsSample(10_000L, 28.7810, -81.3700),
+            GpsSample(20_000L, 28.7820, -81.3700),
+        )
+        val mark = GnssMark(
+            at = 11_000L,
+            endedAt = 16_000L,
+            kind = "interference",
+            confidence = "Medium",
+            detail = "GPS L1: AGC -9.0 dB, signal -7.0 dB, 8 satellites (baseline 12)",
+        )
+        val pin = SitPathPlot.gnssPins(listOf(mark), path).single()
+        assertEquals(28.7810, pin.lat, 0.00001)
+        assertEquals(-81.3700, pin.lon, 0.00001)
+        val line = pin.keyLine()
+        assertTrue(line.contains("Possible GNSS interference"))
+        assertTrue(line.contains("Medium"))
+        assertTrue(line.contains("AGC -9.0 dB"))
+        assertFalse(line.contains("28.781"))
+        assertFalse(line.contains("latitude", ignoreCase = true))
+        assertFalse(line.contains("jammer", ignoreCase = true))
+        assertFalse(line.contains("spoofer", ignoreCase = true))
+    }
+
+    @Test
+    fun gnssPinNeedsAPathAndNamesSpoofingWithoutAPlace() {
+        val mark = GnssMark(at = 5_000L, kind = "spoofing", confidence = "High", detail = "  ")
+        assertTrue(SitPathPlot.gnssPins(listOf(mark), emptyList()).isEmpty())
+        val pin = SitPathPlot.gnssPins(
+            listOf(mark),
+            listOf(GpsSample(1_000L, 28.7800, -81.3700)),
+        ).single()
+        assertEquals("Possible GNSS spoofing", pin.title())
+        assertTrue(pin.keyLine().contains("Signal changed."))
+        assertFalse(pin.keyLine().contains("28.7800"))
+    }
 }

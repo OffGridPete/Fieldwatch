@@ -251,7 +251,8 @@ class DefaultCatalogTest {
                     rule.text.equals("Pico", ignoreCase = true)
             }
         })
-        assertTrue(flock.rules.any { it.kind == RuleKind.NAME_CONTAINS && it.text == "Flock" })
+        assertFalse(flock.rules.any { it.kind == RuleKind.NAME_CONTAINS && it.text == "Flock" })
+        assertTrue(flock.rules.any { it.kind == RuleKind.NAME_GLOB && it.text == "Flock-*" })
 
         val both = tagged("01", "RayNeo Air 2", 0x0BC6)
         val bare = tagged("02", "RayNeo", 0x0BC6)
@@ -292,7 +293,7 @@ class DefaultCatalogTest {
         assertFalse("E0:0A:F6 is not Flock", "fleet-flock-cameras" in hits.getValue(liteA.key))
         assertTrue("14:B5:CD", "fleet-liteon-camera-radio" in hits.getValue(liteB.key))
         assertFalse("14:B5:CD is not Flock", "fleet-flock-cameras" in hits.getValue(liteB.key))
-        assertTrue("Flock name already covers FlockCam", "fleet-flock-cameras" in hits.getValue(flockCam.key))
+        assertFalse("FlockCam is not Flock-", "fleet-flock-cameras" in hits.getValue(flockCam.key))
         assertFalse("RWLS is not Flock", "fleet-flock-cameras" in hits.getValue(rwls.key))
         assertTrue(liteA.copy(fleetIds = hits.getValue(liteA.key)).attentionNotes(stock).isEmpty())
     }
@@ -482,6 +483,132 @@ class DefaultCatalogTest {
         assertFalse("short Meta RB", "fleet-meta-glasses" in ids(short))
         assertFalse("Display not at the start", "fleet-meta-glasses" in ids(mid))
         assertFalse("FD5F alone", "fleet-meta-glasses" in ids(fd5f))
+    }
+
+    @Test
+    fun catalog93TightensFlockPenguinFsExtAndLiteOn() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val flock = stock.single { it.id == "fleet-flock-cameras" }
+        val penguin = stock.single { it.id == "fleet-penguin" }
+        val fs = stock.single { it.id == "fleet-fs-ext-battery" }
+        val lite = stock.single { it.id == "fleet-liteon-camera-radio" }
+        assertEquals(
+            setOf("B4:1E:52"),
+            flock.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet(),
+        )
+        assertEquals(listOf("Flock-*"), flock.rules.filter { it.kind == RuleKind.NAME_GLOB }.map { it.text })
+        assertFalse(flock.rules.any { it.kind == RuleKind.NAME_CONTAINS })
+        assertEquals(listOf("Penguin-*"), penguin.rules.filter { it.kind == RuleKind.NAME_GLOB }.map { it.text })
+        assertFalse(penguin.rules.any { it.kind == RuleKind.NAME_CONTAINS })
+        assertTrue(penguin.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x09C8 })
+        assertTrue(fs.rules.none { it.kind == RuleKind.OUI })
+        assertTrue(fs.rules.any { it.kind == RuleKind.NAME_CONTAINS && it.text == "FS Ext Battery" })
+        assertEquals(listOf("FS Ext*"), fs.rules.filter { it.kind == RuleKind.NAME_GLOB }.map { it.text })
+        val liteOuis = lite.rules.filter { it.kind == RuleKind.OUI }.map { it.text.uppercase() }.toSet()
+        assertFalse(liteOuis.contains("B8:35:32"))
+        assertTrue(liteOuis.contains("08:3A:88"))
+        assertTrue(liteOuis.contains("C0:35:32"))
+        assertTrue(lite.notes.contains("Universal Global Scientific"))
+        assertTrue(lite.attentionNote.isBlank())
+
+        val pole = wifi("B4:1E:52:00:00:01", "Home")
+        val flockName = wifi("02:11:22:33:44:70", "Flock-ABCDEF")
+        val flockLong = wifi("02:11:22:33:44:71", "Flock-ABCDEFGH")
+        val falcons = wifi("02:11:22:33:44:72", "Atlanta-Falcons")
+        val flck = wifi("02:11:22:33:44:73", "FLCK-9")
+        val flockCam = wifi("02:11:22:33:44:74", "FlockCam-9")
+        val penguinOld = wifi("02:11:22:33:44:80", "Penguin")
+        val penguinName = wifi("02:11:22:33:44:81", "Penguin-12345")
+        val penguinMid = wifi("02:11:22:33:44:82", "my Penguin-1")
+        val digits = wifi("02:11:22:33:44:83", "7202302200")
+        val xuntong = tagged("91", "7202302200", 0x09C8)
+        val pack = wifi("02:11:22:33:44:90", "FS Ext Battery")
+        val packTail = wifi("02:11:22:33:44:91", "FS Ext 2")
+        val fsStar = wifi("02:11:22:33:44:92", "FS_1234")
+        val silabs = wifi("04:0D:84:11:22:33", "Home")
+        val bogus = wifi("B8:35:32:11:22:33", "Home")
+        val ugsi = wifi("08:3A:88:11:22:33", "Home")
+        val hits = engine.match(
+            listOf(
+                pole, flockName, flockLong, falcons, flck, flockCam,
+                penguinOld, penguinName, penguinMid, digits, xuntong,
+                pack, packTail, fsStar, silabs, bogus, ugsi,
+            ),
+            stock,
+        )
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("Flock OUI", "fleet-flock-cameras" in ids(pole))
+        assertTrue("Flock- name", "fleet-flock-cameras" in ids(flockName))
+        assertTrue("longer Flock- name", "fleet-flock-cameras" in ids(flockLong))
+        assertFalse("Atlanta-Falcons", "fleet-flock-cameras" in ids(falcons))
+        assertFalse("FLCK", "fleet-flock-cameras" in ids(flck))
+        assertFalse("FlockCam", "fleet-flock-cameras" in ids(flockCam))
+        assertFalse("bare Penguin", "fleet-penguin" in ids(penguinOld))
+        assertTrue("Penguin- name", "fleet-penguin" in ids(penguinName))
+        assertFalse("Penguin- in the middle", "fleet-penguin" in ids(penguinMid))
+        assertFalse("10-digit name alone", "fleet-penguin" in ids(digits))
+        assertTrue("XUNTONG id", "fleet-penguin" in ids(xuntong))
+        assertTrue("FS Ext Battery name", "fleet-fs-ext-battery" in ids(pack))
+        assertTrue("FS Ext prefix", "fleet-fs-ext-battery" in ids(packTail))
+        assertFalse("FS_ wildcard", "fleet-fs-ext-battery" in ids(fsStar))
+        assertFalse("Silicon Labs prefix", "fleet-fs-ext-battery" in ids(silabs))
+        assertFalse("unassigned prefix", "fleet-liteon-camera-radio" in ids(bogus))
+        assertTrue("UGSI prefix stays on the module row", "fleet-liteon-camera-radio" in ids(ugsi))
+        assertFalse("UGSI is not Flock", "fleet-flock-cameras" in ids(ugsi))
+    }
+
+    @Test
+    fun catalog94AddsFlipperServiceTilePreactivationAndPolar() {
+        val stock = DefaultCatalog.fleets()
+        val engine = SignatureEngine()
+        val flipper = stock.single { it.id == "fleet-flipper" }
+        val tile = stock.single { it.id == "fleet-tile" }
+        val polar = stock.single { it.id == "fleet-polar" }
+        assertEquals(SignatureClass.WEARABLE, polar.kind)
+        assertTrue(polar.attentionNote.isBlank())
+        assertFalse("fleet-polar" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        for (uuid in listOf("3080", "3081", "3082", "3083")) {
+            assertTrue(uuid, flipper.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals(uuid, true) })
+        }
+        assertTrue(tile.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FEEC", true) })
+        assertTrue(polar.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x006B })
+        assertTrue(polar.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FEEE", true) })
+        assertTrue(polar.rules.any { it.kind == RuleKind.NAME_GLOB && it.text == "Polar*" && it.radio == RadioKind.BLE })
+        assertTrue(DeviceExplain.uuidGloss("FEEC")!!.contains("Tile"))
+        assertTrue(DeviceExplain.uuidGloss("FEEE")!!.contains("Polar"))
+
+        val renamed = ble(name = "Widget", serviceUuids = listOf("00003082-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:f1", mac = "AA:BB:CC:DD:EE:31")
+        val tileNew = ble(name = "", serviceUuids = listOf("0000FEEC-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:f2", mac = "AA:BB:CC:DD:EE:32")
+        val h10 = ble(
+            name = "Polar H10 E7BAC71A",
+            manufacturerId = 0x006B,
+            manufacturerDataHex = "37060000",
+            serviceUuids = listOf(
+                "0000180D-0000-1000-8000-00805F9B34FB",
+                "0000FEEE-0000-1000-8000-00805F9B34FB",
+                "0000FEA5-0000-1000-8000-00805F9B34FB",
+            ),
+        ).copy(key = "BLE:f3", mac = "AA:BB:CC:DD:EE:33")
+        val gopro = ble(name = "GoPro 1234", serviceUuids = listOf("0000FEA5-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:f4", mac = "AA:BB:CC:DD:EE:34")
+        val hrOnly = ble(name = "", serviceUuids = listOf("0000180D-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:f5", mac = "AA:BB:CC:DD:EE:35")
+        val hits = engine.match(listOf(renamed, tileNew, h10, gopro, hrOnly), stock)
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("renamed Flipper service", "fleet-flipper" in ids(renamed))
+        assertTrue("Tile FEEC", "fleet-tile" in ids(tileNew))
+        assertTrue("Polar H10", "fleet-polar" in ids(h10))
+        assertFalse("Polar strap is not a camera", "fleet-gopro" in ids(h10))
+        assertTrue("GoPro still matches", "fleet-gopro" in ids(gopro))
+        assertFalse("GoPro is not Polar", "fleet-polar" in ids(gopro))
+        assertFalse("heart rate alone", "fleet-polar" in ids(hrOnly))
+        assertEquals(
+            TrackerMatch.Kind.WEARABLE,
+            TrackerMatch.kind(h10.copy(fleetIds = setOf("fleet-polar")), mapOf("fleet-polar" to "Polar")),
+        )
     }
 
     private fun tagged(tail: String, name: String, manufacturerId: Int?) =

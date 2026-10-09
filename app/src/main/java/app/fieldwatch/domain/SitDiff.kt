@@ -39,6 +39,7 @@ object SitDiff {
         val radios: List<Radio>,
         val path: List<GpsSample> = emptyList(),
         val floods: List<FloodBurst> = emptyList(),
+        val gnss: List<GnssMark> = emptyList(),
     ) {
         val keys: Set<String> get() = radios.map { it.key }.toSet()
 
@@ -213,6 +214,9 @@ object SitDiff {
         floodSection(thisSit, second)?.let { body ->
             sections += DebriefSection(next(), "Flood", body)
         }
+        gnssSection(thisSit, second)?.let { body ->
+            sections += DebriefSection(next(), "GNSS", body, alert = true)
+        }
         sections += rosterSection(next(), "Only in this sit (${onlyThis.size})", onlyThis, byKey, showAllRadios)
         sections += rosterSection(next(), "Only in second sit (${onlySecond.size})", onlySecond, byKey, showAllRadios)
         sections += bothSection(next(), "In both (${both.size})", both, thisSit, second, byKey, showAllRadios)
@@ -262,7 +266,25 @@ object SitDiff {
             },
         )
         if (tracks.isEmpty()) return null
-        val pinNote = "A MAC alert or a signature alert is drawn once. A decoded latitude and longitude is the last advertised position. Anything else is the strongest hear. A number is that place (Path key)."
+        val thisTrack = tracks.firstOrNull { !it.secondary }
+        val secondTrack = tracks.firstOrNull { it.secondary }
+        val gnss = buildList {
+            if (thisTrack != null) addAll(SitPathPlot.gnssPins(thisSit.gnss, thisTrack.samples))
+            if (secondTrack != null) addAll(SitPathPlot.gnssPins(second.gnss, secondTrack.samples, secondary = true))
+        }
+        val pinNote = buildString {
+            append("A MAC alert or a signature alert is drawn once. ")
+            append("A decoded latitude and longitude is the last advertised position. ")
+            append("Anything else is the strongest hear. A number is that place (Path key).")
+            if (gnss.isNotEmpty()) {
+                append(" A red diamond is where this phone was during a GNSS detection. ")
+                if (gnss.any { it.secondary }) {
+                    append("A blue diamond is the second sit. ")
+                }
+                append("The Path key has the time and what changed. ")
+                append("It does not say where the interference came from.")
+            }
+        }
         val points = (thisSit.radios + second.radios)
             .filter { it.bookmarked || it.fleetIds.any { id -> id in watchedFleetIds } }
             .distinctBy { it.key }
@@ -319,6 +341,7 @@ object SitDiff {
             lengthM = Geo.pathLengthM(all),
             spanM = Geo.spanM(all),
             caption = cap,
+            gnss = gnss,
         )
     }
 
@@ -567,6 +590,29 @@ object SitDiff {
     private fun compareTakeaway(onlyThis: Int, onlySecond: Int, both: Int, mine: Int): String {
         val counts = "$onlyThis only in this sit · $onlySecond only in the second · $both in both."
         return if (mine > 0) "$counts · $mine marked mine." else counts
+    }
+
+    private fun gnssSection(thisSit: Side, second: Side): String? {
+        if (thisSit.gnss.isEmpty() && second.gnss.isEmpty()) return null
+        return buildString {
+            appendLine(GnssCopy.INTRO)
+            appendLine(GnssCopy.ROUTER)
+            appendLine()
+            fun side(name: String, marks: List<GnssMark>) {
+                if (marks.isEmpty()) return
+                appendLine(name)
+                marks.sortedBy { it.at }.forEach { appendLine("  ${it.reportLine()}") }
+            }
+            side(thisSit.name, thisSit.gnss)
+            if (thisSit.gnss.isNotEmpty() && second.gnss.isNotEmpty()) appendLine()
+            side(second.name, second.gnss)
+            val onPath = SitPathPlot.gnssPins(thisSit.gnss, thisSit.path).isNotEmpty() ||
+                SitPathPlot.gnssPins(second.gnss, second.path).isNotEmpty()
+            if (onPath) {
+                appendLine()
+                appendLine("The path map marks where this phone was. It does not say where the interference came from.")
+            }
+        }.trimEnd()
     }
 
     private fun floodSection(thisSit: Side, second: Side): String? {

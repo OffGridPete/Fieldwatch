@@ -1,5 +1,12 @@
 package app.fieldwatch.domain
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -43,7 +50,84 @@ data class TakSent(
     val lat: Double,
     val lon: Double,
     val rssi: Int = Int.MIN_VALUE,
+    /** Last GNSS line sent on the phone marker. Empty when that line is off. */
+    val note: String = "",
 )
+
+/** When a GNSS hit is written onto this phone's TAK marker. Not a separate pin. */
+@Serializable
+enum class TakGnssSend {
+    OFF,
+    ALERT,
+    RED_LINE,
+    ANY,
+    ;
+
+    fun label(): String = when (this) {
+        OFF -> "Off"
+        ALERT -> "While alerting"
+        RED_LINE -> "Red line"
+        ANY -> "Any hit"
+    }
+}
+
+/** When a flood line is written onto this phone's TAK marker. Not a separate pin. */
+@Serializable(with = TakFloodSendSerializer::class)
+enum class TakFloodSend {
+    OFF,
+    ON,
+    ;
+
+    fun label(): String = when (this) {
+        OFF -> "Off"
+        ON -> "On"
+    }
+}
+
+/** Reads the first field-test name (Red line) so an already-saved setup still loads. */
+object TakFloodSendSerializer : KSerializer<TakFloodSend> {
+    override val descriptor = PrimitiveSerialDescriptor("TakFloodSend", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: TakFloodSend) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): TakFloodSend = when (val raw = decoder.decodeString()) {
+        "OFF" -> TakFloodSend.OFF
+        "ON", "RED_LINE" -> TakFloodSend.ON
+        else -> throw SerializationException("Unknown TAK flood choice: $raw")
+    }
+}
+
+object TakFlood {
+    /** The Live flood line, from the moment the flood is detected until it ends. */
+    fun line(mode: TakFloodSend, notice: PairingFlood.Notice?): String? {
+        if (mode != TakFloodSend.ON) return null
+        return notice?.line()?.trim()?.ifBlank { null }
+    }
+}
+
+object TakGnss {
+    /**
+     * One line for the Fieldwatch heartbeat, or null when this mode sends nothing.
+     * The line is the same words as the Live banner. No coordinates.
+     */
+    fun line(mode: TakGnssSend, notice: GnssNotice?, lives: List<GnssLive>): String? {
+        val active = notice?.takeIf { !it.ended }?.line?.takeIf { it.isNotBlank() }
+        val ended = notice?.takeIf { it.ended }?.line?.takeIf { it.isNotBlank() }
+        val anyLive = if (lives.isEmpty()) {
+            null
+        } else {
+            GnssCopy.banner(lives.map { it.kind }.toSet(), lives.maxOf { it.confidence })
+        }
+        return when (mode) {
+            TakGnssSend.OFF -> null
+            TakGnssSend.ALERT -> active
+            TakGnssSend.RED_LINE -> active ?: ended
+            TakGnssSend.ANY -> active ?: anyLive
+        }
+    }
+}
 
 enum class TakHeardHere {
     SKIP,
@@ -420,22 +504,38 @@ object CotEvent {
         linkType = null,
     )
 
-    fun selfXml(lat: Double, lon: Double, now: Long, staleMs: Long = TakDefaults.STALE_MS): String = eventXml(
-        uid = SELF_UID,
-        cotType = "a-f-G-U-C",
-        lat = lat,
-        lon = lon,
-        hae = 9999999.0,
-        callsign = "Fieldwatch",
-        remarks = "Fieldwatch TAK heartbeat (this phone)",
-        group = "Cyan",
-        now = now,
-        staleMs = staleMs,
-        staleNow = false,
-        linkUid = null,
-        linkType = null,
-        role = "Team Member",
-    )
+    fun selfXml(
+        lat: Double,
+        lon: Double,
+        now: Long,
+        staleMs: Long = TakDefaults.STALE_MS,
+        remarksExtra: String? = null,
+    ): String {
+        val remarks = buildString {
+            append("Fieldwatch TAK heartbeat (this phone)")
+            val extra = remarksExtra?.trim().orEmpty()
+            if (extra.isNotEmpty()) {
+                append('\n')
+                append(extra)
+            }
+        }.take(TakDefaults.REMARKS_MAX)
+        return eventXml(
+            uid = SELF_UID,
+            cotType = "a-f-G-U-C",
+            lat = lat,
+            lon = lon,
+            hae = 9999999.0,
+            callsign = "Fieldwatch",
+            remarks = xmlEscape(remarks),
+            group = "Cyan",
+            now = now,
+            staleMs = staleMs,
+            staleNow = false,
+            linkUid = null,
+            linkType = null,
+            role = "Team Member",
+        )
+    }
 
     fun remarks(
         device: Sighting,

@@ -634,6 +634,10 @@ data class AppSettings(
     val takWatchlist: Boolean = false,
     /** Every labeled signature. Noisy. Off by default. */
     val takAllSignatures: Boolean = false,
+    /** GNSS line on this phone's TAK marker. Off until chosen. */
+    val takGnss: TakGnssSend = TakGnssSend.OFF,
+    /** Flood line on this phone's TAK marker while a flood is detected. */
+    val takFlood: TakFloodSend = TakFloodSend.OFF,
     /**
      * Red-on-black field display. Off by default. The rest of the UI is always dark.
      * Phone brightness is unchanged.
@@ -648,6 +652,25 @@ data class AppSettings(
     val signatureListSort: SignatureListSort = SignatureListSort.NAME,
     /** By class: hide class headers with 0 radios. Off = show all (zeros stay). */
     val outlineHideEmpty: Boolean = false,
+    /** Phone GNSS interference check. Off until this phone is calibrated and the user turns it on. */
+    val gnssMonitor: Boolean = false,
+    val gnssSensitivity: GnssSensitivity = GnssSensitivity.MEDIUM,
+    /** Popup, red line, beep, and voice start at this confidence. */
+    val gnssAlertFloor: GnssAlertFloor = GnssAlertFloor.MEDIUM,
+    /** Gain down while the signal holds, plus clock and position checks. */
+    val gnssSpoofChecks: Boolean = false,
+    /** Pip for a GNSS hit. Independent of the watchlist beep. */
+    val gnssBeep: Boolean = true,
+    /** Spoken GNSS hit. On by default. Independent of watchlist voice. */
+    val gnssVoice: Boolean = true,
+    /** Silent shade card for a GNSS hit. Off unless chosen. Independent of the watchlist shade. */
+    val gnssShade: Boolean = false,
+    /** Ask the GPS chip to stay on. Android 12 and newer. Costs battery. */
+    val gnssFullTracking: Boolean = false,
+    /** Satellites fading together. Pocket, hand, and a car door can do this. */
+    val gnssCorrelation: Boolean = false,
+    /** A few phones report gain backwards. Off unless a router test rises. */
+    val gnssInvertAgc: Boolean = false,
 )
 
 const val DISCLAIMER_REV = 3
@@ -659,6 +682,19 @@ data class DetectionPolicy(
     val knownOuis: Boolean = true,
     val vendorIes: Boolean = true,
     val bleRaven: Boolean = true,
+)
+
+fun AppSettings.gnssSettings(): List<Any> = listOf(
+    gnssMonitor,
+    gnssSensitivity,
+    gnssAlertFloor,
+    gnssSpoofChecks,
+    gnssBeep,
+    gnssVoice,
+    gnssShade,
+    gnssFullTracking,
+    gnssCorrelation,
+    gnssInvertAgc,
 )
 
 fun AppSettings.detectionPolicy() = DetectionPolicy(

@@ -105,6 +105,48 @@ class Alerter(private val context: Context) {
         else main.post { ensureTts() }
     }
 
+    /**
+     * GNSS interference or spoofing. Own notification channel so it can be muted
+     * without muting the watchlist. Phrase is null when voice is off.
+     * Text must not include coordinates.
+     */
+    fun gnssAlert(title: String, text: String, phrase: String?, beep: Boolean, shade: Boolean) {
+        if (shade) {
+            ensureGnssChannel()
+            val pending = PendingIntent.getActivity(
+                context,
+                GNSS_NOTE_ID,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val note = NotificationCompat.Builder(context, GNSS_CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .setContentIntent(pending)
+                .build()
+            manager.notify(GNSS_NOTE_ID, note)
+        } else {
+            manager.cancel(GNSS_NOTE_ID)
+        }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (!phrase.isNullOrBlank()) {
+            prepareVoice()
+            queueVoice(phrase, afterBeep = beep)
+        }
+    }
+
+    fun clearGnssNote() {
+        manager.cancel(GNSS_NOTE_ID)
+    }
+
     /** Short Hunt geiger tick. Not the watchlist double-pip. */
     fun huntTick(beepOn: Boolean, vibrateOn: Boolean) {
         if (vibrateOn) main.post { huntPulse() }
@@ -490,12 +532,24 @@ class Alerter(private val context: Context) {
     private fun ensureChannel() {
         if (Build.VERSION.SDK_INT < 26) return
         runCatching { manager.deleteNotificationChannel("fieldwatch_watch_v2") }
-        if (manager.getNotificationChannel(CHANNEL) != null) return
+        if (manager.getNotificationChannel(CHANNEL) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL, "Watchlist", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Appearing signatures and devices on your watchlist. Beep is played separately."
+                    enableVibration(true)
+                    enableLights(true)
+                    setSound(null, null)
+                },
+            )
+        }
+    }
+
+    private fun ensureGnssChannel() {
+        if (Build.VERSION.SDK_INT < 26) return
+        if (manager.getNotificationChannel(GNSS_CHANNEL) != null) return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Watchlist", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Appearing signatures and devices on your watchlist. Beep is played separately."
-                enableVibration(true)
-                enableLights(true)
+            NotificationChannel(GNSS_CHANNEL, "GNSS interference", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Possible GNSS interference or spoofing on this phone. Beep and voice are separate."
                 setSound(null, null)
             },
         )
@@ -503,6 +557,8 @@ class Alerter(private val context: Context) {
 
     companion object {
         const val CHANNEL = "fieldwatch_watch_v3"
+        const val GNSS_CHANNEL = "fieldwatch_gnss"
+        private const val GNSS_NOTE_ID = 71_001
         const val EXTRA_DEVICE_KEY = "device_key"
         private const val FREQ_HZ = 1050.0
         private const val PIP_MS = 85

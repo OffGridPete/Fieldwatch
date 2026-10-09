@@ -49,6 +49,8 @@ data class ScanPhoneFacts(
 data class ScanStatusReport(
     val rows: List<Pair<String, String>>,
     val verdict: String,
+    /** Plain steps for the person holding the phone. Empty never happens. */
+    val checks: List<String>,
     val text: String,
     val blocked: Boolean,
 )
@@ -59,6 +61,7 @@ object ScanStatus {
         phone: ScanPhoneFacts,
         now: Long,
         radiosOnAir: Int = 0,
+        gnssRows: List<Pair<String, String>> = emptyList(),
     ): ScanStatusReport {
         val rows = listOf(
             "App" to "${phone.versionName} (${phone.versionCode})",
@@ -78,14 +81,17 @@ object ScanStatus {
             "Location permission" to if (phone.locationPermission) "granted" else "missing",
             "GPS fix" to ageLabel(phone.gpsFixAgeMs),
             "Filters" to filtersLabel(phone),
-        )
+        ) + gnssRows
         val verdict = verdict(radio, phone, radiosOnAir)
+        val checks = checks(radio, phone, radiosOnAir)
         val blocked = isBlocked(radio, phone.locationOn, phone.locationPermission)
         val text = buildString {
             rows.forEach { (k, v) -> append(k).append(": ").append(v).append('\n') }
-            append("Verdict: ").append(verdict)
+            append("Verdict: ").append(verdict).append('\n')
+            append("Check:\n")
+            checks.forEach { append("- ").append(it).append('\n') }
         }
-        return ScanStatusReport(rows, verdict, text, blocked)
+        return ScanStatusReport(rows, verdict, checks, text, blocked)
     }
 
     fun isBlocked(radio: ScanRadioFacts, locationOn: Boolean, locationPermission: Boolean): Boolean {
@@ -114,12 +120,12 @@ object ScanStatus {
             !radio.wifiOn && !radio.bleOn -> "Wi-Fi and Bluetooth are off."
             radio.bleStarting && !radio.bleRunning && !radio.wifiWaitingOnOs -> "Scanning is starting."
             !wifiOk && !bleOk && radio.wifiWaitingOnOs && radio.bleParked ->
-                "Wi-Fi scan refused. BLE scan is parked. Check Location, then Location services, then Wi-Fi scanning and Bluetooth scanning."
+                "Wi-Fi scan refused. BLE scan is parked. Both radios are on."
             !wifiOk && !bleOk && radio.bleParked ->
-                "BLE scan is parked. Check Location, then Location services, then Bluetooth scanning."
+                "BLE scan is parked. Bluetooth is on."
             !wifiOk && !bleOk && radio.bleRetrying -> "BLE scan is retrying."
             !wifiOk && !bleOk && radio.wifiWaitingOnOs ->
-                "Wi-Fi scan refused. Check Location, then Location services, then Wi-Fi scanning."
+                "Wi-Fi scan refused. Wi-Fi is on."
             !wifiOk && !bleOk -> "Wi-Fi and Bluetooth scans are not running."
             radio.wifiWaitingOnOs && bleOk -> "Wi-Fi scan refused. BLE is running."
             radio.bleParked && wifiOk -> "BLE scan is parked. Wi-Fi is running."
@@ -129,6 +135,67 @@ object ScanStatus {
             radiosOnAir > 0 -> "Scans are running."
             else -> "Scans are running. Nothing is on the air."
         }
+    }
+
+    /**
+     * What to turn on, in the order a person can fix it.
+     * A radio that is off is named only when the other radio is still hearing.
+     * Background usage, unrestricted battery, and a GPS fix are not required
+     * while Fieldwatch is open, so they stay in the fact rows.
+     */
+    private fun checks(radio: ScanRadioFacts, phone: ScanPhoneFacts, radiosOnAir: Int): List<String> {
+        val lines = mutableListOf<String>()
+        if (!radio.scanning) {
+            lines += "Scanning is not running. Open Live. If Fieldwatch asks for permission, allow Location, Nearby devices, and Notifications."
+        }
+        if (!phone.locationOn) {
+            lines += "Turn Location on. Android will not return Wi-Fi or Bluetooth results while Location is off."
+        }
+        if (!phone.locationPermission) {
+            lines += "Allow location for Fieldwatch. Phone Settings, Apps, Fieldwatch, Permissions, Location."
+        }
+        val wifiOk = wifiUsable(radio)
+        val bleOk = bleUsable(radio)
+        val locationReady = phone.locationOn && phone.locationPermission
+        if (!radio.wifiOn && !radio.bleOn) {
+            lines += "Turn Wi-Fi or Bluetooth on. Fieldwatch hears access points and Bluetooth advertisements."
+        } else {
+            if (!radio.wifiOn && bleOk) {
+                lines += "Wi-Fi is off, so access points will not appear. Bluetooth is running."
+            }
+            if (!radio.bleOn && wifiOk) {
+                lines += "Bluetooth is off, so Bluetooth radios will not appear. Wi-Fi is running."
+            }
+            if (locationReady && radio.wifiOn && radio.wifiWaitingOnOs) {
+                lines += "Wi-Fi scans are being refused. The Wi-Fi radio is on. Toggle Wi-Fi off and on, then reopen Fieldwatch."
+            }
+            if (locationReady && radio.bleOn && radio.bleParked) {
+                lines += "Bluetooth scans are parked. The Bluetooth radio is on. Fieldwatch will try again."
+            }
+            if (radio.bleOn && radio.bleRetrying) {
+                lines += "Bluetooth scan is retrying. Toggle Bluetooth off and on, then reopen Fieldwatch."
+            }
+            if (radio.bleOn && radio.bleStarting && !radio.bleRunning) {
+                lines += "Bluetooth is still starting. Wait a few seconds."
+            }
+            if (radio.bleOn && !radio.bleRunning && !radio.bleParked && !radio.bleRetrying && !radio.bleStarting) {
+                lines += "Bluetooth is on, and the scan is not running. Toggle Bluetooth off and on, then reopen Fieldwatch."
+            }
+        }
+        if (filterHiding(phone)) {
+            lines += "A filter is hiding radios. Filters is ${filtersLabel(phone)}. Set Filters to All Traffic to see everything the phone hears."
+        }
+        if (phone.wifiFastScan && phone.wifiOsThrottled) {
+            lines += "Faster Wi-Fi AP scans is on, and Android is still throttling. Turn off Wi-Fi scan throttling in Developer options. Until then, Wi-Fi stays on the slower scan."
+        }
+        if (lines.isEmpty()) {
+            lines += if (radiosOnAir > 0) {
+                "Nothing that needs to be on is off. Scans are running."
+            } else {
+                "Nothing that needs to be on is off. Scans are running. Nothing is on the air right now."
+            }
+        }
+        return lines
     }
 
     private fun filterHiding(phone: ScanPhoneFacts): Boolean =

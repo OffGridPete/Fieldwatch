@@ -99,9 +99,11 @@ data class FloodBurst(
 /**
  * Counts brand-new Bluetooth addresses over about ten seconds.
  * Pairing popups share one counter: Apple proximity pairing (Continuity 0x07),
- * Nearby Action (0x0F), a 3-byte Fast Pair model, a Swift Pair beacon, a
- * Nearby Sharing scenario, Samsung Easy Setup buds or watch, and a LoveSpouse
- * advertisement (company 0x00FF plus its fixed prefix).
+ * Nearby Action (0x0F), a 3-byte Fast Pair model, a Swift Pair beacon,
+ * Samsung Easy Setup buds or watch, and a LoveSpouse advertisement
+ * (company 0x00FF plus its fixed prefix).
+ * The Windows background beacon (company 0x0006 starting with 0x01) stays out.
+ * Find My (0x12) stays out, including a later 0x07 in that same payload.
  * A separate counter is a new randomized address that only advertises a name.
  * A factory address with a stable name stays out of that count.
  * Pairing popups still count every address.
@@ -215,6 +217,8 @@ class PairingFlood {
     /** Clock time when a no-sit hold ends. A sit hold uses [Long.MAX_VALUE]. */
     private var holdUntil = 0L
     private var lastNow = 0L
+    /** Latest GPS speed from the scan loop. Null when the fix has no speed. */
+    private var speedMps: Double? = null
     private val _notice = MutableStateFlow<Notice?>(null)
     val notice: StateFlow<Notice?> = _notice.asStateFlow()
     private val _hide = MutableStateFlow(FloodHide())
@@ -222,11 +226,16 @@ class PairingFlood {
 
     fun bursts(): List<FloodBurst> = synchronized(lock) { bursts.toList() }
 
-    /** First sighting of an address. Repeat advertisements are not passed in. */
-    fun consider(obs: Observation, now: Long) {
+    /**
+     * First sighting of an address. Repeat advertisements are not passed in.
+     * [speedMps] is this phone's GPS speed, or null when it is unknown.
+     * A weak burst while driving does not warn. Null does not hide one.
+     */
+    fun consider(obs: Observation, now: Long, speedMps: Double? = null) {
         if (obs.kind != RadioKind.BLE) return
         val kind = classify(obs) ?: return
         synchronized(lock) {
+            this.speedMps = speedMps
             lastNow = now
             expireHold(now)
             val dropped = evict(now)
@@ -242,15 +251,18 @@ class PairingFlood {
     }
 
     /** Drops addresses that have left the window. Cheap when the window is empty. */
-    fun tick(now: Long) {
+    fun tick(now: Long, speedMps: Double? = null) {
         synchronized(lock) {
+            val wasDriving = driving(this.speedMps)
+            this.speedMps = speedMps
             lastNow = now
             expireHold(now)
             if (window.isEmpty()) {
                 finishEpisode()
                 return
             }
-            if (!evict(now)) return
+            val dropped = evict(now)
+            if (!dropped && wasDriving == driving(this.speedMps)) return
             publish(now)
         }
     }
@@ -340,6 +352,13 @@ class PairingFlood {
         }
     }
 
+    /** A weak cluster while this phone is driving is a pass-by, not a warning. */
+    private fun warnsAtThisSpeed(median: Int?): Boolean {
+        if (!driving(speedMps)) return true
+        val rssi = median ?: return true
+        return rssi > DRIVE_WEAK_DBM
+    }
+
     private fun evict(now: Long): Boolean {
         var dropped = false
         while (window.isNotEmpty() && now - window.first().at > WINDOW_MS) {
@@ -357,8 +376,8 @@ class PairingFlood {
         }
         val pop = band(popups)
         val nam = band(names)
-        val popupHot = pop.count >= POPUP_MIN
-        val nameHot = nam.count >= NAME_MIN
+        val popupHot = pop.count >= POPUP_MIN && warnsAtThisSpeed(pop.median)
+        val nameHot = nam.count >= NAME_MIN && warnsAtThisSpeed(nam.median)
         if (!popupHot && !nameHot) {
             finishEpisode()
             return
@@ -506,18 +525,24 @@ class PairingFlood {
         return listOf(MfgRecord(id, obs.manufacturerDataHex))
     }
 
-    /** Apple Continuity TLVs. 0x10 Nearby Info and 0x12 Find My are not popups. */
+    /**
+     * Apple Continuity TLVs. Nearby Info (0x10) and Find My (0x12) are not popups.
+     * A 0x07 after a Find My TLV is part of that advertisement. A 0x07 that comes
+     * first is still proximity pairing. Nearby Action (0x0F) still counts.
+     */
     private fun appleBits(hex: String): Int {
         val bytes = hexBytes(hex) ?: return 0
         var i = 0
         var bits = 0
+        var sawFindMy = false
         while (i + 2 <= bytes.size) {
             val type = bytes[i].toInt() and 0xFF
             val len = bytes[i + 1].toInt() and 0xFF
             if (len <= 0 || i + 2 + len > bytes.size) break
             when (type) {
-                0x07 -> bits = bits or BIT_PROX
+                0x07 -> if (!sawFindMy) bits = bits or BIT_PROX
                 0x0F -> bits = bits or BIT_ACTION
+                0x12 -> sawFindMy = true
             }
             i += 2 + len
         }
@@ -525,12 +550,11 @@ class PairingFlood {
     }
 
     /**
-     * Nearby Sharing scenario 0x01, or a Swift Pair beacon: id 0x03,
-     * sub-scenario 0x00–0x02, reserved byte 0x80. Other 0x0006 payloads stay out.
+     * Swift Pair beacon: id 0x03, sub-scenario 0x00–0x02, reserved byte 0x80.
+     * The Windows background beacon starts with 0x01 and stays out.
      */
     private fun swiftPair(hex: String): Boolean {
         val bytes = hexBytes(hex) ?: return false
-        if (bytes.size >= 2 && (bytes[0].toInt() and 0xFF) == 0x01) return true
         if (bytes.size < 3 || (bytes[0].toInt() and 0xFF) != 0x03) return false
         val sub = bytes[1].toInt() and 0xFF
         val reserved = bytes[2].toInt() and 0xFF
@@ -604,6 +628,12 @@ class PairingFlood {
         const val POPUP_MIN = 10
         const val NAME_MIN = 15
         const val RSSI_BAND_DB = 12
+        /** Above a walk. About 11 mph. A store aisle stays under this. */
+        const val DRIVE_MPS = 5.0
+        /** At or below this, a burst while driving stays quiet. Louder still warns. */
+        const val DRIVE_WEAK_DBM = -80
+
+        private fun driving(speed: Double?): Boolean = speed != null && speed >= DRIVE_MPS
         private const val CAP = 96
         private const val BURST_CAP = 40
         private const val EPISODE_CAP = 900

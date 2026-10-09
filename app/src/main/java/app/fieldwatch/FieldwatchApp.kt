@@ -8,8 +8,10 @@ import android.location.LocationManager
 import android.os.Looper
 import androidx.core.content.ContextCompat
 import app.fieldwatch.alert.Alerter
+import app.fieldwatch.radio.GnssMonitor
 import app.fieldwatch.data.ConfigStore
 import app.fieldwatch.data.DeviceStore
+import app.fieldwatch.data.GnssProfileStore
 import app.fieldwatch.data.LogStore
 import app.fieldwatch.data.SitStore
 import app.fieldwatch.domain.CoTravel
@@ -50,6 +52,10 @@ class FieldwatchApp : Application() {
         private set
     val pairingFlood = PairingFlood()
     val wifiFlood = WifiBeaconFlood()
+    lateinit var gnss: GnssMonitor
+        private set
+    lateinit var gnssProfile: GnssProfileStore
+        private set
 
     /** Bluetooth bursts, Wi-Fi bursts, or both in time order. */
     fun floodBursts(): List<FloodBurst> {
@@ -72,11 +78,16 @@ class FieldwatchApp : Application() {
     var lastFix: Pair<Double, Double>? = null
     @Volatile
     var lastFixAt: Long = 0L
+    @Volatile
+    private var speedMps: Double? = null
+    @Volatile
+    private var speedAt: Long = 0L
     private val pathLock = Any()
     private val operatorPath = ArrayList<GpsSample>(64)
     private var pathLengthM = 0.0
     private var locating = false
-    private val gpsListener = LocationListener { loc -> acceptFix(loc) }
+    private val gpsListener = LocationListener { loc -> onProviderFix(loc, gps = true) }
+    private val netListener = LocationListener { loc -> onProviderFix(loc, gps = false) }
 
     override fun onCreate() {
         super.onCreate()
@@ -87,8 +98,13 @@ class FieldwatchApp : Application() {
         sits = SitStore(this, scope)
         alerter = Alerter(this)
         tak = TakPublisher()
+        gnssProfile = GnssProfileStore(this)
+        gnss = GnssMonitor(this)
         runBlocking {
             config.load()
+            if (gnssProfile.profile.value == null && config.settings.gnssMonitor) {
+                config.update { it.copy(settings = it.settings.copy(gnssMonitor = false)) }
+            }
             logs.configure(
                 config.settings.logFormat,
                 config.settings.logRotateKb,
@@ -101,7 +117,7 @@ class FieldwatchApp : Application() {
         }
         sits.startFlusher()
         syncLocationUpdates()
-        if (config.settings.alertVoice) alerter.prepareVoice()
+        if (config.settings.alertVoice || config.settings.gnssVoice) alerter.prepareVoice()
         if (config.filter.arrivalsOnly) {
             beginArrivals(keepRemembered = true)
         }
@@ -265,7 +281,7 @@ class FieldwatchApp : Application() {
         }
         runCatching {
             if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4_000L, 15f, gpsListener, looper)
+                lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 4_000L, 15f, netListener, looper)
             }
         }
         locating = true
@@ -276,8 +292,26 @@ class FieldwatchApp : Application() {
         runCatching {
             val lm = getSystemService(LOCATION_SERVICE) as LocationManager
             lm.removeUpdates(gpsListener)
+            lm.removeUpdates(netListener)
         }
         locating = false
+    }
+
+    /** Start or stop the GNSS check. Safe to call often. The scan service waits past radio start. */
+    fun syncGnss() {
+        if (!::gnss.isInitialized || !::gnssProfile.isInitialized) return
+        if (gnss.isCalibrating) return
+        val ready = config.settings.gnssMonitor && gnssProfile.profile.value != null
+        if (!ready || !devices.stats.value.scanning) {
+            gnss.stop()
+            return
+        }
+        gnss.sync(config.settings, gnssProfile.profile.value)
+    }
+
+    private fun onProviderFix(loc: android.location.Location, gps: Boolean) {
+        acceptFix(loc)
+        if (::gnss.isInitialized) gnss.onTaggedFix(loc, gps)
     }
 
     fun refreshFix() {
@@ -302,7 +336,21 @@ class FieldwatchApp : Application() {
         if (age > 30_000L) return
         lastFix = loc.latitude to loc.longitude
         lastFixAt = loc.time
+        if (loc.hasSpeed() && loc.speed >= 0f && loc.speed.isFinite()) {
+            val loose = loc.hasSpeedAccuracy() && loc.speedAccuracyMetersPerSecond > 4f
+            if (!loose) {
+                speedMps = loc.speed.toDouble()
+                speedAt = System.currentTimeMillis()
+            }
+        }
         recordOperatorFix(loc.latitude, loc.longitude, loc.time)
+    }
+
+    /** GPS speed in m/s, or null when the latest fix has no usable speed. */
+    fun floodSpeed(now: Long = System.currentTimeMillis()): Double? {
+        val speed = speedMps ?: return null
+        if (now - speedAt > 12_000L) return null
+        return speed
     }
 
     fun recordOperatorFix(lat: Double, lon: Double, at: Long = System.currentTimeMillis()) {

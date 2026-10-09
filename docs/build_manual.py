@@ -462,7 +462,7 @@ def draw_cover(c, doc):
     c.drawString(48, PAGE_H - 118, "FIELDWATCH")
     c.setFillColor(PHOS)
     c.setFont("Helvetica", 13)
-    c.drawString(48, PAGE_H - 142, "Passive Signal Intelligence for Android")
+    c.drawString(48, PAGE_H - 142, "Wi-Fi and Bluetooth LE for Android")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.8)
     c.line(48, PAGE_H - 160, PAGE_W - 48, PAGE_H - 160)
@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.21")
-    c.drawString(48, 94, "3 October 2026")
+    c.drawString(48, 108, "Version 1.1.22")
+    c.drawString(48, 94, "8 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -501,7 +501,7 @@ def draw_cover(c, doc):
     c.drawString(162, 18, "@OGridPete")
     c.setFillColor(PHOS)
     c.setFont("Helvetica", 8)
-    c.drawRightString(PAGE_W - 48, 50, "CONTROLLED FIELD DOCUMENT")
+    c.drawRightString(PAGE_W - 48, 50, "Field manual")
     c.restoreState()
 
 
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.21  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.22  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -582,7 +582,7 @@ def story():
         P(
             "There is no guarantee that trackers, cameras, tags, access points, or any other "
             "device will be found, named, or reported. Radios that are off, cellular-only, "
-            "asleep, randomized, quiet, or outside what this handset’s OS exposes will not "
+            "asleep, randomized, quiet, or outside what this phone’s OS exposes will not "
             "appear. Each phone has its own radios, firmware, scan quotas, and OEM battery "
             "policies, and software cannot address those limits."
         ),
@@ -596,7 +596,7 @@ def story():
         P(
             "Location data, if tagging is on, is this phone at the moment the packet was heard "
             "(hear-time) — not the other radio. "
-            "There is no Fieldwatch server; stamps stay on the handset until you share them. Logs "
+            "There is no Fieldwatch server; stamps stay on the phone until you share them. Logs "
             "keep full coordinates even when Privacy mode masks the screen and sit reports. "
             "Debrief, Log export, AI Export (sit or one radio), and radio-detail Share as text "
             "can take that path off the phone. A TAK / CoT feed, if you turn it on, sends "
@@ -636,15 +636,14 @@ def story():
         PageBreak(),
         P("Contents", "h1"),
         toc(),
-        P("How this book is organized", "h3"),
+        P("How this manual is organized", "h3"),
         P(
-            "Read chapters 4 and 5 first. Chapter 4 covers install, permissions, Quick start "
-            "(the five tabs and Tune), and the max-collection checklist (§4.5); chapter 5 maps "
-            "the screens. Chapter 8 is Filters — which radios the Live display shows, including "
-            "Moving with you (§8.5). Chapter 9 is Signatures — which patterns are labeled. "
-            "Chapter 12 is playbooks for a question you can actually ask. Chapter 14 is the "
-            "pipeline on one page (how a hear becomes a row). The rest is reference: how the "
-            "radios work, logging, field hygiene, and the stock catalog."
+            "Start with chapters 4 and 5. Chapter 4 is install, permissions, a short tour of the "
+            "five tabs, and the checklist for scanning as often as the phone allows (§4.5). "
+            "Chapter 5 is the screens. Chapter 8 is Filters: which radios show on Live, including "
+            "Moving with you (§8.5). Chapter 9 is Signatures: which patterns get a name. "
+            "Chapter 12 is one question at a time. Chapter 14 is how a hear becomes a row, on one page. "
+            "The other chapters are reference. They cover the radios, the log, a long sit, and the stock catalog."
         ),
         table(
             ["If you want…", "Go to"],
@@ -661,6 +660,7 @@ def story():
                 ["Hear Remote ID on BLE and Wi-Fi", "§5.8.3, §9.6.6, §12.16"],
                 ["Build my own decode map from a payload spec", "§9.6.1–§9.6.5"],
                 ["Overlay radios on ATAK / TAK (CoT feed)", "§5.8 (configure), §12.15 (sit), §12.16 (Remote ID)"],
+                ["Calibrate GNSS interference on this phone", "§5.9"],
                 ["Path / sit compare / log export", "§5.6, then §11"],
                 ["Custom name / Observer notes", "§5.5, Settings → Named radios"],
                 ["Followed / new arrival / hunt / cameras", "Chapter 12"],
@@ -683,7 +683,7 @@ def story():
 
     # 1 Introduction
     flow += [
-        P("1. Introduction &amp; Background", "h1"),
+        P("1. Introduction", "h1"),
         P("1.1 Purpose of Fieldwatch", "h2"),
         P(
             "I built Fieldwatch as a personal tool to look at what Wi-Fi access points and "
@@ -760,7 +760,7 @@ def story():
             "<b>Chip.</b> The colored signature name on a Live display row. A pattern hit, not identity. A second chip in that color can be one decoded word (Separated, Airborne, …). §5.4.1.",
             "<b>OUI.</b> The first three bytes of a MAC, assigned to a vendor. The same module vendor shows up in many products, so an OUI-only match is a weak guess.",
         ]),
-        P("1.2 Design philosophy", "h2"),
+        P("1.2 Principles", "h2"),
         bullets([
             "<b>Passive only.</b> Fieldwatch listens. It does not deauthenticate, probe inject, "
             "pair, connect, or join a network as part of detection.",
@@ -782,7 +782,7 @@ def story():
             ["Use case", "What Fieldwatch is for"],
             [
                 ["Privacy awareness", "See which advertised Wi-Fi and BLE sources are around you and whether any match known tracker or camera patterns."],
-                ["Counter-surveillance hygiene", "Notice when a named signature appears, stays, or comes back after you move. Confirm with RSSI trend and presence over time, not a single packet. After a walk with GPS tagging, Debrief’s tracking section still covers the last 15 minutes, even if you change Live display view or Filters."],
+                ["A radio that stays with you", "Notice when a named signature appears, stays, or comes back after you move. Confirm with loudness over time, not one packet. After a walk with GPS tagging, Debrief’s tracking section still covers the last 15 minutes, even if you change the Live view or the filters."],
                 ["Field observation", "Walk or sit a location, watch live strength, and export a timestamped log for later review."],
                 ["Signature pattern recognition", "Define a signature from an observed radio and reuse it: OUI family, SSID glob, BLE UUID, or manufacturer payload."],
                 ["After-action review", "Use timeline, device history, and Reports → Log (CSV / JSON lines / GPX / KML / WiGLE) to reconstruct when an emitter appeared and faded."],
@@ -809,8 +809,8 @@ def story():
     # 2 Research
     flow += [
         PageBreak(),
-        P("2. Research &amp; Design Decisions", "h1"),
-        P("2.1 Research inputs", "h2"),
+        P("2. Design", "h1"),
+        P("2.1 Sources", "h2"),
         P(
             "The default signature catalog and matching rules are compiled from public sources, "
             "not from proprietary vendor documentation. Treat every component-vendor OUI as a "
@@ -820,10 +820,11 @@ def story():
             ["Source class", "What it contributed"],
             [
                 ["IEEE MA-L registry", "B4:1E:52 is registered to Flock Safety (9 May 2024). This is the only high-confidence Flock-assigned OUI in the default set."],
-                ["Independent ALPR / DeFlock research", "Field OUI lists for LiteOn camera radios and Silicon Labs battery packs commonly seen on Flock hardware; SSID patterns Flock-XXXXXX, FS Ext Battery, Penguin, Pigvision."],
+                ["Independent ALPR / DeFlock research", "LiteOn camera-radio prefixes commonly seen on camera boards; names that start with Flock- or Penguin-; FS Ext Battery; Pigvision. Silicon Labs prefixes are not a battery rule."],
                 ["GainSec / firmware write-ups", "Raven BLE service UUID range 0x3100–0x3500. XUNTONG manufacturer ID 0x09C8 is the Penguin / Flock external battery, not the Raven acoustic radio."],
-                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag FD5A / 0x0075; Tile 0x00C7 and FEED/FEDD. Chipolo and Pebblebee/moto tag are name-only Find Hub locators (stock rows, on). IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit)."],
+                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag FD5A / 0x0075; Tile 0x00C7 and FEED/FEEC/FEDD. Chipolo and Pebblebee/moto tag are name-only Find Hub locators (stock rows, on). IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit)."],
                 ["Android platform docs", "WifiManager scan throttling, BLE ScanSettings, permission model (location, NEARBY_WIFI_DEVICES, BLUETOOTH_SCAN), foreground-service types."],
+                ["Android GNSS interference note", "Google’s public guide “Detect GNSS jamming and spoofing.” A drop in receiver gain together with a drop in signal strength can mean interference. The guide’s figure is from Spens, Lee, Nedelkov, and Akos, NAVIGATION, 2022. The full credit is in §5.9. Fieldwatch uses that idea on this phone. It does not name a jammer or a spoofer."],
             ],
             [1.9 * inch, 4.6 * inch],
         ),
@@ -867,7 +868,7 @@ def story():
         ]),
         P("2.4 Trade-offs: Android phone vs dedicated sniffer hardware", "h2"),
         table(
-            ["Dimension", "Android handset (Fieldwatch)", "Typical ESP32 sniffer"],
+            ["Dimension", "Android phone (Fieldwatch)", "Typical ESP32 sniffer"],
             [
                 ["Radios", "Independent Wi-Fi (2.4/5/6 GHz) and BLE 5.x; both can run at once.", "Usually one 2.4 GHz radio; Wi-Fi and BLE must time-slice."],
                 ["Wi-Fi visibility", "Access points only. No promiscuous STA / probe capture on stock Android.", "Promiscuous mode can see stations, probes, and hidden-SSID clients."],
@@ -962,8 +963,8 @@ def story():
         ]),
         callout(
             "Confidence discipline",
-            "Treat B4:1E:52 plus a Flock-* SSID or Raven UUID 0x3100–0x3500 as high confidence. "
-            "Treat LiteOn / Silicon Labs / Raspberry Pi OUIs as low confidence unless a name, "
+            "Treat B4:1E:52 or a name that starts with Flock-, or Raven UUID 0x3100–0x3500, as high confidence. "
+            "Treat a LiteOn or other module OUI as low confidence unless a name, "
             "UUID, or manufacturer ID corroborates. Component OUIs ship in millions of unrelated devices.",
             "warn",
         ),
@@ -1028,7 +1029,7 @@ def story():
             "Grant the permission screen. Fieldwatch will not start radios until the required set is complete.",
             "A foreground notification <b>Fieldwatch scanning</b> appears. Leave it; dismissing via Stop ends collection.",
             "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock catalog, presets, bookmarks, and Settings. Later launches reload that file. Settings → Export signatures / Export settings share the catalog and switches. Neither pack includes logs or GPS (§5.7, §9.3).",
-            "The Live display opens on the last view mode (default: By class). Display ships with RSSI bars, Signature names, Frequency, and First / last seen on. The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
+            "The Live display opens on the last view mode (default: By class). Display starts with RSSI bars, Signature names, Frequency, and First / last seen on. The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
             "Turn on system Location and Bluetooth if either is off. The Live display header and Settings show radio hints (Wi-Fi next Ns, waiting on OS, BLE cycling). Keep screen on is enabled by default. If you will leave the app: Settings → Allow background usage, then Unrestricted battery. Some phones (Samsung among them) do not open onto Unrestricted — tap Allow background usage to click through and select it.",
             ]),
             privacy=False,
@@ -1043,7 +1044,7 @@ def story():
         ),
         P(
             "<b>Out of the box.</b> First launch and Restore load the stock catalog. Every row "
-            "labels when its rules hit. These Settings ship on: Keep screen on, Tag detections with GPS, "
+            "labels when its rules hit. These start on: Keep screen on, Tag detections with GPS, "
             "Online place names, Watchlist alerts, Beep, Voice on watched signature (What to say: Class + signature), and Jump to new watched detection. Stock bookmarks (alert on a new match) "
             "are Extra attention rows: Axon, WatchGuard Video, Ray-Ban / Meta glasses, "
             "Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, "
@@ -1087,7 +1088,7 @@ def story():
         ),
         numbered([
             "Confirm the header is counting (Wi-Fi, Bluetooth, and signatures icons with numbers). If both radio counts stay at 0, Location / Wi-Fi / Bluetooth are probably off at the system level — turn them on, wait ~30 s for the first Wi-Fi batch.",
-            "You should be on the Live display, By class. Tap a class, then a signature, then a radio. Each radio row is one radio. The circle is a class glyph (unmatched = ?) — that is the glanceable mark. AP = Wi-Fi access point and LE = BLE advertiser; they still mean those two radio kinds (§1.1). On the Live display they are a small Wi-Fi or Bluetooth icon at the start of the subtitle, not two-letter tags and not the title. Default first line is the MAC (SemiBold). Default second line is that icon, then Name + type (SSID / advertised BLE name / a type guess such as Apple · AirTag), then rand/gone. RSSI bars, signature names, Frequency, and first/last seen ship on. Vendor is not on the list — open detail. The number on the right is RSSI in dBm (loudness here, not meters; −50 is louder than −90).",
+            "You should be on Live, in By class. Tap a class, then a signature, then a radio. Each row is one radio. The circle is the class. A question mark means Fieldwatch has no name for it yet. That circle is what you scan for. Wi-Fi access points and Bluetooth LE advertisers are still two kinds of radio (§1.1). On the list they are a small Wi-Fi or Bluetooth icon at the start of the second line, not letters in the title. The first line is the address. The second line is the icon, then the name and type, then rand or gone. Bars, signature names, frequency, and first and last seen start on. The vendor is on the detail page, not on the list. The number on the right is loudness at this phone, in dBm. −50 is louder than −90. It is not a distance.",
             "Tap the tune icon (top right). That is <b>Display</b>: how the list looks for this job. Pick a View first (By class, Strength list, Hybrid, Timeline, or Classic radar). Then Sort, Brief hold, Title line, Subtitle line, and the extra-fact switches. Close it when the list looks the way you want — tap Tune again or tap the dimmed radios behind the panel. In a crowded plaza, set Subtitle to None and turn the extras off — you still have every radio; you just see less of each. §5.3.",
             "Tap a row. That is device detail: a saved custom name is the large title; advertised name smaller; Observer notes (cyan) under the name; “What this looks like,” Extra attention if any, Signature family, signal, decode, optional Decoded fields on BLE when that signature has a map (§9.6), bookmark (watch this MAC), Hunt on BLE, Create signature from device. Custom name / notes edit is hidden on a random / privacy BLE MAC. Back returns to the Live display.",
             "Work the other four tabs once: Filters (try BLE only, then All traffic), Signatures (Class A–Z, tap a class), Reports (Sits, Path, Debrief, Compare, Log), Settings (Appearance — Night mode, Privacy mode, Keep screen on — and Show Live tour if you want the overlay again).",
@@ -1102,7 +1103,7 @@ def story():
             "this for hours."
         ),
         P(
-            "High performance already ships on, as do Keep screen on, GPS tagging, and logging. "
+            "High performance already starts on, as do Keep screen on, GPS tagging, and logging. "
             "What this checklist adds is grant every permission, stop the OEM from parking the "
             "scan, leave the screen on while you watch, and (optional) Faster Wi-Fi AP scans for "
             "signed access points at speed. It does not lift stock Android limits — no monitor mode, "
@@ -1160,7 +1161,7 @@ def story():
         ]),
         callout(
             "Keep screen on while you watch",
-            "Fieldwatch Settings → Keep screen on ships on. Leave it on while the Live display or Hunt is in "
+            "Fieldwatch Settings → Keep screen on starts on. Leave it on while the Live display or Hunt is in "
             "front so Samsung does not park BLE when the display blanks. Turn it off when you "
             "pocket the phone if you still want the notification scanning and you do not need "
             "low-latency BLE. Unrestricted background is not the same switch — it does not hold "
@@ -1169,7 +1170,7 @@ def story():
         ),
         P("4.5.4 Fieldwatch Settings for this sit", "h3"),
         numbered([
-            "<b>Scan intensity: High performance</b> (ships on). BLE low-latency, recycled about every 70 s. Wi-Fi about every 30 s until you add Faster Wi-Fi. Balanced and Battery saver are the compromise; not this page. §10.3.",
+            "<b>Scan intensity: High performance</b> (starts on). BLE low-latency, recycled about every 70 s. Wi-Fi about every 30 s until you add Faster Wi-Fi. Balanced and Battery saver are the compromise; not this page. §10.3.",
             "<b>Faster Wi-Fi AP scans</b> (optional, off until you do this). For signed APs on a drive. (1) Settings → About phone → tap Build number until Developer options exist. (2) Settings → Developer options → <b>Wi-Fi scan throttling → Off</b>. (3) Fieldwatch → Settings → Faster Wi-Fi AP scans → On. About every 8 s AP batches instead of ~30 s. More battery and heat than High performance alone. Fieldwatch will not flip the switch while the OS is still throttling. Turn the Fieldwatch switch off when the drive is over. §7.1.1, §10.3.1.",
             "<b>Keep screen on</b> — on while you are looking at the Live display / Hunt.",
             "<b>Tag detections with GPS</b> — leave on if you want Moving with you, Debrief distance, or log lat/lon. High-accuracy Location. Path stays 0 until a live fix.",
@@ -1197,10 +1198,10 @@ def story():
     # 5 Navigation
     flow += [
         PageBreak(),
-        P("5. App Navigation &amp; Interface Overview", "h1"),
+        P("5. Screens", "h1"),
         P(
             "This chapter maps the screens. If you have not launched the app yet, start with §4.4. "
-            "The first bottom tab is labeled <b>Live</b> on the phone. This book calls that screen the "
+            "The first bottom tab is labeled <b>Live</b> on the phone. This manual calls that screen the "
             "<b>Live display</b> so it is not confused with live GPS or a recording. "
             "The circle on each row is a class glyph. The two radio kinds are Wi-Fi access points and BLE advertisers "
             "(§1.1); they show as a small Wi-Fi or Bluetooth icon on the subtitle. "
@@ -1276,11 +1277,11 @@ def story():
         table(
             ["Tab", "Function"],
             [
-                ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports. A pairing flood, a name flood, or a Wi-Fi beacon flood shows one dialog, then a red line with Hide this burst."],
+                ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports. A pairing flood, a name flood, or a Wi-Fi beacon flood shows one dialog, then a red line with Hide this burst. A GNSS hit is a separate dialog, then its own red line, with no Hide button. §5.9."],
                 ["Filters", "Which radios appear. Order: presets, radios, Moving with you, New detections only, Signatures only, Watched only, Named radios only, Hide my radios, Hide Fast Pair account-key, class Show only / Hide these, Show only selected signatures, Hide selected signatures, RSSI / name / OUI. Signatures still label and can beep. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). Each row shows the class glyph, and a hexagon when that row has a Decode fields map (§9.6). Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). Bookmark = watch (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Sits (optional named window), Path, Debrief (text / PDF), Sit export, Compare sits, AI Export, Signature candidates, Log export (Format + radios), Reset / clear log. The selected sit drives Path, Debrief, Sit export, and Compare’s this-sit side. Signature candidates mines the rotating log. GPS / place names / logging on-off stay on Settings."],
-                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Update stock catalog from GitHub, Settings backup, restore defaults, Show Live tour, Diagnostics. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
+                ["Settings", "Appearance (Night mode, Keep screen on, Privacy mode), scan intensity, GPS tagging, GNSS interference (calibrate before the check will turn on, §5.9), TAK / CoT feed (off), place names, logging, beep and/or voice / optional shade card, Test alert, Named radios, battery exemption, export / import signatures, Update stock catalog from GitHub, Settings backup, restore defaults, Show Live tour, Diagnostics. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
             ],
             [1.2 * inch, 5.3 * inch],
         ),
@@ -1293,13 +1294,13 @@ def story():
                 ["Less text on each row", "Live display → Tune → Display (§5.3)"],
                 ["Stop seeing a family on the Live display", "Filters → Hide these (class) or Hide selected (one family)"],
                 ["Hide MAC tails on the screen", "Settings → Privacy mode"],
-                ["See why the Live list is empty, or paste phone facts into an issue", "Settings → Diagnostics"],
+                ["See why the Live list is empty, or paste phone facts into an issue", "Settings → Diagnostics. What to check names a switch that is off. Copy sends the paste. When Location is off, Live shows a banner with Turn on."],
                 ["Put radios on an ATAK map", "Settings → TAK / CoT feed (§5.8, §12.15)"],
             ],
             [2.4 * inch, 4.1 * inch],
         ),
         Spacer(1, 6),
-        P("5.3 Display inspector (Live display)", "h2"),
+        P("5.3 Display", "h2"),
         P(
             "The Live display is not a fixed dump of every field. You can fit it to the job — a "
             "crowded plaza, a sit, a hunt, or copying a MAC. View (Radar, Strength list, Timeline, "
@@ -1761,7 +1762,7 @@ def story():
             "<b>While it runs.</b> Live title FIELDWATCH · SIT and a status banner. Path, Debrief, Sit export, Compare’s this-sit side, and AI Export use this window, not 15 minutes. Filters, Hunt, TAK, and the 400-radio Live list stay as they are. Start and End sit stay on Reports.",
             "<b>After End sit.</b> The sit appears in the list on Reports. Pick it for Path / Debrief / Sit export / Compare this-sit, or leave Last 15 minutes selected. Rename / Delete sit under the list.",
             "<b>Path</b> — North-up plot of the selected sit (open, saved, or last 15 minutes). Leave Reports in front to watch an open sit grow, or the last-15-minute snake move. An open or saved sit draws an advertised aircraft track as a white dotted line on this card. Full write-up: §5.6.1.",
-            "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit (up to 6000 unique radios), or last 15 minutes in RAM (~400, hard ceiling 900). Unmatched rotating BLE omitted from lists by default; counts still include them. Show unmatched rotating BLE is on the Sit report card. Show all radios is off by default: counts, and a radio that is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. Turn Show all radios on for the full rosters. The PDF draws those counts as bars. The text report has the same counts and the same lines. Sit export has every radio. Full cap / drop / list rules just above. Hobby / as-is disclaimer at the top. Custom names. Observer notes after Where you were. An Aircraft section follows when a radio advertised a position (§5.4.1). Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk. A nearby advertised track is a black dotted line on that figure. The last position is a class icon. The pilot is a person icon. A pairing flood, a name flood, or a Wi-Fi beacon flood heard during the sit is a quiet Flood section: the time, the kind, how many new addresses or new names, and how many of those addresses are left out of the radio counts and lists. The sit file and Sit export still have every radio. A sit saved before those addresses were stored still counts them with the other radios.",
+            "<b>Debrief (text) / Debrief (PDF)</b> — Same sit report, two formats. Uses the selected sit (up to 6000 unique radios), or last 15 minutes in RAM (~400, hard ceiling 900). Unmatched rotating BLE omitted from lists by default; counts still include them. Show unmatched rotating BLE is on the Sit report card. Show all radios is off by default: counts, and a radio that is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. Turn Show all radios on for the full rosters. The PDF draws those counts as bars. The text report has the same counts and the same lines. Sit export has every radio. Full cap / drop / list rules just above. Hobby / as-is disclaimer at the top. Custom names. Observer notes after Where you were. An Aircraft section follows when a radio advertised a position (§5.4.1). Filters and Live view do not change what Debrief sees. On a drive without a sit, tap Debrief more than once (§11.4.1). PDF adds bold stay/transit lines, Label: kickers, and a letter-size path figure when GPS recorded a walk. A nearby advertised track is a black dotted line on that figure. The last position is a class icon. The pilot is a person icon. A pairing flood, a name flood, or a Wi-Fi beacon flood heard during the sit is a quiet Flood section: the time, the kind, how many new addresses or new names, and how many of those addresses are left out of the radio counts and lists. The sit file and Sit export still have every radio. A sit saved before those addresses were stored still counts them with the other radios. A GNSS section lists each hit with the time, the level, and what changed. It does not name a source or a distance. Compare names which sit the hit was in.",
             "<b>Compare (text) / Compare (PDF)</b> — This sit vs a second saved sit. Presence only: only here, only there, in both. Kind + MAC. Same window as Debrief. Observer notes after Windows. Marked mine after that, one line per radio and which window. A live value that changed is stated (Separated → Near owner, Airborne → Ground). Last 15 minutes vs a named sit is a different net (RAM ~400 vs sit 6000). PDF overlays both walks when both have GPS. This sit’s advertised track is a black dotted line. The second sit’s is a blue dotted line. A flood note, including a Wi-Fi beacon flood, names which sit the burst was in and leaves that burst’s addresses out of the presence counts and lists.",
             "<b>Compare AI Export</b> — Paste-ready addendum for a chat. Embeds the onboard Compare, then overlap (both/union), Wi-Fi vs BLE in each bucket, RAND BLE among exclusives, exclusive Extra attention / Named radios, and Observer notes if any. Instructs the model not to reprint the lists. Sit report AI Export stays this window.",
             "<b>AI Export</b> — Sit-level paste-ready addendum (the open or selected sit, otherwise last 15 minutes with a 5-minute slice). Onboard Debrief verbatim, then rates, RSSI bands, Extra attention, finder-tag IDs, and Observer notes — not a second inventory. Instructs the model not to reprint Debrief. For a <i>single</i> radio, use AI Export on the device-detail page instead.",
@@ -1770,6 +1771,14 @@ def story():
             "<b>Log export</b> — Own card, titled Log export. Format dropdown and radios chips for the rotating session file. Full write-up: §5.6.3 and §11.6.",
             "<b>Reset / clear log</b> — Bottom of Reports. Deletes rotated files on the phone. Does not reset New detections already-seen. Does not delete sits.",
         ]),
+        figure_wrap(
+            "fig-reports-sit.png",
+            "Fig. 6 — Reports → Sit report. Show unmatched rotating BLE and Show all radios.",
+            "Debrief (text) and Debrief (PDF) are the same report. "
+            "Show unmatched rotating BLE adds those addresses to the lists. The counts already include them. "
+            "Show all radios lists every radio, not only Extra attention, a custom name, Marked mine, or a bookmark. "
+            "Sit export already has every radio. A GNSS hit in this window is its own section in that report, and a red diamond on the Path map where this phone was. §5.9.",
+        ),
         P("5.6.1 Path", "h3"),
         figure_wrap(
             "fig-path.png",
@@ -1809,6 +1818,9 @@ def story():
             "The class icon matches the map. Observer notes sit on that row. "
             "Live list still shows only the cyan notes chip, not the text. "
             "Thick green on the line is a stay (~40 m, same as Debrief Where you were). Time ticks (HH:mm) sit along the path. "
+            "A red diamond is where this phone was during a GNSS detection. "
+            "The note under the map has the time, the level, and what changed. "
+            "That spot is this phone, not the source of the interference. "
             "Tap a count for the radios there. Tap a single icon for that one radio. Tap again to close. "
             "Tap a row in that list, or a row below, to open that radio. "
             "The distance scale sits under the plot. The route is inset so Start/End do not sit on the frame. "
@@ -1841,6 +1853,8 @@ def story():
             "Thick green is a stay. A MAC alert or a signature alert is drawn once, the same radios as Reports → Path. "
             "A decoded latitude and longitude is the last advertised position. Anything else is the strongest hear. "
             "Extra attention is red, a MAC alert is blue, and a signature alert with neither is green. "
+            "A red diamond is a GNSS detection where this phone was. The Path key under the figure has the time, the level, and what changed. "
+            "It does not say where the interference came from. "
             "Stacked radios at one place share a Path-key number. "
             "An advertised aircraft on that figure is the drone class icon in the Path key, not a number, with the live status, UAS id, last position, motion, and the pilot position when the radio sent them. "
             "Privacy mode masks the MAC tail, the UAS id, and those coordinates in that key and in the Aircraft section. Altitude, course, and speed stay. The track still draws. "
@@ -1951,19 +1965,22 @@ def story():
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
         ),
         bullets([
-            "<b>Appearance</b> — Night mode (off by default): red-on-black field display so chips, text, RSSI, Hunt, and Extra attention do not dump green or blue into a dark sit. Phone brightness is unchanged. Restore defaults turns it off. Fig. 9. Keep screen on (on by default): holds the display while Fieldwatch is in front so Samsung does not park BLE; turn it off when you pocket the phone. Privacy mode (off by default) hides the last three octets of every MAC on the Live display, radar, timeline, detail, Hunt, Named radios, and watchlist cards as **:**:**. GPS last-fix on detail and coordinates in Debrief / AI Export / detail Share become “masked”; street names are omitted from those sit reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. The OUI stays. Logs, matching, Moving with you, and saved signatures still use the real MAC and GPS. A TAK / CoT feed is paused while Privacy mode is on so full MACs and coordinates are not sent onto the LAN (§5.8).",
+            "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, and Extra attention follow that. Phone brightness does not change. Restore defaults turns it off. Fig. 9.",
+            "<b>Keep screen on</b> starts on. The display stays awake while Fieldwatch is in front, so Samsung does not park Bluetooth. Turn it off when you pocket the phone.",
+            "<b>Privacy mode</b> starts off. It hides the last three octets of each MAC on Live, radar, timeline, detail, Hunt, Named radios, and watchlist cards, shown as **:**:**. GPS on detail, and coordinates in Debrief, AI Export, and detail Share, show as “masked.” Street names are left out of those reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. The vendor prefix stays. Logs, matching, Moving with you, and saved signatures still use the real address and position. The TAK / CoT feed pauses while Privacy mode is on, so full addresses and coordinates are not sent (§5.8).",
         ]),
         figure_wrap(
             "fig-settings-night.png",
             "Fig. 9 — Settings → Appearance, Night mode on.",
-            "Night mode is the first switch under Appearance. Text, chips, RSSI, Hunt, and Extra attention become shades of red so green and blue do not dump into a dark sit. Phone brightness is unchanged. Restore defaults turns it off.",
+            "Red on black so a dark sit stays dim. Phone brightness does not change. Restore defaults turns it off.",
         ),
         P("Radios, watchlist, logging, and backup", "h3"),
         bullets([
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
-            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Location heading and speed go in the ATAK track when present. Wi-Fi Remote ID (vendor IE FA:0B:BC) can pin the aircraft the same way as BLE FFFA on Android 11+. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
+            "<b>GNSS interference</b> — Calibrate this phone once before the check will turn on. The result stays on this phone and is not part of Export settings. Full write-up: §5.9.",
+            "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; decoded pilot lat/lon is a second pin. Location heading and speed go in the ATAK track when present. Wi-Fi Remote ID (vendor IE FA:0B:BC) can pin the aircraft the same way as BLE FFFA on Android 11+. Gone radios are dropped. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). GNSS is Off, While alerting, Red line, or Any hit. Floods is Off or On. Those two add a line to this phone’s marker and do not add a pin. §5.8.12. Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Online place names and maps</b> — On by default. One switch. Debrief and AI Export reverse-geocode GPS stamps (system geocoder). Reports → Path loads OpenStreetMap tiles under the trace (no Fieldwatch cloud, no API key). Offline, no geocoder, or no tiles: Debrief uses coordinates only and Path stays the north-up plot — no error dialog. Privacy mode does not hide that map. Turn off to keep streets and map tiles out of reports and Path together. Generate buttons are on Reports (§5.6, §5.6.1).",
             "<b>Logging</b> — Write to disk, rotate size, Stale after slider (when a radio is marked gone). Line/disk counts. The rotating file is JSON lines. Format (CSV, JSON lines, GPX, KML, WiGLE) and radios (Both / Wi-Fi / BLE) are on Reports → Log. Share, Save, and Reset / clear log are on Reports.",
             "<b>Allow background usage</b> — Switch. Opens Fieldwatch’s Battery page; turn on Allow background usage so the OS may run the scan when Fieldwatch is not in front. Follows that Android setting. Not Keep screen on.",
@@ -1973,7 +1990,7 @@ def story():
             "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off). This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
             "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, and already-seen for New detections only stay out of the pack. The first-run disclaimer is not overwritten, so scanning does not stop. If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks before it imports. A file that leaves the feed and the destination as they are imports with no extra step. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
             "<b>Show Live tour</b> — Opens Live with the first-launch overlay again: Tune is Display, Pause, Filters, Signatures, Reports, Settings. The same overlay runs once after the license on a new install. Got it dismisses it.",
-            "<b>Diagnostics</b> — Under Show Live tour. Phone maker and model, Android version and build fingerprint, catalog, Wi-Fi and Bluetooth on or off, how old the last Wi-Fi scan is, whether BLE is running, BLE results in the last minute, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, system Location, location permission, and how old the GPS fix is. It refreshes about once a second. Copy puts the same lines on the clipboard. No network names, no addresses, and no GPS coordinates. An empty Live list adds “Settings → Diagnostics” when a scan is blocked (Location off, permission missing, or neither radio is delivering). A filter that hides the list is not a blocked scan. A quiet minute with BLE still running is not a failure.",
+            "<b>Diagnostics</b> — Under Show Live tour. What to check names anything that is off and needs to be on: Location, the location permission, Wi-Fi or Bluetooth, a refused scan, or a filter hiding the list. It does not tell you to flip Wi-Fi scanning or Bluetooth scanning while that radio is already on. Faster Wi-Fi scans, background use, unrestricted battery, and a GPS fix are not required while Fieldwatch is open. If that does not explain an empty list, tap Copy and send the paste. The page also lists the phone maker and model, Android version and build fingerprint, catalog, Wi-Fi and Bluetooth on or off, how old the last Wi-Fi scan is, whether BLE is running, BLE results in the last minute, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, system Location, location permission, and how old the GPS fix is. It refreshes about once a second. Copy puts the same lines, including What to check, on the clipboard. No network names, no addresses, and no GPS coordinates. An empty Live list adds “Settings → Diagnostics” when a scan is blocked (Location off, permission missing, or neither radio is delivering). When Location is off, Live also shows a banner. Turn on opens the phone’s Location screen when that screen exists. A filter that hides the list is not a blocked scan. A quiet minute with BLE still running is not a failure.",
         ]),
         P(
             "How the Live display row looks — View (Radar, list, timeline, hybrid, By class), Sort, "
@@ -1997,7 +2014,7 @@ def story():
         ),
         P(
             "Settings → <b>TAK / CoT</b>, directly under Tag detections with GPS. The master "
-            "switch ships off. Turning it on does not change the Live display, Filters, logging, or "
+            "switch starts off. Turning it on does not change the Live display, Filters, logging, or "
             "watchlist beeps. It is a parallel UDP feed of radios Fieldwatch already labeled."
         ),
         P("5.8.1 What it is, and what it is not", "h3"),
@@ -2005,7 +2022,7 @@ def story():
             "Cursor-on-Target (CoT) is the XML event ATAK already understands. Fieldwatch writes "
             "a small event per radio — uid, type, a point, a callsign, and a remarks line — and "
             "sends it as a UDP datagram. Destination chips: <b>This phone</b> "
-            "(<font face='Courier'>127.0.0.1:10011</font>, ATAK CIV on this handset), "
+            "(<font face='Courier'>127.0.0.1:10011</font>, ATAK CIV on this phone), "
             "<b>LAN multicast</b> (<font face='Courier'>239.2.3.1:6969</font>, other ATAKs on this Wi-Fi), "
             "or <b>Custom</b> (unicast IPv4 / hostname). Host still defaults to "
             "<font face='Courier'>239.2.3.1</font> port <font face='Courier'>10011</font> until you pick a chip. "
@@ -2136,15 +2153,15 @@ def story():
             "Put the phone and the TAK client on the <b>same LAN</b> if you will use multicast (239.2.3.1). Cellular and most guest Wi-Fi will not deliver that group. Some access points filter multicast — then use unicast.",
             "On ATAK CIV: Manage Inputs should show a UDP CoT listener (typically 10011 on 0.0.0.0). Stock ATAK also listens to 239.2.3.1:6969 for self-SA. You do not install a Fieldwatch plugin.",
             "Fieldwatch: Settings → Privacy mode <b>off</b> (the feed pauses while it is on).",
-            "Fieldwatch: Settings → TAK / CoT feed → On. Destination: This phone (127.0.0.1:10011) for ATAK CIV on this handset; LAN multicast (239.2.3.1:6969) for other ATAKs on this Wi-Fi; Custom for a unicast IPv4. If This phone does not plot, Custom with this phone’s Wi-Fi IPv4 (Settings footer) and port 10011. UDP only — not TCP 8087.",
-            "Leave Extra attention and Payload location on (they ship on). That is the out-of-the-box set: “!” families at your GPS, plus any radio that advertised lat/lon (Remote ID) at that advertised point.",
+            "Fieldwatch: Settings → TAK / CoT feed → On. Destination: This phone (127.0.0.1:10011) for ATAK CIV on this phone; LAN multicast (239.2.3.1:6969) for other ATAKs on this Wi-Fi; Custom for a unicast IPv4. If This phone does not plot, Custom with this phone’s Wi-Fi IPv4 (Settings footer) and port 10011. UDP only — not TCP 8087.",
+            "Leave Extra attention and Payload location on (they start on). That is the out-of-the-box set: “!” families at your GPS, plus any radio that advertised lat/lon (Remote ID) at that advertised point.",
             "Scan. An Extra attention radio with a GPS fix, or a Remote ID Location packet, should appear on the TAK map within a few seconds. Heard-here callsigns end in (here). Remote ID callsign is Self ID, else UAS ID, else the signature name. Settings shows last send count, dest, and time under the host fields.",
         ]),
         P("5.8.6 Host and port", "h3"),
         table(
             ["Setting", "Default", "What to put"],
             [
-                ["This phone", "127.0.0.1:10011", "ATAK CIV on this handset. If nothing plots, Custom with the footer IPv4 and port 10011."],
+                ["This phone", "127.0.0.1:10011", "ATAK CIV on this phone. If nothing plots, Custom with the footer IPv4 and port 10011."],
                 ["LAN multicast", "239.2.3.1:6969", "Other ATAKs on this Wi-Fi (SA multicast). TTL 1. Guest Wi-Fi that isolates clients will fail."],
                 ["Custom host", "239.2.3.1", "Unicast IPv4 / hostname, or the default multicast address with port 10011. Trimmed on save. Empty is ignored so a wipe of the field does not store blank."],
                 ["Port", "10011", "UDP port 1–65535. Digits only. ATAK CIV CoT input (This phone). SA multicast uses 6969. Not a TAK server TCP 8087."],
@@ -2160,9 +2177,10 @@ def story():
         ]),
         P("5.8.7 What to send", "h3"),
         P(
-            "Four independent chips, shown only while the master switch is on. A radio publishes "
-            "when <i>any</i> selected chip matches <i>and</i> a pin exists. Unmatched radios "
-            "(no signature) never go, unless you named that one MAC and Watchlist is on with Alert on."
+            "Four chips choose which radios are sent. They show only while the master switch is on. "
+            "A radio publishes when <i>any</i> selected chip matches <i>and</i> a pin exists. "
+            "Unmatched radios (no signature) never go, unless you named that one MAC and Watchlist is on with Alert on. "
+            "GNSS and Floods are the next two controls. They do not pick radios. §5.8.12."
         ),
         table(
             ["Chip", "Ships", "Who is selected"],
@@ -2180,6 +2198,13 @@ def story():
             "Axon is Extra attention and Watchlist). It is still one uid, one marker. "
             "When many radios qualify at once, Fieldwatch sends at most about 24 per tick, Extra "
             "attention and payload pins first, then louder RSSI."
+        ),
+        P(
+            "GNSS and Floods sit under those four chips. They do not pick radios. "
+            "Each one adds a line to this phone’s Fieldwatch marker. "
+            "Neither one makes its own pin, and neither one says where the cause is. "
+            "GNSS is Off, While alerting, Red line, or Any hit. Floods is Off or On. "
+            "This phone needs a GPS fix. Privacy mode pauses the feed. §5.8.12."
         ),
         P("5.8.8 Privacy, GPS tagging, and when nothing is sent", "h3"),
         bullets([
@@ -2232,12 +2257,167 @@ def story():
             "Feed status under the host fields shows pins on the feed (what Fieldwatch is keeping on ATAK), sends this tick, dest, error, and time. A send count that flashes and returns to 0 is the keep-alive hold (about 10 s, or 30 m for advertised / this-phone) — the on-the-feed number should stay. A drone sit with ATAK open is §12.15. Extra attention overlay (body-cam / glasses / "
             "pentest) is the same switch with Payload location optional. For decode-map ids, §9.6."
         ),
+        P("5.8.12 GNSS and floods on this phone’s marker", "h3"),
+        P(
+            "Under What to send, two more controls add a line to <b>this phone’s</b> Fieldwatch marker. "
+            "Neither one makes its own pin, and neither one says where the cause is. This phone needs a GPS fix. "
+            "Privacy mode pauses the feed, so these lines are not sent while it is on."
+        ),
+        bullets([
+            "<b>GNSS.</b> Off sends nothing. While alerting sends during a hit at or above Alert from. Red line also sends for the about 10 minutes after the hit ends. Any hit also sends a Low detection that never shows the red line on Live. The line does not say where the interference is. §5.9.",
+            "<b>Floods.</b> On adds a note from the detection until the notice ends, including while the popup is up. Off sends nothing. This does not change the red line on Live. The note does not say it was one radio, and it does not name a tool.",
+        ]),
+        P("5.9 GNSS interference", "h2"),
+        P(
+            "Settings → GNSS interference watches this phone’s own GPS receiver. "
+            "It looks for a change that can mean interference, and, if you turn spoofing checks on, a pattern that can mean spoofing. "
+            "A Wi-Fi router or other electronics next to the phone can cause the same change. "
+            "Fieldwatch cannot tell the source or the distance. "
+            "It does not say a jammer was found, and it does not say a spoofer was found. "
+            "You will not be able to turn the check on until you calibrate this phone’s GPS."
+        ),
+        P(
+            "GNSS interference detection. Fieldwatch’s jamming and spoofing alert builds on published research by "
+            "Nicholas Spens, Dong-Kyeong Lee, Filip Nedelkov and Dennis Akos (University of Colorado Boulder), "
+            "Javier Tegedor, Ciro Gioia, Marco Barbero, Stefano Luzardi and Gianluca Folloni "
+            "(European Commission Joint Research Centre), and Alex Minetto, Akmal Rustamov and Fabio Dovis "
+            "(Politecnico di Torino), along with Google’s Android GNSS guidance and Sean Barbeau’s GPSTest. "
+            "Thank you for making this work public."
+        ),
+        callout(
+            "A steady sky",
+            "The check learns what this phone’s GPS looks like, then watches for a change. "
+            "A drop in the receiver’s gain and in the signal can mean interference. "
+            "If spoofing checks are on, gain falling while the signal holds is the other pattern. "
+            "Either one is a change on this phone. Fieldwatch cannot tell the source or the distance. "
+            "The sky has to stay steady. A roof, a pocket, or a hand over the phone can look like interference. "
+            "So can other electronics. A charger, a Wi-Fi router, a car radio, or a second phone against this one can cause a hit. "
+            "High sensitivity speaks up on a smaller change, so those are more likely to count. "
+            "In a car, use a phone holder above the dash, with a view out the windshield, and leave the phone off the charger. "
+            "On foot, the steadier place is on the chest, clear of the body and of other radios.",
+            "note",
+        ),
+        callout(
+            "Calibrate once, outside",
+            "Do this once, outside, away from other radios and Wi-Fi equipment. Hold still. "
+            "It takes about a minute. The check stays off until this phone has a saved result. "
+            "The result stays on this phone until you calibrate again. It is not part of Export settings. "
+            "Another phone needs its own run.",
+            "note",
+        ),
+        P("5.9.1 Calibrate this phone", "h3"),
+        figure_wrap(
+            "fig-settings-gnss.png",
+            "Fig. 21 — Settings → GNSS interference, after a calibration. This phone graded Good. The check can be turned on only after a result is saved.",
+            "Stand where the sky is open. A roof, a router, or a radio next to the phone can spoil the minute. "
+            "Tap <b>Calibrate this phone</b>. The line counts down. "
+            "Stop calibration leaves the last result unchanged. "
+            "If the minute is rejected, the last saved result stays. "
+            "A reject means not enough readings, no GPS fix, the phone was moving, too few satellites, or a signal too weak to grade. "
+            "Go back outside, hold still, and try again.",
+        ),
+        P(
+            "Phones do not have the same GPS. Calibration is how Fieldwatch learns this phone’s limits, "
+            "so ordinary wander is less likely to be called interference. "
+            "A phone with a weaker GPS sensor may still not be able to tell interference from its own normal variation. "
+            "The grade says which of those you have."
+        ),
+        bullets([
+            "Calibration complete. This phone is Good. It should work with a steady view of the sky, away from other electronics.",
+            "Calibration complete. This phone is Fair. Usable. Small drops will be hard to separate from this phone’s own GPS. Medium or Low will be steadier than High.",
+            "Calibration complete. This phone is Poor. This phone’s GPS is too coarse for an interference alert. It can still tag a path. The popup stays off.",
+        ]),
+        P(
+            "Sensitivity is how deep a drop has to be before it counts. "
+            "Low waits for a deeper drop. High alerts on a smaller drop, including some routers. "
+            "Alert from is when the popup, red line, beep, and voice start. "
+            "A weaker hit still shows in Diagnostics and in the sit report. "
+            "Calibration does not change the Sensitivity or Alert from you picked. "
+            "On a Fair or Poor phone it raises the bar under those choices, so a small wander is quieter."
+        ),
+        figure_wrap(
+            "fig-settings-gnss-levels.png",
+            "Fig. 22 — Sensitivity and Alert from. Both are Low, Medium, or High. Spoofing checks, Beep, and Voice are separate from the watchlist beep and voice.",
+            "<b>Spoofing checks</b> watch for gain falling while the signal holds or rises, plus a clock or a position that does not match the network. "
+            "A careful spoofer can still get past these checks. A wrong position can also be a side effect of interference. "
+            "<b>Beep</b> is the same pip as a watchlist hit, on the media volume. The popup and the red line still show if Beep is off. "
+            "<b>Voice</b> says possible GPS interference, or possible GPS spoofing. It speaks again only when the level goes up. "
+            "It uses the media volume and is separate from the watchlist Voice switch. "
+            "<b>System notification</b> is a silent shade card for this warning. Off unless you turn it on. The popup and the red line still show. It is separate from the watchlist System notification switch.",
+        ),
+        figure_wrap(
+            "fig-settings-gnss-more.png",
+            "Fig. 23 — Full tracking, the fading-together check, and Invert gain.",
+            "<b>Full tracking</b> keeps the GPS receiver awake instead of letting it rest. It uses more battery. Android 12 and newer. Older phones ignore it. "
+            "<b>Fading-together check</b> watches for satellites fading at the same time. A hand, a pocket, or getting in a car can do that. Leave it off unless you are testing it. "
+            "<b>Invert gain</b> is for a few phones that report gain backwards. Turn it on only if a Wi-Fi router makes the AGC number in Diagnostics go up.",
+        ),
+        P("5.9.2 The first two minutes", "h3"),
+        P(
+            "The first minute after the check starts is not the baseline. "
+            "Fieldwatch throws those readings away while the receiver settles. "
+            "Diagnostics says settling, with the seconds left. "
+            "The next minute is the baseline. Diagnostics says learning. "
+            "Fieldwatch learns what this phone’s GPS looks like when it is steady. "
+            "A warning can come after that. "
+            "The first real detection is not until at least two minutes after the check starts."
+        ),
+        P(
+            "The wait starts when the check is on and Fieldwatch is scanning. "
+            "Leave the app and come back, or start the scan again, and the wait starts over. "
+            "A hit that was already under way when the check started can be missed. "
+            "That is the receiver already sitting in the changed state, so there is no drop to see."
+        ),
+        P("5.9.3 On the road", "h3"),
+        P(
+            "When you are driving, the phone needs a clear view of the sky. "
+            "Down in a charging cradle, or next to another phone, can cause a GNSS detection. "
+            "A Wi-Fi router in the car, or the phone lying against a laptop, can do the same. "
+            "Move the phone up where it can see sky, and away from the other radio, before you treat the hit as something down the road."
+        ),
+        P(
+            "The grade does not remove that. "
+            "Calibration learned this phone in the open, held still. "
+            "A cradle, a second phone, or a roof changes what the receiver sees. "
+            "A weaker GPS is the one most likely to call that ordinary variation a hit."
+        ),
+        P("5.9.4 What a hit looks like", "h3"),
+        figure_wrap(
+            "fig-gnss-dialog.png",
+            "Fig. 24 — The detection dialog. The title is the level. The first lines are what changed on this phone’s receiver. OK dismisses the dialog. The red line stays.",
+            "The title is <b>Possible GNSS interference</b>, with Low, Medium, or High. "
+            "If spoofing checks are on and that pattern hits as well, the title is "
+            "<b>Possible GNSS interference and spoofing</b>. "
+            "The body names the bands that changed, such as GPS L1, and says a router or other electronics next to the phone can cause this. "
+            "Fieldwatch cannot tell where it comes from or how far away it is. "
+            "A mock location app is its own message. That is the developer mock-location switch, not a radio.",
+        ),
+        figure_wrap(
+            "fig-gnss-live.png",
+            "Fig. 25 — After OK, the red line stays on Live until the hit ends. There is no Hide button. This is not the flood line.",
+            "Dismiss the dialog and the red line stays across the top of Live: "
+            "<b>Possible GNSS interference</b>, then the level. "
+            "It stays until the condition ends. "
+            "After that, a quieter line says it ended, and that line stays for about 10 minutes. "
+            "The flood red line is a different notice and has Hide this burst. This one does not. "
+            "Beep and voice follow Alert from, and they follow their own switches. "
+            "The popup and the red line still show if Beep and Voice are off, unless this phone graded Poor.",
+        ),
+        P(
+            "Debrief and Compare list the hits in a GNSS section: the time, the level, and what changed. "
+            "The Path map marks where this phone was, and the note under the map repeats that. "
+            "It does not say where the interference came from. "
+            "A hit below Alert from can be in that report without a popup. "
+            "Diagnostics shows settling, then learning, then armed, plus the calibration grade. "
+            "It does not show coordinates. "
+            "On TAK, the GNSS choices in §5.8.12 add one line to this phone’s marker. They do not drop a pin on the interference."
+        ),
     ]
 
     # 6 Views
     flow += [
         PageBreak(),
-        P("6. Visualization Modes", "h1"),
+        P("6. Views", "h1"),
         P(
             "All five views show the same filtered radios. If radar looks empty and the list "
             "does not, check the filter first. Radar draws stale devices as dim blips so sitting "
@@ -2370,7 +2550,7 @@ def story():
     # 7 Detection
     flow += [
         PageBreak(),
-        P("7. Detection Methods", "h1"),
+        P("7. What the phone can hear", "h1"),
         P("7.0 How collection fits together", "h2"),
         P(
             "This chapter is how Fieldwatch hears radios on stock Android. You can skip the API "
@@ -2568,9 +2748,10 @@ def story():
             "in the list but it does not match. Custom and built-in signatures work the same way."
         ),
         P(
-            "Typical field use: <b>Flock Safety Cameras</b> is IEEE B4:1E:52 and Flock-* / FLCK / "
-            "Condor / Falcon / Sparrow names (Extra attention). LiteOn / module prefixes are "
-            "<b>LiteOn camera radio</b> — Cameras class, no Extra attention. Hide that row on Filters "
+            "Typical field use: <b>Flock Safety Cameras</b> is IEEE B4:1E:52 and a name that starts with "
+            "Flock- (Extra attention). LiteOn / module prefixes are "
+            "<b>LiteOn camera radio</b> — Cameras class, no Extra attention. 08:3A:88 on that row is "
+            "Universal Global Scientific Industrial. Hide that row on Filters "
             "if module OUIs are local noise. Pigvision is name-only — if you switch every name rule off, "
             "they will not match until you turn one back on."
         ),
@@ -2610,17 +2791,17 @@ def story():
             "(including a hidden SSID AP, which shows as &lt;hidden&gt; plus BSSID — the name "
             "rules will not fire until the SSID is visible).", "body_left"),
         P("<b>Only one OUI is actually Flock’s.</b> IEEE MA-L <font face='Courier'>B4:1E:52</font> "
-            "is registered to Flock Safety. Treat that, especially with a Flock-* SSID, as high "
-            "confidence. The other 25 prefixes in the catalog are LiteOn, Espressif, and similar "
-            "module vendors. Those chips ship in printers, plugs, toys, and cameras that are not "
-            "Flock. An OUI-only hit on 3C:71:BF (Espressif) is a weak hypothesis. Silicon Labs "
-            "OUIs on FS Ext Battery are the same story: lots of unrelated IoT. "
-            "A weak OUI hit still gets Extra attention “!”, a watchlist beep (stock bookmark), "
-            "and a TAK Extra attention pin at your GPS if that feed is on — Extra attention and "
-            "the bookmark apply to the whole signature, not only B4:1E:52.", "body_left"),
-        P("<b>Names help, and they lie.</b> Flock-ABCDEF during provisioning is a strong name. "
-            "A substring “Flock” on an unrelated SSID is weaker. Pigvision is "
-            "name-only and low uniqueness. Penguin also hits BLE manufacturer 0x09C8 (XUNTONG). Optional catalog rows (Verkada, Axis, Hikvision, …) "
+            "is registered to Flock Safety. Treat that, especially with a name that starts with Flock-, as high "
+            "confidence. LiteOn camera radio is a separate row of module prefixes. "
+            "08:3A:88 on that row is Universal Global Scientific Industrial, not Lite-On. "
+            "Those chips ship in doorbells and other gear that is not Flock. "
+            "FS Ext Battery matches the name, not a Silicon Labs prefix. "
+            "A module-prefix hit does not get Extra attention. Extra attention and "
+            "the bookmark on Flock, Penguin, and FS Ext Battery apply to the whole signature.", "body_left"),
+        P("<b>Names help, and they lie.</b> A name that starts with Flock- during provisioning is a strong name. "
+            "Pigvision is name-only and low uniqueness. Penguin matches a name that starts with Penguin-, "
+            "and also BLE manufacturer 0x09C8 (XUNTONG). A 10-digit name hits Penguin only through that manufacturer ID. "
+            "Optional catalog rows (Verkada, Axis, Hikvision, …) "
             "are also mostly names, ship <b>off</b>, and will label any AP that chose that word. "
             "Do not write “Hikvision camera” in a log because an SSID contained Hikvision.", "body_left"),
         P("<b>Raven is a different radio.</b> Acoustic ShotSpotter / Raven sensors are not the "
@@ -2644,11 +2825,11 @@ def story():
             "<i>broadcast</i>, not that the corridor is empty.", "body_left"),
         callout(
             "How to talk about a match",
-            "High: B4:1E:52 and/or SSID Flock-* / FLCK, or Raven UUID 0x3100–0x3500. "
-            "Medium: FS Ext Battery by name, Penguin 0x09C8 (XUNTONG), or Flock name without the IEEE OUI. "
-            "Low: LiteOn / Espressif / Silicon Labs OUI alone, Penguin/Pigvision name, optional "
+            "High: B4:1E:52 or a name that starts with Flock-, or Raven UUID 0x3100–0x3500. "
+            "Medium: FS Ext Battery by name, or Penguin 0x09C8 (XUNTONG). "
+            "Low: a LiteOn or similar module OUI, a Penguin- name, a Pigvision name, optional "
             "catalog name-only cameras. Never: “this is a Flock camera” from RF without a "
-            "visual or the IEEE OUI (or a clear Flock-* SSID). Pattern match ≠ plate, person, or serial.",
+            "visual or the IEEE OUI (or a clear Flock- name). Pattern match ≠ plate, person, or serial.",
             "warn",
         ),
         P("7.7 Offline assigned-number databases", "h2"),
@@ -2685,7 +2866,7 @@ def story():
     # 8 Filters
     flow += [
         PageBreak(),
-        P("8. Filtering System", "h1"),
+        P("8. Filters", "h1"),
         figure_wrap(
             "fig-filters-top.png",
             "Fig. 15 — Filters, presets and radios.",
@@ -2701,7 +2882,7 @@ def story():
             "can hide the second line, bars, Frequency, and first/last without dropping a radio "
             "(§5.3, §12.11). Use this tab when you actually want fewer radios on the Live display."
         ),
-        P("8.1 Architecture", "h2"),
+        P("8.1 What this tab changes", "h2"),
         figure_wrap(
             "fig-filters-mid.png",
             "Fig. 16 — Filters, signature classes.",
@@ -2753,7 +2934,7 @@ def story():
         P("8.3 Signatures only, classes, and selected families", "h2"),
         figure_wrap(
             "fig-filters-selected.png",
-            "Fig. 17 — Selected signatures.",
+            "Fig. 17 — Selected signatures, and the fine filter under them. AND and OR apply to name, vendor, signal, and class.",
             "<b>Signatures only</b> hides radios that match no signature, so the Live display is pattern hits "
             "of every class. If the list goes empty, nothing matching is in earshot — signatures "
             "always label; Filters only hide radios from the Live display. Class <b>Show only</b> or Show only "
@@ -2984,7 +3165,7 @@ def story():
     # 9 Signatures
     flow += [
         PageBreak(),
-        P("9. Named Signatures &amp; Creating Custom Signatures", "h1"),
+        P("9. Signatures", "h1"),
         P("9.1 What a signature is", "h2"),
         figure_wrap(
             "fig-signatures.png",
@@ -3080,7 +3261,7 @@ def story():
             "Prefer 16-bit UUIDs in the 0xFDxx / vendor range over common GAP UUIDs.",
             "For a family, use match-any and several OUIs plus a name glob. For one radio, keep the MAC rule and turn match-any off if you also add other clauses.",
             "A generic DIRECT- / ANDROID- / ESP_ name is unmatched unless a product family also hits (Raven, Roku, Epson).",
-            "Mute a noisy method on one signature with the rule switch (e.g. LiteOn OUIs on Flock) instead of deleting the rule.",
+            "Mute a noisy rule on one signature with the rule switch instead of deleting the rule.",
             "After editing, glance at the Live display. If half the café just inherited your new name, the rule is too broad — undo immediately.",
         ]),
         P("9.5 Using the pre-loaded catalog", "h2"),
@@ -3115,7 +3296,7 @@ def story():
                 ["Finder tags", "Apple AirTags, Samsung SmartTags, Tile, Chipolo, Pebblebee / moto tag, Google Find Hub, DULT tracker"],
                 ["Retail beacons", "iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
                 ["Signage", "Retail LED sign, Electronic shelf label"],
-                ["Wearables", "Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note"],
+                ["Wearables", "Garmin, Fitbit, Oura, Polar, Pokemon GO Plus, Fieldy, Plaud Note"],
                 ["Surveillance", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack"],
                 ["Drones", "Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
                 ["Pentest", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
@@ -3142,7 +3323,7 @@ def story():
                 ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
                 ["Purple", "Phones / Find My tags", "Apple Device, Apple AirTags, Chipolo, Google Find Hub, DULT tracker, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
-                ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
+                ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Polar, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
                 ["Green", "Mesh / LoRa", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Orange", "Glasses and audio (same chip color; class splits them)", "Ray-Ban / Meta glasses, Snap Spectacles, Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO / Aftermarket / SYTPMS / TireCheck / TPMS service"],
@@ -3227,7 +3408,7 @@ def story():
         ),
         P(
             "Brand BLE rows in the stock catalog include Tesla, Rivian, Google, Sony, Bose, Garmin, "
-            "Amazon, Fitbit, Oura, Logitech, HP, Epson, JBL / Harman, Sonos, Shokz, GoPro, Osmo, Insta360, DJI, DJI Power, "
+            "Amazon, Fitbit, Polar, Oura, Logitech, HP, Epson, JBL / Harman, Sonos, Shokz, GoPro, Osmo, Insta360, DJI, DJI Power, "
             "Microsoft Device, Apple Device, Apple audio, Fast Pair, Tuya, Govee, Haiku Fan, myQ, LG webOS TV, "
             "Nespresso, and RadiaCode. Exact match IDs are in Appendix B. A few cautions: Google is "
             "company 0x00E0 / Pixel / Chromecast. Fast Pair is a separate Phones / PCs row (next paragraph). Apple Device is Continuity types, "
@@ -3312,7 +3493,7 @@ def story():
             "<b>Health vs wearables vs Home IoT.</b> Health is clinic and home-medical BLE: Honeywell Xenon "
             "healthcare scanners (Xenon_*HC* / CCB-U00-H*, not warehouse CCB-U00-G), Omron Healthcare 0x020E "
             "(cuffs and scales; not industrial OMRON 0x02D5), Withings scales / BPM Connect, Dexcom G6/G7. "
-            "Garmin / Fitbit / Oura stay Wearables. Honeywell Home thermostats stay Thermostats. Pattern match, "
+            "Garmin / Fitbit / Oura / Polar stay Wearables. Honeywell Home thermostats stay Thermostats. Pattern match, "
             "not a patient or that hospital."
         ),
         P(
@@ -3384,7 +3565,7 @@ def story():
             "endian BE, scale 0.005, unit °C, Only if offset 0 length 1 equals <font face='Courier'>05</font>. "
             "Humidity is u16 BE at offset 3, scale 0.0025, unit %, same Only if. "
             "Format 3 packets skip those fields because byte 0 is 03, not 05 — that is the point of the gate. "
-            "Stock Ruuvi already ships this map. Copy the idea for a sensor that is not in the catalog."
+            "Stock Ruuvi already includes this map. Copy the idea for a sensor that is not in the catalog."
         ),
         P("9.6.2 Source: manufacturer vs service data", "h3"),
         P(
@@ -3549,7 +3730,7 @@ def story():
     # 10 Alerts
     flow += [
         PageBreak(),
-        P("10. Alerts &amp; Sensitivity", "h1"),
+        P("10. Alerts and scanning", "h1"),
         P("10.1 Watchlist", "h2"),
         P(
             "A watch target is either a device key (KIND:MAC) or a signature ID. Fieldwatch alerts "
@@ -3581,7 +3762,7 @@ def story():
         ),
         P("10.2.1 Voice on watched signature", "h3"),
         P(
-            "Voice is the second watchlist cue. It ships on. Turn it off under Settings → "
+            "Voice is the second watchlist cue. It starts on. Turn it off under Settings → "
             "Voice on watched signature if you only want the pip. Watchlist alerts still gates it — master off means no pip, "
             "no speech, no flash, no jump."
         ),
@@ -3902,7 +4083,7 @@ def story():
             "A house Find My heard only on a sidewalk arc, or that faded as you walked a loop, is omitted — not a tail. "
             "<b>Retail beacons with you</b> (amber, separate): iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io that stayed with the path. "
             "Store beacons are usually fixtures — they do not typically move with you. If one did, account for a test tag, a badge, or a short overlap with a fixture. Not a Find My tail. "
-            "<b>Wearables with you</b> (amber, separate): Garmin, Fitbit, Oura that stayed with the path. Usually your own watch/ring or someone walking with you. Not typically a planted tracker. "
+            "<b>Wearables with you</b> (amber, separate): Garmin, Fitbit, Oura, Polar that stayed with the path. Usually your own watch, ring, or strap, or someone walking with you. Not typically a planted tracker. "
             "Find My and iPhone addresses rotate; each MAC is this session, not a unique ID. "
             "When the radio has a live value, Debrief quotes that catalog sentence instead (Separated keeps the about-a-day line; Near owner says it is often your own tag). "
             "Compare states a change between sits. "
@@ -4048,7 +4229,7 @@ def story():
         P(
             "Run <b>one</b> playbook at a time until you can read the result. Stacking "
             "Moving with you + New detections only + Signatures only is allowed, but an empty "
-            "list then has three explanations. Chapter 13 is radio hygiene (battery, screen, crowds). "
+            "list then has three explanations. Chapter 13 is the battery, the screen, and a crowded street. "
             "Full terms are on the Notice page. Playbooks such as “Am I being followed?” are radio "
             "exercises, not a way to decide whether you are in danger — §12.2."
         ),
@@ -4082,10 +4263,29 @@ def story():
             "Optional: Display → Sort → New at bottom so new co-travelers append instead of jumping the list.",
             "When a row appears that is not your kit: Pause, open detail, bookmark if you want a beep on return.",
         ]),
-        P("<b>What you should see.</b> Only loud radios (most GPS-stamped samples about −75 dBm or stronger) that cover a large share of <i>your</i> path in both distance and time. A tag in your bag or car will match — that is the confidence check that the filter is working. House APs that only appear when you arrive should stay hidden. Passing cars on a highway will still come and go; a radio that is actually with you should stay. The “still here” window is not a fixed 50 m circle: it grows with how fast you have been moving, and it is longer for Wi-Fi (slow scans) than for BLE, so a cup-holder tag does not blink off between advertisements. Walking still uses a tight house-length. The checklist and the speed table are §8.5.", "body_left"),
+        P(
+            "<b>What you should see.</b> Loud radios that cover a large share of <i>your</i> path, both in distance and in time. Most of their GPS-stamped samples are about −75 dBm or stronger. A tag in your bag or in the car will match. That is how you know the filter is working. A house access point that only appears when you arrive should stay hidden. Cars you pass on a highway still come and go. A radio that is actually with you should stay.",
+            "body_left",
+        ),
+        P(
+            "“Still here” is not a fixed 50 m circle. The window grows with how fast you have been moving, and it is longer for Wi-Fi than for Bluetooth, because Wi-Fi scans are slow. A tag in the cup holder should not blink off between advertisements. On foot, the window stays about a house length. The checklist and the speed table are in §8.5.",
+            "body_left",
+        ),
         P("<b>What it is not.</b> Not direction finding. Not the other device’s GPS — it is your phone’s fix at hear-time. Find My / Offline Finding MAC rotation will not stitch a tail that changes address every minute. A radio that is quiet, weak, or only heard at one end of the path will not qualify.", "body_left"),
         P(
-            "<b>Write it down.</b> After ~45 m, Reports → Debrief (text) or Debrief (PDF). Tracking assessment is a short “did the test run.” Amber callouts list only radios that stayed with you, split by class: <b>Possible trackers with you</b> / <b>Possible tail</b> (finder tags), <b>Retail beacons with you</b> (iBeacon / Atrius cart tag / Minew / Estimote / Kontakt.io — fixtures; a cart you pushed will co-travel), <b>Wearables with you</b> (Garmin / Fitbit / Oura — usually own kit). House tags you passed are omitted. Plus overall distance — for the last 15 minutes in memory, whether you leave Moving with you on, hide the family, or switch to radar / timeline / hybrid / By class. Filters and view do not shrink Debrief. Carry an AirTag or iPhone: it should land in Possible trackers with you if it stayed loud on you (about −55 to −70 dBm). Find My MACs rotate, so you will see this session’s address, not one ID for the hour. A neighborhood loop is a special case: Debrief will not call a house Find My a tail unless that radio covered about half your path, stayed loud (−75 dBm on most GPS stamps), and did not fade 12 dB from its loudest. Car drive-bys still need three GPS stamps. Optional Online place names if you want streets. AI Export if you want a chat to read those callouts plus the inventory — tell it “apply §12.2; do not dismiss whole-sit radios as yours; do not list radios I only passed; do not treat a retail beacon as a Find My tail.” A longer drive: tap Debrief again at the next stop (§11.4.1) — radios that stayed with you will still be there; the first few kilometers of unnamed roadside radios will not. Not a legal finding and not identity.",
+            "<b>Write it down.</b> After about 45 m, open Reports → Debrief (text) or Debrief (PDF). The tracking note only says whether the test ran. The amber lines list radios that stayed with you, by class.",
+            "body_left",
+        ),
+        P(
+            "<b>Possible trackers with you</b> and <b>Possible tail</b> are finder tags. <b>Retail beacons with you</b> are iBeacon, an Atrius cart tag, Minew, Estimote, and Kontakt.io. Those are fixtures, and a cart you pushed will travel with you. <b>Wearables with you</b> are Garmin, Fitbit, Oura, and Polar, usually your own. House tags you only passed are left out. The distance covers the last 15 minutes still in memory. Turning Moving with you off, hiding a family, or switching to radar, timeline, hybrid, or By class does not change Debrief.",
+            "body_left",
+        ),
+        P(
+            "An AirTag or iPhone you are carrying should land in Possible trackers with you if it stayed loud, about −55 to −70 dBm. Find My addresses rotate, so the report shows this session’s address, not one ID for the whole hour. On a loop around the block, Debrief will not call a house Find My a tail unless that radio covered about half your path, stayed loud (−75 dBm on most GPS stamps), and did not fade 12 dB from its loudest. A car that drives past still needs three GPS stamps.",
+            "body_left",
+        ),
+        P(
+            "Turn on Online place names if you want street names. Use AI Export if you want a chat to read the callouts and the inventory. Tell it to apply §12.2, not to dismiss radios that stayed for the whole sit as yours, not to list radios you only passed, and not to treat a retail beacon as a Find My tail. On a longer drive, tap Debrief again at the next stop (§11.4.1). Radios that stayed with you are still there. The unnamed radios from the first few kilometers are not. This is not a legal finding, and it is not an identification.",
             "body_left",
         ),
         callout(
@@ -4176,7 +4376,7 @@ def story():
         P("12.8 Hunting a tracker", "h2"),
         callout(
             "No guarantee of a find",
-            "Tags advertise slowly, rotate addresses, and may be outside what this handset "
+            "Tags advertise slowly, rotate addresses, and may be outside what this phone "
             "hears. Absence of a row is not proof there is no tracker. Hunt is relative "
             "loudness, not meters and not a compass. Do not use this to decide personal "
             "safety. See the Notice page.",
@@ -4197,7 +4397,7 @@ def story():
         P(
             "<b>If you do not know which radio.</b> Filters → Show only Finder tags. Strength list, High performance. Hide selected on kit you already own "
             "(keys, bag AirTag) or those will always win the top row. Then <i>place the phone</i> "
-            "at spots a tag could hide — you are using the handset as a sniffer probe, not walking "
+            "at spots a tag could hide — you are using the phone as a sniffer probe, not walking "
             "the street. On a car: each wheel well, inside the bumper, under the rocker, hitch, "
             "spare, cabin (console, under seats, visors). Dwell 10–20 s at each spot so a slow "
             "advertiser can speak; tags do not ping every second. If a tracker-family row jumps "
@@ -4270,7 +4470,7 @@ def story():
                 ["ATAK overlay (Remote ID / Extra attention)", "§5.8 configure, §12.15 sit, §12.16 hear RID. Settings → TAK / CoT feed. Extra attention + Payload location. BLE FFFA and Wi-Fi FA:0B:BC. Same Wi-Fi LAN. Privacy mode off."],
                 ["Long sit / parked vehicle", "Balanced or Saver. Timeline. RSSI floor −80 if unreadable. Logging on. Watchlist, not a stare."],
                 ["Drive, then arrive home", "Moving with you is BLE only — house APs stay off. If a bag tag still does not show, the path was too short or GPS only stamped at the destination."],
-                ["Watch the path grow", "Reports → Path, stay on that tab. Open sit grows Start → Now; last 15 minutes is a sliding snake (tail drops off). An open sit also draws an advertised aircraft track as a white dotted line when the sit has one. The last position is a class icon. The pilot is a person icon. Black dot is the start. Blue dot is you, at the last point. MAC alerts and signature alerts are drawn once. A decoded latitude and longitude uses the last advertised position. Anything else is a class icon at the strongest hear. A count is several in one place. A lone class icon has no number box; tap it for that one radio. Redraws about every 3 s. §5.6.1."],
+                ["Watch the path grow", "Reports → Path, stay on that tab. Open sit grows Start → Now; last 15 minutes is a sliding snake (tail drops off). An open sit also draws an advertised aircraft track as a white dotted line when the sit has one. The last position is a class icon. The pilot is a person icon. Black dot is the start. Blue dot is you, at the last point. MAC alerts and signature alerts are drawn once. A decoded latitude and longitude uses the last advertised position. Anything else is a class icon at the strongest hear. A count is several in one place. A lone class icon has no number box; tap it for that one radio. A red diamond is a GNSS detection where this phone was. The note under the map has the time and what changed. Redraws about every 3 s. §5.6.1."],
                 ["Long drive (several km)", "Start sit for a 6000-radio window (unnamed BLE drops first when full). Tap Debrief every 10–15 min or at stops and keep the shares (§11.4.1). Live RAM is still ~400. Debrief lists skip unmatched RAND BLE by default; Sit export has the roster. Log export is the hear-by-hear tape. Path on Reports can stay in front for the live trace."],
                 ["List too fast to tap", "Pause. Then detail. Resume. Or Display → Subtitle None so more of the list fits without Pause."],
                 ["Fit the row to the job", "§5.3. Display is look (Title/Subtitle, extras). Filters are who. Plaza: Subtitle None. Copy MAC: Title → MAC. Channel sit: Frequency on."],
@@ -4376,7 +4576,7 @@ def story():
             "back to the Live display, pick the new row if it is the same family, start Hunt again. Do not convert dBm to feet.",
         ),
         P(
-            "<b>Body-block heading (optional).</b> The handset has no DF. Your torso is a lossy "
+            "<b>Body-block heading (optional).</b> The phone has no direction finding. Your torso is a lossy "
             "shield, the same trick as holding a whip close to the body and turning for a peak. "
             "Stand still. Hold the phone against the center of your chest (or the same pocket "
             "every time). Turn slowly in place through a full circle. Watch loudest-this-hunt "
@@ -4448,7 +4648,7 @@ def story():
             [
                 ["Hobby BLE serial", "BLE names HMSoft / HM-10 / CC41 / AT-09 / JDY / BT05 / ESP32 BLE. Extra attention: same boards have been used in some pump/ATM overlays.", "Not Classic HC-05/HC-06 (Fieldwatch does not see Classic). Same modules on printers, cars, DIY. Loud next to a card reader: look with your eyes. Not proof of a skimmer. A miss is not clean (name changed, Classic, or cellular)."],
                 ["Hak5 Pineapple", "Setup SSID Pineapple_XXXX / Hak5 / WiFi Pineapple.", "Admin/management AP. Not Alfa OUI 00:C0:CA. PineAP clones look like ordinary café SSIDs. Renamed or clone-only: miss."],
-                ["Flipper Zero", "OUI 0C:FA:22; BLE name Flipper*.", "Newer units use that IEEE OUI. Custom firmware can change name and MAC. Bluetooth off: miss. Not proof of an attack."],
+                ["Flipper Zero", "OUI 0C:FA:22; services 3080–3083; BLE name Flipper*.", "3080–3083 is official firmware, including a renamed unit. Custom firmware can change the name, the service, and the MAC. Bluetooth off: miss. Not proof of an attack."],
                 ["Pwnagotchi", "Classic BSSID de:ad:be:ef:de:ad; name pwnagotchi.", "Handshake-collector beacon. Custom MAC/name: miss."],
                 ["Marauder / Deauther", "Default names MarauderAP / Marauder / Deauther.", "ESP32 Marauder or Spacehuhn-style defaults. Same boards are DIY. Renamed: miss."],
                 ["Porkchop", "SSID/name PORKCHOP; BACON fake-AP vendor IE 50:52:4B.", "M5PORKCHOP Cardputer or CYD port. Not Espressif OUI. BLE spam (Apple/Android lookalikes) is not matched. Passive-only or no AP: miss."],
@@ -4482,7 +4682,7 @@ def story():
             "Phone and ATAK (or WinTAK / iTAK) on the same Wi-Fi. Confirm the AP does not isolate clients. If multicast never arrives, you will switch Host to the ATAK device’s IPv4.",
             "ATAK already listens to UDP 239.2.3.1:6969 for SA. No Fieldwatch plugin. This feed is UDP; it does not log into a TAK server.",
             "Fieldwatch → Settings → Privacy mode Off. Tag detections with GPS On (high-accuracy Location) if you want heard-here pins; Remote ID advertised position does not need it.",
-            "Settings → TAK / CoT feed On. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs on this Wi-Fi. Extra attention On, Payload location On, Watchlist Off, All signatures Off. Confirm Feed status under the host fields shows a send, not an error.",
+            "Settings → TAK / CoT feed On. Destination: This phone when ATAK CIV is on the same phone, or LAN multicast for other ATAKs on this Wi-Fi. Extra attention On, Payload location On, Watchlist Off, All signatures Off. GNSS and Floods stay off until you set them. GNSS is Off, While alerting, Red line, or Any hit. Floods is Off or On. Either one adds a line on this phone’s Fieldwatch marker and does not add a pin. Confirm Feed status under the host fields shows a send, not an error. §5.8.12.",
             "Live display: All traffic, High performance. Do not filter to Drones only if you also want body-cam / glasses — the feed ignores Live display filters, but you still need those radios to match.",
         ]),
         P(
@@ -4495,7 +4695,9 @@ def story():
             "Heading and speed from Location go in the ATAK track so the icon can point. "
             "A decoded pilot location is a second Orange pin. Heard-here callsigns end in (here). "
             "Tap a marker for remarks (name, MAC, RSSI, signatures). "
-            "A radio that leaves is dropped on ATAK instead of sitting two minutes.",
+            "A radio that leaves is dropped on ATAK instead of sitting two minutes. "
+            "With GNSS or Floods on, that note is a line on this phone’s Fieldwatch marker. "
+            "There is no separate pin for the interference or the flood.",
             "body_left",
         ),
         table(
@@ -4506,6 +4708,7 @@ def story():
                 ["Heard-here pin stayed where I was louder", "Expected. Heard-here holds closest approach (louder RSSI), not the last hear. A keep-alive every ~10 s refreshes the same lat/lon. This is not DF."],
                 ["Drone pin is kilometers away", "Expected for advertised position. Fieldwatch did not DF it. The aircraft encoded that WGS84."],
                 ["Café APs filled the map", "All signatures is on. Turn it off. Extra attention + Payload location is the field default."],
+                ["GNSS or a flood did not drop a pin", "Expected. The note goes on this phone’s Fieldwatch marker. GNSS Off and Floods Off send nothing. The phone needs a GPS fix. Privacy mode pauses the feed. §5.8.12."],
                 ["Marker vanished after ~2 min", "The radio left earshot, scanning stopped, or Fieldwatch sent a gone event. Start scanning again if you still want it."],
                 ["I want one bag tag on the map", "Watchlist On, bookmark that MAC (Alert on). Extra attention can stay on. Do not use All signatures."],
                 ["Custom sensor with lat/lon in the ad", "Decode fields: ids latitude and longitude (scale as the spec). Payload location On. No TAK checkbox. §5.8.4, §9.6."],
@@ -4585,7 +4788,7 @@ def story():
     # 13 Field hygiene
     flow += [
         PageBreak(),
-        P("13. Field Hygiene", "h1"),
+        P("13. In the field", "h1"),
         P(
             "Chapter 12 is the playbook. This chapter is how to keep the phone collecting while you run those strategies."
         ),
@@ -4606,6 +4809,7 @@ def story():
         bullets([
             "Start High performance (§4.5). Drop to Balanced once the picture is stable if you need the battery. Battery saver is overnight / bag carry — you will miss short BLE bursts.",
             "<b>Keep screen on</b> (Settings, on by default) holds the display while Fieldwatch is in front so Samsung does not park BLE on screen-off. Turn it off when you pocket the phone.",
+            "If the screen slowly gets lighter and darker, that is the phone’s Adaptive brightness, not Fieldwatch. Turn it off in the phone’s Display settings for the sit. Keep screen on only holds the display awake, so the pulse stays in view.",
             "<b>Allow background usage</b> opens Fieldwatch’s Battery page (that switch). <b>Unrestricted battery</b> opens the same page; select Unrestricted. Some phones (Samsung among them) do not open onto that choice — tap Allow background usage to click through and select it. Background usage lets the scan run when the app is not in front; Unrestricted stops the OEM freezing it to save battery. Fieldwatch’s switches follow those Android grants. They do not keep the screen on and do not lift Wi-Fi or BLE scan quotas. Samsung: also do not sleep Fieldwatch under Background usage limits. §4.5.3.",
             "<b>Night mode</b> (Settings → Appearance) is the red field overlay.",
             "A cheap USB battery pack is more useful than arguing with the saver slider if you need low-latency BLE all day.",
@@ -4645,12 +4849,12 @@ def story():
     # 14 Technical specifications / How it works
     flow += [
         PageBreak(),
-        P("14. Technical specifications / How it works", "h1"),
+        P("14. How a hear becomes a row", "h1"),
         P(
             "This chapter is the pipeline, not a dump of every Kotlin file. A hear on this "
             "phone is a Wi-Fi access-point beacon or a Bluetooth LE advertisement. Fieldwatch "
             "matches it locally, draws Live, and can sit, debrief, or publish TAK — all on the "
-            "handset. There is no Fieldwatch server."
+            "phone. There is no Fieldwatch server."
         ),
         P("14.1 From the air to a row", "h2"),
         P(
@@ -4736,9 +4940,10 @@ def story():
             ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. A blank name is filled. Filters → Hide my radios takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
             ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
-            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §12.15, §12.16."],
+            ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. What to send: Extra attention, Payload location, Watchlist, All signatures. GNSS (Off, While alerting, Red line, Any hit) and Floods (Off or On) add a line on this phone’s marker and do not add a pin. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §5.8.12, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
-            ["Diagnostics", "Settings, under Show Live tour. Phone, Android version, catalog, whether Wi-Fi, Bluetooth, and Location are scanning, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. Copy pastes that into an issue. No network names, addresses, or GPS coordinates. An empty Live list points here when a scan is blocked. §5.7."],
+            ["Diagnostics", "Settings, under Show Live tour. What to check names a switch that is off and needs to be on. It does not name Wi-Fi scanning or Bluetooth scanning while that radio is already on. The rest of the page is the phone, Android version, catalog, whether Wi-Fi, Bluetooth, and Location are scanning, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. When the GNSS check is on, it also shows settling or the monitor state, and the calibration grade. Copy pastes that into an issue. No network names, addresses, or GPS coordinates. An empty Live list points here when a scan is blocked. When Location is off, Live also shows a banner. §5.7, §5.9."],
+            ["GNSS interference", "A change in this phone’s own GPS that can mean interference, or, with spoofing checks on, a pattern that can mean spoofing. Not a located radio, and not a named jammer or spoofer. Calibrate once outside before the check will turn on. The first minute is not the baseline. A warning can come after about two minutes. A cradle, a router, or another phone against this phone can cause a hit. Popup, then a red line on Live. Debrief lists the hit. The Path map marks where this phone was. That spot is not the source. §5.9."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
             ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
@@ -4760,7 +4965,7 @@ def story():
             ["Ray-Ban / Meta glasses", "Catalog signature (on). BLE company IDs 0x01AB / 0x058E / 0x0D53, Ray-Ban names, and a Bluetooth name that starts with Meta RB Display. Extra attention. Quest and other Meta wearables can match the same company IDs."],
             ["Snap Spectacles", "Catalog signature (on). BLE company ID 0x03C2 plus Spectacles names. Extra attention. Not proof of recording."],
             ["Hak5 Pineapple", "Catalog signature (on). Setup SSID Pineapple_XXXX. Extra attention: admin AP, not every cloned café SSID."],
-            ["Flipper Zero", "Catalog signature (on). OUI 0C:FA:22 and BLE name Flipper*. Extra attention. Custom firmware can hide it."],
+            ["Flipper Zero", "Catalog signature (on). OUI 0C:FA:22, services 3080–3083, and BLE name Flipper*. Extra attention. Custom firmware can hide it."],
             ["Pwnagotchi", "Catalog signature (on). Classic BSSID de:ad:be:ef:de:ad. Extra attention."],
             ["Marauder / Deauther", "Catalog signature (on). MarauderAP / Deauther default names. Extra attention. DIY boards match too."],
             ["Porkchop", "Catalog signature (on). SSID/name PORKCHOP; BACON fake-AP vendor IE 50:52:4B. Extra attention. Cardputer / CYD firmware, not every ESP32."],
@@ -4838,15 +5043,15 @@ def story():
             "not legal findings. Exact OUI lists can be inspected in the in-app editor. "
             "Every stock signature always labels when its rules hit. "
             "Hide a noisy family on Filters (Hide these for a class, or Hide selected for one row). "
-            "Chip colors are by class (§9.5). Extra attention and a stock bookmark ship on the "
+            "Chip colors are by class (§9.5). Extra attention and a stock bookmark start on the "
             "body-cam, camera-glasses, recording-wearable, pentest, public-safety vehicle AP, and roadside / public camera + ALPR rows noted below, plus every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Consumer cameras, ISP "
             "gateways, and office mice will label when their factory names or OUIs are heard. "
             "The table is A–Z by signature name."
         ),
     ]
     stock_sigs = [
-            ["Flock Safety Cameras", "OUI B4:1E:52; names Flock, FLCK, CONDOR, FALCON, SPARROW; globs Flock-*, Flock-??????. Extra attention filled. Stock bookmark.", "Roadside ALPR / camera pole. High for B4:1E:52 or a Flock-* SSID. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
-            ["LiteOn camera radio", "LiteOn / related module OUIs (dropped: UGSI E0:4F:43, Espressif A4:CF:12 and 3C:71:BF, Samsung 48:27:EA, local 82:6B:F2); vendor IEs 00:80:19 / 00:0A:EB. Cameras class. No Extra attention. Not a stock bookmark.", "Camera-board prefixes. Doorbells and other OEM radios use these chips. A Flock name or B4:1E:52 is Flock Safety Cameras. F8:A2:D6 stays."],
+            ["Flock Safety Cameras", "OUI B4:1E:52; glob Flock-*. Extra attention filled. Stock bookmark.", "Roadside ALPR / camera pole. High for B4:1E:52 or a name that starts with Flock-. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
+            ["LiteOn camera radio", "LiteOn / related module OUIs (dropped: UGSI E0:4F:43, Espressif A4:CF:12 and 3C:71:BF, Samsung 48:27:EA, local 82:6B:F2, unassigned B8:35:32). 08:3A:88 is Universal Global Scientific Industrial. Vendor IEs 00:80:19 / 00:0A:EB. Cameras class. No Extra attention. Not a stock bookmark.", "Camera-board prefixes. Doorbells and other OEM radios use these chips. A name that starts with Flock- or B4:1E:52 is Flock Safety Cameras. F8:A2:D6 stays."],
             ["Raven / ShotSpotter", "Names RAVEN, ShotSpotter, SoundThinking; UUIDs 3100–3500; OUI D4:11:D6", "UUID range is the stronger digital fingerprint. 0x09C8 is Penguin."],
             ["Apple AirTags", "Name AirTag / Find My; mfg data 0x004C / 12; UUID FD44", "Offline Finding. iPhones also send 0x12 — dropped when Continuity (Apple Device) is on the same radio unless the name is AirTag or UUID FD44. Not Continuity 0x10 and not AirPods (0x07)."],
             ["Apple Device", "Apple 0x004C types 0x10 / 0x0F / 0x0B / 0x05 / 0x0C–0x0E / 0x08 / 0x0A; names iPhone, iPad, MacBook", "Phone / tablet / Mac Continuity. OF 0x12 on the same radio is not a second AirTag chip. A street of iPhones will light this up."],
@@ -4875,11 +5080,12 @@ def story():
             ["Plaud Note", "BLE names Plaud Note*. Extra attention filled. Stock bookmark.", "Plaud Note / NotePin AI recorder. Not proof of recording. Beeps on a new match."],
             ["Amazon", "Company 0x0171; names Echo / Amazon / Fire TV", "Echo / Fire."],
             ["Fitbit", "Company 0x018E; UUIDs FD62/FD63; name Fitbit", "Wearable. Identity only — advertisements do not carry steps; modern dumps are GATT/encrypted. No Decode fields map."],
+            ["Polar", "Company 0x006B; UUID FEEE; BLE name Polar*", "Heart-rate strap or watch. Wearables class. A strap that also sends GoPro UUID FEA5 stays on Polar, not GoPro. Heart Rate 180D is not a rule."],
             ["Oura", "Company 0x02B2; name Oura", "Ring."],
             ["Logitech", "Company 0x01DA; UUID FE61; Logitech / Logi", "Mice / keyboards. Office noise."],
             ["JBL / Harman", "Company 0x0057; JBL / Harman", "Audio."],
             ["Sonos", "Company 0x05A7; UUID FE07; name Sonos", "Speakers (S41 / S57 LE)."],
-            ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
+            ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. A Polar strap that also sends FEA5 stays on Polar. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
             ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
@@ -4963,7 +5169,7 @@ def story():
             ["DWnet", "DWnet Technologies IEEE OUIs", "Consumer / SMB APs. Cloud SSIDs are house names. ISP / routers class."],
             ["WAVLINK", "Wi-Fi WAVLINK* plus Winstars IEEE OUI 80:3F:5D", "Consumer APs. ISP / routers class."],
             ["Samsung SmartTags", "Names SmartTag / Smart Tag / Galaxy SmartTag; UUID FD5A; mfg 0x0075", "FD5A is the usual SmartTag service."],
-            ["Tile Trackers", "Name Tile; UUIDs FEED, FEDD; mfg 0x00C7", "Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
+            ["Tile Trackers", "Name Tile; UUIDs FEED, FEEC, FEDD; mfg 0x00C7", "FEEC is a Tile that is not activated yet. Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
             ["Google Find Hub", "BLE service FEAA, data prefix 40 (nearby) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. The list shows Nearby or Separated. Separated is the heavier chip and can hold a MAC about a day. Finder tags class. Decode: mode plus 20-byte EID. Chipolo / Pebblebee / moto tag name rows may dual-label. §5.4.1."],
             ["DULT tracker", "BLE service data FCB2 (any payload). Finder tags class. No Extra attention.", "IETF Detecting Unwanted Location Trackers location-enabled advertisement. The list shows Near owner or Separated. Separated is the heavier chip and can hold a MAC about a day. Decode: Network ID plus that bit. A bare FCB2 UUID list does not match. Chipolo / Pebblebee / moto tag names may dual-label. §5.4.1."],
             ["iBeacon", "Apple 0x004C type 0x02 length 0x15; names *iBeacon*", "Protocol, not a vendor. Dropped when a product signature already labeled the radio (Sony TV, Tesla phone-key). Minew / Estimote / Kontakt / Atrius cart tag still dual-label. Not Nearby Info 0x10 / AirTags 0x12 / AirPods 0x07. Not Eddystone FEAA."],
@@ -4971,9 +5177,9 @@ def story():
             ["Minew", "IEEE OUI AC:23:3F; names Minew*", "Shenzhen Minew beacons / sensors. Field AC:23:3F often also iBeacon or Eddystone."],
             ["Estimote", "BLE company 0x015D; names Estimote*", "Location beacons / stickers. Decode fields: frame type (Nearable / Telemetry). Packed sensors are not expanded. §9.6."],
             ["Kontakt.io", "BLE company 0x01FD; names Kontakt*", "Kontakt Micro-Location beacons. Decode fields: UUID FE6A Location packet (battery / TX / channel / moving). §9.6."],
-            ["Penguin", "Name / glob Penguin*; mfg 0x09C8 (XUNTONG). Extra attention filled. Stock bookmark.", "Flock-family external battery. 0x09C8 is the usual fingerprint; Penguin* names are older firmware. Decode: TN serial from manufacturer data. Beeps on a new match."],
+            ["Penguin", "Glob Penguin-*; mfg 0x09C8 (XUNTONG). Extra attention filled. Stock bookmark.", "Flock-family external battery. 0x09C8 is the usual fingerprint. A name that starts with Penguin- is older firmware. A 10-digit name hits only through that manufacturer ID. Decode: TN serial from manufacturer data. Beeps on a new match."],
             ["Pigvision", "Name / glob Pigvision*. Extra attention filled. Stock bookmark.", "Flock-family / roadside camera name. Name-only. Beeps on a new match."],
-            ["FS Ext Battery", "Name FS Ext Battery; globs FS_*, FS Ext*; remaining pack OUIs 04:0D:84, 1C:34:F1, 38:5B:44, 94:34:69, B4:E3:F9, F0:82:C0 (Silabs 90:35:EA / 58:8E:81 / EC:1B:BD dropped). Extra attention filled. Stock bookmark. Surveillance class.", "Usually a Flock-style camera pack. Name is medium confidence. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
+            ["FS Ext Battery", "Name FS Ext Battery; glob FS Ext*. Extra attention filled. Stock bookmark. Surveillance class.", "Usually a Flock-style camera pack. The name is the hit. Silicon Labs prefixes are not this row. Current poles are often quiet on Wi-Fi and BLE. Beeps on a new match."],
             ["Raven / ShotSpotter", "Names RAVEN / ShotSpotter / SoundThinking; UUIDs 3100–3500; OUI D4:11:D6", "Flock Raven or ShotSpotter-style acoustic gunshot sensor. Wi-Fi Direct SSIDs such as DIRECT-rR-Raven-* hit on the Raven name, not a catch-all DIRECT- prefix. 0x09C8 is Penguin. Surveillance class."],
             ["Digital Ally", "IEEE 00:23:BD; names FirstVu / Digital Ally / EVO-HD / VuLink", "Body-worn or in-car camera. Extra attention. Quiet LTE units stay off-air."],
             ["Limitless Pendant", "BLE service 632de001-604c-446b-a80f-7963e950f3fb; name Limitless", "Wearable conversation recorder. Extra attention."],
@@ -5087,7 +5293,7 @@ def story():
             ["UniFi Protect", "BLE names UVC G3/G4/G6 Instant", "Protect Instant cameras in BLE setup. Not AP BSSID OUIs. Custom 16-bit 252A/2529 not used. Surveillance class."],
             ["Hobby BLE serial", "BLE names HMSoft / HM-10 / CC41 / AT-09 / JDY-08/10/16/31 / BT05 / MLT-BT05 / ESP32 (BLE only). Extra attention filled. Stock bookmark.", "Cheap UART modules. Same boards appear in DIY and in some pump/ATM overlays. Not a skimmer detector. Not Classic HC-05/HC-06. Beeps on a new match. Hide on Filters if those names are local noise."],
             ["Hak5 Pineapple", "Names Pineapple_XXXX / Hak5 / WiFi Pineapple. Extra attention filled. Stock bookmark.", "Setup/management AP. Not Alfa OUI 00:C0:CA. PineAP clones look like ordinary SSIDs. Beeps on a new match."],
-            ["Flipper Zero", "OUI 0C:FA:22; BLE names Flipper*. Extra attention filled. Stock bookmark.", "Flipper Devices IEEE (2024). Custom firmware can rename. Not proof of an attack. Beeps on a new match."],
+            ["Flipper Zero", "OUI 0C:FA:22; services 3080–3083; BLE names Flipper*. Extra attention filled. Stock bookmark.", "3080–3083 is official firmware, so a renamed official unit still matches. Custom firmware can change the name, the service, and the MAC. Not proof of an attack. Beeps on a new match."],
             ["Pwnagotchi", "MAC DE:AD:BE:EF:DE:AD; name pwnagotchi. Extra attention filled. Stock bookmark.", "Handshake-collector beacon. Beeps on a new match."],
             ["Marauder / Deauther", "Names MarauderAP / Marauder / Deauther. Extra attention filled. Stock bookmark.", "ESP32 Marauder or Spacehuhn-style defaults. Same boards are DIY. Beeps on a new match."],
             ["Porkchop", "Names PORKCHOP / M5PORKCHOP; vendor IE 50:52:4B. Extra attention filled. Stock bookmark.", "M5PORKCHOP Cardputer or CYD port. CYD remote AP is named PORKCHOP. BACON fake APs brand 50:52:4B. Not Espressif OUI. BLE spam not matched. Beeps on a new match."],
@@ -5099,7 +5305,7 @@ def story():
         [1.45 * inch, 2.7 * inch, 2.35 * inch],
     ))
     flock_ouis = [
-        "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32", "14:5A:FC", "74:4C:A1",
+        "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "14:5A:FC", "74:4C:A1",
         "08:3A:88", "9C:2F:9D", "C0:35:32", "94:08:53", "E0:0A:F6", "14:B5:CD", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6",
         "24:B2:B9", "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4", "70:08:94",
         "58:00:E3", "5C:93:A2", "64:6E:69",
@@ -5107,7 +5313,7 @@ def story():
     oui_cols = 4
     oui_w = 6.5 * inch / oui_cols
     oui_head = [Paragraph(
-        "<b>LiteOn camera radio OUI inventory</b> (not Extra attention; B4:1E:52 stays on Flock Safety Cameras)",
+        "<b>LiteOn camera radio OUI inventory</b> (not Extra attention; B4:1E:52 stays on Flock Safety Cameras; 08:3A:88 is Universal Global Scientific Industrial)",
         S["cell_b"],
     )] + [""] * (oui_cols - 1)
     oui_body = [
@@ -5147,7 +5353,7 @@ def story():
         [
             ["Permission gate on every launch", "A required runtime permission was denied or reset by the OS.", "Grant Location (Precise), Nearby Wi-Fi, Bluetooth scan/connect, Notifications. Turn system Location on. Full list: §4.5.2."],
             ["I want max hear / the phone gets hot", "High performance, Keep screen on, and Faster Wi-Fi use the radios and the display hard.", "Expected for a sit. Walk through §4.5. Plug in or use a pack. Drop to Balanced and turn Faster Wi-Fi off when you are done. Empty list is still not “safe.”"],
-            ["Live list is empty", "The air is quiet, a filter is hiding radios, or Android is not delivering scans.", "Settings → Diagnostics, under Show Live tour. Copy that page into an issue. It names the phone, Android version, and whether Location and the radios are scanning. It does not include network names or GPS coordinates."],
+            ["Live list is empty", "The air is quiet, a filter is hiding radios, or Android is not delivering scans.", "If Location is off, Live shows a banner. Turn on opens the phone’s Location screen when that screen exists. Otherwise Settings → Diagnostics, under Show Live tour. What to check names a switch that is off. If that does not explain it, Copy that page into an issue. It names the phone, Android version, and whether Location and the radios are scanning. It does not include network names or GPS coordinates."],
             ["Zero Wi-Fi rows, BLE works", "Between OS scan windows, throttle, Wi-Fi off, or Location off.", "Enable Wi-Fi and Location. Read the header: Wi-Fi next Ns or waiting on OS. Last APs should stay held; a new batch arrives about every 30 s on high performance, or ~8 s if Faster Wi-Fi AP scans is on and Developer options Wi-Fi scan throttling is off. Settings → Diagnostics shows the same facts."],
             ["Zero BLE rows after it was working", "Samsung parked the scanner.", "Watch for BLE cycling or BLE parked · restarting in the header. Keep screen on while you watch. Allow background usage and Unrestricted battery if you leave the app. Toggle intensity only if it stays dead."],
             ["UI freeze then both lists empty in a crowd", "A plaza of rotating BLE addresses filled memory.", "The live set is capped at about 400 radios. Turn logging off if you do not need the file. Prefer Strength list over Hybrid in a dense crowd."],
@@ -5176,7 +5382,7 @@ def story():
             ["Cannot find Mark seen / Reset seen", "Those buttons appear only while New detections only is on.", "Turn on Filters → New detections only. Mark seen and Reset seen appear on the Live display, just above the tabs."],
             ["Cannot find Start over", "It is on the Live display, not Filters.", "Turn on Filters → Moving with you. Start over sits above the tabs. It clears the GPS path, not the live list."],
             ["Watchlist never fires", "Alerts off, both Beep and Voice off, or the hit is hidden by New detections only / another filter.", "Enable Watchlist alerts, then Beep, Voice, or both. Confirm the family is bookmarked and the row would show on the Live display. Tap Test alert; raise media volume. Jump works with any of those cues. System notification is optional and off by default."],
-            ["Watchlist beeps but does not speak", "Voice on watched signature was turned off, media volume is down, or the phone has no text-to-speech pack.", "Settings → Voice on watched signature (ships on). Raise media volume. Tap Test alert — Class + signature says “finder tags, Apple AirTags” after the pip if Beep is also on. Hunt never speaks."],
+            ["Watchlist beeps but does not speak", "Voice on watched signature was turned off, media volume is down, or the phone has no text-to-speech pack.", "Settings → Voice on watched signature (starts on). Raise media volume. Tap Test alert — Class + signature says “finder tags, Apple AirTags” after the pip if Beep is also on. Hunt never speaks."],
             ["Finder tags / Surveillance shows nothing", "Show only that class, and no matching radios are on the air.", "Empty Live display means none of that class is in earshot (a bag AirTag is the check for Finder tags). Hide these on another class does not mute labels."],
             ["Signatures only switch does nothing under Show only", "Show only already hides unmatched radios.", "The switch is dimmed while Show only has a class or selected signatures picked. Turn Show only off to use Signatures only, or use Hide these if unmatched radios should stay."],
             ["Moving with you empty after Show only Finder tags", "Class Show only, Signatures only, Named radios only, or Watched only was still on. Finder tags rotate MACs, so they often fail co-travel, and unmatched radios were hidden.", "Tap the Moving with you preset, or turn the switch on. Either one clears Show only, Signatures only, Named radios only, and Watched only. Hide these stays if you were hiding a bag tag. The path still needs about 50 m."],
@@ -5201,7 +5407,8 @@ def story():
             ["Where you were has coords but no street", "Online place names is off, or on with no internet / no geocoder.", "Expected. Stays still print lat/lon. Distance does not need internet. Turn the switch off if you want no lookup attempt."],
             ["Last fix or Debrief shows “masked” instead of lat/lon", "Privacy mode is on.", "Expected. Settings → Privacy mode hides GPS coordinates on the screen and in sit reports. Street names are omitted too. The log still has lat/lon. A TAK / CoT feed is paused. Turn Privacy mode off when you need the pin or the overlay."],
             ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Appearance → Night mode Off. Restore defaults also turns Night mode off. Fig. 9."],
-            ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this handset, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
+            ["Screen pulses lighter and darker", "The phone’s Adaptive brightness is chasing the light sensor. Fieldwatch does not set the brightness. Keep screen on only holds the display awake, so the pulse stays in view.", "Turn Adaptive brightness off in the phone’s Display settings for the sit. Night Light and Extra dim can change the look too. Fieldwatch Night mode only turns the screen red. §13.2."],
+            ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this phone, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 0–2) on BLE FFFA or Wi-Fi FA:0B:BC (Android 11+); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected. §5.8.3, §12.16."],
             ["Wi-Fi drone, no Remote ID chip", "Android 10, NAN-only RID, or a fast fly-by.", "Vendor IEs need Android 11+. NAN still misses. Hover or slow pass. BLE FFFA still works on Android 10. §5.8.3, §12.16."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
@@ -5212,6 +5419,10 @@ def story():
             ["Remote ID is a cloud of dots on ATAK", "UID was the BLE MAC, which Remote ID rotates.", "1.0.3 keys the aircraft on sticky UAS ID. One marker should move. Until the first Basic ID packet, it still keys on MAC, then jumps once."],
             ["Path on Reports is not growing while I drive", "Reports is not in front, GPS tagging is off, or you picked a saved sit.", "Stay on Reports. The plot redraws about every 3 s while that tab is open. Last 15 minutes or an open sit are live (head labeled Now). A saved sit is a still (End). Tag detections with GPS on, high-accuracy Location, scanning running. §5.6.1."],
             ["GPS path stays 0 m while I drive / Moving with you says keep moving", "The phone is not giving a live fix.", "Turn on Tag detections with GPS and high-accuracy Location. Scanning must be running. Wait until the path meter is not 0, then walk or drive."],
+            ["GNSS interference check will not turn on", "This phone has no saved calibration.", "Settings → Calibrate this phone. Outside, hold still, away from radios and Wi-Fi, about a minute. §5.9."],
+            ["No GNSS warning right after I open the app", "The first minute is settling. The next minute is the baseline.", "Expected. Diagnostics says settling, then learning, then armed. A real detection is not until at least two minutes after the check starts. Starting the scan again starts that wait over. §5.9.2."],
+            ["GNSS hits in a cradle, or next to another phone", "The receiver’s view of the sky changed, or another radio is against this phone.", "Put the phone where it can see sky, and not against a charger, a router, or a second phone. A weaker GPS is more likely to call that a hit. §5.9.3."],
+            ["GNSS graded Poor and never pops up", "This phone’s GPS is too coarse to separate interference from its own variation.", "Expected. The popup, red line, beep, and voice stay off. Path tagging still works. Calibrate again outside if you think the minute was spoiled. §5.9.1."],
             ["Second iPhone in the car did not show under Moving with you", "iOS rotates the BLE address, so Fieldwatch sees a new radio with an empty GPS trail.", "Expected. Use a tag with a stable MAC (AirTag/Tile in the bag) as the confidence check. Phones will not stitch as one follower."],
             ["Moving with you lists house APs after I get home", "Wi-Fi access points are excluded from this filter.", "Expected. A loud AP you drive past paints your hear-time path and would look like co-travel, so APs never qualify. Bag and car BLE tags should stay on."],
             ["Moving with you flashes on the highway", "Passing BLE only overlaps for a few seconds, so it fails the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel at 55 mph) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones will still appear and leave — that is the filter working. Roadside APs stay off. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
@@ -5239,9 +5450,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.21 (versionCode 31), field build of 6 October 2026"],
-                ["Document version", "1.1.21"],
-                ["Document date", "3 October 2026"],
+                ["Software version", "1.1.22 (versionCode 32), field build of 8 October 2026"],
+                ["Document version", "1.1.22"],
+                ["Document date", "8 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],
@@ -5273,7 +5484,7 @@ def main():
         pagesize=letter,
         title="Fieldwatch — User Manual and Technical Documentation",
         author="Fieldwatch",
-        subject="Passive Signal Intelligence for Android",
+        subject="Wi-Fi and Bluetooth LE for Android",
         creator="Fieldwatch documentation build",
     )
     cover_frame = Frame(0, 0, PAGE_W, PAGE_H, id="cover")

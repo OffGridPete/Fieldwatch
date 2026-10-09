@@ -67,6 +67,8 @@ class ScanStatusTest {
         assertEquals("Location is off. Android will not deliver scan results.", report.verdict)
         assertTrue(report.blocked)
         assertEquals("off", report.rows.first { it.first == "Location" }.second)
+        assertTrue(report.checks.any { it.startsWith("Turn Location on.") })
+        assertFalse(report.checks.any { it.contains("Location services") })
     }
 
     @Test
@@ -74,29 +76,38 @@ class ScanStatusTest {
         val report = ScanStatus.report(radio(), phone(locationPermission = false), now)
         assertEquals("Location permission is off.", report.verdict)
         assertTrue(report.blocked)
+        assertTrue(report.checks.any { it.startsWith("Allow location for Fieldwatch.") })
     }
 
     @Test
-    fun wifiRefusedAndBleParkedPointsAtLocationServices() {
+    fun wifiRefusedAndBleParkedWhenRadiosAreOn() {
         val report = ScanStatus.report(
             radio(wifiWaitingOnOs = true, bleParked = true, bleHitsLastMin = 0),
             phone(),
             now,
         )
         assertEquals(
-            "Wi-Fi scan refused. BLE scan is parked. Check Location, then Location services, then Wi-Fi scanning and Bluetooth scanning.",
+            "Wi-Fi scan refused. BLE scan is parked. Both radios are on.",
             report.verdict,
         )
         assertTrue(report.blocked)
         assertEquals("waiting on OS (12s ago)", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
         assertEquals("parked", report.rows.first { it.first == "BLE" }.second)
         assertEquals("0", report.rows.first { it.first == "BLE results last minute" }.second)
+        assertTrue(report.checks.any { it.contains("The Wi-Fi radio is on.") })
+        assertTrue(report.checks.any { it.contains("The Bluetooth radio is on.") })
+        assertFalse(report.checks.any { it.contains("Wi-Fi scanning") })
+        assertFalse(report.checks.any { it.contains("Bluetooth scanning") })
     }
 
     @Test
     fun quietAirIsNotAFailure() {
         val report = ScanStatus.report(radio(bleHitsLastMin = 0, lastWifiScanAt = now - 40_000L), phone(), now)
         assertEquals("Scans are running. Nothing is on the air.", report.verdict)
+        assertEquals(
+            listOf("Nothing that needs to be on is off. Scans are running. Nothing is on the air right now."),
+            report.checks,
+        )
         assertFalse(report.blocked)
         assertEquals("All Traffic", report.rows.first { it.first == "Filters" }.second)
         assertEquals("40s ago", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
@@ -123,6 +134,8 @@ class ScanStatusTest {
             now,
         )
         assertEquals("on, OS still throttling", blocked.rows.first { it.first == "Faster Wi-Fi AP scans" }.second)
+        assertTrue(blocked.checks.single().contains("Wi-Fi scan throttling"))
+        assertFalse(off.checks.any { it.contains("throttling") })
     }
 
     @Test
@@ -130,6 +143,10 @@ class ScanStatusTest {
         val report = ScanStatus.report(radio(), phone(), now, radiosOnAir = 12)
         assertEquals("Scans are running.", report.verdict)
         assertFalse(report.verdict.contains("Nothing is on the air"))
+        assertEquals(
+            listOf("Nothing that needs to be on is off. Scans are running."),
+            report.checks,
+        )
         assertFalse(report.blocked)
     }
 
@@ -149,7 +166,10 @@ class ScanStatusTest {
             val report = ScanStatus.report(radio(), facts, now)
             assertEquals("Scans are running. A filter is hiding the list.", report.verdict)
             assertFalse(report.blocked)
-            assertFalse(report.rows.first { it.first == "Filters" }.second == "All Traffic")
+            val filters = report.rows.first { it.first == "Filters" }.second
+            assertFalse(filters == "All Traffic")
+            assertTrue(report.checks.single().contains(filters))
+            assertTrue(report.checks.single().contains("All Traffic"))
         }
     }
 
@@ -175,7 +195,8 @@ class ScanStatusTest {
         val report = ScanStatus.report(radio(), phone(gpsFixAgeMs = null), now)
         assertEquals("none", report.rows.first { it.first == "GPS fix" }.second)
         assertTrue(report.text.startsWith("App: 1.1.21 (31)\n"))
-        assertTrue(report.text.endsWith("Verdict: ${report.verdict}"))
+        assertTrue(report.text.contains("Verdict: ${report.verdict}\n"))
+        assertTrue(report.text.contains("Check:\n- Nothing that needs to be on is off."))
         assertFalse(report.text.contains(planted))
         assertFalse(report.text.contains("latitude", ignoreCase = true))
         assertFalse(report.text.contains("longitude", ignoreCase = true))

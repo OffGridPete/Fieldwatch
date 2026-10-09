@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import app.fieldwatch.domain.Sit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.withFrameNanos
@@ -60,6 +61,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -97,6 +99,11 @@ import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.ui.FieldwatchUi
 import app.fieldwatch.ui.FieldwatchViewModel
+import android.content.Intent
+import android.provider.Settings
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fieldwatch.ui.component.PresenceTrack
 import app.fieldwatch.ui.component.RssiBar
@@ -130,11 +137,59 @@ fun LivePane(
     val flashKeys by vm.flashKeys.collectAsStateWithLifecycle()
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
     val flood by vm.floodNotice.collectAsStateWithLifecycle()
+    val gnss by vm.gnssNotice.collectAsStateWithLifecycle()
     val floodHide by vm.floodHide.collectAsStateWithLifecycle()
     var renameSit by remember { mutableStateOf(false) }
     var renameDraft by remember { mutableStateOf("") }
     val floodNotice = flood
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val obs = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.refreshLocation()
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
     Column(Modifier.fillMaxSize()) {
+        if (!state.locationOn) {
+            LocationOffBanner()
+        }
+        val gnssNotice = gnss
+        if (gnssNotice != null && !gnssNotice.showDialog && gnssNotice.line.isNotBlank()) {
+            Text(
+                gnssNotice.line,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+        }
+        if (gnssNotice != null && gnssNotice.showDialog) {
+            AlertDialog(
+                onDismissRequest = { vm.dismissGnss() },
+                title = { Text(gnssNotice.title) },
+                text = {
+                    Column {
+                        Text(gnssNotice.body)
+                        if (gnssNotice.details.isNotBlank()) {
+                            Text(
+                                "Details",
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(top = 14.dp),
+                            )
+                            Text(
+                                gnssNotice.details,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { vm.dismissGnss() }) { Text("OK") }
+                },
+            )
+        }
         if (floodNotice != null && !floodNotice.showDialog) {
             Text(
                 floodNotice.line(),
@@ -294,6 +349,29 @@ fun LivePane(
                     flashKeys = flashKeys, alertedKeys = alertedKeys, titleLine = titleLine, subtitleLine = subtitleLine,
                     demoMode = demoMode,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocationOffBanner() {
+    val context = LocalContext.current
+    val settings = remember(context) {
+        Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    val canOpen = remember(context) {
+        settings.resolveActivity(context.packageManager) != null
+    }
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+        Text(
+            "Location is off. Android will not return Wi-Fi or Bluetooth results.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+        if (canOpen) {
+            TextButton(onClick = { runCatching { context.startActivity(settings) } }) {
+                Text("Turn on")
             }
         }
     }

@@ -468,6 +468,73 @@ class TakPublishTest {
     }
 
     @Test
+    fun gnssLineFollowsTheChosenWindow() {
+        val active = GnssNotice(false, "Possible GNSS interference (Medium)", "", "Possible GNSS interference · Medium")
+        val ended = active.copy(line = "Possible GNSS interference ended 15:04", ended = true)
+        val low = GnssLive(
+            kind = GnssKind.INTERFERENCE,
+            confidence = GnssConfidence.LOW,
+            startedWall = 1L,
+            detail = "GPS L1",
+            adapted = false,
+            rose = false,
+        )
+        assertNull(TakGnss.line(TakGnssSend.OFF, active, listOf(low)))
+        assertEquals(active.line, TakGnss.line(TakGnssSend.ALERT, active, emptyList()))
+        assertNull(TakGnss.line(TakGnssSend.ALERT, ended, emptyList()))
+        assertEquals(ended.line, TakGnss.line(TakGnssSend.RED_LINE, ended, emptyList()))
+        assertNull(TakGnss.line(TakGnssSend.ANY, ended, emptyList()))
+        assertEquals("Possible GNSS interference · Low", TakGnss.line(TakGnssSend.ANY, null, listOf(low)))
+        assertEquals(TakGnssSend.OFF, AppSettings().takGnss)
+    }
+
+    @Test
+    fun floodNoteStartsWhenTheFloodIsDetected() {
+        val asking = PairingFlood.Notice(
+            showDialog = true,
+            popupCount = 12,
+            nameCount = 0,
+            families = listOf("Fast Pair"),
+            medianRssi = -40,
+        )
+        val wifi = PairingFlood.Notice(
+            showDialog = false,
+            popupCount = 8,
+            nameCount = 0,
+            families = emptyList(),
+            medianRssi = -55,
+            wifi = true,
+        )
+        assertNull(TakFlood.line(TakFloodSend.OFF, asking))
+        assertEquals("Pairing flood · 12 new addresses · about -40 dBm", TakFlood.line(TakFloodSend.ON, asking))
+        assertEquals("Wi-Fi beacon flood · 8 new names · about -55 dBm", TakFlood.line(TakFloodSend.ON, wifi))
+        assertEquals(TakFloodSend.OFF, AppSettings().takFlood)
+        assertEquals("On", TakFloodSend.ON.label())
+        val saved = SettingsExchange.json.decodeFromString(
+            TakFloodSend.serializer(),
+            "\"RED_LINE\"",
+        )
+        assertEquals(TakFloodSend.ON, saved)
+        val xml = CotEvent.selfXml(40.0, -74.0, 0L, remarksExtra = TakFlood.line(TakFloodSend.ON, asking))
+        assertTrue(xml.contains("Pairing flood"))
+        assertFalse(xml.contains("Flipper"))
+        assertFalse(xml.contains("latitude"))
+    }
+
+    @Test
+    fun selfMarkerCarriesTheGnssLineAndNoCoordinatesInRemarks() {
+        val plain = CotEvent.selfXml(40.0, -74.0, 0L)
+        assertTrue(plain.contains("Fieldwatch TAK heartbeat (this phone)"))
+        assertFalse(plain.contains("GNSS"))
+        val xml = CotEvent.selfXml(40.0, -74.0, 0L, remarksExtra = "Possible GNSS interference · Medium")
+        assertTrue(xml.contains("Possible GNSS interference · Medium"))
+        assertTrue(xml.contains("&#10;"))
+        assertFalse(xml.contains("latitude"))
+        assertFalse(xml.contains("longitude"))
+        assertTrue(xml.contains("lat=\"40\""))
+    }
+
+    @Test
     fun tombstoneStaleEqualsNow() {
         val xml = CotEvent.tombstoneXml("FIELDWATCH-BLE-AABBCCDDEE01", 37.5, -122.2, 0L)
         assertTrue(xml.contains("uid=\"FIELDWATCH-BLE-AABBCCDDEE01\""))

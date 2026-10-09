@@ -92,6 +92,23 @@ class PairingFloodTest {
     }
 
     @Test
+    fun findMyThatContainsAProximityShapeStaysQuiet() {
+        val flood = PairingFlood()
+        val findMy = "12026E0007110654D03727C0AFB609F0BD82E4C265C651"
+        repeat(12) { flood.consider(apple(it, findMy), 0L) }
+        assertNull(flood.notice.value)
+        repeat(10) { flood.consider(apple(40 + it, "120200000F0101"), 0L) }
+        val action = flood.notice.value!!
+        assertEquals(10, action.popupCount)
+        assertEquals(listOf("Apple Nearby Action"), action.families)
+        val leading = PairingFlood()
+        repeat(10) { leading.consider(apple(it, "07010012020000"), 0L) }
+        val notice = leading.notice.value!!
+        assertEquals(10, notice.popupCount)
+        assertEquals(listOf("Apple proximity pairing"), notice.families)
+    }
+
+    @Test
     fun aLongFastPairPayloadIsNotThePairingFrame() {
         val flood = PairingFlood()
         repeat(12) { flood.consider(fastPair(it, payload = "01020304050607"), 0L) }
@@ -450,7 +467,10 @@ class PairingFloodTest {
         assertEquals((0..9).map { burstKey(it) }.toSet(), flood.hide.value.keys)
 
         val quiet = PairingFlood()
-        listOf("0300", "030000", "030380", "00", "0209").forEachIndexed { group, payload ->
+        listOf(
+            "0300", "030000", "030380", "00", "0209",
+            "0109", "01092022B0018CE2", "010F2022",
+        ).forEachIndexed { group, payload ->
             repeat(12) { quiet.consider(swift(group * 16 + it, payload = payload), 0L) }
         }
         assertNull(quiet.notice.value)
@@ -605,6 +625,49 @@ class PairingFloodTest {
     }
 
     @Test
+    fun aWeakBurstWhileDrivingStaysQuiet() {
+        val flood = PairingFlood()
+        repeat(16) { flood.consider(named(it, rssi = -97), 0L, speedMps = 20.0) }
+        assertNull(flood.notice.value)
+        assertTrue(flood.bursts().isEmpty())
+        val pairing = PairingFlood()
+        repeat(12) { pairing.consider(proximity(it, rssi = -96), 0L, speedMps = 12.0) }
+        assertNull(pairing.notice.value)
+    }
+
+    @Test
+    fun theSameWeakBurstWarnsOnFoot() {
+        val flood = PairingFlood()
+        repeat(16) { flood.consider(named(it, rssi = -97), 0L, speedMps = 1.2) }
+        assertEquals("Name flood", flood.notice.value!!.title())
+        assertEquals(-97, flood.notice.value!!.medianRssi)
+    }
+
+    @Test
+    fun aLoudBurstWhileDrivingStillWarns() {
+        val flood = PairingFlood()
+        repeat(10) { flood.consider(proximity(it, rssi = -55), 0L, speedMps = 20.0) }
+        assertEquals("Pairing flood", flood.notice.value!!.title())
+        assertEquals(-55, flood.notice.value!!.medianRssi)
+    }
+
+    @Test
+    fun unknownSpeedDoesNotHideAWeakBurst() {
+        val flood = PairingFlood()
+        repeat(16) { flood.consider(named(it, rssi = -97), 0L, speedMps = null) }
+        assertEquals("Name flood", flood.notice.value!!.title())
+    }
+
+    @Test
+    fun slowingDownLetsAWeakBurstWarn() {
+        val flood = PairingFlood()
+        repeat(16) { flood.consider(named(it, rssi = -97), 1_000L, speedMps = 20.0) }
+        assertNull(flood.notice.value)
+        flood.tick(2_000L, speedMps = 0.0)
+        assertEquals("Name flood", flood.notice.value!!.title())
+    }
+
+    @Test
     fun wifiNamesAreIgnored() {
         val flood = PairingFlood()
         repeat(20) {
@@ -626,7 +689,7 @@ class PairingFloodTest {
     private fun fastPair(n: Int, rssi: Int = -48, payload: String = "000006") =
         obs(n, rssi, serviceUuid = "FE2C", serviceHex = payload)
 
-    private fun swift(n: Int, rssi: Int = -48, payload: String = "0109") =
+    private fun swift(n: Int, rssi: Int = -48, payload: String = "030080") =
         obs(n, rssi, mfgId = 0x0006, mfgHex = payload)
 
     private fun samsung(n: Int, rssi: Int = -48, payload: String) =

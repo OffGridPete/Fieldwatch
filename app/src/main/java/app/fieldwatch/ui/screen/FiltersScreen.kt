@@ -83,9 +83,9 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
         ) {
             SectionCard("Presets") {
             Text(
-                "Tap to replace the whole filter. Long-press a chip to delete it. " +
-                    "A short stock set ships; Save current as… adds your own (Cameras, plaza −80, …). " +
-                    "Stock chips you delete come back with Settings → Restore default signatures & presets.",
+                "Tap a preset to replace the whole filter. Long-press one to delete it. " +
+                    "Save current as… keeps the filter you have now. " +
+                    "Settings → Restore default signatures & presets brings deleted stock presets back.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -129,9 +129,9 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             SectionCard("Radios") {
             Text(
                 if (filter.movingWithYou) {
-                    "Moving with you is BLE only. Both and Wi-Fi only stay off until you turn that switch off."
+                    "Moving with you uses BLE only. Both and Wi-Fi only stay unavailable until you turn that switch off."
                 } else {
-                    "These are include switches. Turn both on to see Wi-Fi and BLE together. A single device is never both."
+                    "Pick which radios Live shows. One radio is Wi-Fi or BLE, not both."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -189,43 +189,37 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             Text(
                 when {
                     !state.settings.tagLocation ->
-                        "Turn on Settings → Tag detections with GPS, then walk or drive. " +
-                            "Only loud BLE advertisers that stay with you along the path. " +
-                            "Wi-Fi access points stay off — a loud AP you drive past paints your path. " +
-                            "The switch starts a BLE follow test (clears Signatures only / Show only / Named radios only / Watched only). " +
-                            "Or tap the Moving with you preset at the top."
+                        "Turn on Tag detections with GPS, then walk or drive. " +
+                            "This shows loud Bluetooth radios that stay with you. Wi-Fi access points stay off. " +
+                            "Turning this on clears the other “only” filters, except Hide these."
                     state.operatorSpanM < 45.0 ->
-                        "GPS path so far ${state.operatorSpanM.toInt()} m. Keep moving (~50 m). " +
-                            "If this stays 0 while you drive, Location is not giving a live fix " +
-                            "(set Location to high accuracy). Last-known-only is not enough. " +
-                            "A second iPhone usually will not match: BLE MAC rotation starts a new radio." +
+                        "GPS path so far ${state.operatorSpanM.toInt()} m. Keep moving until about 50 m. " +
+                            "If this stays at 0 while you drive, set Location to high accuracy. " +
+                            "A phone that keeps changing its Bluetooth address will not match." +
                             when {
                                 filter.customNamesOnly ->
-                                    " Named radios only is also on — unlabeled radios stay hidden."
+                                    " Named radios only is also on, so unlabeled radios stay hidden."
                                 filter.watchedOnly ->
-                                    " Watched only is also on — unwatched radios stay hidden."
+                                    " Watched only is also on, so unwatched radios stay hidden."
                                 filter.namedOnly || filter.namedOnlyImplied() ->
-                                    " Signatures only / Show only is also on — unmatched radios stay hidden."
+                                    " Signatures only or Show only is also on, so unmatched radios stay hidden."
                                 else -> ""
                             } +
-                            if (filter.hideMine) " Hide my radios is on — those stay off this list." else ""
+                            if (filter.hideMine) " Hide my radios is on, so those stay off this list." else ""
                     filter.customNamesOnly || filter.watchedOnly || filter.namedOnly || filter.namedOnlyImplied() ->
-                        "GPS path ${state.operatorSpanM.toInt()} m. Signatures only, class Show only, " +
-                            "Named radios only, or Watched only is also on, so only those radios can co-travel. " +
-                            "Tap the Moving with you preset to test BLE. A tag in your bag or car should match. Wi-Fi access points stay hidden." +
-                            if (filter.hideMine) " Hide my radios is on — those stay off this list." else ""
+                        "GPS path ${state.operatorSpanM.toInt()} m. Another “only” filter is on, so only those radios can match. " +
+                            "A tag in a bag or a car should show. Wi-Fi stays hidden." +
+                            if (filter.hideMine) " Hide my radios is on, so those stay off this list." else ""
                     else ->
-                        "GPS path ${state.operatorSpanM.toInt()} m. Loud BLE heard along that " +
-                            "path at a fairly steady level — not ones that only appear when you " +
-                            "arrive. " +
+                        "GPS path ${state.operatorSpanM.toInt()} m. Loud Bluetooth heard along that path at a steady level. " +
                             (if (filter.hideMine) {
-                                "Hide my radios is on — those stay off this list. "
+                                "Hide my radios is on, so those stay off this list. "
                             } else {
-                                "A tag in your bag or car will match. "
+                                "A tag in a bag or a car should show. "
                             }) +
-                            "Wi-Fi access points stay hidden " +
-                            "(range looks like co-travel). A phone’s rotating BLE address will not stitch as one follower. " +
-                            "Live → Start over clears the path and trails so you can test again."
+                            "Wi-Fi stays hidden, because a strong access point can look like it is traveling with you. " +
+                            "A phone that keeps changing its Bluetooth address will not show as one follower. " +
+                            "Live → Start over clears the path so you can test again."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -245,20 +239,20 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             }
             Text(
                 if (filter.arrivalsOnly) {
-                    "Mark seen and Reset seen sit on Live, above the tabs. " +
+                    "Mark seen and Reset seen are on Live, above the tabs. " +
                         when {
                             state.arrivalsLearning ->
-                                "Learning sitting Wi-Fi into already-seen."
+                                "Learning the Wi-Fi that is already here."
                             state.hiddenKnown > 0 ->
-                                "${state.hiddenKnown} already seen are hidden."
+                                "${state.hiddenKnown} already-seen radios are hidden."
                             else ->
-                                "Already seen is 0."
+                                "Nothing is marked seen yet."
                         }
                 } else {
-                    "Hide radios already here so only new ones show on Live. " +
-                        "Mark seen / Reset seen appear above the tabs on Live while this is on. " +
+                    "Hides radios already here so Live shows only new ones. " +
+                        "Mark seen and Reset seen appear on Live while this is on. " +
                         "Brief hold still sets how long a new radio stays after the last packet. " +
-                        "Randomized BLE addresses look new."
+                        "A Bluetooth radio that changes its address looks new."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -287,7 +281,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             }
             if (namedImplied) {
                 Text(
-                    "Show only already hides unmatched radios. Turn Show only (class or selected signatures) off to use this switch.",
+                    "Show only is already hiding unmatched radios. Turn Show only off to use this switch.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -301,9 +295,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             Text(
-                "Only radios that match a bookmarked signature, or a Named radio with Alert on. " +
-                    "Hide these still applies (Watched only + Hide Surveillance drops bookmarked cameras). " +
-                    "Label-only names stay on Named radios only. Bookmark on Signatures; Alert on detail.",
+                "Live shows bookmarked signatures, and named radios with Alert on. Hide these still applies. A name with no bookmark stays under Named radios only.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -316,8 +308,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             Text(
-                "Only radios you gave a custom name. Alert can still be off. Settings → Named radios. " +
-                    "A random / privacy MAC will not follow a rotation.",
+                "Live shows radios you named. Alert can be off. A radio that changes its address will not keep that name.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -330,8 +321,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             Text(
-                "Radios marked Mine stay off Live. The sit and Debrief still have them. " +
-                    "Turning on Moving with you leaves this on.",
+                "Radios marked Mine stay off Live. The sit and Debrief still have them. Moving with you leaves this on.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -344,8 +334,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             Text(
-                "Plaza noise: already-paired Fast Pair chips with no other signature. " +
-                    "Keeps pairing-mode (tap-to-pair model ID). Hide selected Fast Pair still drops pairing-mode too.",
+                "Hides already-paired Fast Pair radios that match no other signature. Radios still in pairing mode stay. Hide selected signatures can hide those too.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -353,9 +342,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
 
             SectionCard("Signature classes") {
             Text(
-                "Live only — signatures still label, log, and can beep. " +
-                    "Cameras, Drones, Finder tags, and the rest are these chips — Show only, then Save current as… if you want a preset. " +
-                    "Show only with no class picked leaves Live unchanged.",
+                "Live only. Signatures still label, log, and can beep. Pick Show only or Hide these, then the classes. Show only with nothing picked leaves Live unchanged. Save current as… keeps this as a preset.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -438,8 +425,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 SignaturePickList(
                     fleets = state.fleets,
                     selected = filter.includeFleetIds,
-                    help = "Tap a class to open its signatures. Only radios matching a signature you turn on below stay on Live. " +
-                        "Empty list = no extra include (Live unchanged). Picks stay if you turn this off and on again.",
+                    help = "Tap a class to open it. Live keeps radios that match a signature you turn on. An empty list leaves Live unchanged. Your picks stay if you turn this off and back on.",
                     onToggle = { id, checked ->
                         vm.updateFilter { current ->
                             val next = current.includeFleetIds.toMutableSet()
@@ -461,8 +447,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 SignaturePickList(
                     fleets = state.fleets,
                     selected = filter.fleetIds,
-                    help = "Tap a class to open its signatures. Devices matching a signature you turn on below stay off the Live list. " +
-                        "Your picks stay if you turn this off and on again.",
+                    help = "Tap a class to open it. Radios that match a signature you turn on stay off Live. Your picks stay if you turn this off and back on.",
                     onToggle = { id, checked ->
                         vm.updateFilter { current ->
                             val next = current.fleetIds.toMutableSet()
@@ -502,12 +487,12 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             FieldwatchOutlinedField(
                 filter.ouiQuery,
                 { value -> vm.updateFilter { it.copy(ouiQuery = value) } },
-                "OUI / vendor contains",
+                "Vendor contains",
             )
 
-            Text("Extra filter logic", style = MaterialTheme.typography.labelLarge)
+            Text("Name, vendor, signal, and class", style = MaterialTheme.typography.labelLarge)
             Text(
-                "AND/OR applies to name, OUI, RSSI, and class include — not to radios, Named radios only, Watched only, Hide my radios, Hide Fast Pair account-key, or hide lists.",
+                "AND means all of these match. OR means any one of them. This does not change the radio type, the “only” switches, Hide my radios, Hide Fast Pair, or a hide list.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -536,8 +521,8 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             title = { Text("Reset filter?") },
             text = {
                 Text(
-                    "Clears every switch and pick on this tab (radios, classes, selected signatures, RSSI, name/OUI). " +
-                        "Presets you saved stay. The Live display goes back to the unfiltered set. This is not undo.",
+                    "Clears the radios, classes, selected signatures, signal strength, and name and vendor fields. " +
+                        "Presets you saved stay. Live shows the radios again. This cannot be undone.",
                 )
             },
             confirmButton = {
@@ -560,9 +545,9 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
             text = {
                 Text(
                     if (preset.isBuiltIn()) {
-                        "Remove stock chip “${preset.name}” from this list? Catalog updates will not put it back. Settings → Restore default signatures & presets restores all stock chips. The filter on Live does not change until you apply another chip or Reset filter."
+                        "Remove “${preset.name}” from this list? A catalog update will not put it back. Settings → Restore default signatures & presets brings the stock presets back. Live keeps this filter until you pick another preset or tap Reset filter."
                     } else {
-                        "Delete preset “${preset.name}”? This cannot be undone. The filter on Live does not change until you apply another chip or Reset filter."
+                        "Delete “${preset.name}”? This cannot be undone. Live keeps this filter until you pick another preset or tap Reset filter."
                     },
                 )
             },

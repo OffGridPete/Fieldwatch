@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.content.Context
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.FloodBurst
+import app.fieldwatch.domain.GnssMark
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sit
@@ -76,7 +77,7 @@ class SitStore(
                 runCatching { File(dir, "${extra.summary.id}.json").delete() }
             }
             open = keepOpen?.let {
-                SitSession(it.summary, it.radios, it.operatorPath, it.floods)
+                SitSession(it.summary, it.radios, it.operatorPath, it.floods, it.gnss)
             }
             closed = closedAcc.sortedByDescending { it.startAt }
             pruneClosedLocked()
@@ -105,6 +106,13 @@ class SitStore(
         if (incoming.isEmpty()) return
         synchronized(lock) {
             open?.noteFloods(incoming)
+        }
+    }
+
+    fun noteGnss(incoming: List<GnssMark>) {
+        if (incoming.isEmpty()) return
+        synchronized(lock) {
+            open?.noteGnss(incoming)
         }
     }
 
@@ -255,6 +263,7 @@ class SitStore(
                     devices = snap.radios.map { it.toSighting() },
                     operatorPath = snap.operatorPath,
                     floods = snap.floods,
+                    gnss = snap.gnss,
                 )
             }
         }
@@ -268,6 +277,7 @@ class SitStore(
             devices = file.radios.map { it.toSighting() },
             operatorPath = file.operatorPath,
             floods = file.floods,
+            gnss = file.gnss,
         )
     }
 

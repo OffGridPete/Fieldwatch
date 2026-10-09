@@ -40,6 +40,7 @@ class TakPublisher {
         watchlist: List<WatchTarget>,
         now: Long = System.currentTimeMillis(),
         selfFix: Pair<Double, Double>? = null,
+        gnssRemark: String? = null,
     ) {
         if (!settings.takEnabled) {
             last.clear()
@@ -71,10 +72,24 @@ class TakPublisher {
 
         if (selfOk) {
             val prev = last[SELF_UID]
-            if (TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, selfFix!!.first, selfFix.second)) {
-                val xml = CotEvent.selfXml(selfFix.first, selfFix.second, now)
+            val gnssLine = gnssRemark?.trim().orEmpty()
+            val noteChanged = (prev?.note ?: "") != gnssLine
+            if (noteChanged || TakPublish.shouldEmit(prev?.at, prev?.lat, prev?.lon, now, selfFix!!.first, selfFix.second)) {
+                val xml = CotEvent.selfXml(
+                    selfFix.first,
+                    selfFix.second,
+                    now,
+                    remarksExtra = gnssLine.ifBlank { null },
+                )
                 if (sendAll(dests, xml.toByteArray(Charsets.UTF_8))) {
-                    last[SELF_UID] = TakSent(SELF_UID, SELF_UID, now, selfFix.first, selfFix.second)
+                    last[SELF_UID] = TakSent(
+                        SELF_UID,
+                        SELF_UID,
+                        now,
+                        selfFix.first,
+                        selfFix.second,
+                        note = gnssLine,
+                    )
                     sent++
                 } else {
                     lastErr = "send failed"

@@ -362,7 +362,7 @@ object TrackerMatch {
         "find hub", "dult",
     )
     private val beaconTokens = listOf("ibeacon", "minew", "estimote", "kontakt")
-    private val wearableTokens = listOf("garmin", "fitbit", "oura")
+    private val wearableTokens = listOf("garmin", "fitbit", "oura", "polar")
 
     /** Apple Continuity / pairing types — not Offline Finding 0x12. */
     private val APPLE_CONTINUITY_PREFIXES = setOf(

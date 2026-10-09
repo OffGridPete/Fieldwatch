@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 92,
+    "catalogVersion": 94,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -24397,6 +24397,38 @@
                     "enabled": true
                 },
                 {
+                    "kind": "SERVICE_UUID",
+                    "text": "3080",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "3081",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "3082",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "3083",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
                     "kind": "NAME_CONTAINS",
                     "text": "Flipper",
                     "companyId": 0,
@@ -24425,8 +24457,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Flipper Zero (or other Flipper Devices). Default name starts with Flipper; custom firmware can hide it.",
-            "attentionNote": "Flipper Zero (or other Flipper Devices) BLE. Default name starts with Flipper; newer units use IEEE OUI 0C:FA:22. Custom firmware can change the name and MAC. Not proof of an attack. A miss is not a clean bill (Bluetooth off, or renamed). Look with your eyes.",
+            "notes": "Flipper Zero (or other Flipper Devices). Default name starts with Flipper. Official firmware keeps its service UUID when the name changes. Custom firmware can hide it.",
+            "attentionNote": "Flipper Zero (or other Flipper Devices) BLE. Default name starts with Flipper. Official firmware also advertises service 3080, 3081, 3082, or 3083, so a renamed official unit still matches. Newer units may use IEEE OUI 0C:FA:22. Custom firmware can change the name, the service, and the MAC. Not proof of an attack. A miss is not a clean bill (Bluetooth off, or custom firmware). Look with your eyes.",
             "builtIn": true,
             "kind": "HACKING"
         },
@@ -24446,56 +24478,8 @@
                     "enabled": true
                 },
                 {
-                    "kind": "NAME_CONTAINS",
-                    "text": "Flock",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "FLCK",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
                     "kind": "NAME_GLOB",
                     "text": "Flock-*",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_GLOB",
-                    "text": "Flock-??????",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "CONDOR",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "FALCON",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "SPARROW",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -24506,7 +24490,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Flock-style roadside ALPR / camera pole. IEEE B4:1E:52 or a Flock-* / FLCK / Condor / Falcon / Sparrow name. Current poles are often quiet on Wi-Fi and BLE. LiteOn module prefixes are a separate row, not Extra attention.",
+            "notes": "Flock-style roadside ALPR / camera pole. IEEE B4:1E:52 or a name that starts with Flock-. Current poles are often quiet on Wi-Fi and BLE. LiteOn module prefixes are a separate row, not Extra attention.",
             "attentionNote": "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the strong hit. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
@@ -24941,63 +24925,7 @@
                 },
                 {
                     "kind": "NAME_GLOB",
-                    "text": "FS_*",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_GLOB",
                     "text": "FS Ext*",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "04:0D:84",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "1C:34:F1",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "38:5B:44",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "94:34:69",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "B4:E3:F9",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "F0:82:C0",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -25008,8 +24936,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "External battery pack usually associated with a Flock-style camera pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE.",
-            "attentionNote": "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
+            "notes": "External battery pack usually associated with a Flock-style camera pole. The name FS Ext Battery, or a name that starts with FS Ext, is the hit. Current poles are often quiet on Wi-Fi and BLE.",
+            "attentionNote": "Usually associated with a Flock-style camera — an external battery pack on the pole. The name is the hit. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
         },
@@ -25540,7 +25468,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "GoPro action camera. Decoded fields can show whether it is awake, in Wi-Fi AP mode, or pairing.",
+            "notes": "GoPro action camera. Decoded fields can show whether it is awake, in Wi-Fi AP mode, or pairing. A Polar strap that also advertises a GoPro heart-rate service stays on Polar.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA",
@@ -45619,14 +45547,6 @@
                 },
                 {
                     "kind": "OUI",
-                    "text": "B8:35:32",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
                     "text": "14:5A:FC",
                     "companyId": 0,
                     "dataPrefixHex": "",
@@ -45806,7 +45726,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Wi-Fi module prefixes commonly seen on camera boards (LiteOn and similar). Not Flock's IEEE block. Doorbells and other OEM radios use these chips. A Flock name or B4:1E:52 is Flock Safety Cameras.",
+            "notes": "Wi-Fi module prefixes commonly seen on camera boards (LiteOn and similar). 08:3A:88 is Universal Global Scientific Industrial, not Lite-On. Not Flock's IEEE block. Doorbells and other OEM radios use these chips. A name that starts with Flock- or B4:1E:52 is Flock Safety Cameras.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
@@ -49690,24 +49610,8 @@
             "colorIndex": 1,
             "rules": [
                 {
-                    "kind": "NAME_CONTAINS",
-                    "text": "Penguin",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "PENGUIN",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
                     "kind": "NAME_GLOB",
-                    "text": "Penguin*",
+                    "text": "Penguin-*",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -49726,8 +49630,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Penguin Flock-family external battery. The XUNTONG BLE manufacturer ID is the usual fingerprint; Penguin* names are older firmware. Newer packs often advertise a 10-digit name. Decode fields show the TN serial from manufacturer data when present.",
-            "attentionNote": "Penguin is a Flock-family external battery (XUNTONG manufacturer ID). Name hits are older firmware and low uniqueness. Pattern match, not that camera. Look with your eyes.",
+            "notes": "Penguin Flock-family external battery. The XUNTONG BLE manufacturer ID is the usual fingerprint. A name that starts with Penguin- is older firmware. Newer packs often advertise a 10-digit name. Decode fields show the TN serial from manufacturer data when present.",
+            "attentionNote": "Penguin is a Flock-family external battery (XUNTONG manufacturer ID). A name that starts with Penguin- is older firmware and low uniqueness. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE",
             "decode": {
@@ -50159,6 +50063,47 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "Nintendo Pokémon GO Plus or Plus + wrist accessory. Not a Joy-Con or Switch.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE"
+        },
+        {
+            "id": "fleet-polar",
+            "name": "Polar",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 107,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEEE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Polar*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Polar heart-rate strap or watch. A strap that also advertises a GoPro heart-rate service stays on this row.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "WEARABLE"
@@ -58251,6 +58196,14 @@
                 {
                     "kind": "SERVICE_UUID",
                     "text": "FEED",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEEC",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,

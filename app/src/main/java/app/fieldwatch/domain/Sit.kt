@@ -223,6 +223,7 @@ data class SitFile(
     val radios: List<SitRadio> = emptyList(),
     val operatorPath: List<GpsSample> = emptyList(),
     val floods: List<FloodBurst> = emptyList(),
+    val gnss: List<GnssMark> = emptyList(),
 )
 
 data class SitUi(
@@ -243,6 +244,7 @@ data class SitDebrief(
     val devices: List<Sighting>,
     val operatorPath: List<GpsSample>,
     val floods: List<FloodBurst> = emptyList(),
+    val gnss: List<GnssMark> = emptyList(),
 )
 
 data class DebriefWindow(
@@ -258,6 +260,7 @@ class SitSession(
     radios: List<SitRadio> = emptyList(),
     path: List<GpsSample> = emptyList(),
     floods: List<FloodBurst> = emptyList(),
+    gnss: List<GnssMark> = emptyList(),
 ) {
     var summary: SitSummary = summary
         private set
@@ -266,6 +269,7 @@ class SitSession(
     }
     private val path = ArrayList<GpsSample>(path.size + 16).apply { addAll(path) }
     private val floods = ArrayList<FloodBurst>(floods.size + 4).apply { addAll(floods) }
+    private val gnss = ArrayList<GnssMark>(gnss.size + 4).apply { addAll(gnss) }
     var dirty: Boolean = false
         private set
 
@@ -290,7 +294,32 @@ class SitSession(
             radios = radios.values.toList(),
             operatorPath = path.toList(),
             floods = floods.toList(),
+            gnss = gnss.toList(),
         )
+    }
+
+    /** Copy GNSS hits that started during this sit. The same start time updates in place. */
+    fun noteGnss(incoming: List<GnssMark>) {
+        if (!open || incoming.isEmpty()) return
+        val start = summary.startAt
+        var changed = false
+        for (mark in incoming) {
+            if (mark.at < start && (mark.endedAt <= 0L || mark.endedAt < start)) continue
+            val index = gnss.indexOfFirst { it.at == mark.at && it.kind == mark.kind }
+            if (index < 0) {
+                gnss += mark
+                changed = true
+            } else if (gnss[index] != mark) {
+                gnss[index] = mark
+                changed = true
+            }
+        }
+        if (gnss.size > 40) {
+            val drop = gnss.size - 40
+            repeat(drop) { gnss.removeAt(0) }
+            changed = true
+        }
+        if (changed) dirty = true
     }
 
     /** Copy bursts that started during this sit. The same start time updates in place. */

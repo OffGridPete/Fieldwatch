@@ -66,6 +66,7 @@ object DebriefPdf {
     private val PATH_STAY = Color.parseColor("#35D683")
     private val DOT_ATTENTION = Color.parseColor("#E53935")
     private val DOT_BOOKMARK = Color.parseColor("#0288D1")
+    private val GNSS_INK = Color.parseColor("#B91C1C")
     private const val MARK_STAY = 1
     private const val MARK_SLATE = 2
     private const val MARK_AMBER = 3
@@ -74,6 +75,8 @@ object DebriefPdf {
     private const val MARK_BLUE = 6
     private const val MARK_PILOT = 7
     private const val MARK_ALERT = 8
+    private const val MARK_GNSS = 9
+    private const val MARK_GNSS_2 = 10
     private val CONTENT_W = (PAGE_W - 2 * MARGIN).toInt()
     private val TIME_FMT = SimpleDateFormat("HH:mm", Locale.getDefault())
     private val BODY_TOP = HEADER_H + 18f
@@ -477,6 +480,10 @@ object DebriefPdf {
         if (phonePrimary != null && phonePrimary.samples.size >= 2 && fig.tracks.count { !it.aircraft } == 1) {
             drawPathTicks(canvas, lay, phonePrimary.samples, ::ox, ::oy, despike = true)
         }
+        fig.gnss.forEach { pin ->
+            val pt = lay.project(pin.lat, pin.lon)
+            drawGnssMark(canvas, ox(pt.x), oy(pt.y), pin.secondary)
+        }
         val craftPrimary = fig.tracks.firstOrNull { it.aircraft && !it.secondary && it.samples.size >= 2 }
         if (phonePrimary == null && craftPrimary != null) {
             drawPathTicks(canvas, lay, craftPrimary.samples, ::ox, ::oy, despike = false)
@@ -690,6 +697,8 @@ object DebriefPdf {
         if (fig.dots.any { it.named }) out += LegendSwatch("MAC alert", MARK_BLUE)
         if (fig.dots.any { !it.extraAttention && !it.named }) out += LegendSwatch("Signature alert", MARK_ALERT)
         if (fig.pilots.isNotEmpty()) out += LegendSwatch("Pilot", MARK_PILOT)
+        if (fig.gnss.any { !it.secondary }) out += LegendSwatch("GNSS", MARK_GNSS)
+        if (fig.gnss.any { it.secondary }) out += LegendSwatch("Second GNSS", MARK_GNSS_2)
         return out
     }
 
@@ -790,7 +799,37 @@ object DebriefPdf {
                 canvas.drawCircle(cx, cy, 2.6f, fill)
             }
             MARK_PILOT -> drawPilot(canvas, cx, cy, radius = 4.4f)
+            MARK_GNSS -> drawGnssMark(canvas, cx, cy, secondary = false, radius = 4.2f)
+            MARK_GNSS_2 -> drawGnssMark(canvas, cx, cy, secondary = true, radius = 4.2f)
         }
+    }
+
+    private fun drawGnssMark(
+        canvas: Canvas,
+        x: Float,
+        y: Float,
+        secondary: Boolean,
+        radius: Float = 5.6f,
+    ) {
+        val path = Path()
+        path.moveTo(x, y - radius)
+        path.lineTo(x + radius * 0.86f, y)
+        path.lineTo(x, y + radius)
+        path.lineTo(x - radius * 0.86f, y)
+        path.close()
+        val fill = Paint().apply {
+            color = if (secondary) PATH_OTHER else GNSS_INK
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        val halo = Paint().apply {
+            color = Color.WHITE
+            style = Paint.Style.STROKE
+            strokeWidth = 1.3f
+            isAntiAlias = true
+        }
+        canvas.drawPath(path, fill)
+        canvas.drawPath(path, halo)
     }
 
     private fun figureModel(fig: SitPathPlot.Figure): SitPathPlot.Model {
@@ -932,7 +971,7 @@ object DebriefPdf {
         val lay = SitPathPlot.layout(model, plotW, plotH, pad = 12f, scaleBarReserve = 0f) ?: return emptyList()
         val piles = SitPathPlot.clusters(lay.dots)
         val craft = fig.craftKeys.filter { it.isNotBlank() }
-        if (piles.isEmpty() && craft.isEmpty()) return emptyList()
+        if (piles.isEmpty() && craft.isEmpty() && fig.gnss.isEmpty()) return emptyList()
         val out = ArrayList<Block>()
         out += sectionHead("", "Path key", alert = false)
         out += spacer(4f)
@@ -942,6 +981,10 @@ object DebriefPdf {
         }
         craft.forEach { line ->
             out += pathKeyCraftRow(line)
+            out += spacer(5f)
+        }
+        fig.gnss.forEach { pin ->
+            out += pathKeyGnssRow(pin)
             out += spacer(5f)
         }
         return out
@@ -1042,6 +1085,18 @@ object DebriefPdf {
                 isAntiAlias = true
             }
             canvas.drawText("$n", MARGIN, y + 11f, num)
+            canvas.save()
+            canvas.translate(MARGIN + 22f, y)
+            sl.draw(canvas)
+            canvas.restore()
+        }
+    }
+
+    private fun pathKeyGnssRow(pin: SitPathPlot.GnssPin): Block {
+        val sl = layout(pin.keyLine(), CONTENT_W - 28, 9f, muted = false)
+        val h = maxOf(18f, sl.height + 4f)
+        return Block(h) { canvas, y ->
+            drawGnssMark(canvas, MARGIN + 7f, y + 8f, pin.secondary, radius = 5f)
             canvas.save()
             canvas.translate(MARGIN + 22f, y)
             sl.draw(canvas)

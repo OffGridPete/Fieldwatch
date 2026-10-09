@@ -32,6 +32,7 @@ class SignatureEngine {
             }
             dropProtocolIBeacon(hits, compiled)
             dropDjiWhenSpecificRow(hits)
+            dropGoProWhenPolar(hits)
             dropAirTagsWhenAppleDevice(hits, device)
             dropCiscoWhenMeraki(hits)
             byKey[device.key] = hits
@@ -294,6 +295,11 @@ class SignatureEngine {
     /** Osmo cameras and DJI Power stations share company 0x08AA. Prefer those rows over DJI. */
     private fun dropDjiWhenSpecificRow(hits: MutableSet<String>) {
         if ("fleet-osmo" in hits || "fleet-dji-power" in hits) hits.remove("fleet-dji")
+    }
+
+    /** A Polar H10 advertises GoPro's heart-rate service FEA5. The strap stays Polar. */
+    private fun dropGoProWhenPolar(hits: MutableSet<String>) {
+        if ("fleet-polar" in hits) hits.remove("fleet-gopro")
     }
 
     /**

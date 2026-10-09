@@ -10,6 +10,7 @@ class SettingsExchangeTest {
     fun factorySettingsVoiceAndJump() {
         val stock = AppSettings()
         assertTrue(stock.alertVoice)
+        assertTrue(stock.gnssVoice)
         assertEquals(AlertVoiceWhat.BOTH, stock.alertVoiceWhat)
         assertTrue(stock.snapToBeep)
         assertTrue(stock.darkTheme)
@@ -208,5 +209,67 @@ class SettingsExchangeTest {
         } catch (e: IllegalArgumentException) {
             assertTrue(e.message!!.contains("Not a Fieldwatch settings pack"))
         }
+    }
+
+    @Test
+    fun gnssSettingsRoundTripAndOldNamesStillLoad() {
+        val tuned = AppSettings(
+            gnssMonitor = true,
+            gnssSensitivity = GnssSensitivity.HIGH,
+            gnssAlertFloor = GnssAlertFloor.LOW,
+            gnssSpoofChecks = true,
+            gnssBeep = false,
+            gnssVoice = true,
+            gnssShade = true,
+            gnssFullTracking = true,
+            gnssCorrelation = true,
+            gnssInvertAgc = true,
+        )
+        val encoded = SettingsExchange.encode(
+            SettingsExchange.pack(
+                settings = tuned,
+                filter = FilterState(),
+                presets = emptyList(),
+                watchlist = emptyList(),
+                hiddenPresetIds = emptySet(),
+                appVersion = "1.1.22",
+                exportedAt = "2026-10-08T00:00:00Z",
+            ),
+        )
+        assertTrue(encoded.contains("\"gnssSensitivity\": \"HIGH\""))
+        assertTrue(encoded.contains("\"gnssMonitor\": true"))
+        val parsed = SettingsExchange.parse(encoded)
+        assertEquals(tuned.gnssSettings(), parsed.settings.gnssSettings())
+        val (next, _) = SettingsExchange.apply(localConfig(), parsed)
+        assertEquals(tuned.gnssSettings(), next.settings.gnssSettings())
+
+        val fromOld = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"gnssSensitivity":"NORMAL","gnssSpoofChecks":true}""",
+        )
+        assertEquals(GnssSensitivity.MEDIUM, fromOld.gnssSensitivity)
+        assertTrue(fromOld.gnssSpoofChecks)
+        val fromLess = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"gnssSensitivity":"LESS"}""",
+        )
+        assertEquals(GnssSensitivity.LOW, fromLess.gnssSensitivity)
+        val fromMore = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"gnssSensitivity":"MORE"}""",
+        )
+        assertEquals(GnssSensitivity.HIGH, fromMore.gnssSensitivity)
+        val missing = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"keepScreenOn":true}""",
+        )
+        assertFalse(missing.gnssMonitor)
+        assertEquals(GnssSensitivity.MEDIUM, missing.gnssSensitivity)
+        assertEquals(TakGnssSend.OFF, missing.takGnss)
+        assertEquals(TakFloodSend.OFF, missing.takFlood)
+        assertEquals(GnssAlertFloor.MEDIUM, missing.gnssAlertFloor)
+        assertTrue(missing.gnssBeep)
+        assertTrue(missing.gnssVoice)
+        assertFalse(missing.gnssShade)
     }
 }

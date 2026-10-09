@@ -1,5 +1,6 @@
 package app.fieldwatch.domain
 
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.hypot
@@ -65,6 +66,8 @@ object SitPathPlot {
         /** Advertised positions with no UAS id that do not get a map. */
         val looseAdvertised: Int = 0,
         val caption: String = "",
+        /** GNSS detections placed on this phone's line. Not drawn on an aircraft card. */
+        val gnss: List<GnssPin> = emptyList(),
     )
 
     data class Pt(val x: Float, val y: Float)
@@ -87,6 +90,64 @@ object SitPathPlot {
         val lon: Double,
         val label: String,
     )
+
+    /**
+     * Where this phone was when a GNSS detection started.
+     * The spot is the path sample nearest in time. It is not the source of the interference.
+     */
+    data class GnssPin(
+        val at: Long,
+        val endedAt: Long = 0L,
+        val kind: String,
+        val confidence: String,
+        val detail: String,
+        val lat: Double,
+        val lon: Double,
+        val secondary: Boolean = false,
+    ) {
+        fun title(): String = when (kind) {
+            "spoofing" -> "Possible GNSS spoofing"
+            "mock" -> "Mock location app"
+            else -> "Possible GNSS interference"
+        }
+
+        /** Local clock, same as the times drawn on the path. */
+        fun whenLine(): String {
+            val start = GnssCopy.localHm(at)
+            return if (endedAt > at) "$start–${GnssCopy.localHm(endedAt)}" else start
+        }
+
+        fun keyLine(): String {
+            val sit = if (secondary) "Second sit. " else ""
+            val what = detail.trim().ifBlank { "Signal changed." }
+            return "$sit${title()} · $confidence · ${whenLine()}. $what"
+        }
+    }
+
+    /**
+     * One pin per mark, on the path sample closest in time to the start.
+     * An empty path leaves the mark in the report text only.
+     */
+    fun gnssPins(
+        marks: List<GnssMark>,
+        path: List<GpsSample>,
+        secondary: Boolean = false,
+    ): List<GnssPin> {
+        if (marks.isEmpty() || path.isEmpty()) return emptyList()
+        return marks.sortedBy { it.at }.map { mark ->
+            val sample = path.minBy { abs(it.at - mark.at) }
+            GnssPin(
+                at = mark.at,
+                endedAt = mark.endedAt,
+                kind = mark.kind,
+                confidence = mark.confidence,
+                detail = mark.detail,
+                lat = sample.lat,
+                lon = sample.lon,
+                secondary = secondary,
+            )
+        }
+    }
 
     data class FigureTrack(
         val name: String,
@@ -111,6 +172,8 @@ object SitPathPlot {
          * One line each, same order as the tracks.
          */
         val craftKeys: List<String> = emptyList(),
+        /** GNSS detections on this phone's line. Empty on an aircraft figure. */
+        val gnss: List<GnssPin> = emptyList(),
     ) {
         val drawable: Boolean
             get() = tracks.any { it.samples.size >= 2 || (it.aircraft && it.samples.isNotEmpty()) }

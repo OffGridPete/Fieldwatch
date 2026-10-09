@@ -1,9 +1,14 @@
 package app.fieldwatch.ui
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.location.LocationManager
 import android.net.Uri
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +19,7 @@ import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.attentionNotes
 import app.fieldwatch.domain.signatureNotes
 import app.fieldwatch.domain.detectionPolicy
+import app.fieldwatch.domain.gnssSettings
 import app.fieldwatch.data.CatalogRemote
 import app.fieldwatch.data.DebriefPdf
 import app.fieldwatch.data.PathTiles
@@ -83,6 +89,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -144,6 +151,8 @@ data class FieldwatchUi(
     val throttleHint: String = "",
     val scanRadio: ScanRadioFacts = ScanRadioFacts(),
     val scanBlocked: Boolean = false,
+    /** System Location services. Live uses this for the banner, separate from a blocked scan. */
+    val locationOn: Boolean = true,
     val hiddenKnown: Int = 0,
     val arrivalsLearning: Boolean = false,
     val displayPaused: Boolean = false,
@@ -192,6 +201,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private val _alertedKeys = MutableStateFlow<Set<String>>(emptySet())
     val alertedKeys: StateFlow<Set<String>> = _alertedKeys
     private val clock = MutableStateFlow(System.currentTimeMillis())
+    private val locationEpoch = MutableStateFlow(0)
+    private val locationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            locationEpoch.value = locationEpoch.value + 1
+        }
+    }
     private val displayPaused = MutableStateFlow(false)
     private val heldSelected = MutableStateFlow<Sighting?>(null)
     private val familyLog = MutableStateFlow(FamilyLogSnap())
@@ -222,6 +237,21 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val catalogOpenClasses: StateFlow<Set<String>> = _catalogOpenClasses
     @Volatile private var frozenUi: FieldwatchUi? = null
 
+    val gnssNotice: StateFlow<app.fieldwatch.domain.GnssNotice?> = app.gnss.reading
+        .map { it.notice }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun dismissGnss() {
+        app.gnss.dismiss()
+    }
+
+    val gnssProfile = app.gnssProfile.profile
+    val gnssCalibration = app.gnss.calibration
+
+    fun startGnssCalibration() = app.gnss.startCalibration()
+
+    fun stopGnssCalibration() = app.gnss.stopCalibration()
+
     val floodNotice: StateFlow<PairingFlood.Notice?> = combine(
         app.pairingFlood.notice,
         app.wifiFlood.notice,
@@ -242,7 +272,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         combine(app.devices.devices, app.devices.stats, app.config.config) { devices, stats, config ->
             Triple(devices, stats, config)
         },
-        combine(selectedKey, draft, app.arrivals, clock) { sel, fleetDraft, arr, now ->
+        combine(selectedKey, draft, app.arrivals, clock, locationEpoch) { sel, fleetDraft, arr, now, _ ->
             arrayOf(sel, fleetDraft, arr, now)
         },
         lastAlertAt,
@@ -362,6 +392,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             throttleHint = stats.throttleHint,
             scanRadio = scanRadio,
             scanBlocked = ScanStatus.isBlocked(scanRadio, app.systemLocationOn(), app.hasFineLocation()),
+            locationOn = app.systemLocationOn(),
             hiddenKnown = hiddenKnown,
             arrivalsLearning = learning,
             operatorSpanM = if (moveCtx.ready || config.filter.movingWithYou) {
@@ -436,18 +467,35 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HuntUi())
 
+    /** Re-read system Location. Live calls this when the screen resumes. */
+    fun refreshLocation() {
+        locationEpoch.value = locationEpoch.value + 1
+    }
+
+    override fun onCleared() {
+        runCatching { app.unregisterReceiver(locationReceiver) }
+        super.onCleared()
+    }
+
     init {
+        ContextCompat.registerReceiver(
+            app,
+            locationReceiver,
+            IntentFilter(LocationManager.MODE_CHANGED_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         viewModelScope.launch {
             while (true) {
                 delay(1_000)
                 val now = System.currentTimeMillis()
                 clock.value = now
                 val liveKeys = app.devices.devices.value.mapTo(HashSet()) { it.key }
-                app.pairingFlood.tick(now)
+                app.pairingFlood.tick(now, app.floodSpeed(now))
                 app.pairingFlood.prune(liveKeys)
                 app.wifiFlood.prune(liveKeys)
                 app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.noteFloods(app.wifiFlood.bursts())
+                app.sits.noteGnss(app.gnss.marks())
             }
         }
         viewModelScope.launch {
@@ -927,6 +975,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             },
             path = otherFile.operatorPath,
             floods = otherFile.floods,
+            gnss = otherFile.gnss,
         )
         return thisSide to second
     }
@@ -950,6 +999,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 },
                 path = source?.operatorPath.orEmpty(),
                 floods = source?.floods.orEmpty(),
+                gnss = source?.gnss.orEmpty(),
             )
         }
         val selected = sit.closed.firstOrNull { it.id == sit.selectedId }
@@ -964,6 +1014,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 },
                 path = file.operatorPath,
                 floods = file.floods,
+                gnss = file.gnss,
             )
         }
         val now = System.currentTimeMillis()
@@ -976,6 +1027,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             },
             path = app.operatorPathCopy().filter { it.at >= since },
             floods = app.floodBursts().filter { it.at >= since },
+            gnss = app.gnss.marks().filter { it.at >= since || it.endedAt >= since },
         )
     }
 
@@ -1129,10 +1181,19 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun updateSettings(transform: (AppSettings) -> AppSettings) {
         viewModelScope.launch {
             val prev = app.config.settings
-            app.config.update { it.copy(settings = transform(it.settings)) }
+            app.config.update { cfg ->
+                var nextSettings = transform(cfg.settings)
+                if (app.gnssProfile.profile.value == null) {
+                    nextSettings = nextSettings.copy(gnssMonitor = false)
+                }
+                cfg.copy(settings = nextSettings)
+            }
             val next = app.config.settings
             app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
             if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
+            if (prev.gnssSettings() != next.gnssSettings() || prev.tagLocation != next.tagLocation) {
+                app.syncGnss()
+            }
             if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
                 app.startScanning()
             }
@@ -1144,7 +1205,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     decaySec = next.decaySec,
                 )
             }
-            if (next.alertVoice) app.alerter.prepareVoice()
+            if (next.alertVoice || next.gnssVoice) app.alerter.prepareVoice()
         }
     }
 
@@ -1576,9 +1637,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val prev = app.config.settings
         val result = app.config.importSettings(pack)
         if (result.error != null) error(result.error)
+        if (app.gnssProfile.profile.value == null && app.config.settings.gnssMonitor) {
+            app.config.update { it.copy(settings = it.settings.copy(gnssMonitor = false)) }
+        }
         val next = app.config.settings
         app.logs.configure(next.logFormat, next.logRotateKb, next.loggingEnabled)
         if (prev.tagLocation != next.tagLocation) app.syncLocationUpdates()
+        if (prev.gnssSettings() != next.gnssSettings() || prev.tagLocation != next.tagLocation) {
+            app.syncGnss()
+        }
         if (prev.intensity != next.intensity && app.devices.stats.value.scanning) {
             app.startScanning()
         }
@@ -1588,7 +1655,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             policy = next.detectionPolicy(),
             decaySec = next.decaySec,
         )
-        if (next.alertVoice) app.alerter.prepareVoice()
+        if (next.alertVoice || next.gnssVoice) app.alerter.prepareVoice()
         _export.value = ExportUi(
             noticeTitle = "Settings imported",
             noticeMessage = result.summary(),
@@ -1683,8 +1750,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
             )
             val empty = when {
-                !tagging -> "Tag detections with GPS (Settings) to record a path."
-                samples.isEmpty() -> "Walk with tagging on. Path needs a GPS fix."
+                !tagging -> "Turn on Tag detections with GPS to record a path."
+                samples.isEmpty() -> "Walk with that on. The path needs a GPS fix."
                 else -> null
             }
             pathRadios = source.devices
@@ -1706,6 +1773,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     title = source.name,
                     emptyHint = empty,
                     live = app.sits.ui.value.open != null,
+                    gnss = if (samples.isNotEmpty()) SitPathPlot.gnssPins(source.gnss, samples) else emptyList(),
                 ),
                 pictures,
             )
@@ -1714,8 +1782,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val samples = Geo.despikePath(app.operatorPathCopy().filter { it.at >= start })
         val devices = app.devices.devices.value.filter { it.lastSeen >= start || it.firstSeen >= start }
         val empty = when {
-            !tagging -> "Tag detections with GPS (Settings) to record a path."
-            samples.isEmpty() -> "Last 15 minutes. Walk with tagging on, or Start sit to keep a longer path."
+            !tagging -> "Turn on Tag detections with GPS to record a path."
+            samples.isEmpty() -> "Last 15 minutes. Walk with Tag detections with GPS on, or start a sit to keep a longer path."
             else -> null
         }
         pathRadios = devices
@@ -1732,6 +1800,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             SitPathPlot.PlotRadios(emptyList())
         }
         val windowPath = app.operatorPathCopy().filter { it.at >= start }
+        val gnssMarks = app.gnss.marks().filter { it.at >= start || (it.endedAt > 0L && it.endedAt >= start) }
         return AircraftTrail.overlay(
             SitPathPlot.Model(
                 samples = samples,
@@ -1741,6 +1810,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 title = "Last 15 minutes",
                 emptyHint = empty,
                 live = true,
+                gnss = if (samples.isNotEmpty()) SitPathPlot.gnssPins(gnssMarks, samples) else emptyList(),
             ),
             AircraftTrail.pictures(
                 devices.mapNotNull { device ->
@@ -1884,6 +1954,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 watchedFleetIds = RadioBookmarks.watchedFleetIds(app.config.watchlist),
                 mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
                 floods = source?.floods ?: app.floodBursts(),
+                gnss = source?.gnss ?: app.gnss.marks(),
             ).withDemoMacs(
                 devices.map { it.mac },
                 settings.demoMode,
@@ -1931,6 +2002,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist),
                         mineKeys = RadioBookmarks.mineKeys(app.config.watchlist),
                         floods = source?.floods ?: app.floodBursts(),
+                        gnss = source?.gnss ?: app.gnss.marks(),
                     )
                     val masked = MacUtil.redactPrivateText(
                         raw,

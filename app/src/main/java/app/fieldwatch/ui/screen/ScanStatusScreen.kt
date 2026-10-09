@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import app.fieldwatch.BuildConfig
 import app.fieldwatch.FieldwatchApp
 import app.fieldwatch.radio.WifiRadio
+import app.fieldwatch.domain.GnssCalibration
 import app.fieldwatch.domain.ScanPhoneFacts
 import app.fieldwatch.domain.ScanStatus
 import app.fieldwatch.ui.FieldwatchUi
@@ -57,11 +59,15 @@ fun ScanStatusScreen(
             now = System.currentTimeMillis()
         }
     }
+    val app = context.applicationContext as FieldwatchApp
+    val gnss by app.gnss.reading.collectAsStateWithLifecycle()
+    val gnssProfile by app.gnssProfile.profile.collectAsStateWithLifecycle()
     val report = ScanStatus.report(
         radio = state.scanRadio,
         phone = scanPhoneFacts(context, state, now),
         now = now,
         radiosOnAir = state.wifiNow + state.bleNow,
+        gnssRows = gnss.diagRows + GnssCalibration.diagRows(gnssProfile),
     )
     Scaffold(
         contentWindowInsets = NestedTabInsets,
@@ -85,6 +91,15 @@ fun ScanStatusScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(report.verdict, style = MaterialTheme.typography.bodyLarge)
+            Text("What to check", style = MaterialTheme.typography.titleSmall)
+            report.checks.forEach { line ->
+                Text(line, style = MaterialTheme.typography.bodyMedium)
+            }
+            Text(
+                "If that does not explain it, tap Copy and send the paste.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             report.rows.forEach { (label, value) ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(

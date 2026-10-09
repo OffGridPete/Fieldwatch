@@ -86,8 +86,10 @@ fun SitPathCanvas(
     val outline = MaterialTheme.colorScheme.outline
     val measurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 10.sp, color = muted)
+    val gnssInk = GnssDiamond.nightIf(night)
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var selectedId by remember { mutableStateOf<String?>(null) }
+    var selectedGnss by remember { mutableStateOf<String?>(null) }
     val layout = remember(model, boxSize) {
         if (boxSize.width < 8 || boxSize.height < 8) null
         else SitPathPlot.layout(model, boxSize.width.toFloat(), boxSize.height.toFloat())
@@ -119,13 +121,28 @@ fun SitPathCanvas(
         Canvas(
             Modifier
                 .matchParentSize()
-                .pointerInput(clusters, markers) {
+                .pointerInput(clusters, markers, layout, model.gnss) {
                     detectTapGestures { pos ->
-                        val hit = SitPathPlot.clusterAt(clusters, pos.x, pos.y, markers)
-                        selectedId = when {
-                            hit == null -> null
-                            selectedId == hit.id -> null
-                            else -> hit.id
+                        val lay = layout
+                        val gnssHit = if (lay == null) emptyList() else gnssAt(model.gnss, lay, pos.x, pos.y)
+                        val radio = SitPathPlot.clusterAt(clusters, pos.x, pos.y, markers)
+                        val gnssD = gnssHit.minOfOrNull { pin ->
+                            val pt = lay!!.project(pin.lat, pin.lon)
+                            hypot(pt.x - pos.x, pt.y - pos.y)
+                        }
+                        val radioD = radio?.let { hypot(it.center.x - pos.x, it.center.y - pos.y) }
+                        val pickGnss = gnssHit.isNotEmpty() && (radioD == null || gnssD!! <= radioD)
+                        if (pickGnss) {
+                            val id = gnssHit.joinToString("|") { gnssId(it) }
+                            selectedGnss = if (selectedGnss == id) null else id
+                            selectedId = null
+                        } else {
+                            selectedGnss = null
+                            selectedId = when {
+                                radio == null -> null
+                                selectedId == radio.id -> null
+                                else -> radio.id
+                            }
                         }
                     }
                 },
@@ -227,6 +244,10 @@ fun SitPathCanvas(
                 val end = lay.path.last()
                 drawYouDot(end.x, end.y, 6.2f, you)
             }
+            model.gnss.forEach { pin ->
+                val pt = lay.project(pin.lat, pin.lon)
+                drawGnssDiamond(Offset(pt.x, pt.y), gnssInk)
+            }
             if (selected != null) {
                 val insetOnRight = selected.center.x < size.width / 2f
                 val dest = Offset(
@@ -253,7 +274,43 @@ fun SitPathCanvas(
             val n = measurer.measure("N", labelStyle)
             drawText(n, topLeft = Offset(size.width - n.size.width - 10f, 8f))
         }
-        if (selected != null) {
+        val gnssCard = model.gnss.filter { gnssId(it) in selectedGnss.orEmpty().split("|") }
+        if (gnssCard.isNotEmpty()) {
+            val anchor = layout?.project(gnssCard.first().lat, gnssCard.first().lon)
+            val onRight = (anchor?.x ?: 0f) < (boxSize.width / 2f)
+            Column(
+                Modifier
+                    .align(if (onRight) Alignment.TopEnd else Alignment.TopStart)
+                    .padding(8.dp)
+                    .widthIn(max = 248.dp)
+                    .background(surface, RoundedCornerShape(8.dp))
+                    .border(1.dp, outline, RoundedCornerShape(8.dp))
+                    .padding(8.dp),
+            ) {
+                Text(
+                    if (gnssCard.size == 1) "GNSS detection" else "${gnssCard.size} GNSS detections",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = muted,
+                )
+                gnssCard.forEach { pin ->
+                    Text(
+                        "${pin.title()} · ${pin.confidence}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = track,
+                    )
+                    Text(
+                        pin.whenLine(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = muted,
+                    )
+                    Text(
+                        pin.detail.trim().ifBlank { "Signal changed." },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = track,
+                    )
+                }
+            }
+        } else if (selected != null) {
             val onRight = selected.center.x < (boxSize.width / 2f)
             Column(
                 Modifier
@@ -368,6 +425,33 @@ private fun hitMarker(
         labelRight = left + text.size.width,
         labelBottom = top + text.size.height,
     )
+}
+
+private val GnssDiamond = Color(0xFFB91C1C)
+
+private fun gnssId(pin: SitPathPlot.GnssPin) = "${pin.at}:${pin.kind}:${pin.secondary}"
+
+private fun gnssAt(
+    pins: List<SitPathPlot.GnssPin>,
+    lay: SitPathPlot.Layout,
+    x: Float,
+    y: Float,
+    slop: Float = 22f,
+): List<SitPathPlot.GnssPin> = pins.filter { pin ->
+    val pt = lay.project(pin.lat, pin.lon)
+    hypot(pt.x - x, pt.y - y) <= slop
+}
+
+private fun DrawScope.drawGnssDiamond(center: Offset, color: Color) {
+    fun diamond(r: Float) = Path().apply {
+        moveTo(center.x, center.y - r)
+        lineTo(center.x + r * 0.86f, center.y)
+        lineTo(center.x, center.y + r)
+        lineTo(center.x - r * 0.86f, center.y)
+        close()
+    }
+    drawPath(diamond(9.2f), Color.White)
+    drawPath(diamond(7.2f), color)
 }
 
 private fun DrawScope.drawStartDot(x: Float, y: Float) {

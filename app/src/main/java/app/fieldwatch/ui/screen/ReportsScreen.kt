@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -106,7 +107,7 @@ fun ReportsScreen(
         ) {
             if (settings.demoMode) {
                 Text(
-                    "Privacy mode is on. MAC tails in Debrief, sit compare, AI Export (sit or compare), and detail Share are **:**:**. GPS coordinates and a Remote ID UAS id in those reports are masked. The log file, sit export, and GPX / KML / WiGLE files still have full addresses and lat/lon.",
+                    "Privacy mode is on. Debrief, Compare, and AI Export hide the last half of each MAC, the coordinates, and a Remote ID id. The log and sit export still have the full addresses and coordinates.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -114,7 +115,7 @@ fun ReportsScreen(
 
             SectionCard("Sits") {
                 Text(
-                    "A sit is a named window of radios heard here. The selection below drives Path, Debrief, and Compare’s this-sit side: open sit, a selected saved sit, or last 15 minutes if you never start one.",
+                    "A sit is the radios heard during a named stretch of time. Path, Debrief, and Compare use the open sit, a saved sit you pick, or the last 15 minutes.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -141,9 +142,9 @@ fun ReportsScreen(
                     ) { Text("Start sit") }
                     Text(
                         if (state.sit.closed.isEmpty()) {
-                            "No sit running. Start sit here. Path and Debrief stay last 15 minutes until you do."
+                            "No sit is running. Path and Debrief use the last 15 minutes until you start one."
                         } else {
-                            "No sit running. Start sit here. Path and Debrief use the selected sit."
+                            "No sit is running. Path and Debrief use the sit you pick."
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -162,7 +163,7 @@ fun ReportsScreen(
                         selected = state.sit.selectedId == null,
                         enabled = pickEnabled,
                         title = "Last 15 minutes",
-                        subtitle = "Path and Debrief use RAM, not a saved sit.",
+                        subtitle = "Uses what is still in memory, not a saved sit.",
                         onSelect = { vm.selectSit(null) },
                     )
                     state.sit.closed.forEach { row ->
@@ -182,7 +183,7 @@ fun ReportsScreen(
                     }
                     if (open != null) {
                         Text(
-                            "End sit to pick a saved one for Path and Debrief.",
+                            "End this sit to pick a saved one.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -225,7 +226,7 @@ fun ReportsScreen(
             }
             SectionCard("Path") {
                 Text(
-                    "North up. The line is this phone. The black dot is the start. The blue dot is you, at the last point. A MAC or signature alert is one class icon. A decoded latitude and longitude uses the last position that radio sent. A count is several in one spot. Thick green is a stay. Time ticks along the path.",
+                    "North is up. The line is this phone, with times along it. Black is the start. Blue is you. One icon is one radio. A number is several radios in one spot. A thick green stretch is a stay. An advertised position is the last one that radio sent. A red diamond is where this phone was during a GNSS detection.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -234,7 +235,7 @@ fun ReportsScreen(
                 val showAircraft = model != null && model.aircraftCards.isNotEmpty()
                 if (model == null || (!showWalk && !showAircraft)) {
                     Text(
-                        model?.emptyHint ?: "Tag detections with GPS and walk, or open a sit that recorded a path.",
+                        model?.emptyHint ?: "Turn on Tag detections with GPS and walk, or pick a sit that recorded a path.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -243,13 +244,14 @@ fun ReportsScreen(
                     val aircraftTiles by vm.pathAircraftTiles.collectAsStateWithLifecycle()
                     if (!showWalk) {
                         Text(
-                            model.emptyHint ?: "Tag detections with GPS and walk, or open a sit that recorded a path.",
+                            model.emptyHint ?: "Turn on Tag detections with GPS and walk, or pick a sit that recorded a path.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     if (showWalk) {
                     val stopN = model.dots.size
+                    val gnssN = model.gnss.size
                     Text(
                         buildString {
                             append("${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span")
@@ -257,16 +259,19 @@ fun ReportsScreen(
                                 append(" · $stopN alert")
                                 if (stopN != 1) append("s")
                             }
+                            if (gnssN > 0) {
+                                append(" · $gnssN GNSS")
+                            }
                         },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     SitPathCanvas(model, tiles = pathTiles, onOpenRadio = onOpenPathRadio)
                     Text(
-                        "Tap a count for the radios there. Tap a single icon for that one radio. Tap again to close. Tap a row in that list, or a row below, to open that radio.",
+                        "Tap a number for the radios there. Tap one icon for that radio. Tap a row to open it. Tap a red diamond for that detection.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    if (model.craft.isNotEmpty() || model.pilots.isNotEmpty()) {
+                    if (model.craft.isNotEmpty() || model.pilots.isNotEmpty() || model.gnss.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             if (model.craft.isNotEmpty()) {
                                 val multi = model.craft.any { it.samples.size >= 2 }
@@ -299,12 +304,25 @@ fun ReportsScreen(
                                     )
                                 }
                             }
+                            if (model.gnss.isNotEmpty()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    GnssSwatch()
+                                    Text(
+                                        "= where this phone was during a GNSS detection",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                            }
                         }
                     }
                     val alertsOnACard = model.aircraftCards.any { it.dots.isNotEmpty() }
-                    if (model.dots.isEmpty() && !alertsOnACard) {
+                    if (model.dots.isEmpty() && model.gnss.isEmpty() && !alertsOnACard) {
                         Text(
-                            "No MAC or signature alerts with a GPS stamp on this path.",
+                            "No alerts with a GPS stamp on this path.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -317,6 +335,13 @@ fun ReportsScreen(
                                     demoMode = settings.demoMode,
                                     onOpen = { onOpenPathRadio(dot.key) },
                                 )
+                            }
+                        }
+                    }
+                    if (model.gnss.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            model.gnss.forEach { pin ->
+                                GnssPathNote(pin)
                             }
                         }
                     }
@@ -420,7 +445,7 @@ fun ReportsScreen(
                 )
             }
             Text(
-                "Off (default): Debrief text/PDF lists skip unmatched RAND BLE. Counts still include them. Extra attention, named signatures, bookmarks, and payload pins stay. Sit export has every radio.",
+                "Leaves unmatched Bluetooth radios that keep changing address out of the Debrief lists. The counts still include them. Extra attention, named signatures, bookmarks, and radios that sent a position stay. Sit export still has every radio.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -439,7 +464,7 @@ fun ReportsScreen(
                 )
             }
             Text(
-                "Off (default): Debrief and Compare lead with counts. A radio is listed when it is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. On: the full rosters return. Show unmatched rotating BLE applies to those lists. The PDF draws the counts as bars. Sit export has every radio.",
+                "Debrief and Compare open with counts. A radio is listed when it is Extra attention, has a custom name, is marked Mine, or is bookmarked. Compare also lists a decoded value that changed. Turn this on for the full list. The PDF draws the counts as bars. Sit export still has every radio.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -449,7 +474,7 @@ fun ReportsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("AI Export") }
             Text(
-                "Paste-ready addendum: rates, RSSI bands, Extra attention and tracking IDs. Does not reprint Debrief inventories. One-radio AI Export is on detail.",
+                "A short note for pasting into a chat: rates, signal bands, Extra attention, and tracking ids. It does not repeat the Debrief lists. A one-radio export is on that radio’s page.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -466,7 +491,7 @@ fun ReportsScreen(
                 onRadios = vm::setSitExportRadios,
                 onShare = vm::startSitExport,
                 onSave = onSaveSitToStorage,
-                hint = "One row per unique radio in this sit (or last 15 minutes). CSV / JSON lines include matched signatures and Extra attention families. Not the rotating log. GPX / KML include this phone’s path as a track plus hear-points. Fieldwatch does not upload. Privacy mode does not mask this file.",
+                hint = "One row per radio in this sit, or the last 15 minutes. Not the log. CSV and JSON include the matched signatures. GPX and KML include this phone’s path and a point for each detection. Fieldwatch does not upload the file. Privacy mode does not hide addresses in it.",
             )
             }
 
@@ -480,7 +505,7 @@ fun ReportsScreen(
                 val choices = SitDiff.secondSitChoices(state.sit.closed, thisSaved)
                 if (choices.isEmpty()) {
                     Text(
-                        "Save a second sit to compare. Start sit, then End sit. Last 15 minutes can be this sit.",
+                        "Save a second sit to compare. Start a sit, then end it. The last 15 minutes can be this sit.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -516,7 +541,7 @@ fun ReportsScreen(
                     ) { Text("Compare (PDF)") }
                 }
                 Text(
-                    "Same report, two formats. Presence only — only in this sit, only in the second, in both. Kind + MAC. Extra attention and Named radios are marked. Not a radio fix.",
+                    "The same report as text or PDF. Radios only in this sit, only in the second, and in both. Extra attention and named radios are marked. These points are where this phone was, not a location from the other radio.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -526,7 +551,7 @@ fun ReportsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("AI Export") }
                 Text(
-                    "Paste-ready addendum: overlap, exclusive Extra attention / Named radios, what another sit would shrink. Does not reprint the compare lists. Sit report AI Export stays this window only.",
+                    "A short note on what overlaps and what is only in one sit. It does not repeat the compare lists. The sit-report export stays on this window only.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -539,7 +564,7 @@ fun ReportsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Signature candidates") }
             Text(
-                "Unmatched radios in the log that share a unique ID — not every unknown. You review; nothing is added until you Save.",
+                "Unmatched radios in the log that share an id. Not every unknown radio. Nothing is added until you save it.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -561,7 +586,7 @@ fun ReportsScreen(
                 onRadios = vm::setLogExportRadios,
                 onShare = vm::startExport,
                 onSave = onSaveToStorage,
-                hint = "The rotating file is JSON lines. CSV is the same rows as a spreadsheet. GPX — GPS Exchange, KML — Google Earth, and WiGLE CSV — wigle.net are hear-points: where this phone was when it heard each radio, not a radio fix. Tag detections with GPS and logging on. Share uses the Android share sheet — Fieldwatch does not upload.",
+                hint = "The file on disk is one detection per line. CSV is those rows in a spreadsheet. GPX, KML, and WiGLE are points where this phone was when it heard each radio, not a location from the other radio. Tag detections with GPS and logging both have to be on. Share uses the Android share sheet. Fieldwatch does not upload.",
             )
             FieldwatchActionButton(
                 onClick = { confirmClear = true },
@@ -575,7 +600,7 @@ fun ReportsScreen(
                     onDismissRequest = { confirmClear = false },
                     title = { Text("Clear the log?") },
                     text = {
-                        Text("This deletes all rotated CSV/JSON files on the phone. It cannot be undone. Live scanning will start a new empty log.")
+                        Text("Deletes the log files on this phone. This cannot be undone. Scanning starts a new empty log.")
                     },
                     confirmButton = {
                         TextButton(onClick = {
@@ -754,6 +779,43 @@ private fun AdvertisedRingSwatch() {
 }
 
 @Composable
+private fun GnssSwatch() {
+    val ink = Color(0xFFB91C1C).nightIf(LocalNightMode.current)
+    Canvas(Modifier.size(14.dp)) {
+        val c = Offset(size.width / 2f, size.height / 2f)
+        val r = size.minDimension / 2f
+        fun diamond(rad: Float) = Path().apply {
+            moveTo(c.x, c.y - rad)
+            lineTo(c.x + rad * 0.86f, c.y)
+            lineTo(c.x, c.y + rad)
+            lineTo(c.x - rad * 0.86f, c.y)
+            close()
+        }
+        drawPath(diamond(r), Color.White)
+        drawPath(diamond(r * 0.72f), ink)
+    }
+}
+
+@Composable
+private fun GnssPathNote(pin: SitPathPlot.GnssPin) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            "${pin.title()} · ${pin.confidence}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            pin.whenLine(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            pin.detail.trim().ifBlank { "Signal changed." },
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
 private fun PilotSwatch() {
     val painter = rememberVectorPainter(Icons.Outlined.Person)
     Canvas(Modifier.size(18.dp)) {
@@ -862,14 +924,10 @@ private fun PathRadioRow(
 
 private fun compareThisCaption(state: FieldwatchUi): String {
     val open = state.sit.open
-    if (open != null) {
-        return "This sit: ${open.name} — named window (up to ${Sit.RADIO_CAP}). Same as Debrief."
-    }
+    if (open != null) return "This sit: ${open.name}. Same window as Debrief."
     val selected = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
-    if (selected != null) {
-        return "This sit: ${selected.name} — named window (up to ${Sit.RADIO_CAP}). Same as Debrief."
-    }
-    return "This sit: last 15 minutes in memory (about 400 radios). Same as Debrief."
+    if (selected != null) return "This sit: ${selected.name}. Same window as Debrief."
+    return "This sit: the last 15 minutes still in memory, about 400 radios. Same window as Debrief."
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -946,12 +1004,11 @@ private fun ExportFormatBlock(
 
 private fun sitReportCaption(state: FieldwatchUi): String {
     val open = state.sit.open
-    if (open != null) {
-        return "This sit (${open.name}) — same window as Path. GPS following test when tagging is on and you have moved. Not a legal finding."
-    }
     val selected = state.sit.closed.firstOrNull { it.id == state.sit.selectedId }
-    if (selected != null) {
-        return "Sit: ${selected.name} — same window as Path. GPS following test when tagging is on and you have moved. Not a legal finding."
+    val window = when {
+        open != null -> "This sit (${open.name})"
+        selected != null -> "Sit: ${selected.name}"
+        else -> "Last 15 minutes still in memory"
     }
-    return "Last 15 minutes in memory — same window as Path. Two formats. GPS following test when tagging is on and you have moved. Not a legal finding."
+    return "$window. Same window as Path. Moving with you runs when Tag detections with GPS is on and you have moved. This is not a legal finding."
 }

@@ -112,6 +112,7 @@ object DefaultCatalog {
         garmin(),
         amazon(),
         fitbit(),
+        polar(),
         oura(),
         logitech(),
         jblHarman(),
@@ -335,18 +336,12 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "Flock-style roadside ALPR / camera pole. IEEE B4:1E:52 or a Flock-* / FLCK / Condor / Falcon / Sparrow name. Current poles are often quiet on Wi-Fi and BLE. LiteOn module prefixes are a separate row, not Extra attention.",
+        notes = "Flock-style roadside ALPR / camera pole. IEEE B4:1E:52 or a name that starts with Flock-. Current poles are often quiet on Wi-Fi and BLE. LiteOn module prefixes are a separate row, not Extra attention.",
         attentionNote = "Flock-style roadside ALPR / camera pole — reads plates and can be used to locate a vehicle. IEEE B4:1E:52 or a Flock-* SSID is the strong hit. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
         rules = listOf(
             oui("B4:1E:52"),
-            name("Flock"),
-            name("FLCK"),
             glob("Flock-*"),
-            glob("Flock-??????"),
-            name("CONDOR"),
-            name("FALCON"),
-            name("SPARROW"),
         ),
     )
 
@@ -357,11 +352,11 @@ object DefaultCatalog {
         colorIndex = Hue.CAMERA,
         kind = SignatureClass.CAMERA,
         matchAny = true,
-        notes = "Wi-Fi module prefixes commonly seen on camera boards (LiteOn and similar). Not Flock's IEEE block. Doorbells and other OEM radios use these chips. A Flock name or B4:1E:52 is Flock Safety Cameras.",
+        notes = "Wi-Fi module prefixes commonly seen on camera boards (LiteOn and similar). 08:3A:88 is Universal Global Scientific Industrial, not Lite-On. Not Flock's IEEE block. Doorbells and other OEM radios use these chips. A name that starts with Flock- or B4:1E:52 is Flock Safety Cameras.",
         builtIn = true,
         rules = buildList {
             listOf(
-                "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49", "B8:35:32",
+                "70:C9:4E", "3C:91:80", "D8:F3:BC", "80:30:49",
                 "14:5A:FC", "14:B5:CD", "74:4C:A1", "08:3A:88", "9C:2F:9D", "C0:35:32",
                 "94:08:53", "E0:0A:F6", "E4:AA:EA", "F4:6A:DD", "F8:A2:D6", "24:B2:B9",
                 "00:F4:8D", "D0:39:57", "E8:D0:FC", "B8:1E:A4",
@@ -520,6 +515,7 @@ object DefaultCatalog {
         rules = listOf(
             name("Tile"),
             uuid("FEED"),
+            uuid("FEEC"),
             uuid("FEDD"),
             mfg(0x00C7),
         ),
@@ -531,14 +527,12 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "Penguin Flock-family external battery. The XUNTONG BLE manufacturer ID is the usual fingerprint; Penguin* names are older firmware. Newer packs often advertise a 10-digit name. Decode fields show the TN serial from manufacturer data when present.",
-        attentionNote = "Penguin is a Flock-family external battery (XUNTONG manufacturer ID). Name hits are older firmware and low uniqueness. Pattern match, not that camera. Look with your eyes.",
+        notes = "Penguin Flock-family external battery. The XUNTONG BLE manufacturer ID is the usual fingerprint. A name that starts with Penguin- is older firmware. Newer packs often advertise a 10-digit name. Decode fields show the TN serial from manufacturer data when present.",
+        attentionNote = "Penguin is a Flock-family external battery (XUNTONG manufacturer ID). A name that starts with Penguin- is older firmware and low uniqueness. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
         decode = CatalogDecodes.penguin,
         rules = listOf(
-            name("Penguin"),
-            name("PENGUIN"),
-            glob("Penguin*"),
+            glob("Penguin-*"),
             mfg(0x09C8),
         ),
     )
@@ -566,18 +560,13 @@ object DefaultCatalog {
         colorIndex = Hue.SURVEILLANCE,
         kind = SignatureClass.SURVEILLANCE,
         matchAny = true,
-        notes = "External battery pack usually associated with a Flock-style camera pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE.",
-        attentionNote = "Usually associated with a Flock-style camera — an external battery pack on the pole. Name hits are stronger. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
+        notes = "External battery pack usually associated with a Flock-style camera pole. The name FS Ext Battery, or a name that starts with FS Ext, is the hit. Current poles are often quiet on Wi-Fi and BLE.",
+        attentionNote = "Usually associated with a Flock-style camera — an external battery pack on the pole. The name is the hit. Current poles are often quiet on Wi-Fi and BLE. Pattern match, not that camera. Look with your eyes.",
         builtIn = true,
-        rules = buildList {
-            add(name("FS Ext Battery"))
-            add(glob("FS_*"))
-            add(glob("FS Ext*"))
-            listOf(
-                "04:0D:84", "1C:34:F1", "38:5B:44", "94:34:69",
-                "B4:E3:F9", "F0:82:C0",
-            ).forEach { add(oui(it)) }
-        },
+        rules = listOf(
+            name("FS Ext Battery"),
+            glob("FS Ext*"),
+        ),
     )
 
     private fun appleDevice() = Fleet(
@@ -922,6 +911,22 @@ object DefaultCatalog {
         ),
     )
 
+    private fun polar() = Fleet(
+        id = "fleet-polar",
+        name = "Polar",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Polar heart-rate strap or watch. A strap that also advertises a GoPro heart-rate service stays on this row.",
+        builtIn = true,
+        rules = listOf(
+            mfg(0x006B),
+            uuid("FEEE"),
+            bleGlob("Polar*"),
+        ),
+    )
+
     private fun oura() = Fleet(
         id = "fleet-oura",
         name = "Oura",
@@ -993,7 +998,7 @@ object DefaultCatalog {
         colorIndex = Hue.CAMERA,
         kind = SignatureClass.CAMERA,
         matchAny = true,
-        notes = "GoPro action camera. Decoded fields can show whether it is awake, in Wi-Fi AP mode, or pairing.",
+        notes = "GoPro action camera. Decoded fields can show whether it is awake, in Wi-Fi AP mode, or pairing. A Polar strap that also advertises a GoPro heart-rate service stays on Polar.",
         builtIn = true,
         decode = CatalogDecodes.gopro,
         rules = listOf(
@@ -3138,11 +3143,15 @@ object DefaultCatalog {
         colorIndex = Hue.HACKING,
         kind = SignatureClass.HACKING,
         matchAny = true,
-        notes = "Flipper Zero (or other Flipper Devices). Default name starts with Flipper; custom firmware can hide it.",
-        attentionNote = "Flipper Zero (or other Flipper Devices) BLE. Default name starts with Flipper; newer units use IEEE OUI 0C:FA:22. Custom firmware can change the name and MAC. Not proof of an attack. A miss is not a clean bill (Bluetooth off, or renamed). Look with your eyes.",
+        notes = "Flipper Zero (or other Flipper Devices). Default name starts with Flipper. Official firmware keeps its service UUID when the name changes. Custom firmware can hide it.",
+        attentionNote = "Flipper Zero (or other Flipper Devices) BLE. Default name starts with Flipper. Official firmware also advertises service 3080, 3081, 3082, or 3083, so a renamed official unit still matches. Newer units may use IEEE OUI 0C:FA:22. Custom firmware can change the name, the service, and the MAC. Not proof of an attack. A miss is not a clean bill (Bluetooth off, or custom firmware). Look with your eyes.",
         builtIn = true,
         rules = listOf(
             oui("0C:FA:22"),
+            uuid("3080"),
+            uuid("3081"),
+            uuid("3082"),
+            uuid("3083"),
             bleName("Flipper"),
             bleGlob("Flipper*"),
             bleName("Flipper Zero"),

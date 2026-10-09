@@ -1140,6 +1140,19 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V92
         }
+        if (version < CATALOG_V93) {
+            fleets = fleets.map { fleet ->
+                val stock = catalog[fleet.id] ?: return@map fleet
+                catalog93Fleet(fleet, stock)
+            }
+            version = CATALOG_V93
+        }
+        if (version < CATALOG_V94) {
+            val have = fleets.map { it.id }.toSet()
+            val extras = ADDED_IN_V94.mapNotNull { catalog[it] }.filter { it.id !in have }
+            if (extras.isNotEmpty()) fleets = (fleets + extras).sortedBy { it.name.lowercase() }
+            version = CATALOG_V94
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1184,7 +1197,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 92
+        const val CATALOG_VERSION = 94
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1275,7 +1288,9 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V89 = 89
         private const val CATALOG_V90 = 90
         private const val CATALOG_V91 = 91
-        private const val CATALOG_V92 = CATALOG_VERSION
+        private const val CATALOG_V92 = 92
+        private const val CATALOG_V93 = 93
+        private const val CATALOG_V94 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1638,5 +1653,48 @@ class ConfigStore(context: Context) {
         private val ADDED_IN_V91 = listOf(
             "fleet-dji-power",
         )
+        private val ADDED_IN_V94 = listOf(
+            "fleet-polar",
+        )
     }
 }
+
+/**
+ * Catalog 93 drops loose Flock and Penguin names, Silicon Labs prefixes on
+ * FS Ext Battery, and the unassigned LiteOn prefix. A rule the operator added
+ * with different text stays. Stock notes are copied so the editor matches.
+ */
+internal fun catalog93Fleet(fleet: Fleet, stock: Fleet): Fleet {
+    if (!fleet.builtIn || fleet.id != stock.id) return fleet
+    val rules = fleet.rules.filterNot { rule ->
+        when (fleet.id) {
+            "fleet-flock-cameras" ->
+                (rule.kind == RuleKind.NAME_CONTAINS && rule.text.uppercase() in FLOCK_LOOSE_NAMES) ||
+                    (rule.kind == RuleKind.NAME_GLOB && rule.text == "Flock-??????")
+            "fleet-penguin" ->
+                rule.kind == RuleKind.NAME_CONTAINS && rule.text.equals("Penguin", true) ||
+                    rule.kind == RuleKind.NAME_GLOB && rule.text.equals("Penguin*", true)
+            "fleet-fs-ext-battery" ->
+                (rule.kind == RuleKind.OUI && rule.text.uppercase() in FS_EXT_SILABS_OUIS) ||
+                    (rule.kind == RuleKind.NAME_GLOB && rule.text.equals("FS_*", true))
+            "fleet-liteon-camera-radio" ->
+                rule.kind == RuleKind.OUI && rule.text.equals("B8:35:32", true)
+            else -> false
+        }
+    }
+    return when (fleet.id) {
+        "fleet-flock-cameras", "fleet-penguin", "fleet-fs-ext-battery", "fleet-liteon-camera-radio" ->
+            fleet.copy(
+                rules = rules,
+                notes = stock.notes,
+                attentionNote = stock.attentionNote,
+            )
+        else -> fleet
+    }
+}
+
+private val FS_EXT_SILABS_OUIS = setOf(
+    "04:0D:84", "1C:34:F1", "38:5B:44", "94:34:69", "B4:E3:F9", "F0:82:C0",
+)
+
+private val FLOCK_LOOSE_NAMES = setOf("FLOCK", "FLCK", "CONDOR", "FALCON", "SPARROW")

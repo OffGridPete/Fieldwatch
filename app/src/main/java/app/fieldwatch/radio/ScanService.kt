@@ -15,6 +15,8 @@ import app.fieldwatch.MainActivity
 import app.fieldwatch.R
 import app.fieldwatch.FieldwatchApp
 import app.fieldwatch.domain.Observation
+import app.fieldwatch.domain.TakFlood
+import app.fieldwatch.domain.TakGnss
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.detectionPolicy
@@ -35,6 +37,8 @@ class ScanService : LifecycleService() {
     private var loop: Job? = null
     private var pump: Job? = null
     private var bleStartJob: Job? = null
+    private var gnssStartJob: Job? = null
+    private var gnssReady = false
     private var lastIntensity: ScanIntensity? = null
     private var lastNotifAt = 0L
     private val inbound = Channel<Observation>(512, BufferOverflow.DROP_OLDEST)
@@ -70,6 +74,11 @@ class ScanService : LifecycleService() {
         publishScanRadio()
         app.syncLocationUpdates()
         restartRadios()
+        gnssStartJob = lifecycleScope.launch {
+            delay(GNSS_START_DELAY_MS)
+            gnssReady = true
+            app.syncGnss()
+        }
         pump = lifecycleScope.launch(Dispatchers.Default) { drainInbound() }
         loop = lifecycleScope.launch(Dispatchers.Default) {
             while (isActive) {
@@ -106,9 +115,13 @@ class ScanService : LifecycleService() {
                     .joinToString(" · ")
                 app.devices.setScanning(true, hint)
                 publishScanRadio()
-                app.pairingFlood.tick(System.currentTimeMillis())
+                app.pairingFlood.tick(System.currentTimeMillis(), app.floodSpeed())
                 app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.noteFloods(app.wifiFlood.bursts())
+                if (gnssReady) {
+                    app.syncGnss()
+                    app.sits.noteGnss(app.gnss.marks())
+                }
                 publishNow()
                 delay(2_000L)
             }
@@ -179,7 +192,7 @@ class ScanService : LifecycleService() {
                 for (i in seen.indices) {
                     val row = seen[i]
                     if (row.kind != RadioKind.BLE || row.hitCount != 1) continue
-                    app.pairingFlood.consider(tagged[i], row.lastSeen)
+                    app.pairingFlood.consider(tagged[i], row.lastSeen, app.floodSpeed())
                 }
                 app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.ingest(seen, fleets, app.config.watchlist)
@@ -258,12 +271,19 @@ class ScanService : LifecycleService() {
                     demoMode = settings.demoMode,
                 )
             }
+            val gnss = app.gnss.reading.value
+            val floodNotice = app.pairingFlood.notice.value ?: app.wifiFlood.notice.value
+            val phoneNote = listOfNotNull(
+                TakGnss.line(settings.takGnss, gnss.notice, gnss.lives),
+                TakFlood.line(settings.takFlood, floodNotice),
+            ).joinToString("\n").ifBlank { null }
             app.tak.publish(
                 live,
                 fleets,
                 settings,
                 app.config.watchlist,
                 selfFix = app.lastFix,
+                gnssRemark = phoneNote,
             )
         } catch (e: CancellationException) {
             throw e
@@ -345,6 +365,8 @@ class ScanService : LifecycleService() {
         loop?.cancel()
         pump?.cancel()
         bleStartJob?.cancel()
+        gnssStartJob?.cancel()
+        gnssReady = false
         publishJob?.cancel()
         inbound.close()
         runCatching { wifi.stop() }
@@ -352,6 +374,7 @@ class ScanService : LifecycleService() {
         runCatching { (application as FieldwatchApp).tak.close() }
         val app = application as FieldwatchApp
         app.devices.setScanning(false)
+        app.gnss.stop()
         app.stopLocationUpdates()
         if (Build.VERSION.SDK_INT >= 24) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -391,5 +414,6 @@ class ScanService : LifecycleService() {
         private const val NOTIF_ID = 42
         private const val PUBLISH_MS = 200L
         private const val BLE_START_STAGGER_MS = 500L
+        private const val GNSS_START_DELAY_MS = 1_500L
     }
 }

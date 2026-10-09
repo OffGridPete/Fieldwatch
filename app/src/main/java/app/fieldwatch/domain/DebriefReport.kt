@@ -174,6 +174,7 @@ private fun SitPathPlot.Figure.withDemoText(t: (String) -> String): SitPathPlot.
             advertisedNote = t(dot.advertisedNote),
         )
     },
+    gnss = gnss.map { pin -> pin.copy(detail = t(pin.detail), confidence = t(pin.confidence)) },
 )
 
 /**
@@ -208,10 +209,11 @@ object DebriefReport {
         watchedFleetIds: Set<String> = emptySet(),
         mineKeys: Set<String> = emptySet(),
         floods: List<FloodBurst> = emptyList(),
+        gnss: List<GnssMark> = emptyList(),
     ): String = document(
         devices, fleets, settings, operatorPath, now, places, window,
         customNames, observerNotes, bookmarkedKeys, watchedFleetIds, mineKeys,
-        floods,
+        floods, gnss,
     ).toPlainText()
 
     fun document(
@@ -228,6 +230,7 @@ object DebriefReport {
         watchedFleetIds: Set<String> = emptySet(),
         mineKeys: Set<String> = emptySet(),
         floods: List<FloodBurst> = emptyList(),
+        gnss: List<GnssMark> = emptyList(),
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -245,6 +248,11 @@ object DebriefReport {
         val arrived = inWin.filter { it.firstSeen >= windowStart }
         val persistent = inWin.filter { dwellMs(it, windowStart, windowEnd) >= win.durationMs * 2 / 3 }
         val path = operatorPath.filter { it.at in windowStart..windowEnd }
+        val gnssInWindow = gnss.filter { mark ->
+            mark.at in windowStart..windowEnd || (mark.endedAt > 0L && mark.endedAt in windowStart..windowEnd)
+        }
+        val gnssPins = SitPathPlot.gnssPins(gnssInWindow, Geo.despikePath(path))
+        val gnssOnPath = gnssPins.isNotEmpty()
         val pathSpan = Geo.spanM(path)
         val pathLen = Geo.pathLengthM(path)
         val trackers = inWin.filter { TrackerMatch.kind(it, names) == TrackerMatch.Kind.FINDER }
@@ -509,7 +517,7 @@ object DebriefReport {
                         next(),
                         "Wearables with you",
                         trackerCallout(
-                            "Garmin / Fitbit / Oura radios that stayed with your GPS path. " +
+                            "Garmin / Fitbit / Oura / Polar radios that stayed with your GPS path. " +
                                 "Watches and rings usually move with the person wearing them — often your own kit or someone walking with you. " +
                                 "They are not typically planted trackers. Account for each MAC. Not a finding and not identity.",
                             wearablesWithYou,
@@ -551,6 +559,9 @@ object DebriefReport {
             add(DebriefSection(next(), "Anomalies", anomalyBody))
             floodBody(floods, windowStart, windowEnd)?.let { body ->
                 add(DebriefSection(next(), "Flood", body))
+            }
+            gnssBody(gnss, windowStart, windowEnd, onPath = gnssOnPath)?.let { body ->
+                add(DebriefSection(next(), "GNSS", body, alert = true))
             }
             add(DebriefSection(next(), "Privacy", privacy(wifi, ble, randomized, hidden, settings, places, pictures.isNotEmpty())))
             add(DebriefSection(next(), "Recommended actions", actionBody))
@@ -609,6 +620,7 @@ object DebriefReport {
                 pathFigure(
                     win.sitName ?: "Last 15 minutes", path, inWin, fleets,
                     customNames, observerNotes, bookmarkedKeys, watchedFleetIds, mineKeys,
+                    gnssPins,
                 ),
                 pictures,
                 secondary = false,
@@ -627,6 +639,7 @@ object DebriefReport {
         bookmarkedKeys: Set<String> = emptySet(),
         watchedFleetIds: Set<String> = emptySet(),
         mineKeys: Set<String> = emptySet(),
+        gnss: List<SitPathPlot.GnssPin> = emptyList(),
     ): SitPathPlot.Figure? {
         val path = Geo.despikePath(path)
         if (path.size < 2) return null
@@ -638,13 +651,25 @@ object DebriefReport {
             alertsOnly = true,
             mineKeys = mineKeys,
         )
+        val caption = buildString {
+            append("North-up. Line is this phone (${path.lengthM()}). ")
+            append("A MAC alert or a signature alert is drawn once. ")
+            append("A decoded latitude and longitude is the last advertised position. ")
+            append("Anything else is the strongest hear. A number is that place (Path key).")
+            if (gnss.isNotEmpty()) {
+                append(" A red diamond is where this phone was during a GNSS detection. ")
+                append("The Path key has the time and what changed. ")
+                append("It does not say where the interference came from.")
+            }
+        }
         return SitPathPlot.Figure(
             kicker = "OPERATOR PATH",
             tracks = listOf(SitPathPlot.FigureTrack(title, path)),
             dots = plot.points,
             lengthM = Geo.pathLengthM(path),
             spanM = Geo.spanM(path),
-            caption = "North-up. Line is this phone (${path.lengthM()}). A MAC alert or a signature alert is drawn once. A decoded latitude and longitude is the last advertised position. Anything else is the strongest hear. A number is that place (Path key).",
+            caption = caption,
+            gnss = gnss,
         )
     }
 
@@ -754,7 +779,7 @@ object DebriefReport {
                 beaconsOpen,
             )
             dump(
-                "Wearables with you (Garmin / Fitbit / Oura — usually own kit or a companion)",
+                "Wearables with you (Garmin / Fitbit / Oura / Polar — usually own kit or a companion)",
                 wearablesOpen,
             )
         }
@@ -1004,7 +1029,7 @@ object DebriefReport {
             return@buildString
         }
         appendLine("Overall distance traveled: ${fmtDist(pathLen)} along the GPS path (${path.size} samples). Straight-line span ${fmtDist(pathSpan)}.")
-        appendLine("Co-travel is split by class: finder tags (AirTag / Find My, SmartTag, Tile, Chipolo, Pebblebee, loud pocket Apple), retail beacons (iBeacon, Minew, Estimote, Kontakt.io, Atrius cart tag), and wearables (Garmin, Fitbit, Oura).")
+        appendLine("Co-travel is split by class: finder tags (AirTag / Find My, SmartTag, Tile, Chipolo, Pebblebee, loud pocket Apple), retail beacons (iBeacon, Minew, Estimote, Kontakt.io, Atrius cart tag), and wearables (Garmin, Fitbit, Oura, Polar).")
         if (path.size < 2 || pathSpan < MOVE_M) {
             appendLine("Insufficient movement to distinguish a radio that stayed with you from one you passed. Walk or drive farther and re-run.")
             return@buildString
@@ -1305,6 +1330,27 @@ object DebriefReport {
             rows.sortedByDescending { it.rssi }.forEach { d ->
                 appendLine("  · ${bleLine(d, names, from, now, customNames)}")
                 if (d.key in mineKeys) appendLine("    Marked mine")
+            }
+        }.trimEnd()
+    }
+
+    private fun gnssBody(marks: List<GnssMark>, start: Long, end: Long, onPath: Boolean): String? {
+        val rows = marks.filter { it.at in start..end || (it.endedAt > 0L && it.endedAt in start..end) }
+            .sortedBy { it.at }
+        if (rows.isEmpty()) return null
+        return buildString {
+            appendLine(GnssCopy.INTRO)
+            appendLine()
+            appendLine(GnssCopy.ROUTER)
+            if (rows.any { it.kind == "spoofing" }) {
+                appendLine()
+                appendLine(GnssCopy.SPOOF_LIMIT)
+            }
+            appendLine()
+            rows.forEach { appendLine(it.reportLine()) }
+            if (onPath) {
+                appendLine()
+                appendLine("The path map marks where this phone was. It does not say where the interference came from.")
             }
         }.trimEnd()
     }

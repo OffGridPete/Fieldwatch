@@ -28,6 +28,7 @@ object DebriefPrompt {
         bookmarkedKeys: Set<String> = emptySet(),
         mineKeys: Set<String> = emptySet(),
         floods: List<FloodBurst> = emptyList(),
+        gnss: List<GnssMark> = emptyList(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -64,6 +65,7 @@ object DebriefPrompt {
             devices, fleets, settings, operatorPath, now, places, win,
             customNames, observerNotes, bookmarkedKeys, mineKeys = mineKeys,
             floods = floods,
+            gnss = gnss,
         )
         val iso = utc(windowEnd)
         val start = utc(windowStart)
