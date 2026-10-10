@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.23")
-    c.drawString(48, 94, "9 October 2026")
+    c.drawString(48, 108, "Version 1.1.24")
+    c.drawString(48, 94, "10 October 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.23  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.24  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -1029,7 +1029,7 @@ def story():
             "Grant the permission screen. Fieldwatch will not start radios until the required set is complete.",
             "A foreground notification <b>Fieldwatch scanning</b> appears. Leave it; dismissing via Stop ends collection.",
             "On first run the app writes <font face='Courier'>files/config.json</font> and loads the stock catalog, presets, bookmarks, and Settings. Later launches reload that file. Settings → Export signatures / Export settings share the catalog and switches. Neither pack includes logs or GPS (§5.7, §9.3).",
-            "The Live display opens on the last view mode (default: By class). Display starts with RSSI bars, Signature names, Frequency, and First / last seen on. The header shows live counts as three small icons: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A radio hint may follow those numbers.",
+            "The Live display opens on the last view mode (default: By class). Display starts with RSSI bars, Signature names, Frequency, and First / last seen on. The top bar shows live counts: Wi-Fi access points, BLE advertisers, and on-air signature matches (the same hub icon as the Signatures tab). A GPS mark, with no number, appears there only while the GNSS interference check is on. Green means that part is working. Dim gray means that radio is switched off. Red means it needs you, or a GPS hit is up. The color key is §5.1. A radio hint may follow those numbers.",
             "Turn on system Location and Bluetooth if either is off. The Live display header and Settings show radio hints (Wi-Fi next Ns, waiting on OS, BLE cycling). Keep screen on is enabled by default. If you will leave the app: Settings → Allow background usage, then Unrestricted battery. Some phones (Samsung among them) do not open onto Unrestricted — tap Allow background usage to click through and select it.",
             ]),
             privacy=False,
@@ -1087,7 +1087,7 @@ def story():
             "Tap Tune again or tap the dimmed radios to close it. Walk through the chrome once:",
         ),
         numbered([
-            "Confirm the header is counting (Wi-Fi, Bluetooth, and signatures icons with numbers). If both radio counts stay at 0, Location / Wi-Fi / Bluetooth are probably off at the system level — turn them on, wait ~30 s for the first Wi-Fi batch.",
+            "Confirm the header is counting. Wi-Fi, Bluetooth, and the signatures icon each have a number, and they should be green. Green includes the wait between Wi-Fi scans. Dim gray means that radio is switched off. Red means Location is off, or Android is refusing that radio. A GPS mark with no number appears only while the GNSS interference check is on (§5.9). If both radio counts stay at 0 and the icons are dim or red, turn on Location, Wi-Fi, and Bluetooth, then wait ~30 s for the first Wi-Fi batch. §5.1.",
             "You should be on Live, in By class. Tap a class, then a signature, then a radio. Each row is one radio. The circle is the class. A question mark means Fieldwatch has no name for it yet. That circle is what you scan for. Wi-Fi access points and Bluetooth LE advertisers are still two kinds of radio (§1.1). On the list they are a small Wi-Fi or Bluetooth icon at the start of the second line, not letters in the title. The first line is the address. The second line is the icon, then the name and type, then rand or gone. Bars, signature names, frequency, and first and last seen start on. The vendor is on the detail page, not on the list. The number on the right is loudness at this phone, in dBm. −50 is louder than −90. It is not a distance.",
             "Tap the tune icon (top right). That is <b>Display</b>: how the list looks for this job. Pick a View first (By class, Strength list, Hybrid, Timeline, or Classic radar). Then Sort, Brief hold, Title line, Subtitle line, and the extra-fact switches. Close it when the list looks the way you want — tap Tune again or tap the dimmed radios behind the panel. In a crowded plaza, set Subtitle to None and turn the extras off — you still have every radio; you just see less of each. §5.3.",
             "Tap a row. That is device detail: a saved custom name is the large title; advertised name smaller; Observer notes (cyan) under the name; “What this looks like,” Extra attention if any, Signature family, signal, decode, optional Decoded fields on BLE when that signature has a map (§9.6), bookmark (watch this MAC), Hunt on BLE, Create signature from device. Custom name / notes edit is hidden on a random / privacy BLE MAC. Back returns to the Live display.",
@@ -1171,7 +1171,7 @@ def story():
         P("4.5.4 Fieldwatch Settings for this sit", "h3"),
         numbered([
             "<b>Scan intensity: High performance</b> (starts on). BLE low-latency, recycled about every 70 s. Wi-Fi about every 30 s until you add Faster Wi-Fi. Balanced and Battery saver are the compromise; not this page. §10.3.",
-            "<b>Faster Wi-Fi AP scans</b> (optional, off until you do this). For signed APs on a drive. (1) Settings → About phone → tap Build number until Developer options exist. (2) Settings → Developer options → <b>Wi-Fi scan throttling → Off</b>. (3) Fieldwatch → Settings → Faster Wi-Fi AP scans → On. About every 8 s AP batches instead of ~30 s. More battery and heat than High performance alone. Fieldwatch will not flip the switch while the OS is still throttling. Turn the Fieldwatch switch off when the drive is over. §7.1.1, §10.3.1.",
+            "<b>Faster Wi-Fi AP scans</b> follows Developer options. The switch is on only when <b>Wi-Fi scan throttling</b> is off. Tap the switch to open that page, or to read the note on a phone that cannot open it. About every 8 s AP batches instead of ~30 s. More battery and heat. Turn Wi-Fi scan throttling back on when the drive is over. §7.1.1, §10.3.1.",
             "<b>Keep screen on</b> — on while you are looking at the Live display / Hunt.",
             "<b>Tag detections with GPS</b> — leave on if you want Moving with you, Debrief distance, or log lat/lon. High-accuracy Location. Path stays 0 until a live fix.",
             "<b>Write to disk / logging</b> — leave on if you want Log export, Signature candidates, or a file after the 15-minute Debrief window. Turn off only if the plaza is so dense the UI feels late.",
@@ -1180,9 +1180,9 @@ def story():
         P("4.5.5 Check it is actually scanning", "h3"),
         numbered([
             "The shade has <b>Fieldwatch scanning</b> with Wi-Fi / BLE / signatures counts. If that card is gone, the service is not running — open Fieldwatch again.",
-            "Live display header counts are not both stuck at 0. If they are: Location, Wi-Fi, and Bluetooth at the system level (§4.5.1), then wait ~30 s for the first Wi-Fi batch (~8 s if Faster Wi-Fi is in effect).",
+            "Live header counts are not both stuck at 0, and the Wi-Fi and Bluetooth icons are green. Dim gray is that radio switched off. Red is Location off, or Android refusing the scan. If the counts stay at 0: Location, Wi-Fi, and Bluetooth at the system level (§4.5.1), then wait ~30 s for the first Wi-Fi batch (~8 s if Faster Wi-Fi is in effect). The color key is §5.1.",
             "Header hint is not <b>BLE parked · restarting</b> while you watch. If it is: Keep screen on, Unrestricted background, do not sleep the app. §13.2.",
-            "If Faster Wi-Fi is on, Wi-Fi next Ns is a short count. If the header reads <b>Wi-Fi fast scan needs Developer options</b>, the OS throttle came back on — fix Developer options, then return to Settings.",
+            "If Faster Wi-Fi is on, Wi-Fi next Ns is a short count. The switch matches Wi-Fi scan throttling in Developer options.",
             "The phone will get warm. That is the radios and the screen, not a crash. Plug in or use a pack for a long sit.",
         ]),
         callout(
@@ -1209,7 +1209,8 @@ def story():
             "127 means the stack did not report a measurement (Bluetooth “not available”), not transmit power. "
             "Filters change who appears. Display (§5.3) changes how each row looks. "
             "Pause freezes the picture; the radios keep scanning and the log still writes. "
-            "A new filter applies when you run the Live display again."
+            "A new filter applies when you run the Live display again. "
+            "The icons in the top bar, and what their colors mean, are §5.1."
         ),
         P("5.1 Main layout", "h2"),
         figure_wrap(
@@ -1218,10 +1219,73 @@ def story():
             "One screen, five tabs, and a device-detail page on top. "
             "The bottom bar is Live, Filters, Signatures, Reports, Settings. "
             "Signatures is the pattern catalog. Reports is Path, Debrief, Compare, Sit export, AI Export, and Log export. "
-            "The top bar is FIELDWATCH plus three live counts: Wi-Fi access points, BLE advertisers, and on-air signature matches "
-            "(the same hub icon as the Signatures tab). A radio hint may follow — Wi-Fi next 27s, waiting on OS, BLE cycling, or BLE parked. "
+            "The top bar is FIELDWATCH plus the live counts. The colors on those icons, and the words that can follow them, are next. "
             "The scan notification spells the same three counts. Exports live on Reports. "
             "Screenshots in this book use Privacy mode (MAC tails **:**:**) unless noted.",
+        ),
+        P(
+            "The top bar stays on Live, Filters, Signatures, Reports, and Settings. "
+            "It is not on a radio’s detail page, and it is not on Hunt. "
+            "FIELDWATCH is the title. A running sit adds · SIT. Pause adds · PAUSED."
+        ),
+        P(
+            "Three icons have a number beside them, and the number uses the same color as the icon. "
+            "Wi-Fi is access points from the last scan, held through the wait between scans. "
+            "Bluetooth is BLE advertisers still being heard. "
+            "The hub icon, the same one as the Signatures tab, is radios on the air that match a signature. "
+            "A GPS mark has no number. It appears only while the GNSS interference check is on. "
+            "These numbers are what the phone is hearing. Filters change the list under them. They do not change the counts."
+        ),
+        table(
+            ["Color", "What it means"],
+            [
+                ["Green", "That part is on and healthy. A count of 0 can still be green."],
+                ["Gray", "The scan is stopped, or the GPS check is not ready to call a hit. The radio can still be on."],
+                ["Dim gray", "Wi-Fi or Bluetooth is switched off in the phone’s settings."],
+                ["Red", "Wi-Fi or Bluetooth needs you, or a GPS hit is up."],
+            ],
+            [1.25 * inch, 5.25 * inch],
+        ),
+        Spacer(1, 6),
+        P(
+            "The words after the icons stay in the secondary text color. They name a wait or a problem. More than one can show, joined with · between them. "
+            "Wi-Fi scanning. Wi-Fi next 27s, where the number is the seconds until the next batch. Wi-Fi waiting on OS. "
+            "BLE retrying. Bluetooth is off. BLE unavailable. BLE cycling. BLE parked · restarting. "
+            "The line is blank when nothing is waiting and nothing is wrong. "
+            "Night mode folds these colors into the red display, so on a dark sit you read the words. §5.7."
+        ),
+        P(
+            "<b>Wi-Fi.</b> Green while Fieldwatch is scanning, Wi-Fi is on, and Location is on. "
+            "That includes the wait. The words say Wi-Fi next Ns, or Wi-Fi scanning, and the icon stays green. "
+            "A jump in the number is the new batch. "
+            "Red when the scan is running and Location is off, or when the words say Wi-Fi waiting on OS. "
+            "Dim gray when Wi-Fi is switched off. "
+            "Gray when the scan is stopped and Wi-Fi is still on. A stopped scan stays gray even if Location is off. Live still shows the Location banner. "
+            "How the batches work: §7.1."
+        ),
+        P(
+            "<b>Bluetooth.</b> Green while Fieldwatch is scanning, Bluetooth is on, and Location is on. "
+            "A planned rest stays green. The words say BLE cycling for the short recycle, "
+            "or BLE parked · restarting when Android has parked the scanner and Fieldwatch is bringing it back. "
+            "Red when the scan is running and Location is off, or when the words say BLE retrying or BLE unavailable. "
+            "Dim gray when Bluetooth is switched off. The words may also say Bluetooth is off. "
+            "Gray when the scan is stopped and Bluetooth is still on. "
+            "A green icon and a count of 0 is a quiet room. How the scan rests: §7.2."
+        ),
+        P(
+            "<b>Signatures.</b> Green for the whole scan, including a count of 0. "
+            "Gray when the scan stops. "
+            "Zero stays green. Extra attention is a mark on a row, not a color on this icon. "
+            "The number can stay up while Filters has taken that family off the list. §9."
+        ),
+        P(
+            "<b>GPS.</b> No number. Hidden until Settings → GNSS interference is on. "
+            "That switch itself waits until this phone has a calibration. "
+            "Green when the check is armed and quiet. "
+            "Gray while it is still settling or learning, while Live says GNSS paused by the phone, "
+            "while this phone graded Poor, or while the scan is stopped. "
+            "Red while a hit is up, the same time as the red line on Live. "
+            "A pause stays gray. §5.9."
         ),
         figure_wrap(
             "fig-flood.png",
@@ -1294,6 +1358,7 @@ def story():
                 ["Less text on each row", "Live display → Tune → Display (§5.3)"],
                 ["Stop seeing a family on the Live display", "Filters → Hide these (class) or Hide selected (one family)"],
                 ["Hide MAC tails on the screen", "Settings → Privacy mode"],
+                ["See whether Wi-Fi, Bluetooth, signatures, or GPS is healthy", "The icons in the top bar. Green, gray, dim gray, and red. §5.1."],
                 ["See why the Live list is empty, or paste phone facts into an issue", "Settings → Diagnostics. What to check names a switch that is off. Copy sends the paste. When Location is off, Live shows a banner with Turn on."],
                 ["Put radios on an ATAK map", "Settings → TAK / CoT feed (§5.8, §12.15)"],
             ],
@@ -1965,18 +2030,18 @@ def story():
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
         ),
         bullets([
-            "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, and Extra attention follow that. Phone brightness does not change. Restore defaults turns it off. Fig. 9.",
+            "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, Extra attention, and the top-bar icons follow that, so green and red become shades of red. Read the words beside the icons. Phone brightness does not change. Restore defaults turns it off. Fig. 9, §5.1.",
             "<b>Keep screen on</b> starts on. The display stays awake while Fieldwatch is in front, so Samsung does not park Bluetooth. Turn it off when you pocket the phone.",
             "<b>Privacy mode</b> starts off. It hides the last three octets of each MAC on Live, radar, timeline, detail, Hunt, Named radios, and watchlist cards, shown as **:**:**. GPS on detail, and coordinates in Debrief, AI Export, and detail Share, show as “masked.” Street names are left out of those reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. The vendor prefix stays. Logs, matching, Moving with you, and saved signatures still use the real address and position. The TAK / CoT feed pauses while Privacy mode is on, so full addresses and coordinates are not sent (§5.8).",
         ]),
         figure_wrap(
             "fig-settings-night.png",
             "Fig. 9 — Settings → Appearance, Night mode on.",
-            "Red on black so a dark sit stays dim. Phone brightness does not change. Restore defaults turns it off.",
+            "Red on black so a dark sit stays dim. The top-bar icons follow the same red. Phone brightness does not change. Restore defaults turns it off.",
         ),
         P("Radios, watchlist, logging, and backup", "h3"),
         bullets([
-            "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans: a second switch. Fieldwatch reads the OS Wi-Fi scan-throttle flag (Android 11+) and will not turn this on while that flag is still on. Developer options → Wi-Fi scan throttling → Off, then flip Fieldwatch. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Header may read Wi-Fi fast scan needs Developer options if the OS switch came back on. Fieldwatch cannot flip Developer options. §7.1.1, §10.3.1.",
+            "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans matches Developer options → Wi-Fi scan throttling. The switch is on only when that limit is off. Tap it to open Developer options. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Fieldwatch cannot flip Developer options itself. §7.1.1, §10.3.1.",
             "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. <b>Named radios (N)</b> opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all (signature watches stay on Signatures). Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
             "<b>GNSS interference</b> — Calibrate this phone once before the check will turn on. The result stays on this phone and is not part of Export settings. Full write-up: §5.9.",
@@ -2370,6 +2435,16 @@ def story():
             "A real hit is still a gain drop while satellites are being tracked."
         ),
         P(
+            "The GPS mark in the top bar follows this check. It is there only while the check is on, and it has no count. "
+            "It stays gray during the first two minutes, while Diagnostics says settling and then learning. "
+            "It turns green once Diagnostics says armed and the air is quiet. "
+            "A phone with no AGC reading can still go green. Diagnostics says AGC not available, and the check watches signal strength. "
+            "GNSS paused by the phone keeps the mark gray. On Live, that same sentence sits under the top bar. "
+            "A Poor grade stays gray, and the popup stays off. "
+            "Stopping the scan turns the mark gray until the scan is running again. "
+            "Red is a hit, the same time as the red line. After the hit ends, the mark returns to green when the check is still armed and quiet. §5.1."
+        ),
+        P(
             "The wait starts when the check is on and Fieldwatch is scanning. "
             "Leave the app and come back, or start the scan again, and the wait starts over. "
             "A hit that was already under way when the check started can be missed. "
@@ -2408,7 +2483,9 @@ def story():
             "After that, a quieter line says it ended, and that line stays for about 10 minutes. "
             "The flood red line is a different notice and has Hide this burst. This one does not. "
             "Beep and voice follow Alert from, and they follow their own switches. "
-            "The popup and the red line still show if Beep and Voice are off, unless this phone graded Poor.",
+            "The popup and the red line still show if Beep and Voice are off, unless this phone graded Poor. "
+            "The GPS mark in the top bar is red for that same stretch. "
+            "It returns to green when the line clears and the check is still armed.",
         ),
         P(
             "Debrief and Compare list the hits in a GNSS section: the time, the level, and what changed. "
@@ -2594,6 +2671,15 @@ def story():
             "scans (§7.1.1, §10.3.1) is the optional way to shrink that gap after the OS throttle "
             "is off."
         ),
+        P(
+            "<b>On the header.</b> The Wi-Fi icon is this same scan. "
+            "It stays green through the wait. The words say Wi-Fi next Ns, and the last batch stays in the count until the next one arrives. "
+            "Wi-Fi scanning is green too. "
+            "Red is Wi-Fi waiting on OS, which is a refused scan and a backoff of up to 45 s, or Location off while the scan is running. "
+            "Dim gray is Wi-Fi switched off. "
+            "Gray is Fieldwatch not scanning, with Wi-Fi still on. "
+            "A new batch shows up as a jump in the count. The color key is §5.1."
+        ),
         P("7.1.1 Faster Wi-Fi AP scans (optional)", "h2"),
         P(
             "Stock Android is the bottleneck, not Fieldwatch’s matcher. A Cradlepoint IBR, an "
@@ -2635,23 +2721,22 @@ def story():
             "in Debrief."
         ),
         P(
-            "How to turn it on: Android 11 or newer. Settings → About phone → tap Build number "
-            "until Developer options exist. Developer options → <b>Wi-Fi scan throttling</b> → "
-            "Off. Return to Fieldwatch → Settings → Faster Wi-Fi AP scans → On. Fieldwatch reads "
-            "<font face='Courier'>WifiManager.isScanThrottleEnabled()</font> before it will "
-            "accept the switch; if the OS is still throttling, the switch stays off and a "
-            "dialog explains, with Open developer options. Fieldwatch cannot change the OS switch. "
-            "If you turn OS throttling back on, the Fieldwatch switch may stay saved on but scans "
-            "return to ~30/40/55 s and the header can read Wi-Fi fast scan needs Developer "
-            "options. Come back to Settings and the caption updates on resume."
+            "How to turn it on: Android 11 or newer. Settings → Faster Wi-Fi AP scans. The switch "
+            "shows the real Android state. It is on only when Wi-Fi scan throttling is off. Tap "
+            "it and Fieldwatch opens Developer options, or shows a note when that page cannot be "
+            "opened. Turn <b>Wi-Fi scan throttling</b> off. Come back and the switch matches. "
+            "Fieldwatch reads <font face='Courier'>WifiManager.isScanThrottleEnabled()</font> and "
+            "cannot change that flag itself. Turn the Android limit back on when you want the "
+            "normal wait. Android 10 cannot be queried, so the switch stays off there."
         ),
         P(
             "While it is actually in effect, Fieldwatch skips the four-scans-per-two-minutes quota "
-            "and asks about every 8 s. If <font face='Courier'>startScan()</font> starts "
+            "and asks about every 8 s. The Wi-Fi icon stays green, and Wi-Fi next Ns counts down from a shorter number. "
+            "If <font face='Courier'>startScan()</font> starts "
             "returning false, the existing backoff still applies (up to 45 s) so a hostile OEM "
             "limit does not spin. Battery and heat go up; use it for the drive or the first "
             "minutes on a corridor, not an all-day pocket sit. Battery saver intensity still "
-            "applies to BLE. Turn Faster Wi-Fi AP scans off when you no longer need the extra "
+            "applies to BLE. Turn Wi-Fi scan throttling back on when you no longer need the extra "
             "AP batches."
         ),
         P(
@@ -2691,6 +2776,15 @@ def story():
             "caption",
         ),
         Spacer(1, 6),
+        P(
+            "<b>On the header.</b> The Bluetooth icon stays green through a planned rest. "
+            "High performance recycles about every 70 seconds. For that gap the words say BLE cycling, and the icon stays green. "
+            "If Android parks the scanner, the words say BLE parked · restarting. Fieldwatch rests and continues, and the icon stays green. "
+            "Red is a start that failed, or Location is off while the scan is running. The words say BLE retrying or BLE unavailable. "
+            "Dim gray is Bluetooth switched off. The words may say Bluetooth is off. "
+            "Gray is the scan stopped. "
+            "A green icon with a count of 0 is a quiet room. The color key is §5.1."
+        ),
         P(
             "Each advertisement yields address, local name, RSSI, service UUIDs (including "
             "keys from service data), the first manufacturer ID and a short manufacturer hex, "
@@ -3173,6 +3267,15 @@ def story():
     flow += [
         PageBreak(),
         P("9. Signatures", "h1"),
+        P(
+            "The hub icon in the top bar is this catalog on the air. "
+            "The number is how many radios Fieldwatch is hearing right now that match any signature, stock or one you added. "
+            "It stays green while a scan is running, including when the number is 0. "
+            "It turns gray when the scan stops. "
+            "Extra attention, a bookmark, and a filter do not change that color. "
+            "Hide these takes a family off the Live list and leaves the header count alone. "
+            "The count is what matched, not what the list is showing. The color key is §5.1."
+        ),
         P("9.1 What a signature is", "h2"),
         figure_wrap(
             "fig-signatures.png",
@@ -3844,29 +3947,26 @@ def story():
             "real and in the catalog."
         ),
         P(
-            "<b>OS gate — Fieldwatch checks before the switch will turn on.</b> Android 11+ exposes "
-            "whether Wi-Fi scan throttling is enabled. Fieldwatch reads that flag when you try to "
-            "turn Faster Wi-Fi AP scans on, and again when Settings resumes. If the OS is still "
-            "throttling (the factory default), the Fieldwatch switch stays off and a dialog tells "
-            "you to use Developer options; Open developer options is offered. Fieldwatch cannot "
-            "write that OS flag. Android 10 cannot be queried, so the Fieldwatch switch stays off "
-            "there."
+            "<b>The switch is the Android setting.</b> Android 11+ exposes whether Wi-Fi scan "
+            "throttling is enabled. Fieldwatch reads that flag when Settings is open, and again "
+            "when you come back. The switch is on only when that limit is off. Tap the switch and "
+            "Fieldwatch opens Developer options, or shows a note when that page cannot be opened. "
+            "Fieldwatch cannot write the OS flag. Android 10 cannot be queried, so the switch "
+            "stays off there."
         ),
         P(
-            "<b>How to enable, in order.</b> (1) Settings → About phone → tap Build number until "
-            "the phone says you are a developer. (2) Settings → Developer options → Wi-Fi scan "
-            "throttling → Off. (3) Return to Fieldwatch → Settings → Faster Wi-Fi AP scans → On. "
-            "Keep screen on and the scan notification still apply. Tag detections with GPS "
-            "should stay on if you care where that hear was."
+            "<b>How to enable.</b> Tap Faster Wi-Fi AP scans. In Developer options, turn Wi-Fi "
+            "scan throttling off. If Developer options is missing, Settings → About phone → tap "
+            "Build number until the phone says you are a developer. Come back to Fieldwatch. The "
+            "switch matches. Keep screen on and the scan notification still apply. Tag detections "
+            "with GPS should stay on if you care where that hear was."
         ),
         P(
             "<b>While it is in effect.</b> About every 8 s Fieldwatch calls "
             "<font face='Courier'>startScan()</font> and skips the four-per-two-minutes quota. "
-            "The header’s Wi-Fi next Ns count is shorter. If the OEM still refuses scans, "
-            "fail/backoff is unchanged (Wi-Fi waiting on OS, up to 45 s). If you turn OS "
-            "throttling back on, faster mode is not used even if the Fieldwatch switch is still "
-            "saved on; the header can read Wi-Fi fast scan needs Developer options. Turn the "
-            "Fieldwatch switch off when the drive is over — battery and heat are higher than High "
+            "The header’s Wi-Fi next Ns count is shorter, and the Wi-Fi icon stays green through that wait. If the OEM still refuses scans, "
+            "fail/backoff is unchanged (Wi-Fi waiting on OS, up to 45 s). Turn Wi-Fi scan "
+            "throttling back on when the drive is over. Battery and heat are higher than High "
             "performance alone."
         ),
         P(
@@ -4948,9 +5048,9 @@ def story():
             ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus a pilot pin when op_lat/op_lon decoded; Location heading/speed go in track). Gone radios are dropped. What to send: Extra attention, Payload location, Watchlist, All signatures. GNSS (Off, While alerting, Red line, Any hit) and Floods (Off or On) add a line on this phone’s marker and do not add a pin. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. §5.8, §5.8.12, §12.15, §12.16."],
-            ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention. Phone brightness is unchanged. Fig. 9, §5.7."],
+            ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention, and the top-bar icons. Green and red become shades of red, so read the words beside the icons. Phone brightness is unchanged. Fig. 9, §5.1, §5.7."],
             ["Diagnostics", "Settings, under Show Live tour. What to check names a switch that is off and needs to be on. It does not name Wi-Fi scanning or Bluetooth scanning while that radio is already on. The rest of the page is the phone, Android version, catalog, whether Wi-Fi, Bluetooth, and Location are scanning, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. When the GNSS check is on, it also shows settling or the monitor state, and the calibration grade. Copy pastes that into an issue. No network names, addresses, or GPS coordinates. An empty Live list points here when a scan is blocked. When Location is off, Live also shows a banner. §5.7, §5.9."],
-            ["GNSS interference", "A change in this phone’s own GPS that can mean interference, or, with spoofing checks on, a pattern that can mean spoofing. Not a located radio, and not a named jammer or spoofer. Calibrate once outside before the check will turn on. The first minute is not the baseline. A warning can come after about two minutes. A cradle, a router, or another phone against this phone can cause a hit. Popup, then a red line on Live. Debrief lists the hit. The Path map marks where this phone was. That spot is not the source. §5.9."],
+            ["GNSS interference", "A change in this phone’s own GPS that can mean interference, or, with spoofing checks on, a pattern that can mean spoofing. Not a located radio, and not a named jammer or spoofer. Calibrate once outside before the check will turn on. The first minute is not the baseline. A warning can come after about two minutes. A cradle, a router, or another phone against this phone can cause a hit. Popup, then a red line on Live. The top-bar GPS mark is red for that same stretch, gray while the check is warming up, paused, graded Poor, or the scan is stopped, and green once armed and quiet. Debrief lists the hit. The Path map marks where this phone was. That spot is not the source. §5.1, §5.9."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second (pilot) pin. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
             ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
@@ -4978,6 +5078,7 @@ def story():
             ["Porkchop", "Catalog signature (on). SSID/name PORKCHOP; BACON fake-AP vendor IE 50:52:4B. Extra attention. Cardputer / CYD firmware, not every ESP32."],
             ["Moving with you", "Filter: loud BLE (about −75 dBm or stronger on the trail) with a GPS trail along your path, still being heard. Wi-Fi access points are excluded — hear-time GPS on a loud AP looks like co-travel. “Still here” is not a fixed radius: allowed distance = the larger of 50 m or (recent speed × 15 s), plus 25 m of GPS slack. Walking holds a house-length; highway hold is a handful of advertisements so a car tag does not blink off between packets. Passing BLE still fails the trail-moved gates. Needs live tagging (not stale last-known) and ~45 m of path. Bag/car tag yes; a second iPhone usually no (BLE MAC rotation). The switch starts a BLE follow test (clears Signatures only / Show only / Named radios only / Watched only; Hide these stays). The preset replaces the whole filter. Live display → Start over clears path and trails. Debrief still writes the same co-travel assessment for the last 15 minutes even if this filter is off and even if the Live display is not on the list. §8.5."],
             ["Start over", "Live display button while Moving with you is on. Clears the operator GPS path and radio GPS trails. List and log stay. Path meter returns to 0 m."],
+            ["Header icons", "The counts under FIELDWATCH, on Live, Filters, Signatures, Reports, and Settings. Not on a radio’s detail page, and not on Hunt. Wi-Fi count, Bluetooth count, signature count (the hub icon), and a GPS mark with no number while the GNSS interference check is on. The number uses the same color as its icon. Green is healthy, including the wait between Wi-Fi scans, a planned Bluetooth rest, and a signature count of 0. Gray is the scan stopped, or GPS warming up, paused by the phone, or graded Poor. Dim gray is Wi-Fi or Bluetooth switched off. Red is Location off, Android refusing Wi-Fi, Bluetooth retrying, or a GPS hit. Words after the icons name the wait or the problem: Wi-Fi scanning, Wi-Fi next Ns, Wi-Fi waiting on OS, BLE retrying, Bluetooth is off, BLE unavailable, BLE cycling, BLE parked · restarting. The line is blank when nothing is waiting. Counts are what the phone is hearing. Filters do not change them. Night mode folds the colors into the red display. §5.1, §7.1, §7.2, §5.9, §9."],
             ["Live display", "The first bottom tab (labeled Live on the phone). The on-screen picture of radios: radar, list, timeline, hybrid, or By class. Filters change who appears here; Tune (Display) changes the view and how each row looks. Not “live vs recorded” — Debrief, the log, and the TAK feed are separate. §4.4, §5.1–5.3."],
             ["By class", "Live display view (Display → By class). Outline of the filtered set: every class A–Z by name → signatures A–Z → radios → detail. Unmatched last. Show all (default) keeps empty classes; Collapse empty hides zeros. Those chips scroll with the list. Class headers use the same glyphs as Live display rows (unmatched = ?). Counts are radios, not packets. Radio rows follow Display (bars, chips, Frequency, first/last). Dual-chip radios sit in each class they matched. A watchlist hit opens that class and signature so the row can flash, and the jump keeps those headers on screen when the radio is close enough. Not a Report. §6.5."],
             ["Display (Live display)", "Tune (sliders icon, top right of Live). How the list looks for this mission: View, Sort, Brief hold, Title line, Subtitle line, bars, signature names, Frequency, first/last. View is Radar, Strength list, Timeline, Hybrid, or By class. The circle on each row is a class glyph, not radio kind — that is the Wi-Fi / Bluetooth icon on the subtitle. Filters hide radios; Display hides fields. Not on Settings. §4.4, §5.3, §6.5."],
@@ -5361,8 +5462,10 @@ def story():
             ["Permission gate on every launch", "A required runtime permission was denied or reset by the OS.", "Grant Location (Precise), Nearby Wi-Fi, Bluetooth scan/connect, Notifications. Turn system Location on. Full list: §4.5.2."],
             ["I want max hear / the phone gets hot", "High performance, Keep screen on, and Faster Wi-Fi use the radios and the display hard.", "Expected for a sit. Walk through §4.5. Plug in or use a pack. Drop to Balanced and turn Faster Wi-Fi off when you are done. Empty list is still not “safe.”"],
             ["Live list is empty", "The air is quiet, a filter is hiding radios, or Android is not delivering scans.", "If Location is off, Live shows a banner. Turn on opens the phone’s Location screen when that screen exists. Otherwise Settings → Diagnostics, under Show Live tour. What to check names a switch that is off. If that does not explain it, Copy that page into an issue. It names the phone, Android version, and whether Location and the radios are scanning. It does not include network names or GPS coordinates."],
-            ["Zero Wi-Fi rows, BLE works", "Between OS scan windows, throttle, Wi-Fi off, or Location off.", "Enable Wi-Fi and Location. Read the header: Wi-Fi next Ns or waiting on OS. Last APs should stay held; a new batch arrives about every 30 s on high performance, or ~8 s if Faster Wi-Fi AP scans is on and Developer options Wi-Fi scan throttling is off. Settings → Diagnostics shows the same facts."],
-            ["Zero BLE rows after it was working", "Samsung parked the scanner.", "Watch for BLE cycling or BLE parked · restarting in the header. Keep screen on while you watch. Allow background usage and Unrestricted battery if you leave the app. Toggle intensity only if it stays dead."],
+            ["Zero Wi-Fi rows, BLE works", "Between OS scan windows, throttle, Wi-Fi off, or Location off.", "Enable Wi-Fi and Location. A green Wi-Fi icon with Wi-Fi next Ns is the normal wait. Red with Wi-Fi waiting on OS means Android refused the scan. Dim gray means Wi-Fi is off. Last APs should stay held; a new batch arrives about every 30 s on high performance, or ~8 s if Faster Wi-Fi AP scans is on and Developer options Wi-Fi scan throttling is off. Settings → Diagnostics shows the same facts. §5.1, §7.1."],
+            ["Zero BLE rows after it was working", "Samsung parked the scanner, or the scan did not start.", "A green icon with BLE cycling or BLE parked · restarting is a planned rest. Red with BLE retrying or BLE unavailable means the scan did not start. Dim gray means Bluetooth is off. Keep screen on while you watch. Allow background usage and Unrestricted battery if you leave the app. Toggle intensity only if it stays dead. §5.1, §7.2."],
+            ["Wi-Fi or Bluetooth icon is red", "Location is off, or Android is refusing that radio.", "Turn Location on. Wi-Fi waiting on OS is a refused scan. BLE retrying or BLE unavailable is a scan that did not start. Dim gray is the radio switched off. §5.1, §4.5.1."],
+            ["GPS mark stays gray", "The check is still in its first two minutes, the phone paused GPS, this phone graded Poor, or the scan is stopped.", "Wait until Diagnostics says armed. A pause is the line GNSS paused by the phone. Poor keeps the popup off. §5.9."],
             ["UI freeze then both lists empty in a crowd", "A plaza of rotating BLE addresses filled memory.", "The live set is capped at about 400 radios. Turn logging off if you do not need the file. Prefer Strength list over Hybrid in a dense crowd."],
             ["Radar looks empty, list does not", "Gone radios are drawn dim on radar, or a Live display filter is hiding them.", "Dim blips are radios past Stale / Brief hold. Check that the Live display filter is not Signatures only with no matches."],
             ["Everything is “gone”", "Stale window shorter than the advertisement interval, or the service was killed.", "Raise stale to 90–120 s, or raise intensity. Confirm the scan notification is still present. Exempt from battery optimization."],
@@ -5429,7 +5532,7 @@ def story():
             ["GNSS interference check will not turn on", "This phone has no saved calibration.", "Settings → Calibrate this phone. Outside, hold still, away from radios and Wi-Fi, about a minute. §5.9."],
             ["No GNSS warning right after I open the app", "The first minute is settling. The next minute is the baseline.", "Expected. Diagnostics says settling, then learning, then armed. A real detection is not until at least two minutes after the check starts. Starting the scan again starts that wait over. §5.9.2."],
             ["GNSS hits in a cradle, or next to another phone", "The receiver’s view of the sky changed, or another radio is against this phone.", "Put the phone where it can see sky, and not against a charger, a router, or a second phone. A weaker GPS is more likely to call that a hit. §5.9.3."],
-            ["GNSS graded Poor and never pops up", "This phone’s GPS is too coarse to separate interference from its own variation.", "Expected. The popup, red line, beep, and voice stay off. Path tagging still works. Calibrate again outside if you think the minute was spoiled. §5.9.1."],
+            ["GNSS graded Poor and never pops up", "This phone’s GPS is too coarse to separate interference from its own variation.", "Expected. The popup, red line, beep, and voice stay off. The GPS mark stays gray. Path tagging still works. Calibrate again outside if you think the minute was spoiled. §5.9.1."],
             ["Second iPhone in the car did not show under Moving with you", "iOS rotates the BLE address, so Fieldwatch sees a new radio with an empty GPS trail.", "Expected. Use a tag with a stable MAC (AirTag/Tile in the bag) as the confidence check. Phones will not stitch as one follower."],
             ["Moving with you lists house APs after I get home", "Wi-Fi access points are excluded from this filter.", "Expected. A loud AP you drive past paints your hear-time path and would look like co-travel, so APs never qualify. Bag and car BLE tags should stay on."],
             ["Moving with you flashes on the highway", "Passing BLE only overlaps for a few seconds, so it fails the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel at 55 mph) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones will still appear and leave — that is the filter working. Roadside APs stay off. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
@@ -5457,9 +5560,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.23 (versionCode 33), field build of 9 October 2026"],
-                ["Document version", "1.1.23"],
-                ["Document date", "9 October 2026"],
+                ["Software version", "1.1.24 (versionCode 34), field build of 10 October 2026"],
+                ["Document version", "1.1.24"],
+                ["Document date", "10 October 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

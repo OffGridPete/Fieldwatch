@@ -48,6 +48,7 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Bluetooth
+import androidx.compose.material.icons.outlined.GpsFixed
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material.icons.outlined.Description
@@ -108,7 +109,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.fieldwatch.domain.HeaderTone
 import app.fieldwatch.domain.ListLine
+import app.fieldwatch.domain.bleHeader
+import app.fieldwatch.domain.gpsHeader
+import app.fieldwatch.domain.wifiHeader
 import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
@@ -126,6 +131,9 @@ import app.fieldwatch.ui.screen.ReportsScreen
 import app.fieldwatch.ui.screen.ScanStatusScreen
 import app.fieldwatch.ui.screen.SettingsScreen
 import app.fieldwatch.ui.theme.FieldwatchTheme
+import app.fieldwatch.ui.theme.LocalNightMode
+import app.fieldwatch.ui.theme.Phosphor
+import app.fieldwatch.ui.theme.nightIf
 
 @Composable
 fun FieldwatchRoot(vm: FieldwatchViewModel, onRequestPermissions: () -> Unit) {
@@ -247,6 +255,9 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     val route = nav.currentBackStackEntryAsState().value?.destination?.route ?: "live"
     val context = LocalContext.current
     val export by vm.export.collectAsStateWithLifecycle()
+    val gnssStatus by vm.gnssStatus.collectAsStateWithLifecycle()
+    val gnssNotice by vm.gnssNotice.collectAsStateWithLifecycle()
+    val gnssProfile by vm.gnssProfile.collectAsStateWithLifecycle()
     val logKind by vm.logExportKind.collectAsStateWithLifecycle()
     val saveLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(vm.exportMime()),
@@ -372,6 +383,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     }
     Box(Modifier.fillMaxSize()) {
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             if (route != "detail" && route != "hunt") {
                 TopAppBar(
@@ -414,9 +426,49 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 val muted = MaterialTheme.colorScheme.onSurfaceVariant
-                                HeaderCount(state.wifiNow, Icons.Outlined.Wifi, "Wi-Fi")
-                                HeaderCount(state.bleNow, Icons.Outlined.Bluetooth, "BLE")
-                                HeaderCount(state.namedNow, Icons.Outlined.Hub, "signatures")
+                                val night = LocalNightMode.current
+                                val wifiHead = wifiHeader(state.scanning, state.locationOn, state.scanRadio)
+                                val bleHead = bleHeader(state.scanning, state.locationOn, state.scanRadio)
+                                HeaderCount(
+                                    state.wifiNow,
+                                    Icons.Outlined.Wifi,
+                                    wifiHead.second,
+                                    headerTint(wifiHead.first, muted, night),
+                                )
+                                HeaderCount(
+                                    state.bleNow,
+                                    Icons.Outlined.Bluetooth,
+                                    bleHead.second,
+                                    headerTint(bleHead.first, muted, night),
+                                )
+                                HeaderCount(
+                                    state.namedNow,
+                                    Icons.Outlined.Hub,
+                                    if (state.scanning) "signatures" else "signatures idle",
+                                    headerTint(
+                                        if (state.scanning) HeaderTone.HEALTHY else HeaderTone.IDLE,
+                                        muted,
+                                        night,
+                                    ),
+                                )
+                                val notice = gnssNotice
+                                val gnssAlert = notice != null && notice.line.isNotBlank() &&
+                                    (notice.showDialog || !notice.ended)
+                                val gps = gpsHeader(
+                                    monitorOn = state.settings.gnssMonitor && gnssProfile != null,
+                                    suppressAlerts = gnssProfile?.suppressAlerts == true,
+                                    scanning = state.scanning,
+                                    statusLine = gnssStatus,
+                                    alertShowing = gnssAlert,
+                                )
+                                if (gps != null) {
+                                    Icon(
+                                        Icons.Outlined.GpsFixed,
+                                        contentDescription = gps.second,
+                                        modifier = Modifier.size(13.dp),
+                                        tint = headerTint(gps.first, muted, night),
+                                    )
+                                }
                                 if (state.throttleHint.isNotBlank()) {
                                     Text(
                                         "·  ${state.throttleHint}",
@@ -738,7 +790,18 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
 }
 
 @Composable
-private fun HeaderCount(n: Int, icon: ImageVector, desc: String) {
+private fun headerTint(tone: HeaderTone, muted: Color, night: Boolean): Color {
+    val color = when (tone) {
+        HeaderTone.HEALTHY -> Phosphor
+        HeaderTone.PROBLEM -> MaterialTheme.colorScheme.error
+        HeaderTone.OFF -> muted.copy(alpha = 0.38f)
+        HeaderTone.IDLE -> muted
+    }
+    return color.nightIf(night)
+}
+
+@Composable
+private fun HeaderCount(n: Int, icon: ImageVector, desc: String, tint: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -747,13 +810,13 @@ private fun HeaderCount(n: Int, icon: ImageVector, desc: String) {
             icon,
             contentDescription = desc,
             modifier = Modifier.size(13.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = tint,
         )
         Text(
             n.toString(),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = tint,
             maxLines = 1,
             softWrap = false,
         )

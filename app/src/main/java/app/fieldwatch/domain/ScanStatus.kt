@@ -4,6 +4,46 @@ package app.fieldwatch.domain
  * Settings → Diagnostics. Phone and scan facts only.
  * No network names, MACs, or GPS coordinates.
  */
+enum class HeaderTone { OFF, IDLE, HEALTHY, PROBLEM }
+
+/** Wi-Fi icon in the list header. Green is healthy, including the wait between scans. */
+fun wifiHeader(scanning: Boolean, locationOn: Boolean, radio: ScanRadioFacts): Pair<HeaderTone, String> {
+    if (!radio.wifiOn) return HeaderTone.OFF to "Wi-Fi off"
+    if (!scanning) return HeaderTone.IDLE to "Wi-Fi idle"
+    if (!locationOn) return HeaderTone.PROBLEM to "Wi-Fi, Location is off"
+    if (radio.wifiWaitingOnOs) return HeaderTone.PROBLEM to "Wi-Fi waiting on Android"
+    return HeaderTone.HEALTHY to "Wi-Fi on"
+}
+
+/**
+ * GPS icon in the list header. Null when the check is off.
+ * Green is armed and quiet. A hit is red. A pause, a Poor phone, and the warmup stay muted.
+ */
+fun gpsHeader(
+    monitorOn: Boolean,
+    suppressAlerts: Boolean,
+    scanning: Boolean,
+    statusLine: String,
+    alertShowing: Boolean,
+): Pair<HeaderTone, String>? {
+    if (!monitorOn) return null
+    if (alertShowing) return HeaderTone.PROBLEM to "GPS alert"
+    if (statusLine == GnssCopy.PAUSED) return HeaderTone.IDLE to "GPS paused"
+    if (!scanning || suppressAlerts) return HeaderTone.IDLE to "GPS on"
+    val ready = statusLine == "armed" || statusLine.startsWith("AGC not available")
+    return if (ready) HeaderTone.HEALTHY to "GPS on" else HeaderTone.IDLE to "GPS on"
+}
+
+/** Bluetooth icon in the list header. A planned rest stays healthy. */
+fun bleHeader(scanning: Boolean, locationOn: Boolean, radio: ScanRadioFacts): Pair<HeaderTone, String> {
+    if (!radio.bleOn) return HeaderTone.OFF to "Bluetooth off"
+    if (!scanning) return HeaderTone.IDLE to "Bluetooth idle"
+    if (!locationOn) return HeaderTone.PROBLEM to "Bluetooth, Location is off"
+    val stuck = !radio.bleRunning && !radio.bleParked && !radio.bleRetrying && !radio.bleStarting
+    if (radio.bleRetrying || stuck) return HeaderTone.PROBLEM to "Bluetooth waiting on Android"
+    return HeaderTone.HEALTHY to "Bluetooth on"
+}
+
 data class ScanRadioFacts(
     val scanning: Boolean = false,
     val wifiOn: Boolean = false,
@@ -185,9 +225,6 @@ object ScanStatus {
         if (filterHiding(phone)) {
             lines += "A filter is hiding radios. Filters is ${filtersLabel(phone)}. Set Filters to All Traffic to see everything the phone hears."
         }
-        if (phone.wifiFastScan && phone.wifiOsThrottled) {
-            lines += "Faster Wi-Fi AP scans is on, and Android is still throttling. Turn off Wi-Fi scan throttling in Developer options. Until then, Wi-Fi stays on the slower scan."
-        }
         if (lines.isEmpty()) {
             lines += if (radiosOnAir > 0) {
                 "Nothing that needs to be on is off. Scans are running."
@@ -219,11 +256,8 @@ object ScanStatus {
 
     private fun onOff(on: Boolean): String = if (on) "on" else "off"
 
-    private fun fasterWifi(phone: ScanPhoneFacts): String = when {
-        !phone.wifiFastScan -> "off"
-        phone.wifiOsThrottled -> "on, OS still throttling"
-        else -> "on"
-    }
+    private fun fasterWifi(phone: ScanPhoneFacts): String =
+        if (phone.wifiOsThrottled) "off" else "on"
 
     private fun lastWifi(radio: ScanRadioFacts, now: Long): String {
         val age = ageLabel(if (radio.lastWifiScanAt > 0L) now - radio.lastWifiScanAt else null)

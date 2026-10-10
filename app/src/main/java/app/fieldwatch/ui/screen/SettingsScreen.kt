@@ -200,49 +200,38 @@ fun SettingsScreen(
                 lifecycleOwner.lifecycle.addObserver(obs)
                 onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
             }
-            val fastActive = settings.wifiFastScan && !osThrottled
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Faster Wi-Fi AP scans", Modifier.weight(1f))
                 FieldwatchSwitch(
-                    checked = settings.wifiFastScan,
-                    onCheckedChange = { on ->
-                        if (!on) {
-                            vm.updateSettings { it.copy(wifiFastScan = false) }
-                        } else if (!osThrottled) {
-                            vm.updateSettings { it.copy(wifiFastScan = true) }
-                        } else {
-                            needDevOptions = true
-                        }
-                    },
+                    checked = !osThrottled,
+                    onCheckedChange = { needDevOptions = true },
                 )
             }
             StableCaption(
                 when {
                     Build.VERSION.SDK_INT < 30 ->
                         "This phone is older than Android 11, so Fieldwatch cannot tell if Wi-Fi scan throttling is on. The switch stays off."
-                    fastActive ->
-                        "Asking for a new access-point list about every 8 seconds. Uses more battery. If Android starts refusing scans, Fieldwatch slows down."
-                    settings.wifiFastScan && osThrottled ->
-                        "Saved on, but Android is still limiting Wi-Fi scans. Turn off Wi-Fi scan throttling in Developer options, then come back."
+                    !osThrottled ->
+                        "On. A new access-point list about every 8 seconds. Uses more battery. This matches Wi-Fi scan throttling in Developer options."
                     else ->
-                        "Android allows about four Wi-Fi scans per two minutes. To go faster, turn off Wi-Fi scan throttling in Developer options. Fieldwatch cannot change that for you."
+                        "Off. Android is limiting Wi-Fi scans to about four per two minutes. Tap the switch to open Developer options."
                 },
                 "This phone is older than Android 11, so Fieldwatch cannot tell if Wi-Fi scan throttling is on. The switch stays off.",
-                "Asking for a new access-point list about every 8 seconds. Uses more battery. If Android starts refusing scans, Fieldwatch slows down.",
-                "Saved on, but Android is still limiting Wi-Fi scans. Turn off Wi-Fi scan throttling in Developer options, then come back.",
-                "Android allows about four Wi-Fi scans per two minutes. To go faster, turn off Wi-Fi scan throttling in Developer options. Fieldwatch cannot change that for you.",
+                "On. A new access-point list about every 8 seconds. Uses more battery. This matches Wi-Fi scan throttling in Developer options.",
+                "Off. Android is limiting Wi-Fi scans to about four per two minutes. Tap the switch to open Developer options.",
             )
             if (needDevOptions) {
                 AlertDialog(
                     onDismissRequest = { needDevOptions = false },
-                    title = { Text("Developer options required") },
+                    title = { Text("Faster Wi-Fi AP scans") },
                     text = {
                         Text(
                             if (Build.VERSION.SDK_INT < 30) {
                                 "This phone is older than Android 11, so Fieldwatch cannot tell if Wi-Fi scan throttling is on. Faster scanning stays off."
+                            } else if (osThrottled) {
+                                "This opens Developer options. Turn Wi-Fi scan throttling off. Fieldwatch matches that switch when you come back."
                             } else {
-                                "Android is still limiting Wi-Fi scans to about four per two minutes. Turn that off, then flip this switch again.\n\n" +
-                                    "Enable Developer options (tap Build number seven times in About phone), then Settings → Developer options → Wi-Fi scan throttling → Off."
+                                "This opens Developer options. Turn Wi-Fi scan throttling on to use the normal wait. Fieldwatch matches that switch when you come back."
                             },
                         )
                     },

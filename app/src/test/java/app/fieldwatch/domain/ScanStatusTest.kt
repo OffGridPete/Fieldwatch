@@ -1,5 +1,6 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.domain.HeaderTone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -115,27 +116,58 @@ class ScanStatusTest {
     }
 
     @Test
+    fun headerColorsFollowTheRadio() {
+        val on = radio()
+        assertEquals(HeaderTone.HEALTHY, wifiHeader(true, true, on).first)
+        assertEquals("Wi-Fi on", wifiHeader(true, true, on).second)
+        assertEquals(HeaderTone.HEALTHY, bleHeader(true, true, on).first)
+        assertEquals(HeaderTone.OFF, wifiHeader(true, true, radio(wifiOn = false)).first)
+        assertEquals(HeaderTone.OFF, bleHeader(true, true, radio(bleOn = false)).first)
+        assertEquals(HeaderTone.IDLE, wifiHeader(false, true, on).first)
+        assertEquals(
+            HeaderTone.PROBLEM,
+            wifiHeader(true, true, radio(wifiWaitingOnOs = true)).first,
+        )
+        assertEquals(
+            HeaderTone.PROBLEM,
+            wifiHeader(true, false, on).first,
+        )
+        assertEquals(
+            HeaderTone.HEALTHY,
+            bleHeader(true, true, radio(bleRunning = false, bleParked = true)).first,
+        )
+        assertEquals(
+            HeaderTone.PROBLEM,
+            bleHeader(true, true, radio(bleRunning = false, bleRetrying = true)).first,
+        )
+        assertEquals(
+            HeaderTone.PROBLEM,
+            bleHeader(true, true, radio(bleRunning = false)).first,
+        )
+        assertEquals(null, gpsHeader(false, false, true, "armed", false))
+        assertEquals(HeaderTone.HEALTHY, gpsHeader(true, false, true, "armed", false)?.first)
+        assertEquals(HeaderTone.IDLE, gpsHeader(true, false, true, "learning 4/60 s", false)?.first)
+        assertEquals(HeaderTone.IDLE, gpsHeader(true, false, true, GnssCopy.PAUSED, false)?.first)
+        assertEquals(HeaderTone.IDLE, gpsHeader(true, true, true, "armed", false)?.first)
+        assertEquals(HeaderTone.PROBLEM, gpsHeader(true, false, true, "armed", true)?.first)
+        assertEquals("GPS paused", gpsHeader(true, false, true, GnssCopy.PAUSED, false)?.second)
+    }
+
+    @Test
     fun scanOptionsFollowTheSettingsSwitches() {
-        val off = ScanStatus.report(radio(), phone(), now)
+        val off = ScanStatus.report(radio(), phone().copy(wifiOsThrottled = true), now)
         assertEquals("off", off.rows.first { it.first == "Faster Wi-Fi AP scans" }.second)
         assertEquals("off", off.rows.first { it.first == "Allow background usage" }.second)
         assertEquals("off", off.rows.first { it.first == "Unrestricted battery" }.second)
+        assertFalse(off.checks.any { it.contains("throttling") })
         val on = ScanStatus.report(
             radio(),
-            phone().copy(wifiFastScan = true, backgroundUsage = true, unrestrictedBattery = true),
+            phone().copy(wifiOsThrottled = false, backgroundUsage = true, unrestrictedBattery = true),
             now,
         )
         assertEquals("on", on.rows.first { it.first == "Faster Wi-Fi AP scans" }.second)
         assertEquals("on", on.rows.first { it.first == "Allow background usage" }.second)
         assertEquals("on", on.rows.first { it.first == "Unrestricted battery" }.second)
-        val blocked = ScanStatus.report(
-            radio(),
-            phone().copy(wifiFastScan = true, wifiOsThrottled = true),
-            now,
-        )
-        assertEquals("on, OS still throttling", blocked.rows.first { it.first == "Faster Wi-Fi AP scans" }.second)
-        assertTrue(blocked.checks.single().contains("Wi-Fi scan throttling"))
-        assertFalse(off.checks.any { it.contains("throttling") })
     }
 
     @Test

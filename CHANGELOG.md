@@ -4,6 +4,13 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.24 — 10 October 2026
+
+- The icons in the top bar show whether Wi-Fi, Bluetooth, and signatures are healthy. Green means that part is working, including the wait between Wi-Fi scans and a planned Bluetooth rest. A signature count of 0 stays green. Gray means the scan is stopped. Dim gray means that radio is off. Red means Location is off while that scan is running, or Android is refusing it. The words after the icons stay in the secondary text color. Night mode folds the colors into the red display.
+- A GPS mark with no number sits in that bar while the GNSS interference check is on. Green when the check is armed and quiet. Gray while it is still settling or learning, while the phone has paused GPS, while this phone graded Poor, or while the scan is stopped. Red while a hit is up. A pause stays gray.
+- Faster Wi-Fi AP scans matches Developer options. The switch is on only when Wi-Fi scan throttling is off. Tap it to open that page. About every 8 seconds instead of the normal wait. Fieldwatch cannot change that switch for you.
+- The window uses the full height of the phone, so the top bar, the list, and the tabs still draw on phones that were leaving them blank.
+
 ## 1.1.23 — 9 October 2026
 
 - A GPS pause is not interference. If the satellites and the gain disappear together, or the phone reports the receiver stopped, Live says GNSS paused by the phone. There is no popup, red line, or TAK line. The check waits a few seconds after GPS returns before it watches for a drop again. A real drop is still a gain change while satellites are being tracked.

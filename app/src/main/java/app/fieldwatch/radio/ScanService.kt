@@ -84,7 +84,7 @@ class ScanService : LifecycleService() {
             while (isActive) {
                 val settings = app.config.settings
                 if (lastIntensity != settings.intensity) restartRadios()
-                val unthrottled = settings.wifiFastScan && !WifiRadio.osScanThrottled(this@ScanService)
+                val unthrottled = !WifiRadio.osScanThrottled(this@ScanService)
                 val wifiMin = if (unthrottled) {
                     WifiRadio.FAST_INTERVAL_MS
                 } else when (settings.intensity) {
@@ -105,11 +105,9 @@ class ScanService : LifecycleService() {
                     wifi = wifi.waitingOnOs(),
                     ble = ble.holding(),
                 )
-                val fastBlocked = settings.wifiFastScan && !unthrottled
                 val hint = listOf(
                     wifi.throttleHint(),
                     ble.statusHint(),
-                    if (fastBlocked) "Wi-Fi fast scan needs Developer options" else "",
                 )
                     .filter { it.isNotBlank() }
                     .joinToString(" · ")
