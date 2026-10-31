@@ -76,6 +76,15 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
 
 One phone. Wi-Fi, Bluetooth LE, and this phone's GPS. The map and the sit stay on the device.
 
+## Technical papers
+
+These are the longer write-ups of four pieces of Fieldwatch, what each one measures, and what a warning is allowed to mean. The user guide stays the how-to. Each paper stands alone.
+
+- [Scanning Wi-Fi and Bluetooth for known radios](docs/papers/Fieldwatch_Scanning_and_Signatures.pdf). A place full of radios, and a list that still has to be readable.
+- [Flood monitoring](docs/papers/Fieldwatch_Flood_Monitoring.pdf). When the list of radios stops being a list a person can read.
+- [GNSS monitoring on the phone in your hand](docs/papers/Fieldwatch_GNSS_Monitoring.pdf). When the position gets worse, and what a phone is allowed to say about it.
+- [Trusted networks](docs/papers/Fieldwatch_Trusted_Networks.pdf). A familiar name on the Wi-Fi list, and what a scan can say before anyone joins.
+
 ## Safety & disclaimer
 
 This is a hobby project, provided as-is under the MIT License. A few things to know before you do:
