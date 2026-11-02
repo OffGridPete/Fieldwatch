@@ -3891,9 +3891,8 @@ def story():
             "The paragraph is <b>This phone is camped on a tower it has not used at this place. Fieldwatch cannot tell the cause.</b> "
             "One warning per cell. It ends when that cell has been gone for 10 minutes, or when you dismiss it or learn it. "
             "Fig. 30 is that dialog on the Live display. "
-            "The network, the area, and the cell id in the shot were filled in so the dialog could be photographed. "
-            "They are not a tower this phone measured, and they are not a cause. "
-            "Country, Operator, PCI, Channel, and Band are not in that shot.",
+            "The network, the area, the cell id, PCI, the channel, and the band frequency in the shot were filled in so the dialog could be photographed. "
+            "They are not a tower this phone measured, and they are not a cause.",
         ),
         P(
             "<b>Warn on a drop to 2G or 3G.</b> The place’s learned cells are 4G, 5G, or both, and the phone is now camped on 2G or 3G. "
