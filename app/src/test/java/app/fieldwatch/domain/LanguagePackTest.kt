@@ -219,7 +219,15 @@ class LanguagePackTest {
         assertEquals(EnglishCopy.lines.size - 1, older.newSince)
         assertFalse(older.formatNewer)
         val current = ok(pack("tab.live" to "Direct", writtenFor = "1.1.27"))
-        assertEquals(0, current.newSince)
+        val base = LanguagePack.parseVersion("1.1.27")!!
+        val addedLater = EnglishCopy.lines.count {
+            LanguagePack.compareVersion(LanguagePack.parseVersion(it.addedIn)!!, base) > 0
+        }
+        assertEquals(addedLater, current.newSince)
+        assertTrue(current.newKeys.contains("cell.master"))
+        assertFalse(current.newKeys.contains("tab.pause"))
+        val caughtUp = ok(pack("tab.live" to "Direct", writtenFor = "1.1.38"))
+        assertEquals(0, caughtUp.newSince)
         val missing = ok(pack("tab.live" to "Direct"))
         assertNull(missing.newSince)
         val odd = ok(pack("tab.live" to "Direct", writtenFor = "v1.1.21"))
@@ -572,6 +580,7 @@ class LanguagePackTest {
             val parsed = LanguagePack.parse(File(dir, "${bundled.tag}.json").readBytes())
             val preview = (parsed as LanguageParse.Ok).preview
             assertEquals(bundled.name, preview.language)
+            assertEquals("${bundled.tag} writtenFor", "1.1.39", preview.writtenFor)
             assertTrue("${bundled.tag} display.live.path", preview.accepted.containsKey("display.live.path"))
             assertTrue("${bundled.tag} display.recenter", preview.accepted.containsKey("display.recenter"))
             assertTrue("${bundled.tag} map.north.up", preview.accepted.containsKey("map.north.up"))

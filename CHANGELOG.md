@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.39 — 2 November 2026
+
+- A language file that comes with the app says it was written for this version. An imported file reports the keys added after the version it was written for. A translated line from an older file still shows.
+
 ## 1.1.38 — 2 November 2026
 
 - Samsung SmartTags matches the SmartTag name or service FD5A. A phone, TV, Buds, or watch that only sends Samsung's company ID stays off that row. The stock catalog is 98. Opening this version drops that company ID from the built-in row. A rule you added stays. Update stock catalog from GitHub brings the same file.

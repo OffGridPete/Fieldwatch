@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Português",
   "languageTag": "pt",
-  "writtenFor": "1.1.27",
+  "writtenFor": "1.1.39",
   "strings": {
     "tab.live": "Ao vivo",
     "tab.pause": "Pausa",

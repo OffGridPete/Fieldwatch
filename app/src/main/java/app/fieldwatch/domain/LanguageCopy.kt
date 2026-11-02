@@ -10,7 +10,7 @@ data class EnglishLine(
     val key: String,
     val text: String,
     val slot: LanguageSlot,
-    /** versionName that added this key. The first map shares one version. */
+    /** versionName that added this key. The 1.1.27 map shares one version. */
     val addedIn: String,
 )
 
@@ -111,7 +111,8 @@ object EnglishCopy {
         for (line in lines) {
             require(seen.add(line.key)) { "Duplicate language key ${line.key}" }
             require(keyRe.matches(line.key)) { "Bad language key ${line.key}" }
-            require(line.addedIn == ADDED_IN)
+            require(line.addedIn == LanguageAddedIn.of(line.key)) { "Bad addedIn for ${line.key}" }
+            require(line.addedIn.matches(Regex("""\d+\.\d+\.\d+"""))) { "Bad addedIn ${line.addedIn}" }
             var i = 0
             while (i < line.text.length) {
                 val brace = line.text.indexOf('{', i)
@@ -153,7 +154,7 @@ object LanguageErrors {
 }
 
 internal fun en(key: String, text: String, slot: LanguageSlot) =
-    EnglishLine(key, text, slot, EnglishCopy.ADDED_IN)
+    EnglishLine(key, text, slot, LanguageAddedIn.of(key))
 
 private fun buildLines(): List<EnglishLine> = listOf(
     en("tab.live", "Live", LanguageSlot.TAB),

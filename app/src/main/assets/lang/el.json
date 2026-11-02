@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Ελληνικά",
   "languageTag": "el",
-  "writtenFor": "1.1.27",
+  "writtenFor": "1.1.39",
   "strings": {
     "tab.live": "Ζωντανά",
     "tab.pause": "Παύση",
