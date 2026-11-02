@@ -72,9 +72,26 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
       <br>A sit keeps a debrief, a path, an export, and a compare against another sit.
     </td>
   </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/readme/cell-connection.png" width="200" alt="Warning that this phone camped on a cell it has not used here">
+      <br><strong>Cell connection</strong>
+      <br>A warning when this phone camps on a cell it has not used here. It does not name a cause. The numbers in the shot are an example.
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/readme/cell-learn.png" width="200" alt="Cell connection monitoring learning settings">
+      <br><strong>How it learns</strong>
+      <br>Off until you turn it on. The first still visit only learns. A later new cell can warn.
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/readme/cell-place.png" width="200" alt="Cells this phone has already used at a place">
+      <br><strong>A place</strong>
+      <br>Cells this phone has already used there. A quiet watch is an empty report.
+    </td>
+  </tr>
 </table>
 
-One phone. Wi-Fi, Bluetooth LE, and this phone's GPS. The map and the sit stay on the device.
+One phone. Wi-Fi, Bluetooth LE, this phone's GPS, and the cell this phone is camped on. The map and the sit stay on the device.
 
 ## Technical papers
 
