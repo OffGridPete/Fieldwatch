@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.CodDecoder
 import app.fieldwatch.domain.FamilyVerdict
 import app.fieldwatch.domain.Geo
@@ -63,6 +64,9 @@ import app.fieldwatch.domain.Palette
 import app.fieldwatch.domain.RadioDb
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.SpokenName
+import app.fieldwatch.domain.SpokenNames
+import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.Rssi
 import app.fieldwatch.domain.ServiceDataRecord
 import app.fieldwatch.domain.Sighting
@@ -99,6 +103,9 @@ fun DeviceDetailScreen(
     onCreateFleet: () -> Unit,
     onHunt: () -> Unit,
     demoMode: Boolean = false,
+    spokenNames: List<SpokenName> = emptyList(),
+    voiceWhat: AlertVoiceWhat = AlertVoiceWhat.BOTH,
+    watchlist: List<WatchTarget> = emptyList(),
 ) {
     val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
     val accent = (device.fleetIds.firstOrNull()
@@ -158,6 +165,11 @@ fun DeviceDetailScreen(
             val draftLabel = RadioBookmarks.clip(nameDraft)
             val nameIsSaved = lastSaved.isNotBlank() && draftLabel == lastSaved
             val canName = RadioBookmarks.canSetCustomName(device)
+            val spokenNetwork = SpokenNames.networkOf(device.name, device.mac)
+            val spokenFleet = SpokenNames.voiceFleet(device.fleetIds, watchlist)
+            val spokenRow = SpokenNames.announced(spokenNames, device.fleetIds, spokenNetwork, spokenFleet)
+            val individualName = watchlist.firstOrNull { it.deviceKey == device.key }?.label?.trim()
+                ?.takeIf { it.isNotEmpty() && !it.equals(device.mac, ignoreCase = true) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     if (lastSaved.isNotBlank()) {
@@ -195,6 +207,13 @@ fun DeviceDetailScreen(
                             LanguageText.text("ui.no.advertised.name"),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (spokenRow != null && individualName == null) {
+                        Text(
+                            LanguageText.text("spoken.as", mapOf("name" to spokenRow.label)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 6.dp),
                         )
                     }
                 }
@@ -237,6 +256,16 @@ fun DeviceDetailScreen(
                     }
                 }
             }
+            val guess = DeviceExplain.guess(device, device.fleetIds.map { vm.fleetName(it) })
+            StickyHeight(device.key to "guess") { GuessCard(guess) }
+            val attention = vm.attentionNotesFor(device)
+            if (attention.isNotEmpty()) {
+                StickyHeight(device.key to "attention") { ExtraAttentionCard(attention) }
+            }
+            val notes = vm.signatureNotesFor(device)
+            if (notes.isNotEmpty()) {
+                StickyHeight(device.key to "notes") { SignatureNotesCard(notes) }
+            }
 
             var notesDraft by remember(device.key) {
                 mutableStateOf(vm.watchObserverNoteFor(device.key).orEmpty())
@@ -276,6 +305,19 @@ fun DeviceDetailScreen(
                     },
                     saveEnabled = !notesIsSaved,
                     saved = notesIsSaved && lastSavedNotes.isNotBlank(),
+                )
+            }
+            if (spokenNetwork != null && device.fleetIds.isNotEmpty()) {
+                SpokenNameCard(
+                    deviceKey = device.key,
+                    network = spokenNetwork,
+                    fleetIds = device.fleetIds.toList(),
+                    spokenNames = spokenNames,
+                    voiceWhat = voiceWhat,
+                    individualName = individualName,
+                    fleetName = vm::fleetName,
+                    onSave = vm::saveSpokenName,
+                    onRemove = vm::removeSpokenName,
                 )
             }
             if (canName) {
@@ -325,17 +367,6 @@ fun DeviceDetailScreen(
             }
             if (device.kind == RadioKind.WIFI) {
                 TrustNetworkControl(device, vm)
-            }
-
-            val guess = DeviceExplain.guess(device, device.fleetIds.map { vm.fleetName(it) })
-            StickyHeight(device.key to "guess") { GuessCard(guess) }
-            val attention = vm.attentionNotesFor(device)
-            if (attention.isNotEmpty()) {
-                StickyHeight(device.key to "attention") { ExtraAttentionCard(attention) }
-            }
-            val notes = vm.signatureNotesFor(device)
-            if (notes.isNotEmpty()) {
-                StickyHeight(device.key to "notes") { SignatureNotesCard(notes) }
             }
 
             StickyHeight(device.key to "identity") {

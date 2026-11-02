@@ -1,6 +1,7 @@
 package app.fieldwatch.ui.component
 
 import app.fieldwatch.domain.LanguageText
+import app.fieldwatch.domain.MapCameraMarks
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -69,6 +71,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.fieldwatch.data.PathTiles
@@ -135,15 +138,22 @@ fun SitPathCanvas(
     fitButton: Boolean = true,
     /** Blank picture because this map starts at a closer zoom. */
     zoomIn: Boolean = false,
-    /** Live layer on Show live path and Hunt. Reports → Path passes [pathCameras] instead. */
+    /** Live layer on Show live path and Reports → Path. */
     flock: Boolean = false,
     flockIndex: app.fieldwatch.domain.FlockIndex? = null,
     flockRevision: Int = 0,
     /**
-     * Cameras the sit path came near. Null draws the live layer when [flock] is on.
-     * An empty list draws none.
+     * On draws every camera in this picture. Off draws none.
+     * Null [onCycleCameras] draws the live layer when [flock] is on.
      */
-    pathCameras: List<app.fieldwatch.domain.FlockCamera>? = null,
+    cameraMode: MapCameraMarks = MapCameraMarks.VIEW,
+    /**
+     * Tap cycles the marks. Null leaves the glyph off, and aircraft cards leave it null.
+     * The saved mode still draws when this is set.
+     */
+    onCycleCameras: (() -> Unit)? = null,
+    /** Under the compass. True only when a camera list is on and loaded. */
+    camerasReady: Boolean = false,
     /** South, north, west, east of this picture, including a finger-held view. */
     onTileWindow: ((DoubleArray) -> Unit)? = null,
     /**
@@ -166,18 +176,15 @@ fun SitPathCanvas(
     val labelStyle = TextStyle(fontSize = 10.sp, color = muted)
     val gnssInk = GnssDiamond.nightIf(night)
     val flockCountStyle = TextStyle(fontSize = 9.sp, color = Color.Black.nightIf(night))
-    val flockGen = if (flock && flockIndex != null) flockRevision else -1
-    val alongIndex = remember(pathCameras) {
-        val listed = pathCameras
-        if (listed == null) {
-            null
-        } else {
-            app.fieldwatch.domain.FlockIndex().also { index ->
-                if (listed.isNotEmpty()) index.replace(listed)
-            }
-        }
+    val marksMode = if (onCycleCameras != null) {
+        cameraMode
+    } else if (flock && flockIndex != null) {
+        MapCameraMarks.VIEW
+    } else {
+        MapCameraMarks.OFF
     }
-    val sensorCredit = !pathCameras.isNullOrEmpty() || flockGen >= 0
+    val flockGen = if (marksMode == MapCameraMarks.VIEW && flock && flockIndex != null) flockRevision else -1
+    val sensorCredit = flockGen >= 0
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var selectedId by remember { mutableStateOf<String?>(null) }
     var selectedGnss by remember { mutableStateOf<String?>(null) }
@@ -202,6 +209,7 @@ fun SitPathCanvas(
     }
     // Drawn angle turns through the gap between GPS courses. Tiles stay on the heading reached.
     val drawnCourse = rememberEasedCourse(appliedCourse)
+    val camerasShown = onCycleCameras != null && camerasReady
     val layout = remember(model, boxSize, viewport, drawnCourse, followHalfM) {
         if (boxSize.width < 8 || boxSize.height < 8) null
         else SitPathPlot.layout(
@@ -230,11 +238,7 @@ fun SitPathCanvas(
         val window = tileLayout?.tileWindow() ?: return@LaunchedEffect
         onTileWindowRef.value?.invoke(window)
     }
-    val cameraIndex = when {
-        alongIndex != null -> if (pathCameras.isNullOrEmpty()) null else alongIndex
-        flockGen >= 0 -> flockIndex
-        else -> null
-    }
+    val cameraIndex = if (flockGen >= 0) flockIndex else null
     val cameraMarks = remember(layout, cameraIndex, flockGen) {
         val lay = layout
         val index = cameraIndex
@@ -271,14 +275,17 @@ fun SitPathCanvas(
     val showRecenter = fitButton && viewport != null && onViewport != null
     val compass = onRotate != null
     val compassLift = 56.dp
-    fun cardTop(onRight: Boolean) = if (
-        (onRight && compass) ||
-        (onRight && showRecenter && !compass) ||
-        (!onRight && showRecenter && compass)
-    ) {
-        compassLift
-    } else {
-        8.dp
+    fun cardTop(onRight: Boolean): Dp {
+        val chrome = if (
+            (onRight && compass) ||
+            (onRight && showRecenter && !compass) ||
+            (!onRight && showRecenter && compass)
+        ) {
+            compassLift
+        } else {
+            8.dp
+        }
+        return if (onRight && camerasShown) maxOf(chrome, cameraCardClearDp(compass).dp) else chrome
     }
     fun mapCard(key: String, minWidth: Dp = 0.dp): Modifier {
         return Modifier
@@ -503,7 +510,7 @@ fun SitPathCanvas(
                         night,
                         measurer,
                         flockCountStyle,
-                        bold = alongIndex != null || expand,
+                        bold = onCycleCameras != null || expand,
                         prepared = cameraMarks,
                     )
                 }
@@ -798,7 +805,60 @@ fun SitPathCanvas(
                 modifier = Modifier.align(Alignment.TopEnd).padding(4.dp),
             )
         }
+        val cycle = onCycleCameras
+        if (cycle != null && camerasShown && boxSize.width > 8) {
+            val placed = cameraUnderCompass(
+                boxSize.width.toFloat(),
+                with(density) { 1.dp.toPx() },
+                compass,
+            )
+            MapCameraButton(
+                mode = cameraMode,
+                onClick = cycle,
+                modifier = Modifier.offset { IntOffset(placed.left.toInt(), placed.top.toInt()) },
+            )
+        }
     }
+}
+
+/** Matches MapCompassButton: 4 dp from the corner, 48 dp plate. */
+internal const val COMPASS_PAD_DP = 4f
+internal const val COMPASS_SIZE_DP = 48f
+
+/** Matches MapCameraButton. */
+internal const val CAMERA_BUTTON_DP = 36f
+
+/** Space between the compass and the camera control. */
+internal const val CAMERA_UNDER_GAP_DP = 8f
+
+/** Right-side cards start below the camera control. */
+internal fun cameraCardClearDp(compassShown: Boolean): Float {
+    val top = if (compassShown) {
+        COMPASS_PAD_DP + COMPASS_SIZE_DP + CAMERA_UNDER_GAP_DP
+    } else {
+        COMPASS_PAD_DP
+    }
+    return top + CAMERA_BUTTON_DP + 8f
+}
+
+internal class CameraControlBox(val left: Float, val top: Float, val size: Float)
+
+/**
+ * Right edge lines up with the compass. With the compass showing, the control sits
+ * [CAMERA_UNDER_GAP_DP] below it. Without one, it takes that top corner.
+ */
+internal fun cameraUnderCompass(
+    widthPx: Float,
+    pxPerDp: Float,
+    compassShown: Boolean,
+): CameraControlBox {
+    val pad = COMPASS_PAD_DP * pxPerDp
+    val compass = COMPASS_SIZE_DP * pxPerDp
+    val button = CAMERA_BUTTON_DP * pxPerDp
+    val gap = CAMERA_UNDER_GAP_DP * pxPerDp
+    val left = widthPx - pad - button
+    val top = if (compassShown) pad + compass + gap else pad
+    return CameraControlBox(left, top, button)
 }
 
 private fun moveLiveCamera(

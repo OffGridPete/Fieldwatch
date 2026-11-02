@@ -71,6 +71,9 @@ class StockCatalogFileTest {
         )
         val crazy = pack.fleets.single { it.id == "fleet-crazyflie" }
         assertFalse(crazy.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        val smartTag = pack.fleets.single { it.id == "fleet-smarttag" }
+        assertFalse(smartTag.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x0075 })
+        assertTrue(smartTag.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FD5A", true) })
         assertTrue(pack.fleets.single { it.id == "fleet-parrot" }.rules.any {
             it.kind == RuleKind.NAME_GLOB && it.text == "Skycontroller*"
         })

@@ -1,5 +1,8 @@
 package app.fieldwatch.ui.component
 
+import app.fieldwatch.domain.LanguageText
+import app.fieldwatch.domain.MapCameraMarks
+
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
@@ -16,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,14 +41,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.fieldwatch.data.PathTiles
-import app.fieldwatch.domain.LanguageText
 import app.fieldwatch.domain.MapFrame
 import app.fieldwatch.domain.SitPathPlot
 import kotlin.math.abs
@@ -93,6 +96,60 @@ internal fun MapCreditChip(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+/**
+ * One camera under the compass, flush with its right edge, with a small gap between them.
+ * Tap turns the cameras in this picture on, then off.
+ * A filled lens is on. Off is the same camera, dimmed. No label, so the detection list does not move.
+ */
+@Composable
+internal fun MapCameraButton(
+    mode: MapCameraMarks,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    val plate = MaterialTheme.colorScheme.surface
+    val shape = RoundedCornerShape(8.dp)
+    Box(
+        modifier
+            .size(36.dp)
+            .semantics { contentDescription = LanguageText.text(mode.descriptionKey()) }
+            .clip(shape)
+            .background(plate.copy(alpha = 0.88f), shape)
+            .clickable(onClick = onClick),
+    ) {
+        Canvas(Modifier.matchParentSize()) {
+            drawCameraGlyph(ink, mode)
+        }
+    }
+}
+
+private fun DrawScope.drawCameraGlyph(ink: Color, mode: MapCameraMarks) {
+    val paint = if (mode == MapCameraMarks.OFF) ink.copy(alpha = 0.38f) else ink
+    val w = size.width
+    val h = size.height
+    val body = Size(w * 0.62f, h * 0.38f)
+    val left = (w - body.width) / 2f
+    val top = h * 0.32f
+    val stroke = Stroke(width = w * 0.055f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val radius = CornerRadius(w * 0.08f, w * 0.08f)
+    drawRoundRect(paint, Offset(left, top), body, radius, style = stroke)
+    val bump = body.width * 0.26f
+    drawLine(
+        paint,
+        Offset(left + body.width * 0.16f, top),
+        Offset(left + body.width * 0.16f + bump, top - h * 0.09f),
+        stroke.width,
+    )
+    val lens = body.minDimension * 0.26f
+    val center = Offset(left + body.width / 2f, top + body.height / 2f)
+    if (mode == MapCameraMarks.VIEW) {
+        drawCircle(paint, lens, center)
+    } else {
+        drawCircle(paint, lens, center, style = stroke)
     }
 }
 

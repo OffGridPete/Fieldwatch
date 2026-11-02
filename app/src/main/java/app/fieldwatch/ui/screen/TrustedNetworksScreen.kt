@@ -32,11 +32,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.GnssAlertFloor
 import app.fieldwatch.domain.LanguageText
+import app.fieldwatch.domain.LearnLeft
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.Sighting
@@ -62,12 +66,25 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
+private fun learnNow(): Long {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30_000)
+            now = System.currentTimeMillis()
+        }
+    }
+    return now
+}
+
+@Composable
 fun TrustedNetworksPage(vm: FieldwatchViewModel, settings: AppSettings) {
     val book by vm.trustedBook.collectAsStateWithLifecycle()
     val importProblem by vm.trustedImportProblem.collectAsStateWithLifecycle()
     var detail by remember { mutableStateOf<String?>(null) }
     var askForget by remember { mutableStateOf<String?>(null) }
     val open = book.nets.find { it.ssid == detail }
+    val now = learnNow()
     BackHandler(enabled = open != null) { detail = null }
     val exportTrusted = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
@@ -84,11 +101,15 @@ fun TrustedNetworksPage(vm: FieldwatchViewModel, settings: AppSettings) {
             onForget = { askForget = it },
             onExport = { exportTrusted.launch("fieldwatch-trusted.json") },
             onImport = { importTrusted.launch(arrayOf("application/json", "application/*", "*/*")) },
+            now = now,
         )
     } else {
         TrustedDetail(
             net = open,
             demo = settings.demoMode,
+            learnOn = settings.trustedLearn,
+            learnDays = settings.trustedLearnDays,
+            now = now,
             onRename = { vm.renameTrusted(open.ssid, it) },
             onPaused = { vm.setTrustedPaused(open.ssid, it) },
             onTravels = { vm.setTrustedTravels(open.ssid, it) },
@@ -140,6 +161,7 @@ private fun TrustedList(
     onForget: (String) -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
+    now: Long,
 ) {
     SectionCard(LanguageText.text("settings.topic.trusted"), showTitle = false) {
         Note(
@@ -204,7 +226,7 @@ private fun TrustedList(
                 mapOf(
                     "beep" to LanguageText.text("ui.beep.label"),
                     "voice" to LanguageText.text("ui.voice.label"),
-                    "watchlist" to LanguageText.text("settings.topic.watchlist"),
+                    "watchlist" to LanguageText.text("settings.topic.alerts"),
                 ),
             ),
         )
@@ -225,7 +247,13 @@ private fun TrustedList(
         Note(LanguageText.text("trusted.learn.note"))
         Text(LanguageText.text("trusted.learn.days"), style = MaterialTheme.typography.labelLarge)
         ChipRow(
-            listOf(1 to "trusted.day.1", 3 to "trusted.day.3", 7 to "trusted.day.7", 14 to "trusted.day.14"),
+            listOf(
+                0 to "trusted.hour.1",
+                1 to "trusted.day.1",
+                3 to "trusted.day.3",
+                7 to "trusted.day.7",
+                14 to "trusted.day.14",
+            ),
             settings.trustedLearnDays,
         ) { days -> onChange { it.copy(trustedLearnDays = days) } }
         Note(LanguageText.text("trusted.learn.days.note"))
@@ -239,7 +267,19 @@ private fun TrustedList(
     }
     nets.forEach { net ->
         key(net.ssid) {
-            TrustedRow(net, settings.demoMode, onOpen = { onOpen(net.ssid) }, onForget = { onForget(net.ssid) })
+            TrustedRow(
+                net,
+                settings.demoMode,
+                left = if (settings.trustedLearn) {
+                    LearnLeft.label(
+                        LearnLeft.remainingMs(net.trustedAt, LearnLeft.trustedWindowMs(settings.trustedLearnDays), now),
+                    )
+                } else {
+                    null
+                },
+                onOpen = { onOpen(net.ssid) },
+                onForget = { onForget(net.ssid) },
+            )
         }
     }
     FieldwatchActionButton(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
@@ -256,7 +296,7 @@ private fun TrustedList(
 }
 
 @Composable
-private fun TrustedRow(net: TrustedNet, demo: Boolean, onOpen: () -> Unit, onForget: () -> Unit) {
+private fun TrustedRow(net: TrustedNet, demo: Boolean, left: String?, onOpen: () -> Unit, onForget: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) onForget()
@@ -312,6 +352,13 @@ private fun TrustedRow(net: TrustedNet, demo: Boolean, onOpen: () -> Unit, onFor
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    if (left != null) {
+                        Text(
+                            left,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 TextButton(onClick = onForget) { Text(LanguageText.text("trusted.forget")) }
             }
@@ -330,6 +377,9 @@ private fun TrustedDetail(
     onRemovePlace: (Int) -> Unit,
     onStopIgnore: (String) -> Unit,
     onForget: () -> Unit,
+    learnOn: Boolean,
+    learnDays: Int,
+    now: Long,
 ) {
     var draft by remember(net.ssid) { mutableStateOf(net.label) }
     SectionCard(TrustedNets.display(net)) {
@@ -341,6 +391,13 @@ private fun TrustedDetail(
         TextButton(onClick = { onRename(draft) }) { Text(LanguageText.text("ui.rename.label")) }
         SwitchRow(LanguageText.text("trusted.pause"), net.learningPaused, onPaused)
         Note(LanguageText.text("trusted.pause.note"))
+        if (learnOn) {
+            Note(
+                LearnLeft.label(
+                    LearnLeft.remainingMs(net.trustedAt, LearnLeft.trustedWindowMs(learnDays), now),
+                ),
+            )
+        }
         SwitchRow(LanguageText.text("trusted.travels"), net.travels, onTravels)
         Note(LanguageText.text("trusted.travels.note"))
         net.aps.forEach { ap ->

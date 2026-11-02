@@ -685,6 +685,28 @@ class DefaultCatalogTest {
         assertFalse("FEAA is Find Hub, not Chipolo", "fleet-chipolo" in ids(feaa))
     }
 
+    @Test
+    fun smartTagMatchesNameOrFd5aNotSamsungCompanyId() {
+        val stock = DefaultCatalog.fleets()
+        val fleet = stock.single { it.id == "fleet-smarttag" }
+        assertTrue(fleet.matchAny)
+        assertTrue(fleet.attentionNote.isBlank())
+        assertFalse(fleet.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        assertTrue(fleet.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FD5A", true) })
+        val engine = SignatureEngine()
+        val tv = ble(name = "", manufacturerId = 0x0075, manufacturerDataHex = "0102")
+            .copy(key = "BLE:tv", mac = "AA:BB:CC:DD:EE:75")
+        val named = ble(name = "SmartTag").copy(key = "BLE:st", mac = "AA:BB:CC:DD:EE:76")
+        val spaced = ble(name = "Galaxy Smart Tag").copy(key = "BLE:sp", mac = "AA:BB:CC:DD:EE:77")
+        val uuid = ble(name = "", serviceUuids = listOf("FD5A"))
+            .copy(key = "BLE:fd", mac = "AA:BB:CC:DD:EE:78")
+        val hits = engine.match(listOf(tv, named, spaced, uuid), stock)
+        assertFalse("Samsung company ID", "fleet-smarttag" in hits.getValue(tv.key))
+        assertTrue("SmartTag name", "fleet-smarttag" in hits.getValue(named.key))
+        assertTrue("Smart Tag name", "fleet-smarttag" in hits.getValue(spaced.key))
+        assertTrue("FD5A", "fleet-smarttag" in hits.getValue(uuid.key))
+    }
+
     private fun tagged(tail: String, name: String, manufacturerId: Int?) =
         ble(name = name, manufacturerId = manufacturerId)
             .copy(key = "BLE:$tail", mac = "AA:BB:CC:DD:EE:$tail")

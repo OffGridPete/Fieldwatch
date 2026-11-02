@@ -198,10 +198,12 @@ object DebriefReport {
         placeRecords: List<PlaceMemory.Record> = emptyList(),
         cameras: PathCameras.Report? = null,
         trusted: List<TrustedSitLine> = emptyList(),
+        cells: List<CellMark> = emptyList(),
+        savedCameras: List<FlockCamera>? = null,
     ): String = document(
         devices, fleets, settings, operatorPath, now, places, window,
         customNames, observerNotes, bookmarkedKeys, watchedFleetIds, mineKeys,
-        floods, gnss, placeRecords, cameras, trusted,
+        floods, gnss, placeRecords, cameras, trusted, cells, savedCameras,
     ).toPlainText()
 
     fun document(
@@ -222,6 +224,8 @@ object DebriefReport {
         placeRecords: List<PlaceMemory.Record> = emptyList(),
         cameras: PathCameras.Report? = null,
         trusted: List<TrustedSitLine> = emptyList(),
+        cells: List<CellMark> = emptyList(),
+        savedCameras: List<FlockCamera>? = null,
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -247,7 +251,11 @@ object DebriefReport {
         val pathSpan = Geo.spanM(path)
         val pathLen = Geo.pathLengthM(path)
         val cameraTally = cameras?.let { source ->
-            PathCameras.tally(path, source.plates, source.others, source.near)
+            if (savedCameras != null) {
+                PathCameras.fromSaved(savedCameras, source.plates, source.others, path.isNotEmpty())
+            } else {
+                PathCameras.tally(path, source.plates, source.others, source.near)
+            }
         }?.let { raw ->
             PathCameras.shownInReport(raw, settings.flockLayer, settings.sensorLayer)
         }
@@ -620,6 +628,9 @@ object DebriefReport {
             }
             gnssBody(gnss, windowStart, windowEnd, onPath = gnssOnPath)?.let { body ->
                 add(DebriefSection(next(), "GNSS", body, alert = true))
+            }
+            CellWatch.block(cells, windowStart, windowEnd, settings.demoMode)?.let { body ->
+                add(DebriefSection(next(), LanguageText.text("settings.topic.cell"), body, alert = true))
             }
             add(DebriefSection(next(), LanguageText.text("ui.privacy.label"), privacy(wifi, ble, randomized, hidden, settings, places, pictures.isNotEmpty())))
             add(DebriefSection(next(), LanguageText.text("ui.recommended.actions"), actionBody))

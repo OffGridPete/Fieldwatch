@@ -272,6 +272,21 @@ data class SitFile(
     val operatorPath: List<GpsSample> = emptyList(),
     val floods: List<FloodBurst> = emptyList(),
     val gnss: List<GnssMark> = emptyList(),
+    val cells: List<CellMark> = emptyList(),
+    /**
+     * Cameras the path came near. Empty when none did, or when this file
+     * was saved before that list was kept. [cameraKept] says which.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val pathCameras: List<FlockCamera> = emptyList(),
+    /**
+     * Last frozen step whose cameras are in [pathCameras].
+     * Null means this sit never saved that list, so the report counts once from the files.
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val cameraKept: GpsSample? = null,
 )
 
 data class SitUi(
@@ -290,6 +305,8 @@ data class OpenLivePath(
     val startAt: Long,
     val samples: List<GpsSample>,
     val radios: List<Sighting>,
+    /** Cameras this sit already saved along the path. Empty until the first fold. */
+    val cameras: List<FlockCamera> = emptyList(),
 )
 
 data class SitDebrief(
@@ -300,6 +317,20 @@ data class SitDebrief(
     val operatorPath: List<GpsSample>,
     val floods: List<FloodBurst> = emptyList(),
     val gnss: List<GnssMark> = emptyList(),
+    val cells: List<CellMark> = emptyList(),
+    /**
+     * Cameras saved on this sit. Null when the sit has not saved that list yet,
+     * including a sit written before it was kept. Empty means the path was checked
+     * and no listed camera was along it.
+     */
+    val pathCameras: List<FlockCamera>? = null,
+)
+
+/** Path tail still to fold, and the cameras already frozen on that sit. */
+data class CameraSlice(
+    val anchor: GpsSample?,
+    val points: List<GpsSample>,
+    val committed: List<FlockCamera>,
 )
 
 data class DebriefWindow(
@@ -316,6 +347,9 @@ class SitSession(
     path: List<GpsSample> = emptyList(),
     floods: List<FloodBurst> = emptyList(),
     gnss: List<GnssMark> = emptyList(),
+    cells: List<CellMark> = emptyList(),
+    pathCameras: List<FlockCamera> = emptyList(),
+    cameraKept: GpsSample? = null,
 ) {
     var summary: SitSummary = summary
         private set
@@ -324,8 +358,16 @@ class SitSession(
     }
     private val path = ArrayList<GpsSample>(path.size + 16).apply { addAll(path) }
     private val pathApex = Geo.DriveApex()
+    /** Path length already checked for [onePlaceLabel]. A drive does not measure every pair again. */
+    private var placeChecked = 0
+    private var placeWide = false
+    /** Cameras on frozen steps. The report also shows whatever is beside the current tip. */
+    private val cameraCommitted = LinkedHashMap<Long, FlockCamera>()
+    private var cameraShow: List<FlockCamera> = emptyList()
+    private var cameraKept: GpsSample? = cameraKept
     private val floods = ArrayList<FloodBurst>(floods.size + 4).apply { addAll(floods) }
     private val gnss = ArrayList<GnssMark>(gnss.size + 4).apply { addAll(gnss) }
+    private val cells = ArrayList<CellMark>(cells.size + 4).apply { addAll(cells) }
     var dirty: Boolean = false
         private set
 
@@ -334,6 +376,37 @@ class SitSession(
     val atCap: Boolean get() = radios.size >= Sit.RADIO_CAP
     val operatorPath: List<GpsSample> get() = path.toList()
     val pathCount: Int get() = path.size
+
+    init {
+        // The file stores the list the report was showing, tip included.
+        // After a restart those tip cameras stay on the sit.
+        if (cameraKept != null) {
+            for (cam in pathCameras) {
+                if (cam.kind == SensorKind.GUNSHOT) continue
+                cameraCommitted[cam.key] = cam
+            }
+            cameraShow = cameraCommitted.values.sortedBy { it.key }
+        }
+    }
+
+    /**
+     * Sit name while the path is still one place, about [meters] across.
+     * Null once some pair is at least that far. Adding points does not measure the drive again.
+     */
+    fun onePlaceLabel(meters: Double): String? {
+        val name = summary.name.trim().ifBlank { null }
+        if (placeWide) return null
+        val count = path.size
+        if (count < 2) return name
+        if (count == placeChecked) return name
+        placeWide = if (placeChecked == 0 || count < placeChecked) {
+            Geo.widerThan(path, meters)
+        } else {
+            Geo.widerThanNew(path, placeChecked, meters)
+        }
+        placeChecked = count
+        return if (placeWide) null else name
+    }
 
     fun markClean() {
         dirty = false
@@ -369,7 +442,62 @@ class SitSession(
             operatorPath = path.toList(),
             floods = floods.toList(),
             gnss = gnss.toList(),
+            cells = cells.toList(),
+            pathCameras = if (cameraKept != null) cameraShow else emptyList(),
+            cameraKept = cameraKept,
         )
+    }
+
+    /** The part of the path whose cameras are not frozen yet. Null when there is no path. */
+    fun cameraSlice(): CameraSlice? {
+        if (path.isEmpty()) return null
+        val committed = cameraCommitted.values.toList()
+        val anchor = cameraKept
+        if (anchor == null) return CameraSlice(null, path.toList(), committed)
+        val idx = path.indexOfLast { it.at == anchor.at && it.lat == anchor.lat && it.lon == anchor.lon }
+        if (idx < 0) {
+            val head = path.first()
+            return CameraSlice(head, path.toList(), committed)
+        }
+        return CameraSlice(anchor, ArrayList(path.subList(idx, path.size)), committed)
+    }
+
+    /** Cameras the report is showing for this path. Empty until a fold has run. */
+    fun camerasAlongPath(): List<FlockCamera> = cameraShow
+
+    /** Store a fold. The report reads [PathCameras.Fold.cameras] and does not search again. */
+    fun applyCameraFold(fold: PathCameras.Fold) {
+        val nextShow = fold.cameras
+        val changed = cameraKept != fold.kept || cameraShow != nextShow
+        cameraKept = fold.kept
+        cameraCommitted.clear()
+        for (cam in fold.committed) cameraCommitted[cam.key] = cam
+        cameraShow = nextShow
+        if (changed) dirty = true
+    }
+
+    /** Copy cell episodes that overlap this sit. The same start and kind update in place. */
+    fun noteCell(incoming: List<CellMark>) {
+        if (!open || incoming.isEmpty()) return
+        val start = summary.startAt
+        var changed = false
+        for (mark in incoming) {
+            if (mark.endedAt > 0L && mark.endedAt < start) continue
+            val index = cells.indexOfFirst { it.at == mark.at && it.kind == mark.kind }
+            if (index < 0) {
+                cells += mark
+                changed = true
+            } else if (cells[index] != mark) {
+                cells[index] = mark
+                changed = true
+            }
+        }
+        if (cells.size > 40) {
+            val drop = cells.size - 40
+            repeat(drop) { cells.removeAt(0) }
+            changed = true
+        }
+        if (changed) dirty = true
     }
 
     /** Copy GNSS hits that started during this sit. The same start time updates in place. */
@@ -419,6 +547,8 @@ class SitSession(
         }
         if (changed) dirty = true
     }
+
+    fun radio(key: String): SitRadio? = radios[key]
 
     fun sightings(): List<Sighting> = radios.values.map { it.toSighting() }
 
@@ -479,7 +609,11 @@ class SitSession(
         if (!open) return false
         val last = path.lastOrNull()
         if (last != null && !Geo.hopPlausible(last, lat, lon, at)) return false
-        Geo.extendDrivePath(path, pathApex, lat, lon, at, cap = Sit.PATH_CAP)
+        val trimmed = Geo.extendDrivePath(path, pathApex, lat, lon, at, cap = Sit.PATH_CAP)
+        if (trimmed) {
+            placeChecked = 0
+            placeWide = false
+        }
         dirty = true
         return true
     }

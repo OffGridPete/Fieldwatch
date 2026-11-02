@@ -32,15 +32,29 @@ fun DrawScope.drawFlockMarks(
 ) {
     val marks = prepared ?: flockMarksOn(lay, index)
     val metersPerPx = lay.metersPerPx.coerceAtLeast(0.05f)
+    val wide = bold && !flockWedges(metersPerPx)
     for (mark in marks) {
         val pt = lay.project(mark.lat, mark.lon)
         val at = Offset(pt.x, pt.y)
+        if (wide) {
+            drawCircle(markDot(mark), WIDE_DOT_PX, at)
+            continue
+        }
         if (mark.count > 1) {
             drawFlockCount(at, mark, night, measurer, countStyle, bold)
         } else {
             drawFlockSight(at, mark, lay, metersPerPx, bold)
         }
     }
+}
+
+/**
+ * A long path keeps the dot. The wedge and the white ring return once a 150-foot
+ * cone is large enough to read without covering the road.
+ */
+internal fun flockWedges(metersPerPx: Float): Boolean {
+    if (!metersPerPx.isFinite() || metersPerPx <= 0f) return true
+    return CONE_M / metersPerPx >= WEDGE_SHOW_PX
 }
 
 /**
@@ -189,6 +203,10 @@ private fun DrawScope.drawFlockCount(
 
 /** 150 feet. The view cone is a direction, not a measured coverage range. */
 private const val CONE_M = 150.0 * 0.3048
+
+/** Below this on-screen size the wedge and the white ring cover a long path. */
+private const val WEDGE_SHOW_PX = 28f
+private const val WIDE_DOT_PX = 6f
 private const val CONE_DEG = 50f
 private const val CONE_MIN_PX = 16f
 private const val CONE_MAX_PX = 170f

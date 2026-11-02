@@ -100,7 +100,7 @@ object EnglishCopy {
     const val FORMAT = "fieldwatch-language"
     const val FORMAT_VERSION = 1
 
-    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all
+    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all
     val byKey: Map<String, EnglishLine> = lines.associateBy { it.key }
     val placeholders: Map<String, Set<String>> = lines.associate { it.key to placeholderNames(it.text) }
 
@@ -210,6 +210,7 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("settings.topic.appearance", "Appearance", LanguageSlot.CONTROL),
     en("settings.topic.scanning", "Scanning", LanguageSlot.CONTROL),
     en("settings.topic.watchlist", "Watchlist", LanguageSlot.CONTROL),
+    en("settings.topic.alerts", "Alerts", LanguageSlot.CONTROL),
     en("settings.topic.location", "Location", LanguageSlot.CONTROL),
     en("settings.topic.location.maps", "Location and Maps", LanguageSlot.CONTROL),
     en("settings.topic.gnss", "GNSS interference", LanguageSlot.CONTROL),
@@ -328,6 +329,58 @@ private fun buildLines(): List<EnglishLine> = listOf(
         LanguageSlot.BODY,
     ),
     en("settings.named.radios", "Named radios", LanguageSlot.CONTROL),
+    en("settings.spoken.names", "Signature and network", LanguageSlot.CONTROL),
+    en(
+        "alerts.named.note",
+        "A name on one radio is the whole announcement. It is said ahead of the class and the signature.",
+        LanguageSlot.BODY,
+    ),
+    en(
+        "alerts.signature.note",
+        "Words said instead of the signature, for every radio of that signature with that network name.",
+        LanguageSlot.BODY,
+    ),
+    en("spoken.name", "Spoken name", LanguageSlot.CONTROL),
+    en("spoken.card.title", "Custom signature and network alert", LanguageSlot.CONTROL),
+    en(
+        "spoken.card.note",
+        "The name said if this radio alerts, for every radio of that signature with this network name. Turning this on does not start an alert.",
+        LanguageSlot.BODY,
+    ),
+    en("spoken.alert.say", "Alert to say", LanguageSlot.CONTROL),
+    en("spoken.as", "Spoken as {name}", LanguageSlot.CONTROL),
+    en("spoken.words", "Name to say", LanguageSlot.CONTROL),
+    en("spoken.network", "Network name", LanguageSlot.CONTROL),
+    en("spoken.save", "Save spoken name", LanguageSlot.CONTROL),
+    en("spoken.remove", "Remove spoken name", LanguageSlot.CONTROL),
+    en("spoken.one", "1 name", LanguageSlot.CONTROL),
+    en("spoken.count", "{n} names", LanguageSlot.CONTROL),
+    en("spoken.held", "Saved, not spoken", LanguageSlot.CONTROL),
+    en(
+        "spoken.remove.ask",
+        "Remove the spoken name for this signature and network name?",
+        LanguageSlot.BODY,
+    ),
+    en(
+        "spoken.name.note",
+        "Said instead of the signature for every radio of that signature with that network name. Not one address. The signature stays as it is.",
+        LanguageSlot.BODY,
+    ),
+    en(
+        "spoken.class.only",
+        "These words stay saved. They are not spoken while What to say is Class.",
+        LanguageSlot.BODY,
+    ),
+    en(
+        "spoken.empty",
+        "None yet. Open a radio that matches a signature and has a network name, then set the name said instead of that signature.",
+        LanguageSlot.BODY,
+    ),
+    en(
+        "spoken.named.instead",
+        "This radio has its own custom name. That name is said instead.",
+        LanguageSlot.BODY,
+    ),
     en("language.follow", "Use the phone's locale if available", LanguageSlot.CONTROL),
     en("language.english", "English", LanguageSlot.CONTROL),
     en("language.import", "Import language pack", LanguageSlot.CONTROL),
@@ -476,6 +529,11 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("reports.log.export", "Log Export", LanguageSlot.CONTROL),
     en("reports.candidates", "Signature candidates", LanguageSlot.CONTROL),
     en("reports.sits", "Sits", LanguageSlot.CONTROL),
+    en("reports.places.blurb", "Heard at two or more places in the last 7 days.", LanguageSlot.BODY),
+    en("reports.places.empty", "None in the last 7 days.", LanguageSlot.BODY),
+    en("reports.places.off", "Places is off. Turn it on under Location and Maps.", LanguageSlot.BODY),
+    en("reports.places.count", "{n} places", LanguageSlot.CONTROL),
+    en("reports.places.private", "Privacy mode hides the map and the coordinates.", LanguageSlot.BODY),
     en("rule.oui", "OUI", LanguageSlot.CONTROL),
     en("rule.mac.prefix", "MAC prefix", LanguageSlot.CONTROL),
     en("rule.hidden.ssid", "Matches hidden SSIDs", LanguageSlot.CONTROL),

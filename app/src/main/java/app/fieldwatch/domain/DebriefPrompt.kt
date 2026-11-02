@@ -32,6 +32,8 @@ object DebriefPrompt {
         placeRecords: List<PlaceMemory.Record> = emptyList(),
         cameras: PathCameras.Report? = null,
         trusted: List<TrustedSitLine> = emptyList(),
+        cells: List<CellMark> = emptyList(),
+        savedCameras: List<FlockCamera>? = null,
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -72,6 +74,8 @@ object DebriefPrompt {
             placeRecords = placeRecords,
             cameras = cameras,
             trusted = trusted,
+            cells = cells,
+            savedCameras = savedCameras,
         )
         val iso = utc(windowEnd)
         val start = utc(windowStart)

@@ -67,6 +67,7 @@ class PlaceStore(private val file: File) {
         if (devices.isEmpty()) return
         val names = HashMap<String, String>(fleets.size)
         for (fleet in fleets) names[fleet.id] = fleet.name
+        val custom = RadioBookmarks.labels(watchlist)
         val mine = RadioBookmarks.mineKeys(watchlist)
         val zone = ZoneId.systemDefault()
         val now = System.currentTimeMillis()
@@ -76,6 +77,7 @@ class PlaceStore(private val file: File) {
                 val id = PlaceMemory.accept(device, names, mine) ?: continue
                 val at = if (device.lastSeen > 0L) device.lastSeen else now
                 val day = PlaceMemory.localDate(at, zone).toEpochDay()
+                val sigNames = device.fleetIds.mapNotNull { names[it] }
                 val prev = records[id]
                 val next = PlaceMemory.prune(
                     PlaceMemory.note(
@@ -89,6 +91,7 @@ class PlaceStore(private val file: File) {
                             sitId = sitId,
                             sitLabel = sitLabel,
                             localDay = day,
+                            label = PlaceMemory.heardLabel(device, sigNames, custom[device.key]),
                         ),
                     ),
                     now,
@@ -139,10 +142,14 @@ class PlaceStore(private val file: File) {
     }
 
     private fun recordFor(device: Sighting, fleets: List<Fleet>, mineKeys: Set<String>): PlaceMemory.Record? {
+        if (device.key in mineKeys) return null
         val names = HashMap<String, String>(fleets.size)
         for (fleet in fleets) names[fleet.id] = fleet.name
-        val id = PlaceMemory.accept(device, names, mineKeys) ?: return null
-        return synchronized(lock) { records[id] }
+        val id = PlaceMemory.accept(device, names, mineKeys)
+        synchronized(lock) {
+            if (id != null) records[id]?.let { return it }
+            return records.values.firstOrNull { it.deviceKey == device.key }
+        }
     }
 
     fun multiPlaceKeys(now: Long, mineKeys: Set<String>): Set<String> {

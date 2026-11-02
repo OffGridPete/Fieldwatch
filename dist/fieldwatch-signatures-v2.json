@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 97,
+    "catalogVersion": 98,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -56713,21 +56713,13 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
-                },
-                {
-                    "kind": "MANUFACTURER_ID",
-                    "text": "",
-                    "companyId": 117,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Samsung SmartTag / SmartTag+ item finder. Addresses often rotate.",
+            "notes": "Samsung SmartTag / SmartTag+ item finder. Matches the name or service FD5A. Addresses often rotate.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "FINDER"

@@ -1176,6 +1176,14 @@ class ConfigStore(context: Context) {
             if (extras.isNotEmpty()) fleets = (fleets + extras).sortedBy { it.name.lowercase() }
             version = CATALOG_V97
         }
+        if (version < CATALOG_V98) {
+            fleets = fleets.map { fleet ->
+                if (!fleet.builtIn || fleet.id != "fleet-smarttag") return@map fleet
+                val stock = catalog[fleet.id] ?: return@map fleet
+                catalog98SmartTag(fleet, stock)
+            }
+            version = CATALOG_V98
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1222,7 +1230,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 97
+        const val CATALOG_VERSION = 98
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1318,7 +1326,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V94 = 94
         private const val CATALOG_V95 = 95
         private const val CATALOG_V96 = 96
-        private const val CATALOG_V97 = CATALOG_VERSION
+        private const val CATALOG_V97 = 97
+        private const val CATALOG_V98 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1729,3 +1738,21 @@ private val FS_EXT_SILABS_OUIS = setOf(
 )
 
 private val FLOCK_LOOSE_NAMES = setOf("FLOCK", "FLCK", "CONDOR", "FALCON", "SPARROW")
+
+private const val SMARTTAG_NOTES_BEFORE_V98 =
+    "Samsung SmartTag / SmartTag+ item finder. Addresses often rotate."
+
+/**
+ * Catalog 98 drops Samsung company ID 0x0075 from the built-in SmartTag row.
+ * That ID is Samsung Electronics generally. A rule the operator added with a
+ * different company ID stays. A custom copy that is not built-in is left alone.
+ * The stock note is copied only when the row still has the catalog 97 sentence.
+ */
+internal fun catalog98SmartTag(fleet: Fleet, stock: Fleet): Fleet {
+    if (!fleet.builtIn || fleet.id != "fleet-smarttag" || fleet.id != stock.id) return fleet
+    val rules = fleet.rules.filterNot { rule ->
+        rule.kind == RuleKind.MANUFACTURER_ID && rule.companyId == 0x0075
+    }
+    val notes = if (fleet.notes == SMARTTAG_NOTES_BEFORE_V98) stock.notes else fleet.notes
+    return fleet.copy(rules = rules, notes = notes)
+}

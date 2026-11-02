@@ -515,6 +515,20 @@ class FlockCamerasTest {
         assertEquals("Vigilant", sensorNotice(FlockHit(1L, false, brand = "Vigilant")).second["brand"])
     }
 
+    @Test
+    fun theCameraControlWaitsUntilAListIsLoaded() {
+        val index = FlockIndex()
+        assertFalse(index.hasCameras())
+        index.markMissing()
+        assertFalse(index.hasCameras())
+        index.replace(listOf(FlockCamera(1L, 39.0, -104.0, listOf(90))))
+        assertTrue(index.hasCameras())
+        index.replace(emptyList())
+        assertFalse(index.hasCameras())
+        index.clear()
+        assertFalse(index.hasCameras())
+    }
+
     private fun tempDir(): File = File.createTempFile("flock", "").apply {
         delete()
         mkdirs()

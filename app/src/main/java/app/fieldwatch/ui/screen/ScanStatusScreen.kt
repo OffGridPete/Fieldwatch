@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import app.fieldwatch.BuildConfig
 import app.fieldwatch.FieldwatchApp
 import app.fieldwatch.radio.WifiRadio
+import app.fieldwatch.domain.CellWatch
 import app.fieldwatch.domain.GnssCalibration
 import app.fieldwatch.domain.ScanPhoneFacts
 import app.fieldwatch.domain.ScanStatus
@@ -65,6 +66,7 @@ fun ScanStatusScreen(
     }
     val app = context.applicationContext as FieldwatchApp
     val gnss by app.gnss.reading.collectAsStateWithLifecycle()
+    val cell by app.cells.reading.collectAsStateWithLifecycle()
     val gnssProfile by app.gnssProfile.profile.collectAsStateWithLifecycle()
     val report = ScanStatus.report(
         radio = state.scanRadio,
@@ -73,6 +75,7 @@ fun ScanStatusScreen(
         radiosOnAir = state.wifiNow + state.bleNow,
         gnssRows = gnss.diagRows + GnssCalibration.diagRows(gnssProfile),
         tak = takDiag(state, app),
+        cellRows = CellWatch.diagRows(cell),
     )
     Scaffold(
         contentWindowInsets = NestedTabInsets,

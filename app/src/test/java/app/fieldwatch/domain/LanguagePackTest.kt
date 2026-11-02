@@ -320,12 +320,13 @@ class LanguagePackTest {
             // Download-reason lines sat past 16 KiB. The TAK setting notes sit past 20 KiB.
             // The trusted-network setting notes sit past 28 KiB.
             // The report and device sentences sit past 96 KiB.
-            // 112 KiB still refuses a runaway line.
+            // The signature-and-network note sits past 112 KiB.
+            // 120 KiB still refuses a runaway line.
             assertReject(parsed)
             assertEquals(LanguageErrors.LARGE, (parsed as LanguageParse.Reject).messageKey)
             assertTrue(
                 "cap-fill file is ${bytes.size} bytes",
-                bytes.size < LanguagePack.MAX_BYTES + 112 * 1024,
+                bytes.size < LanguagePack.MAX_BYTES + 120 * 1024,
             )
         }
         val shipped = repoFile("app/src/main/assets/lang")
@@ -641,6 +642,16 @@ class LanguagePackTest {
             assertTrue("${bundled.tag} ui.cameras.near.count", preview.accepted.containsKey("ui.cameras.near.count"))
             assertTrue("${bundled.tag} ui.cameras.kind.gun", preview.accepted.containsKey("ui.cameras.kind.gun"))
             assertTrue("${bundled.tag} ui.map.camera.facing", preview.accepted.containsKey("ui.map.camera.facing"))
+            assertTrue("${bundled.tag} map.cameras.view", preview.accepted.containsKey("map.cameras.view"))
+            assertTrue("${bundled.tag} map.cameras.off", preview.accepted.containsKey("map.cameras.off"))
+            assertTrue(
+                "${bundled.tag} missing ${preview.missingKeys}",
+                preview.missingKeys.isEmpty(),
+            )
+            assertTrue(
+                "${bundled.tag} dropped ${preview.issues}",
+                preview.issues.isEmpty(),
+            )
             for ((key, value) in preview.accepted) {
                 val english = EnglishCopy.text(key)
                 assertTrue("${bundled.tag} $key over cap", value.length <= EnglishCopy.cap(key))
@@ -652,6 +663,41 @@ class LanguagePackTest {
                 if (EnglishCopy.byKey.getValue(key).slot == LanguageSlot.CLASSCHIP) {
                     assertTrue("${bundled.tag} $key chip ${value.length}", value.length <= 18)
                 }
+            }
+        }
+    }
+
+    @Test
+    fun spokenNameLinesAreInEveryPack() {
+        val keys = listOf(
+            "settings.spoken.names",
+            "spoken.card.note",
+            "spoken.name",
+            "spoken.as",
+            "spoken.words",
+            "spoken.network",
+            "spoken.save",
+            "spoken.remove",
+            "spoken.one",
+            "spoken.count",
+            "spoken.held",
+            "spoken.remove.ask",
+            "spoken.name.note",
+            "spoken.class.only",
+            "spoken.empty",
+            "spoken.named.instead",
+        )
+        val dir = repoFile("src/main/assets/lang")
+        for (bundled in BundledLanguages.all) {
+            val parsed = LanguagePack.parse(File(dir, "${bundled.tag}.json").readBytes())
+            val accepted = (parsed as LanguageParse.Ok).preview.accepted
+            for (key in keys) {
+                assertTrue("${bundled.tag} $key", accepted.containsKey(key))
+                assertEquals(
+                    "${bundled.tag} $key",
+                    EnglishCopy.placeholders.getValue(key),
+                    placeholderNames(accepted.getValue(key)),
+                )
             }
         }
     }

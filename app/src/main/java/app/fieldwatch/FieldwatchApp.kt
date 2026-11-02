@@ -12,11 +12,14 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.ContextCompat
 import app.fieldwatch.alert.Alerter
 import app.fieldwatch.crash.CrashNotes
+import app.fieldwatch.radio.CellRadio
 import app.fieldwatch.radio.GnssMonitor
 import app.fieldwatch.data.AssetLanguageFiles
+import app.fieldwatch.data.CellStore
 import app.fieldwatch.data.ConfigStore
 import app.fieldwatch.data.FlockFiles
 import app.fieldwatch.data.SensorList
@@ -30,12 +33,17 @@ import app.fieldwatch.data.MapKeyStore
 import app.fieldwatch.data.PlaceStore
 import app.fieldwatch.data.SitStore
 import app.fieldwatch.data.TrustedNetworkStore
+import app.fieldwatch.domain.CellCopy
+import app.fieldwatch.domain.CellFix
+import app.fieldwatch.domain.CellReading
+import app.fieldwatch.domain.CellSwitches
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.FlockApproach
 import app.fieldwatch.domain.FlockCamera
 import app.fieldwatch.domain.FlockIndex
 import app.fieldwatch.domain.FlockLatch
+import app.fieldwatch.domain.PathCameras
 import app.fieldwatch.domain.alertsFor
 import app.fieldwatch.domain.anySensorAlert
 import app.fieldwatch.domain.sensorNotice
@@ -92,9 +100,16 @@ class FieldwatchApp : Application() {
         private set
     lateinit var trusted: TrustedNetworkStore
         private set
+    lateinit var cells: CellStore
+        private set
+    private val cellVoiceLock = Any()
+    private val cellVoiced = HashSet<Long>()
     lateinit var alerter: Alerter
         private set
     val flockIndex = FlockIndex()
+    private val cameraReportLock = Any()
+    private var cameraReportStamp = Long.MIN_VALUE
+    @Volatile private var cameraReportCache: PathCameras.Report? = null
     private val flockLatch = FlockLatch()
     private val _flockRevision = MutableStateFlow(0)
     val flockRevision: StateFlow<Int> = _flockRevision.asStateFlow()
@@ -157,6 +172,18 @@ class FieldwatchApp : Application() {
             return TrustFix(null, null, null, paused = false)
         }
         return TrustFix(fix.first, fix.second, acc, paused = false)
+    }
+
+    /** GPS fix for this phone's cell. A held receiver is paused even when the fix is fresh. */
+    private fun cellFix(now: Long, paused: Boolean): CellFix {
+        val trust = trustFix(now)
+        return CellFix(
+            lat = trust.lat,
+            lon = trust.lon,
+            accuracyM = trust.accuracyM,
+            speedMps = floodSpeed(now)?.toFloat(),
+            paused = paused || trust.paused,
+        )
     }
     /** Course for the map button. NaN until GPS has shown a direction. */
     @Volatile
@@ -586,8 +613,10 @@ class FieldwatchApp : Application() {
         devices = DeviceStore()
         logs = LogStore(this)
         sits = SitStore(this, scope)
+        sits.watchPathCameras { cameraReport()?.near }
         places = PlaceStore(File(filesDir, "place-memory.json"))
         trusted = TrustedNetworkStore(File(filesDir, "trusted-networks.json"), scope)
+        cells = CellStore(File(filesDir, "cell-places.json"), scope)
         alerter = Alerter(this)
         tak = TakPublisher(this)
         gnssProfile = GnssProfileStore(this)
@@ -612,6 +641,7 @@ class FieldwatchApp : Application() {
             sits.load()
             places.load()
             trusted.load()
+            cells.load()
             val sitOpen = sits.ui.value.open != null
             pairingFlood.setSitOpen(sitOpen)
             wifiFlood.setSitOpen(sitOpen)
@@ -619,9 +649,10 @@ class FieldwatchApp : Application() {
         sits.startFlusher()
         places.startFlusher(scope)
         trusted.startFlusher()
+        cells.startFlusher()
         syncLocationUpdates()
         syncFlock()
-        if (config.settings.alertVoice || config.settings.gnssVoice || config.settings.trustedVoice || config.settings.anySensorAlert()) {
+        if (config.settings.alertVoice || config.settings.gnssVoice || config.settings.trustedVoice || config.settings.cellVoice || config.settings.anySensorAlert()) {
             alerter.prepareVoice()
         }
         if (config.filter.arrivalsOnly) {
@@ -829,6 +860,71 @@ class FieldwatchApp : Application() {
         locating = false
     }
 
+    /**
+     * One cached serving-cell read on the scan cadence.
+     * A telephony failure stays in this call. It does not stop the scan loop.
+     */
+    fun tickCell(paused: Boolean) {
+        if (!::cells.isInitialized || !::config.isInitialized) return
+        try {
+            val now = System.currentTimeMillis()
+            val reading = runCatching { CellRadio.read(this) }.getOrDefault(CellReading())
+            val settings = config.settings
+            cells.tick(
+                reading,
+                cellFix(now, paused),
+                CellSwitches(
+                    watch = settings.cellWatch,
+                    warnNew = settings.cellWarnNew,
+                    warnDrop = settings.cellWarnDrop,
+                    learnDays = settings.cellLearnDays,
+                ),
+                now,
+            )
+            if (::sits.isInitialized) sits.noteCell(cells.marks())
+            announceCell()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e("Fieldwatch", "cell watch failed", e)
+        }
+    }
+
+    /** Beep and speak only when an episode becomes the dialog. A shade repost stays quiet. */
+    fun announceCell() {
+        if (!::cells.isInitialized || !::config.isInitialized || !::alerter.isInitialized) return
+        val settings = config.settings
+        if (!settings.cellWatch) {
+            alerter.clearCellNote()
+            return
+        }
+        if (cellDialogBlocked()) return
+        val shown = cells.showing()
+        if (shown == null) {
+            alerter.clearCellNote()
+            return
+        }
+        val first = synchronized(cellVoiceLock) {
+            val open = cells.bookFlow.value.episodes.filter { it.open }.map { it.id }.toSet()
+            cellVoiced.retainAll(open)
+            cellVoiced.add(shown.id)
+        }
+        val sentence = CellCopy.sentence(shown.kind)
+        alerter.cellAlert(
+            title = sentence,
+            body = CellCopy.body(shown.kind),
+            phrase = if (first && settings.cellVoice) sentence else null,
+            beep = first && settings.cellBeep,
+            shade = settings.cellShade,
+        )
+    }
+
+    private fun cellDialogBlocked(): Boolean {
+        val gnssUp = ::gnss.isInitialized && gnss.reading.value.notice?.showDialog == true
+        val trustedUp = ::trusted.isInitialized && trusted.notice.value != null
+        return gnssUp || trustedUp
+    }
+
     /** Start or stop the GNSS check. Safe to call often. The scan service waits past radio start. */
     fun syncGnss() {
         if (!::gnss.isInitialized || !::gnssProfile.isInitialized) return
@@ -919,6 +1015,54 @@ class FieldwatchApp : Application() {
         if (learned != null) writeHuntStride(learned)
         recordOperatorFix(lat, lon, at)
         noteFlock(lat, lon)
+    }
+
+    /**
+     * Both saved lists, for the sit report. Null when neither file is on the phone,
+     * or a file is there and could not be read. A miss leaves the sit's saved step
+     * where it is, so a later download can still be counted along the path so far.
+     * Call this off the main thread. The parsed lists stay until a file changes.
+     */
+    fun cameraReport(): PathCameras.Report? {
+        val stamp = cameraFileStamp()
+        synchronized(cameraReportLock) {
+            val held = cameraReportCache
+            if (held != null && stamp == cameraReportStamp) return held
+        }
+        val platesHeader = FlockFiles.peek(filesDir, SensorList.PLATES)
+        val otherHeader = FlockFiles.peek(filesDir, SensorList.OTHER)
+        if (platesHeader == null && otherHeader == null) return null
+        val plates = if (platesHeader != null) FlockFiles.read(filesDir, SensorList.PLATES) else null
+        val others = if (otherHeader != null) FlockFiles.read(filesDir, SensorList.OTHER) else null
+        if (platesHeader != null && plates == null) return null
+        if (otherHeader != null && others == null) return null
+        val index = FlockIndex()
+        val all = ArrayList<FlockCamera>((plates?.cameras?.size ?: 0) + (others?.cameras?.size ?: 0))
+        if (plates != null) all.addAll(plates.cameras)
+        if (others != null) all.addAll(others.cameras)
+        if (all.isEmpty()) index.markMissing() else index.replace(all)
+        val report = PathCameras.Report(plates != null, others != null, index::near)
+        synchronized(cameraReportLock) {
+            cameraReportCache = report
+            cameraReportStamp = stamp
+        }
+        return report
+    }
+
+    /** True when that list's file can be read. Does not load the cameras. */
+    fun cameraListsOnDisk(): Pair<Boolean, Boolean> =
+        (FlockFiles.peek(filesDir, SensorList.PLATES) != null) to
+            (FlockFiles.peek(filesDir, SensorList.OTHER) != null)
+
+    private fun cameraFileStamp(): Long {
+        fun part(list: SensorList): Long {
+            val file = FlockFiles.file(filesDir, list)
+            if (!file.isFile) return 0L
+            return file.lastModified() xor file.length()
+        }
+        val plates = part(SensorList.PLATES)
+        val other = part(SensorList.OTHER)
+        return plates xor other.rotateLeft(1) xor if (plates == 0L && other == 0L) 1L else 0L
     }
 
     /**

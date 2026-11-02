@@ -54,6 +54,8 @@ object PlaceMemory {
         val returnGapMs: Long = 0L,
         val sitId: String? = null,
         val localDay: Long = Long.MIN_VALUE,
+        /** Last name worth showing after this radio leaves the live list. */
+        val label: String = "",
     )
 
     data class Hear(
@@ -65,6 +67,7 @@ object PlaceMemory {
         val sitId: String?,
         val sitLabel: String?,
         val localDay: Long,
+        val label: String = "",
     )
 
     /**
@@ -87,6 +90,18 @@ object PlaceMemory {
         val finder = TrackerMatch.kind(device, names) == TrackerMatch.Kind.FINDER
         if (!finder && !generic) return null
         return "ble:${device.mac}"
+    }
+
+    /**
+     * Name to keep on the place record.
+     * A custom name wins. Otherwise the live title, when it is a real name.
+     * A blank result keeps whatever the record already stored.
+     */
+    fun heardLabel(device: Sighting, signatureNames: List<String>, custom: String?): String {
+        val named = keptLabel("", custom.orEmpty())
+        if (named.isNotEmpty() && !named.equals(device.mac, ignoreCase = true)) return named
+        val title = device.listTitle(signatureNames).trim()
+        return keptLabel("", title).let { if (it.equals(device.mac, ignoreCase = true)) "" else it }
     }
 
     fun note(prev: Record?, hear: Hear): Record {
@@ -121,6 +136,7 @@ object PlaceMemory {
             returnGapMs = returnGap,
             sitId = hear.sitId,
             localDay = hear.localDay,
+            label = keptLabel(prev?.label, hear.label),
         )
     }
 
@@ -154,13 +170,38 @@ object PlaceMemory {
             val named = if (demo) emptyMap() else streets
             counted.forEach { lines += placeLine(it, zone, now, demo, named) }
         }
+        val again = returnLine(record, now)
+        if (again.isNotEmpty()) lines += again
+        return lines
+    }
+
+    /** Time, sit name, street, and coordinate kept apart for the places report. */
+    internal fun visitParts(
+        place: Place,
+        now: Long,
+        zone: ZoneId,
+        demo: Boolean,
+        streets: Map<String, String>,
+    ): VisitParts {
+        val coord = if (demo) "masked" else Geo.screenCoord(place.lat, place.lon, false).orEmpty()
+        val street = if (demo) "" else Geo.nameNear(place.lat, place.lon, streets, SEPARATION_M).orEmpty()
+        return VisitParts(
+            time = span(place, zone, now, spaced = true),
+            name = blankToNull(place.name).orEmpty(),
+            street = street,
+            coord = coord,
+        )
+    }
+
+    /** Quiet return, or blank. The places report shows this under the numbered stops. */
+    internal fun returnLine(record: Record, now: Long): String {
         if (record.returnAt > 0L &&
             record.returnGapMs >= RETURN_MS &&
             now - record.returnAt in 0..RETURN_SHOW_MS
         ) {
-            lines += "Heard again after ${gapPhrase(record.returnGapMs)}"
+            return "Heard again after ${gapPhrase(record.returnGapMs)}"
         }
-        return lines
+        return ""
     }
 
     /**
@@ -269,6 +310,13 @@ object PlaceMemory {
         return out
     }
 
+    internal data class VisitParts(
+        val time: String,
+        val name: String,
+        val street: String,
+        val coord: String,
+    )
+
     private fun placeLine(
         place: Place,
         zone: ZoneId,
@@ -276,21 +324,25 @@ object PlaceMemory {
         demo: Boolean,
         streets: Map<String, String>,
     ): String {
+        val parts = visitParts(place, now, zone, demo, streets)
+        val time = span(place, zone, now, spaced = false)
+        val head = if (parts.name.isEmpty()) time else "${parts.name} · $time"
+        if (parts.coord.isEmpty()) return head
+        return if (parts.street.isEmpty()) "$head · ${parts.coord}" else "$head · ${parts.street} · ${parts.coord}"
+    }
+
+    private fun span(place: Place, zone: ZoneId, now: Long, spaced: Boolean): String {
+        val dash = if (spaced) " – " else "–"
         val dated = !onSameDay(place.firstAt, now, zone) || !onSameDay(place.lastAt, now, zone)
         val start = formatAt(place.firstAt, zone, dated)
+        val endSame = formatAt(place.lastAt, zone, dated)
         val endClock = clock.format(Instant.ofEpochMilli(place.lastAt).atZone(zone))
-        val span = when {
-            start == formatAt(place.lastAt, zone, dated) -> start
-            dated && onSameDay(place.firstAt, place.lastAt, zone) -> "$start–$endClock"
-            dated -> "$start–${formatAt(place.lastAt, zone, true)}"
-            else -> if (start == endClock) start else "$start–$endClock"
+        return when {
+            start == endSame -> start
+            dated && onSameDay(place.firstAt, place.lastAt, zone) -> start + dash + endClock
+            dated -> start + dash + formatAt(place.lastAt, zone, true)
+            else -> if (start == endClock) start else start + dash + endClock
         }
-        val name = blankToNull(place.name)
-        val head = if (name == null) span else "$name · $span"
-        val coord = if (demo) "masked" else Geo.screenCoord(place.lat, place.lon, false)
-        if (coord == null) return head
-        val street = if (demo) null else Geo.nameNear(place.lat, place.lon, streets, SEPARATION_M)
-        return if (street.isNullOrBlank()) "$head · $coord" else "$head · $street · $coord"
     }
 
     private fun onSameDay(at: Long, now: Long, zone: ZoneId): Boolean =
@@ -312,6 +364,13 @@ object PlaceMemory {
         if (hours < 48) return if (hours == 1) "1 hour" else "$hours hours"
         val days = (hours + 12) / 24
         return if (days == 1) "1 day" else "$days days"
+    }
+
+    private fun keptLabel(prev: String?, next: String): String {
+        val fresh = next.trim()
+        if (fresh.isNotEmpty() && fresh != "unnamed LE") return fresh
+        val older = prev?.trim().orEmpty()
+        return if (older == "unnamed LE") "" else older
     }
 
     private fun blankToNull(raw: String?): String? = raw?.trim()?.ifBlank { null }

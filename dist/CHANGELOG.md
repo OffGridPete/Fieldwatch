@@ -4,6 +4,17 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.38 — 2 November 2026
+
+- Samsung SmartTags matches the SmartTag name or service FD5A. A phone, TV, Buds, or watch that only sends Samsung's company ID stays off that row. The stock catalog is 98. Opening this version drops that company ID from the built-in row. A rule you added stays. Update stock catalog from GitHub brings the same file.
+- Reports lists radios heard at two or more places in the last 7 days, without a sit and without hearing them now. The map shows where this phone was. Each radio has its own color on the map and beside its name. Privacy mode hides the map and the coordinates.
+- On that report, each stop is numbered. The time, the street, and the coordinate are on their own lines. The numbers are plain. The name is the live list's Name + type. Tap a radio to open it, including one that has left Live.
+- Cell connection monitoring is off until Monitor the cell connection is on. The first still visit at a place only learns. How long to learn starts at 3 days. The choices are None, 1 day, 3 days, 7 days, and 14 days. A later visit can warn on a new cell, or on a drop to 2G or 3G. The dialog can list the country, the operator, the channel, and the band. Debrief gets a section when a warning overlapped the sit. The alert is separate from the watchlist. Diagnostics lists the camp even when the watch is off.
+- Signature and network, under Alerts, saves words that replace the signature in the announcement. Those words apply to every radio of that signature with that network name. The network name is not spoken. A name on one radio still comes first. Saying the class only keeps the words saved and says the class. The list goes with Export settings.
+- Trusted networks shows how long learning has left. How long to learn adds 1 hour. Changing the length does not forget access points already saved.
+- Show live path and Reports → Path have a camera button. It hides the marks in the picture, or shows them again. The choice is saved. Hunt has no button. The list under Path, the sit report, and the printed path still follow the layer switches.
+- The new settings and alert text is in all 26 languages that come with the app.
+
 ## 1.1.37 — 29 October 2026
 
 - Show live path and Hunt turn with the heading as it changes. The map already on screen turns with it, so the edges stay filled. Standing still, or turning the phone in place, leaves the map where it is.
@@ -12,7 +23,7 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## 1.1.36 — 29 October 2026
 
-- A trusted-network warning for the address 00:13:37 says that block belongs to Orient Power Home Network.
+- Each trusted-network warning names that network and the reason that fired. The title is Possible evil twin of "{name}": {reason}. The reason is one or more of these: open security, weaker security, unknown device, or away from usual places. The line under it is that access point's address. "00:13:37 belongs to Orient Power Home Network." is an extra line, and only when that address starts with 00:13:37. A warning for any other address does not include it. That line does not replace the network name or the reason, and that address block does not warn by itself.
 - Trusted-network warning actions sit on their own lines.
 
 ## 1.1.35 — 29 October 2026

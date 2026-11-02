@@ -412,14 +412,13 @@ object DefaultCatalog {
         colorIndex = Hue.TRACKER,
         kind = SignatureClass.FINDER,
         matchAny = true,
-        notes = "Samsung SmartTag / SmartTag+ item finder. Addresses often rotate.",
+        notes = "Samsung SmartTag / SmartTag+ item finder. Matches the name or service FD5A. Addresses often rotate.",
         builtIn = true,
         rules = listOf(
             name("SmartTag"),
             name("Smart Tag"),
             name("Galaxy SmartTag"),
             uuid("FD5A"),
-            mfg(0x0075),
         ),
     )
 

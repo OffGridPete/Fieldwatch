@@ -364,6 +364,17 @@ class SettingsExchangeTest {
         assertEquals(MapFooter.OFF, missing.mapFooter)
         assertFalse(missing.mapRotate)
         assertEquals(-1, missing.mapFrame)
+        assertEquals(MapCameraMarks.VIEW, missing.mapCameras)
+        val legacyPath = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"mapCameras":"PATH"}""",
+        )
+        assertEquals(MapCameraMarks.VIEW, legacyPath.mapCameras)
+        val camerasOff = SettingsExchange.json.decodeFromString(
+            AppSettings.serializer(),
+            """{"mapCameras":"OFF"}""",
+        )
+        assertEquals(MapCameraMarks.OFF, camerasOff.mapCameras)
         assertEquals(MapFrame.NORTH, missing.mapHome)
         assertEquals(MapFrame.NORTH, MapFrame.resolved(missing.mapFrame, missing.mapRotate))
         val turned = SettingsExchange.json.decodeFromString(

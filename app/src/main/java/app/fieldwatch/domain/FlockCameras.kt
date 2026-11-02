@@ -1,5 +1,8 @@
 package app.fieldwatch.domain
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlin.math.abs
 import kotlin.math.asin
 import kotlin.math.atan2
@@ -13,6 +16,7 @@ import kotlin.math.sin
  * One saved roadside sensor. The order is the compact-file byte. Do not reorder it.
  * [PLATE] is a license plate reader. [CAMERA] is every other mapped camera.
  */
+@Serializable
 enum class SensorKind {
     PLATE,
     SPEED,
@@ -28,13 +32,18 @@ enum class SensorKind {
  * [flock] is true when the brand or operator says Flock. [brand] is the company name to show.
  * [kind] says which mark and which alert switch apply. A gunshot detector stores no direction.
  */
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class FlockCamera(
     val key: Long,
     val lat: Double,
     val lon: Double,
     val facings: List<Int>,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     val brand: String = "",
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     val flock: Boolean = false,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     val kind: SensorKind = SensorKind.PLATE,
 ) {
     fun forStore(): FlockCamera {
@@ -248,6 +257,9 @@ class FlockIndex {
         loaded = true
         revision += 1
     }
+
+    /** A list with cameras is in memory. Off, missing, or still loading stays false. */
+    fun hasCameras(): Boolean = loaded && snap.lats.isNotEmpty()
 
     fun marks(
         south: Double,

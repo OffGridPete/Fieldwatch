@@ -1,5 +1,12 @@
 package app.fieldwatch.domain
 
+import app.fieldwatch.ui.component.CAMERA_BUTTON_DP
+import app.fieldwatch.ui.component.CAMERA_UNDER_GAP_DP
+import app.fieldwatch.ui.component.COMPASS_PAD_DP
+import app.fieldwatch.ui.component.COMPASS_SIZE_DP
+import app.fieldwatch.ui.component.cameraCardClearDp
+import app.fieldwatch.ui.component.cameraUnderCompass
+import app.fieldwatch.ui.component.flockWedges
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -176,6 +183,75 @@ class PathCamerasTest {
     }
 
     @Test
+    fun foldingThePathInSlicesMatchesOneTally() {
+        val path = ArrayList<GpsSample>()
+        for (i in 0..20) {
+            path.add(GpsSample(1_000L + i * 1_000L, north(lat, i * 10.0), lon))
+        }
+        val besideStart = camera(1L, north(lat, 20.0), east(lat, lon, 12.0), emptyList(), flock = true)
+        val facing = camera(2L, north(lat, 100.0), east(lat, lon, 15.0), listOf(270), flock = true)
+        val nearEnd = camera(3L, north(lat, 190.0), east(lat, lon, -10.0), emptyList())
+        val away = camera(4L, north(lat, 100.0), east(lat, lon, 12.0), listOf(0))
+        val cameras = listOf(besideStart, facing, nearEnd, away)
+        val full = PathCameras.tally(path, plates = true, others = true, near = nearby(cameras))
+        var calls = 0
+        val near = { a: Double, b: Double, c: Double ->
+            calls++
+            nearby(cameras)(a, b, c)
+        }
+        var anchor: GpsSample? = null
+        var committed = emptyList<FlockCamera>()
+        var shown = emptyList<FlockCamera>()
+        var cursor = 0
+        while (cursor < path.size) {
+            val end = minOf(cursor + 4, path.size)
+            val slice = if (anchor == null) {
+                path.subList(0, end)
+            } else {
+                val at = path.indexOfFirst { it.at == anchor!!.at && it.lat == anchor!!.lat && it.lon == anchor!!.lon }
+                path.subList(at, end)
+            }
+            val fold = PathCameras.extend(anchor, slice, committed, near)
+            anchor = fold.kept
+            committed = fold.committed
+            shown = fold.cameras
+            cursor = end
+        }
+        assertEquals(full.cameras.map { it.key }, shown.map { it.key })
+        assertEquals(full.counts, PathCameras.fromSaved(shown, plates = true, others = true, pathReady = true).counts)
+        assertTrue("near calls $calls", calls < 40)
+    }
+
+    @Test
+    fun aSavedCameraListIsTheSitReport() {
+        val path = listOf(
+            GpsSample(1_000L, lat, lon),
+            GpsSample(5_000L, north(lat, 80.0), lon),
+        )
+        val flock = camera(1L, north(lat, 40.0), east(lat, lon, 15.0), listOf(270), flock = true)
+        val tally = PathCameras.tally(path, plates = true, others = true, near = nearby(listOf(flock)))
+        var calls = 0
+        val doc = DebriefReport.document(
+            devices = emptyList(),
+            fleets = emptyList(),
+            settings = layersOn(),
+            operatorPath = path,
+            now = 5_000L,
+            window = DebriefWindow(0L, 5_000L, "drive"),
+            cameras = PathCameras.Report(plates = true, others = true) { _, _, _ ->
+                calls++
+                emptyList()
+            },
+            savedCameras = tally.cameras,
+        )
+        assertEquals(0, calls)
+        val section = doc.sections.single { it.title == "Known cameras on path" }
+        assertTrue(section.body.contains("1 facing the path"))
+        assertEquals(listOf(1L), doc.pathFigure?.cameras?.map { it.key })
+        assertEquals(tally.counts, PathCameras.fromSaved(tally.cameras, plates = true, others = true, pathReady = true).counts)
+    }
+
+    @Test
     fun thePathPageLeavesOffAListThatIsMissingOrSwitchedOff() {
         val flock = camera(1L, lat, lon, listOf(270), flock = true)
         val speed = camera(6L, lat, lon, listOf(90), kind = SensorKind.SPEED)
@@ -197,6 +273,55 @@ class PathCamerasTest {
         assertFalse(noPlateFile!!.plates)
         assertEquals(listOf("ui.cameras.kind.speed"), noPlateFile.counts.map { it.labelKey })
         assertEquals(listOf(6L), noPlateFile.cameras.map { it.key })
+    }
+
+    @Test
+    fun theMapDropsGunshotsAndALayerThatIsOff() {
+        val flock = camera(1L, lat, lon, listOf(270), flock = true)
+        val speed = camera(6L, lat, lon, listOf(90), kind = SensorKind.SPEED)
+        val gun = camera(4L, lat, lon, emptyList(), kind = SensorKind.GUNSHOT)
+        val all = listOf(flock, speed, gun)
+        assertEquals(listOf(1L, 6L), PathCameras.forMap(all, platesOn = true, othersOn = true).map { it.key })
+        assertEquals(listOf(1L), PathCameras.forMap(all, platesOn = true, othersOn = false).map { it.key })
+        assertTrue(PathCameras.forMap(all, platesOn = false, othersOn = false).isEmpty())
+    }
+
+    @Test
+    fun theCameraGlyphCyclesOnThenOff() {
+        assertEquals(MapCameraMarks.OFF, MapCameraMarks.VIEW.next())
+        assertEquals(MapCameraMarks.VIEW, MapCameraMarks.OFF.next())
+    }
+
+    @Test
+    fun theCameraControlSitsUnderTheCompass() {
+        val density = 2.75f
+        val width = 1080f
+        val box = cameraUnderCompass(width, density, compassShown = true)
+        val pad = COMPASS_PAD_DP * density
+        val compass = COMPASS_SIZE_DP * density
+        val compassBottom = pad + compass
+        assertEquals(compassBottom + CAMERA_UNDER_GAP_DP * density, box.top, 0.01f)
+        assertTrue(CAMERA_UNDER_GAP_DP in 6f..12f)
+        val compassRight = width - pad
+        assertEquals(compassRight - box.size, box.left, 0.01f)
+        assertEquals(CAMERA_BUTTON_DP * density, box.size, 0.01f)
+        assertTrue(box.top >= compassBottom)
+        assertEquals(compassRight, box.left + box.size, 0.01f)
+        val buttonBottomDp = COMPASS_PAD_DP + COMPASS_SIZE_DP + CAMERA_UNDER_GAP_DP + CAMERA_BUTTON_DP
+        assertTrue(cameraCardClearDp(true) >= buttonBottomDp + 8f)
+        val plain = cameraUnderCompass(width, density, compassShown = false)
+        assertEquals(pad, plain.top, 0.01f)
+        assertEquals(width - pad - plain.size, plain.left, 0.01f)
+        assertTrue(cameraCardClearDp(false) < cameraCardClearDp(true))
+    }
+
+    @Test
+    fun aWidePathDropsTheWedgeAndACloseOneKeepsIt() {
+        assertTrue(flockWedges(0.4f))
+        assertFalse(flockWedges(12f))
+        val edge = (150.0 * 0.3048 / 28.0).toFloat()
+        assertTrue(flockWedges(edge))
+        assertFalse(flockWedges(edge + 0.2f))
     }
 
     private fun layersOn() = AppSettings(tagLocation = true, flockLayer = true, sensorLayer = true)

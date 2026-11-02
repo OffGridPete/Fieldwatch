@@ -32,5 +32,14 @@ public partner / community listings of Google Fast Pair model IDs.
 They are not a Google product and are not covered by the MIT grant
 as original Fieldwatch source.
 
+Country and operator names in CellPlmnData.kt are taken from the
+Android Open Source Project, Apache License 2.0:
+
+  frameworks/opt/telephony MccTable
+  packages/providers/TelephonyProvider
+  assets/latest_carrier_id/carrier_list.textpb
+
+Those names are not licensed as MIT by Off Grid Pete LLC.
+
 Fieldwatch continues the Spectre 1.2.14 field build under a new name,
 application id (app.fieldwatch), and license.

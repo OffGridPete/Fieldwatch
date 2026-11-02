@@ -156,6 +156,21 @@ class TrustedNetworkTest {
     }
 
     @Test
+    fun oneHourLearnsASiblingAtHomeAndThenStops() {
+        val router = "00:11:22:33:44:01"
+        val sib = "00:11:22:33:44:02"
+        val trusted = TrustedNets.trust(TrustedBook(), "Home", listOf(hear(mac = router)), T0)
+        val home = TrustedNets.hear(trusted, hear(mac = router, lat = LAT, lon = LON), watching(), T0).book
+        val hour = watching().copy(learnDays = 0)
+        val during = TrustedNets.hear(home, hear(mac = sib, lat = LAT, lon = LON), hour, T0 + HOUR - 1)
+        assertNull(during.alert)
+        assertTrue(during.book.net().aps.any { it.bssid == sib })
+        val after = TrustedNets.hear(home, hear(mac = sib, lat = LAT, lon = LON), hour, T0 + HOUR)
+        assertNull(after.alert)
+        assertFalse(after.book.net().aps.any { it.bssid == sib })
+    }
+
+    @Test
     fun aSiblingNearAUsualPlaceIsLearnedQuietly() {
         val router = "00:11:22:33:44:01"
         val sib = "00:11:22:33:44:02"
@@ -610,6 +625,7 @@ class TrustedNetworkTest {
         const val LAT = 40.0
         const val LON = -75.0
         const val T0 = 1_700_000_000_000L
+        const val HOUR = 3_600_000L
         const val DAY = 86_400_000L
     }
 }

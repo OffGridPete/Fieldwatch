@@ -197,6 +197,7 @@ data class TrustedOpt(
     val awayMeters: Int = 1_000,
     val loudnessFloor: Int = -85,
     val learn: Boolean = true,
+    /** Days after the name was trusted. 0 is 1 hour. */
     val learnDays: Int = 3,
     val beep: Boolean = true,
     val voice: Boolean = true,
@@ -781,8 +782,8 @@ object TrustedNets {
 
     private fun learning(net: TrustedNet, opt: TrustedOpt, now: Long): Boolean {
         if (!opt.learn || net.learningPaused) return false
-        val days = opt.learnDays.coerceAtLeast(1)
-        return now - net.trustedAt < days * 86_400_000L
+        val window = LearnLeft.trustedWindowMs(opt.learnDays)
+        return now - net.trustedAt < window
     }
 
     private fun goodFix(hear: TwinHear): Boolean {

@@ -72,6 +72,7 @@ import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.ui.RadioClassBadge
 import app.fieldwatch.ui.RadioKindMark
 import app.fieldwatch.domain.LanguageText
+import app.fieldwatch.domain.MapCameraMarks
 import app.fieldwatch.domain.PathCameras
 import app.fieldwatch.domain.LogExportKind
 import app.fieldwatch.domain.LogExportRadios
@@ -104,6 +105,7 @@ fun ReportsScreen(
     onSaveSitToStorage: () -> Unit,
     onSignatureCandidates: () -> Unit,
     onOpenPathRadio: (String) -> Unit = {},
+    onOpenPlaceRadio: (String) -> Unit = {},
 ) {
     val settings = state.settings
     var confirmClear by remember { mutableStateOf(false) }
@@ -309,6 +311,11 @@ fun ReportsScreen(
                 onOpen = { topicName = it.name },
             )
             ReportTopicRow(
+                title = LanguageText.text("ui.seen.more.than.one"),
+                value = LanguageText.text("reports.places.blurb"),
+                onClick = { topicName = ReportTopic.PLACES.name },
+            )
+            ReportTopicRow(
                 title = LanguageText.text("reports.log.export"),
                 value = LanguageText.text("ui.export.file.current.log"),
                 onClick = { topicName = ReportTopic.LOG.name },
@@ -318,6 +325,10 @@ fun ReportsScreen(
                 value = LanguageText.text("ui.search.log.new.signatures"),
                 onClick = { topicName = ReportTopic.CANDIDATES.name },
             )
+            }
+
+            if (topic == ReportTopic.PLACES) {
+                PlaceReportPage(state, vm, onOpenPlaceRadio)
             }
 
             if (topic == ReportTopic.PATH) {
@@ -334,6 +345,9 @@ fun ReportsScreen(
                 } else {
                     val pathTiles by vm.pathTiles.collectAsStateWithLifecycle()
                     val pathZoomIn by vm.pathZoomIn.collectAsStateWithLifecycle()
+                    val flockRevision by vm.flockRevision.collectAsStateWithLifecycle()
+                    val pendingCameras by vm.shownMapCameras.collectAsStateWithLifecycle()
+                    val cameraMode = MapCameraMarks.onScreen(pendingCameras, settings.mapCameras)
                     val aircraftTiles by vm.pathAircraftTiles.collectAsStateWithLifecycle()
                     val mapPosition = rememberMapFooter(
                         settings.mapFooter,
@@ -373,7 +387,13 @@ fun ReportsScreen(
                         onOpenRadio = onOpenPathRadio,
                         position = if (model.live) mapPosition else null,
                         zoomIn = pathZoomIn,
-                        pathCameras = pathShown?.cameras.orEmpty(),
+                        cameraMode = cameraMode,
+                        onCycleCameras = vm::cycleMapCameras,
+                        camerasReady = (settings.flockLayer || settings.sensorLayer) &&
+                            vm.flockIndex.hasCameras(),
+                        flock = settings.flockLayer || settings.sensorLayer,
+                        flockIndex = vm.flockIndex,
+                        flockRevision = flockRevision,
                         viewport = pathViewport,
                         onViewport = { next ->
                             pathViewport = next
@@ -1172,6 +1192,7 @@ private enum class ReportTopic(val titleKey: String) {
     COMPARE("reports.compare"),
     LOG("reports.log.export"),
     CANDIDATES("reports.candidates"),
+    PLACES("ui.seen.more.than.one"),
     ;
 
     fun title(): String = LanguageText.text(titleKey)

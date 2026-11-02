@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.37")
-    c.drawString(48, 94, "29 October 2026")
+    c.drawString(48, 108, "Version 1.1.38")
+    c.drawString(48, 94, "2 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.37  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.38  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -662,8 +662,9 @@ def story():
                 ["Overlay radios on ATAK / TAK (CoT feed)", "§5.8 (configure), §12.15 (sit), §12.16 (Remote ID)"],
                 ["Calibrate GNSS interference on this phone", "§5.9"],
                 ["Watch a Wi-Fi name for a copy: a team network, a daily shop, or a hotspot that travels", "§5.11"],
+                ["Learn the cell this phone is camped on at a place, then warn when that camp changes", "§5.12"],
                 ["Path / sit compare / log export", "§5.6, then §11"],
-                ["Custom name / Observer notes", "§5.5, Settings → Named radios"],
+                ["Custom name / Observer notes", "§5.5, Settings → Alerts → Named radios"],
                 ["Change the language, or write your own", "Language, after §5.7"],
                 ["Followed / new arrival / hunt / cameras", "Chapter 12"],
                 ["A word you do not recognize", "Appendix glossary"],
@@ -757,7 +758,7 @@ def story():
             "<b>Filter vs log.</b> Filters only change what the Live display shows. The rotating log, if logging is on, still writes what was heard. Hiding AirTags on the Live display does not delete them from the file.",
             "<b>Debrief vs log.</b> Debrief is the sit report of radios still in memory (last 15 minutes, about 400) unless a named sit is selected. Log export is the rotating session file. Sit export is the roster of that window. On a drive without a sit, tap Debrief more than once. §5.6, §11.4.1.",
             "<b>Stale / gone.</b> No packet for longer than Settings → Stale after (and Display → Brief hold). The row can stay on screen dimmed. It does not mean the gadget is powered off forever.",
-            "<b>Watch / bookmark.</b> A pip and/or spoken phrase when that signature family or that one MAC appears. Voice can say the class, the signature name, or both (Settings → What to say). Detail bookmark is one radio; it does not auto-delete when the radio leaves (§5.5, §10.1–10.2.1).",
+            "<b>Watch / bookmark.</b> A pip and/or spoken phrase when that signature family or that one MAC appears. Voice can say the class, the signature name, or both (Settings → Alerts → What to say). Detail bookmark is one radio; it does not auto-delete when the radio leaves (§5.5, §10.1–10.2.1).",
             "<b>Sit.</b> One session of watching radios — a room, a walk, or a drive. Reports → Start sit names the window. Path, Debrief, Sit export, Compare this-sit, and AI Export use it. If you never start one, those reports use last 15 minutes in memory. Log export is still the session file. §5.6.",
             "<b>Chip.</b> The colored signature name on a Live display row. A pattern hit, not identity. A second chip in that color can be one decoded word (Separated, Airborne, …). §5.4.1.",
             "<b>OUI.</b> The first three bytes of a MAC, assigned to a vendor. The same module vendor shows up in many products, so an OUI-only match is a weak guess.",
@@ -824,7 +825,7 @@ def story():
                 ["IEEE MA-L registry", "B4:1E:52 is registered to Flock Safety (9 May 2024). This is the only high-confidence Flock-assigned OUI in the default set."],
                 ["Independent ALPR / DeFlock research", "LiteOn camera-radio prefixes commonly seen on camera boards; names that start with Flock- or Penguin-; FS Ext Battery; Pigvision. Silicon Labs prefixes are not a battery rule."],
                 ["GainSec / firmware write-ups", "Raven BLE service UUID range 0x3100–0x3500. XUNTONG manufacturer ID 0x09C8 is the Penguin / Flock external battery, not the Raven acoustic radio."],
-                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag FD5A / 0x0075; Tile 0x00C7 and FEED/FEEC/FEDD. Chipolo matches BLE service FE33 as well as the Chipolo name. Pebblebee/moto tag is a name-only Find Hub locator (stock rows, on). IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit)."],
+                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag service FD5A; Tile 0x00C7 and FEED/FEEC/FEDD. Chipolo matches BLE service FE33 as well as the Chipolo name. Pebblebee/moto tag is a name-only Find Hub locator (stock rows, on). IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit). Company ID 0x0075 is Samsung generally and is not the SmartTag row."],
                 ["Android platform docs", "WifiManager scan throttling, BLE ScanSettings, permission model (location, NEARBY_WIFI_DEVICES, BLUETOOTH_SCAN), foreground-service types."],
                 ["Android GNSS interference note", "Google’s public guide “Detect GNSS jamming and spoofing.” A drop in receiver gain together with a drop in signal strength can mean interference. The guide’s figure is from Spens, Lee, Nedelkov, and Akos, NAVIGATION, 2022. The full credit is in §5.9. Fieldwatch uses that idea on this phone. It does not name a jammer or a spoofer."],
             ],
@@ -904,7 +905,7 @@ def story():
             "<b>Samsung BLE suspend.</b> Long low-latency unfiltered scans are parked after a few minutes. Fieldwatch recycles the scanner on a duty cycle (~70 s on, a few seconds rest) and restarts if ads go silent for ~18 s. The subtitle may read BLE cycling or BLE parked · restarting.",
             "<b>No Wi-Fi stations.</b> Every Wi-Fi row is an access point (or a device beaconing like one: phone hotspot, mesh node, camera/IoT soft-AP). A phone, laptop, or camera that is only a client on someone else’s network does not appear.",
             "<b>No promiscuous or monitor mode.</b> Stock Android does not expose an 802.11 monitor interface to ordinary apps. Fieldwatch cannot put the Wi-Fi chip in promiscuous mode, cannot capture raw frames, cannot follow a BSSID on one channel, and cannot see management frames the OS scan does not already return. A USB sniffer or rooted/custom stack is a different tool.",
-            "<b>No cellular RF.</b> Fieldwatch does not scan LTE/5G. A camera that only talks on the carrier network is invisible even if you are standing under it.",
+            "<b>No cellular RF.</b> Fieldwatch does not scan LTE/5G. A camera that only talks on the carrier network is invisible even if you are standing under it. Cell connection monitoring reads the tower this phone is already camped on. It does not hear another phone. §5.12.",
             "<b>Dense crowds.</b> Phones rotate BLE addresses. Fieldwatch caps the live set at 400 radios (hard ceiling 900) and drops unnamed BLE after about three minutes so the heap does not collapse. Debrief reads that same map, so a few kilometers of city driving can already have replaced the start of the trip in RAM (§11.4.1).",
         ]),
         callout(
@@ -1076,8 +1077,8 @@ def story():
                 ["Live / Pause", "The picture of radios you are hearing now (radar, list, timeline, hybrid, or By class). Tap this tab again while you are already on it to <b>Pause</b> — the picture freezes; Wi-Fi and BLE keep scanning and the log still appends. Tap Live to run the list again. From another tab, this item only navigates here."],
                 ["Filters", "Which radios appear on Live. Presets and Radios stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Signatures still label and can beep. Logging is unchanged."],
                 ["Signatures", "The pattern catalog — which radios get a name. Tap a class to open its signatures, then a row to edit. Bookmark a signature to alert when that family appears. Hide a family on Filters."],
-                ["Reports", "Named sits, Path, Debrief, Sit export, Compare, AI Export, Signature candidates, Log export. Start and End sit live here."],
-                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Language, Scanning, Watchlist, Named radios, Location and Maps, GNSS interference, Trusted networks, TAK / CoT, Logging, Signatures, Settings backup. Show Live tour and Diagnostics stay on the list. Row layout is Live → Display, not here. Language is the section after §5.7."],
+                ["Reports", "Named sits, Path, Debrief, Sit export, Compare, AI Export, Seen at more than one place, Signature candidates, Log export. Start and End sit live here."],
+                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Language, Scanning, Alerts, Location and Maps, GNSS interference, Cell connection monitoring, Trusted networks, TAK / CoT, Logging, Signatures, Settings backup. Named radios and Signature and network are on Alerts. Show Live tour and Diagnostics stay on the list. Row layout is Live → Display, not here. Language is the section after §5.7."],
                 ["Tune (top right on Live)", "The sliders icon. Opens <b>Display</b> over Live: View (Radar, Strength list, Timeline, Hybrid, By class), Sort, Brief hold, Title line, Subtitle line, then switches. <b>Show map with live path</b> is the first switch, above RSSI bars. It is off until you turn it on (§5.3.4). Then signature names, Frequency, and first/last. This is how you change the picture — appearance, sorting, and which fields each row shows. Tap Tune again, or tap the dimmed list, to close it. Not on Settings. §5.3."],
             ],
             [1.7 * inch, 4.8 * inch],
@@ -1101,7 +1102,7 @@ def story():
             "Confirm the header is counting. Wi-Fi, Bluetooth, and the signatures icon each have a number, and they should be green. Green includes the wait between Wi-Fi scans. Dim gray means that radio is switched off. Red means Location is off, or Android is refusing that radio. A GPS mark with no number appears only while the GNSS interference check is on (§5.9). If both radio counts stay at 0 and the icons are dim or red, turn on Location, Wi-Fi, and Bluetooth, then wait ~30 s for the first Wi-Fi batch. §5.1.",
             "You should be on Live, in By class. Tap a class, then a signature, then a radio. Each row is one radio. The circle is the class. A question mark means Fieldwatch has no name for it yet. That circle is what you scan for. Wi-Fi access points and Bluetooth LE advertisers are still two kinds of radio (§1.1). On the list they are a small Wi-Fi or Bluetooth icon at the start of the second line, not letters in the title. The first line is the address. The second line is the icon, then the name and type, then rand or gone. Bars, signature names, frequency, and first and last seen start on. The vendor is on the detail page, not on the list. The number on the right is loudness at this phone, in dBm. −50 is louder than −90. It is not a distance.",
             "Tap the tune icon (top right). That is <b>Display</b>: how the list looks for this job. Pick a View first (By class, Strength list, Hybrid, Timeline, or Classic radar). Then Sort, Brief hold, Title line, Subtitle line, and the switches. <b>Show map with live path</b> is the first switch. Leave it off until you want the map over the list (§5.3.4). Close it when the list looks the way you want — tap Tune again or tap the dimmed radios behind the panel. In a crowded plaza, set Subtitle to None and turn the extras off — you still have every radio; you just see less of each. §5.3.",
-            "Tap a row. That is device detail: a saved custom name is the large title; advertised name smaller; Observer notes (cyan) under the name; “What this looks like,” Extra attention if any, Signature family, signal, decode, optional Decoded fields on BLE when that signature has a map (§9.6), bookmark (watch this MAC), Hunt on BLE, Create signature from device. Custom name / notes edit is hidden on a random / privacy BLE MAC. Back returns to the Live display.",
+            "Tap a row. That is device detail: a saved custom name is the large title; advertised name smaller. Under that: What this looks like, Extra attention if any, catalog Notes, Observer notes (cyan), Custom signature and network alert, Mine, then Trusted network on Wi-Fi. Signature family, signal, decode, and optional Decoded fields on BLE when that signature has a map (§9.6) follow. Bookmark watches this MAC. Hunt is on BLE. Create signature from device is further down. Custom name / notes edit is hidden on a random / privacy BLE MAC. Back returns to the Live display.",
             "Work the other four tabs once: Filters (try BLE only, then All traffic), Signatures (Class A–Z, tap a class), Reports (Sits, Path, Debrief, Compare, Log), Settings (tap Appearance — Night mode, Privacy mode, Keep screen on — and Show Live tour on the list if you want the overlay again).",
             "Do not expect every gadget in the room to appear. Phones on café Wi-Fi without hotspot, cellular-only cameras, and sleeping tags will not. That is a phone limit, not a broken install. Chapter 12 is what to do once the list makes sense.",
         ]),
@@ -1229,7 +1230,7 @@ def story():
             "Fig. 1 — Live display (hybrid).",
             "One screen, five tabs, and a device-detail page on top. "
             "The bottom bar is Live, Filters, Signatures, Reports, Settings. "
-            "Signatures is the pattern catalog. Reports is Path, Debrief, Compare, Sit export, AI Export, and Log export. "
+            "Signatures is the pattern catalog. Reports is Path, Debrief, Compare, Sit export, AI Export, Seen at more than one place, and Log export. "
             "The top bar is FIELDWATCH plus the live counts. The colors on those icons, and the words that can follow them, are next. "
             "The scan notification spells the same three counts. Exports live on Reports. "
             "Screenshots in this book use Privacy mode (MAC tails **:**:**) unless noted.",
@@ -1355,8 +1356,8 @@ def story():
                 ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports. A pairing flood, a name flood, or a Wi-Fi beacon flood shows one dialog, then a red line with Hide this burst. A GNSS hit is a separate dialog, then its own red line, with no Hide button. §5.9."],
                 ["Filters", "Which radios appear. Presets and Radios (Both, Wi-Fi only, BLE only) stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Reset filter is under the list. Signatures still label and can alert. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). The line under the title says Bookmark to alert. Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). A bookmark alerts (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
-                ["Reports", "Sits stay on this page. Using… names the sit that Path, Debrief, Sit export, and Compare will use. Those four open their own pages. Log Export and Signature candidates are under them. Clear log is on the Log Export page. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings."],
-                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Scanning, Watchlist, Named radios, Location and Maps (GPS tagging, Places, place names, the map, Known cameras, and Display location on map), GNSS interference (calibrate before the check will turn on, §5.9), Trusted networks (off until you turn the watch on, §5.11), TAK / CoT feed (off), Logging, Signatures (export / import, Update stock catalog from GitHub, restore defaults), Settings backup. Show Live tour and Diagnostics stay on the list. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
+                ["Reports", "Sits stay on this page. Using… names the sit that Path, Debrief, Sit export, and Compare will use. Those four open their own pages. Seen at more than one place, Log Export, and Signature candidates are under them. Clear log is on the Log Export page. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings."],
+                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Scanning, Alerts (beep, voice, What to say, Named radios, Signature and network), Location and Maps (GPS tagging, Places, place names, the map, Known cameras, and Display location on map), GNSS interference (calibrate before the check will turn on, §5.9), Cell connection monitoring (off until you turn Monitor the cell connection on, §5.12), Trusted networks (off until you turn the watch on, §5.11), TAK / CoT feed (off), Logging, Signatures (export / import, Update stock catalog from GitHub, restore defaults), Settings backup. Show Live tour and Diagnostics stay on the list. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
             ],
             [1.2 * inch, 5.3 * inch],
         ),
@@ -1601,7 +1602,8 @@ def story():
             "<b>Radios here: N</b>. Thick green is a real stop: this phone stayed within about "
             "25 m for about 40 seconds. Reports → Path uses that same mark. The rest of the "
             "drive is a blue line. Time of day sits along the path. Alert dots and known cameras from Known cameras "
-            "are drawn on top of that line (§5.7.2). Tap a known camera and the same small card names the kind, "
+            "are drawn on top of that line (§5.7.2). A camera button under the facing button hides those marks, or shows them again. "
+            "A filled lens means they are on. Tap a known camera and the same small card names the kind, "
             "the company when the list has one, and the facing when one is stored. Cameras on the same spot are listed together. "
             "A number is several of that kind. A line runs from the mark to the card. "
             "Tap it again to close the card. Aircraft tracks and "
@@ -1743,7 +1745,7 @@ def story():
         P("5.5 Device detail", "h2"),
         figure_wrap(
             "fig-detail.png",
-            "Fig. 4 — Device detail. The custom name is the big title. Mine sits under the notes.",
+            "Fig. 4 — Device detail. The custom name is the big title.",
             "Tap a row or a radar blip. Detail is the full decode of that observation, resolved "
             "offline from packed IEEE and Bluetooth SIG tables (no network). Jargon is spelled "
             "out in plain language (for example BR/EDR not supported = BLE-only, no classic "
@@ -1752,8 +1754,8 @@ def story():
             "127 means the stack did not report a measurement (Bluetooth “not available”), not transmit power — "
             "How loud here, session range, sparkline, Hunt, and Share omit it. "
             "Gone radios show How loud here as Not available and Last heard with the last real dBm.",
-            "<b>Mine</b> is the switch under Observer notes, on the same radios as the name pencil, "
-            "and on Settings → Named radios next to Alert. "
+            "<b>Mine</b> is the switch after Custom signature and network alert, on the same radios as the name pencil, "
+            "and on Settings → Alerts → Named radios next to Alert. "
             "Turning it on fills a blank custom name the same way notes do. "
             "The live list shows a Mine chip. That radio stays listed and does not beep, speak, flash, or raise a card while Mine is on. "
             "Filters → Hide Mine takes those rows off Live. The sit, the log, and Debrief still include them. "
@@ -1766,6 +1768,7 @@ def story():
             "Mine and Trust do not change each other. Full write-up: §5.11.",
             "<b>Places</b> sits in the Session block when Settings → Places is on. "
             "Seen at 2 places today, then each stop from the last 7 days: the time, the date when the stop is not today, where this phone was, and the street when Online place names is on. "
+            "Reports lays those same stops out as a numbered list. §5.10. "
             "Each radio keeps the latest 8 stops. A ninth stop drops the oldest. "
             "Heard again after 25 minutes is a quiet stretch, then a new hear, the same day or the same sit. "
             "A radio that changes its address has neither line. Privacy mode masks the coordinates and leaves the street off. "
@@ -1859,7 +1862,7 @@ def story():
         P(
             "<b>Custom name</b> is behind the edit icon on the name row. A saved name is the large title on this page; "
             "the advertised SSID or LE name sits smaller underneath. It labels <b>this MAC</b> without turning Alert on. "
-            "Save name writes it to Settings → Named radios (Alert off until you bookmark). "
+            "Save name writes it to Settings → Alerts → Named radios (Alert off until you bookmark). "
             "The name shows on the Live display and on reports. Filters → Keep named only keeps only those rows. "
             "Keep watched only is narrower: it needs Alert on this radio, or a bookmarked signature match. "
             "On BLE, if the address looks random / privacy (IEEE local bit or Android Random type), "
@@ -1869,8 +1872,8 @@ def story():
             "body_left",
         ),
         P(
-            "<b>Observer notes</b> is a cyan block under the name (not Extra attention gold, not catalog Notes). "
-            "Up to 280 characters, same MAC as the custom name. Edit on this page or Settings → Named radios. "
+            "<b>Observer notes</b> is a cyan block after catalog Notes (not Extra attention gold). "
+            "Up to 280 characters, same MAC as the custom name. Edit on this page or Settings → Alerts → Named radios. "
             "Debrief, Compare, and AI Export include an Observer notes section (heard radio + the note). "
             "Path lists the note only if that radio is bookmarked. "
             "Live list shows a cyan notes chip on that row (next to Extra attention “!”). "
@@ -1879,11 +1882,22 @@ def story():
             "body_left",
         ),
         P(
+            "<b>Custom signature and network alert</b> is the next card, on a radio that matches a signature and advertises a network name. "
+            "The switch only opens the form. It starts on when words are already saved for that signature and that network name. "
+            "Turning it off hides the form and leaves the words saved. "
+            "The words are said instead of the signature, for every radio of that signature with that network name, not for this address alone. "
+            "The network name is not spoken. A different network name on the same signature still says the signature. "
+            "A longer name does not take those words. What to say set to Class keeps the words saved and does not say them. "
+            "A name on this one radio is still the whole announcement, and the Spoken as line stays off. Otherwise the line under the radio name reads Spoken as and the words for this signature and network name. "
+            "The live list keeps the signature chip. Manage the list on Settings → Alerts → Signature and network. §10.2.1.",
+            "body_left",
+        ),
+        P(
             "<b>Bookmark (top-right)</b> watches <b>this radio only</b> — the device key "
             "(KIND + MAC), not the signature family. Outline = not watched; filled = on the "
             "watchlist. One tap; Fieldwatch prefills a name from the advertised name or type guess. "
             "A saved custom name is the large title; the advertised name is smaller underneath. Rename, "
-            "Observer notes, turn Alert on or off, or drop it on Settings → Named radios. It does <b>not</b> go "
+            "Observer notes, turn Alert on or off, or drop it on Settings → Alerts → Named radios. It does <b>not</b> go "
             "away when the radio leaves the Live display or goes stale. While it is gone, nothing alerts. "
             "If the <i>same</i> MAC returns, Fieldwatch alerts once "
             "(Settings → Watchlist alerts, plus Beep and/or Voice). Sitting detections do not fire "
@@ -1972,7 +1986,7 @@ def story():
             "Start sit is at the top. With no sit running, the helper under that button says Select Sit for actions below. "
             "Using last 15 minutes, or the name of the sit you picked, sits above Path, Debrief, Sit export, and Compare. "
             "A green bar marks those four. Each one opens its own page. "
-            "Log Export and Signature candidates sit full width under them. "
+            "Seen at more than one place, Log Export, and Signature candidates sit full width under them. "
             "GPS tagging, place names, and logging on or off stay on Settings. "
             "If you never start a sit, those four use the last 15 minutes still in memory.",
         ),
@@ -2088,6 +2102,7 @@ def story():
         ),
         P(
             "<b>Cameras on this page.</b> When a camera list is on the phone and its switch is on, those marks sit on the drive line. "
+            "A camera button in the corner of the map hides them, or shows them again. There is no facing button here, so that camera button sits alone. §5.7.2. "
             "They are drawn larger, with a light ring, so they stay readable on top of the blue line. "
             "A camera with a stored direction is a wedge pointed that way. With no direction stored, it is a dot. "
             "Tap a mark for the same card a detection uses. It names the kind, the company when the list has one, and the facing when one is stored. "
@@ -2250,11 +2265,12 @@ def story():
         ),
         figure_wrap(
             "fig-settings.png",
-            "Fig. 8 — Settings. Location and Maps says GPS on · Places on.",
-            "Settings opens on this list. Appearance, Language, Scanning, Watchlist, Named radios, Location and Maps, GNSS interference, Trusted networks, TAK / CoT, Logging, and Signatures are here. "
+            "Fig. 8 — Settings. Alerts sits under Scanning. Named radios is on that page.",
+            "Settings opens on this list. Appearance, Language, Scanning, Alerts, Location and Maps, GNSS interference, Cell connection monitoring, Trusted networks, and TAK / CoT are here. "
             "Map, Known cameras, and Display location on map are on Location and Maps. "
-            "TAK / CoT says Paused in this shot because Privacy mode is on. "
-            "Settings backup, Show Live tour, and Diagnostics are further down. "
+            "Named radios is on Alerts, not on this list. "
+            "Cell connection monitoring, GNSS interference, and Trusted networks say On in this shot. Each of those starts off. Privacy mode is on. "
+            "Logging, Signatures, Settings backup, Show Live tour, and Diagnostics are further down. "
             "This is not where you hide radios on the Live display, "
             "and not where you tap Debrief. Mute a noisy OUI or name with the per-rule switches "
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
@@ -2262,7 +2278,7 @@ def story():
         bullets([
             "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, Extra attention, and the top-bar icons follow that, so green and red become shades of red. Read the words beside the icons. Phone brightness does not change. Restore defaults turns it off. Fig. 9, §5.1.",
             "<b>Keep screen on</b> starts on. The display stays awake while Fieldwatch is in front, so Samsung does not park Bluetooth. Turn it off when you pocket the phone.",
-            "<b>Privacy mode</b> starts off. It hides the last three octets of each MAC on Live, radar, timeline, detail, Hunt, Named radios, and watchlist cards, shown as **:**:**. GPS on detail, and coordinates in Debrief, AI Export, and detail Share, show as “masked.” Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as “masked,” and the byte count stays. Street names are left out of those reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. The vendor prefix stays. Logs, matching, Moving with you, and saved signatures still use the real address and position. The TAK / CoT feed pauses while Privacy mode is on, so full addresses and coordinates are not sent (§5.8).",
+            "<b>Privacy mode</b> starts off. It hides the last three octets of each MAC on Live, radar, timeline, detail, Hunt, Named radios, and watchlist cards, shown as **:**:**. GPS on detail, and coordinates in Debrief, AI Export, and detail Share, show as “masked.” Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as “masked,” and the byte count stays. Street names are left out of those reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. In a cell-connection warning on that sit report, the area and the cell id show as “masked.” The generation, the network, the country, and the operator stay. The dialog and the place page still show the numbers the phone filled. The vendor prefix stays. Logs, matching, Moving with you, and saved signatures still use the real address and position. The TAK / CoT feed pauses while Privacy mode is on, so full addresses and coordinates are not sent (§5.8).",
         ]),
         figure_wrap(
             "fig-settings-night.png",
@@ -2272,11 +2288,13 @@ def story():
         P("Radios, watchlist, logging, and backup", "h3"),
         bullets([
             "<b>Radios</b> — Scan intensity: High performance / Balanced / Battery saver (Wi-Fi ~30 / 40 / 55 s). Faster Wi-Fi AP scans matches Developer options → Wi-Fi scan throttling. The switch is on only when that limit is off. Tap it to open Developer options. About every 8 s instead of ~30 s. Purpose: more chances to hear an AP while it is in range so a catalog signature (OUI or factory SSID) can fire — important on a drive, when a roadside or vehicle AP may only be loud for a few seconds. More battery and heat. Fieldwatch cannot flip Developer options itself. §7.1.1, §10.3.1.",
-            "<b>Watchlist</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — Settings → What to say; default is Class + signature. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
-            "<b>Named radios</b> — Its own Settings row, after Watchlist. The row shows how many are saved. Opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all. Signature watches stay on Signatures.",
+            "<b>Alerts</b> — Watchlist alerts is the master switch (off: no beep, voice, flash, jump, or shade card; bookmarking still works). Beep and Voice are independent: pip only, spoken phrase only, or pip then phrase. Voice (on by default) can say the class (finder tags, audio, …), the signature name (Apple AirTags, Axon, …), or both — What to say, on this page; default is Class + signature. Under What to say: Named radios, then Signature and network. Not Hunt; a second hit is skipped while a phrase is being spoken. Jump to new watched detection is on. Optional system notification (off by default). Test alert plays whatever is on. Stock bookmarks watch Extra attention families (body-cam, camera glasses, recording wearables, pentest, public-safety vehicle APs, roadside / public camera + ALPR) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie). Unbookmark a row on Signatures if you do not want that alert. Flock LiteOn / Espressif OUIs can be noisy. Field write-up: §10.1–10.2.1.",
+            "<b>Named radios</b> — On Alerts, under What to say. The row shows how many are saved. Opens the list of one-MAC names, Observer notes, and optional alerts: rename, notes, Alert on/off, remove one, or Clear all. A name on one radio is the whole announcement. Signature watches stay on Signatures.",
+            "<b>Signature and network</b> — On Alerts, under Named radios. One name for every radio of one signature that advertises one network name. Those words replace the signature in the announcement. The network name is not spoken. A different network name on that signature still says the signature. Class only keeps the words saved and does not say them. A name on one radio still comes first. The list stays on this phone and goes with Export settings. It does not change the catalog. §10.2.1.",
             "<b>Tag detections with GPS</b> — On by default. Requests live GPS and network location updates while scanning, then stamps each hear (detail, Moving with you, Places, Debrief, log lat/lon). Last-known older than 30 s is ignored. Path stays 0 until a live fix. High-accuracy Location. Needed for Debrief distance/following, Filters → Moving with you, Places, and heard-here TAK pins. Advertised payload pins (Remote ID) do not need this. A Log export with tagging on contains operator coordinates.",
-            "<b>Places</b> — On by default, under Tag detections with GPS. A tracker that keeps its address is listed on its page and in the sit report when this phone hears it at two or more places in the last 7 days. Each radio keeps the latest 8 stops. A ninth confirmed stop drops the oldest. Hearing it many times at one stop is still one stop. A single jumped fix does not erase an older stop. A return after about 20 quiet minutes is listed on its page for a day. Times are when this phone heard it, with the date when the stop is not today. Each stop includes where this phone was. Online place names adds the street. A radio that changes its address is skipped. Ordinary Wi-Fi and Bluetooth stay off. A radio heard the whole way between stops stays with Moving with you and is left out of this list. No beep and no TAK marker. Not part of Export settings. Full write-up: §5.10.",
+            "<b>Places</b> — On by default, under Tag detections with GPS. A tracker that keeps its address is listed on its page, in the sit report, and on Reports → Seen at more than one place when this phone hears it at two or more places in the last 7 days. That report does not need a sit. It draws a map of where this phone was, numbers each stop, and opens the radio when you tap it. Each radio keeps the latest 8 stops. A ninth confirmed stop drops the oldest. Hearing it many times at one stop is still one stop. A single jumped fix does not erase an older stop. A return after about 20 quiet minutes is listed on its page for a day. Times are when this phone heard it, with the date when the stop is not today. Each stop includes where this phone was. Online place names adds the street. A radio that changes its address is skipped. Ordinary Wi-Fi and Bluetooth stay off. A radio heard the whole way between stops stays with Moving with you and is left out of this list. No beep and no TAK marker. Not part of Export settings. Full write-up: §5.10.",
             "<b>GNSS interference</b> — Calibrate this phone once before the check will turn on. The result stays on this phone and is not part of Export settings. Full write-up: §5.9.",
+            "<b>Cell connection monitoring</b> — Off until you turn Monitor the cell connection on. It learns the tower this phone is camped on while you are still at a place, then can warn on a later visit when that camp is new, or when a place that stayed on 4G or 5G drops to 2G or 3G. The first visit only learns. How long to learn starts at 3 days and can keep later visits quiet. None stops after that first visit. It does not see another phone, and it does not name a cause. Full write-up: §5.12.",
             "<b>Trusted networks</b> — Off until you turn Watch trusted networks on. Trust this network is on a Wi-Fi radio’s page, next to Mine, and only for that exact name. A later sighting can alert when the security is weaker, the maker was not learned, or this phone is far from the places it usually hears that name. A hotspot that travels with you needs This network travels on that name. The phone does not join the network or ask for its password. Full write-up: §5.11.",
             "<b>TAK / CoT feed</b> — Off by default. UDP Cursor-on-Target to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — a TAK server’s TCP 8087 is not this feed. Heard-here pins sit at operator GPS at the loudest hear (closest approach) and are labeled (here). Advertised lat/lon (stock Remote ID) sit on the aircraft; sticky UAS ID keeps one moving marker; a decoded operator location is a second pin. The callsign says takeoff, the pilot, or a fixed point. Location heading and speed go in the ATAK track when present. Wi-Fi Remote ID (vendor IE FA:0B:BC) can pin the aircraft the same way as BLE FFFA on Android 11+. A radio that leaves keeps its name for How long a spot stays (1 hour unless you change it). This phone’s marker still refreshes about every 2 minutes. Turning the feed off, or Privacy mode on, takes those radio spots off the map. Settings shows last send. What to send chips: Extra attention (on), Payload location (on), Watchlist (off), All signatures (off). GNSS warnings is Off, While alerting, Red line, or Any hit. A GNSS hit also puts a pin or an ellipse on the map where this phone was. A short hit is a pin. A longer hit is an ellipse from the start to the last place it was heard, half as wide as it is long. How long that mark stays is 1 hour, 6 hours, 24 hours, or until deleted. BLE Flood warnings is Off or On and only adds a line to this phone’s marker. A Wi-Fi beacon flood uses that same line. The Network warnings switch, for a trusted-network alert, is on this page. It stays dim until Watch trusted networks is on. The mark, the ellipse, and the hold are §5.8.13. BLE flood warnings are §5.8.12. Privacy mode pauses the feed. Full configuration: §5.8. Sit: §12.15.",
             "<b>Online place names and maps</b> — On by default. One switch, on Location and Maps. Debrief, Places, and AI Export reverse-geocode GPS stamps (system geocoder). Reports → Path and Show map with live path load the map chosen on that same page (no Fieldwatch cloud). OpenStreetMap is the start. The USGS maps cover the United States and do not ask for a key. FAA VFR Sectional is a United States chart, does not ask for a key, and is not for navigation. A map marked Key covers the world. Paste the key from that account (§5.7.1). It stays on this phone and is left out of Export settings. Offline, no geocoder, or no tiles: Debrief and Places keep the coordinates, and the path stays the north-up plot. OpenStreetMap, the USGS maps, and FAA VFR Sectional show no error dialog. A map marked Key shows a popup when the key is missing, the service rejects it, or the map does not load. Privacy mode does not hide that map, and it masks coordinates and leaves streets off. Turn off to keep streets and map tiles out of reports, Places, Path, and the live band together. Generate buttons are on Reports (§5.6, §5.6.1). The live band is §5.3.4.",
@@ -2286,10 +2304,10 @@ def story():
             "<b>Unrestricted battery</b> — Switch. Opens the Battery page. Select Unrestricted (not Optimized). Some phones (Samsung among them) do not open onto that choice — tap Allow background usage (the words, not the switch) to click through and select Unrestricted. Fieldwatch follows that grant when you return.",
             "<b>Signatures — export / import</b> — Export signatures shares a JSON pack of the whole catalog (stock plus any you added or edited, including Decode fields). Save signatures to SD card / storage… writes the same file through the system picker. Import signatures… reads a pack from another Fieldwatch. Same id or the same match rules are skipped, so importing twice does not clone the catalog. Extra rules on a stock row (for example a glob you added to Govee) merge onto the local row; a missing Decode fields map on that stock id is filled from the pack. A new name that already exists is imported as “Name (imported)”. Watchlist, filters, settings, logs, and GPS are not in the pack. A settings pack is a different file — use Import settings. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-signatures-YYYYMMDD.json</font>.",
             "<b>Update stock catalog from GitHub</b> — Needs internet. Pulls <font face='Courier'>dist/fieldwatch-signatures-v2.json</font> from the Fieldwatch GitHub (1.1.12+). 1.1.11 still reads <font face='Courier'>dist/fieldwatch-signatures.json</font>. Replaces stock rows, including Extra attention text. Bookmarks, Settings, muted stock rows, extra rules you added on a stock id, and signatures you added stay. Dialogs name why it failed: no internet, the phone could not reach GitHub, the connection was not trusted, GitHub did not send the catalog and the code when there is one, an empty catalog, a catalog that could not be read, or a catalog that could not be saved. The catalog already on the phone stays. The other dialogs are already on the latest catalog, and catalog updated. If a field map uses a decode source this APK does not know, the signature still imports and a second dialog (Signature decoding skipped) asks you to install a newer Fieldwatch APK. Offline: Import signatures from a file. A new APK still applies default watches; this button does not. Settings footer shows Catalog N under the app version.",
-            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Maps back to OpenStreetMap with Overlays and Known cameras off, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off). Saved map keys stay on the phone. This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
-            "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, already-seen for New detections only, and a map key stay out of the pack. The language choice and an imported language file stay out of the pack too. The first-run disclaimer is not overwritten, so scanning does not stop. If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks before it imports. A file that leaves the feed and the destination as they are imports with no extra step. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
+            "<b>Restore default signatures &amp; presets</b> — Rewrites the catalog (stock rows, class colors, and stock Decode fields maps), stock bookmarks (Extra attention plus Drone-class), the full stock filter-chip set (including chips you long-press deleted), named radios, names for a signature and a network name, and the default Settings switches (Keep screen on, Tag detections with GPS, Online place names, Maps back to OpenStreetMap with Overlays and Known cameras off, Voice on with Class + signature, Jump on, TAK / CoT off, Night mode off, Cell connection monitoring off). Saved map keys stay on the phone. Places learned on Cell connection monitoring stay. This wipes custom signatures and any chips you saved. Export signatures and Export settings first if you want a backup. It is not an undo for a single rule. To drop one preset chip, long-press it on Filters. There is no second factory-settings button; this is the stock rewrite.",
+            "<b>Settings backup — export / import</b> — Fieldwatch-only backup for a factory reset or a new phone. Export settings shares a JSON pack; Save settings to SD card / storage… writes the same file through the system picker. Import settings… replaces Settings switches, the current filter, filter presets, named radios, names for a signature and a network name, and signature watches on this phone. The catalog stays (that is Export / Import signatures). Logs, GPS, already-seen for New detections only, a map key, and the places learned on Cell connection monitoring stay out of the pack. The six switches on that page are settings, so they are in the pack. The language choice and an imported language file stay out of the pack too. The first-run disclaimer is not overwritten, so scanning does not stop. If the file would turn the TAK / CoT feed on or change its destination, Fieldwatch asks before it imports. A file that leaves the feed and the destination as they are imports with no extra step. Importing twice is the same as once. Picking a signature pack by mistake tells you to use Import signatures. Done and error both show an OK dialog. The file is <font face='Courier'>fieldwatch-settings-YYYYMMDD.json</font>. Not a Spectre config import.",
             "<b>Show Live tour</b> — Shows the Live tour again. It points at the sliders for how Live looks. Open it opens Display and ends the tour. Skip closes it. The same card runs once, on the first Live screen, after the license on a new install. An upgrade to this version shows it once as well.",
-            "<b>Diagnostics</b> — Under Show Live tour. Shows whether scanning is running, and the state of Wi-Fi, Bluetooth, Location, and GPS. What to check names anything that is off and needs to be on: Location, the location permission, Wi-Fi or Bluetooth, a refused scan, or a filter hiding the list. It does not tell you to flip Wi-Fi scanning or Bluetooth scanning while that radio is already on. Faster Wi-Fi scans, background use, unrestricted battery, and a GPS fix are not required while Fieldwatch is open. The page also lists the phone maker and model, Android version and build fingerprint, catalog, Wi-Fi and Bluetooth on or off, how old the last Wi-Fi scan is, whether BLE is running, BLE results in the last minute, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, system Location, location permission, and how old the GPS fix is. It refreshes about once a second. Copy puts the same lines, including What to check, on the clipboard. No network names, no addresses, and no GPS coordinates. An empty Live list adds “Settings → Diagnostics” when a scan is blocked (Location off, permission missing, or neither radio is delivering). When Location is off, Live also shows a banner. Turn on opens the phone’s Location screen when that screen exists. A filter that hides the list is not a blocked scan. A quiet minute with BLE still running is not a failure.",
+            "<b>Diagnostics</b> — Under Show Live tour. Shows whether scanning is running, and the state of Wi-Fi, Bluetooth, Location, and GPS. What to check names anything that is off and needs to be on: Location, the location permission, Wi-Fi or Bluetooth, a refused scan, or a filter hiding the list. It does not tell you to flip Wi-Fi scanning or Bluetooth scanning while that radio is already on. Faster Wi-Fi scans, background use, unrestricted battery, and a GPS fix are not required while Fieldwatch is open. The page also lists the phone maker and model, Android version and build fingerprint, catalog, Wi-Fi and Bluetooth on or off, how old the last Wi-Fi scan is, whether BLE is running, BLE results in the last minute, Faster Wi-Fi AP scans, Allow background usage, Unrestricted battery, system Location, location permission, and how old the GPS fix is. It refreshes about once a second. Copy puts the same lines, including What to check, on the clipboard. No network names, no addresses, and no GPS coordinates. An empty Live list adds “Settings → Diagnostics” when a scan is blocked (Location off, permission missing, or neither radio is delivering). When Location is off, Live also shows a banner. Turn on opens the phone’s Location screen when that screen exists. A filter that hides the list is not a blocked scan. A quiet minute with BLE still running is not a failure. The page also lists the registered cell, the generation when this phone is camped, which of Network, Area, or Cell were empty, how many neighbor cells were counted, and whether a second SIM is registered. A second SIM the phone did not answer says not returned. That line is not proof of one SIM. No network code is printed. Those cell lines are listed even when Cell connection monitoring is off. §5.12.",
         ]),
         P("5.7.1 A map key", "h3"),
         P(
@@ -2418,6 +2436,7 @@ def story():
             "You see the marks on Show map with live path, on Hunt under the heat once that walk is on a map, and on Reports → Path. While Hunt says No GPS yet, the marks stay off. "
             "On the path page, the printed path, and Show map with live path the marks are larger, with a light ring, so they stay readable on top of the blue line. Alert dots on Show map with live path sit on that line the same way. Hunt keeps the smaller marks. "
             "On Show map with live path and on Reports → Path, tap a mark and a small card names the kind, the company when the list has one, and the facing when one is stored. Cameras on the same spot are listed together. A number is several of that kind. A line runs from the mark to the card. Tap the mark again to close the card. Hunt draws the marks and does not open that card. "
+            "<b>Hide the marks in the picture.</b> Those two maps have a camera button. On Show map with live path it sits under the facing button. On Reports → Path it sits in that corner by itself. The button appears when a list is on the phone and its switch is on. Tap it to leave the marks off the picture, and tap again to put them back. A filled lens is on. A dim camera is off. The choice is saved. Hunt has no button. The list under Path, the sit report, and the printed path still follow the layer switches. Turning a layer off in Settings removes that list’s marks, and the button goes away when neither list is on. "
             "The path in a Debrief draws the cameras that report counts. A layer that is off stays off that picture. Compare does not add this camera list to the second sit.",
             "body_left",
         ),
@@ -3318,7 +3337,7 @@ def story():
         P(
             "<b>The street.</b> When Online place names is on and the phone has internet, the system geocoder adds the street and city. Nothing is sent to a Fieldwatch server. "
             "Offline, or with that switch off, the line keeps the coordinates. Privacy mode shows masked and leaves the street off. "
-            "The street is not saved. It is looked up when you open the radio page or write the sit report. "
+            "The street is not saved. It is looked up when you open the radio page, Reports → Seen at more than one place, or write the sit report. "
             "A sit report can name up to eight of those stops beyond the path it was already naming.",
             "body_left",
         ),
@@ -3335,6 +3354,20 @@ def story():
             "A last-15-minute report repeats a line only for a radio still heard in those 15 minutes, and the return line is on those rows. "
             "AI Export pastes the sit report, so the section is included. Share as text, and the one-radio AI Export, include the same lines as the radio page. "
             "Compare, Path, and Sit export do not list these stops.",
+            "body_left",
+        ),
+        P(
+            "<b>On Reports.</b> Reports → Seen at more than one place lists every radio that already has two stops in the last 7 days. "
+            "You do not need to be hearing it, and you do not need a sit. "
+            "The map is where this phone was. Each radio has its own color, and that same color is the dot beside its name. "
+            "Pinch and drag to look around. A double-tap fits the stops again. A trip wider than the street map opens on the newest stop, and you can still move to the others. "
+            "Under the map, each stop is numbered in the order this phone heard that radio. The numbers are ordinary text. The time, the street, and the coordinate are on their own lines. "
+            "The colored dot and the place count use that radio’s color, so they match the pins. "
+            "The name is the advertised name, or the type when the radio has no name, the same choice as Name + type on the live list. A name you saved on Named radios is used instead. "
+            "Tap a radio to open it, including one that has already left Live. "
+            "A radio you can hear now opens the full page. One that has left says it is not on the air, and still shows the name saved when it was heard and the places. "
+            "Privacy mode hides the map and the coordinates. The picture needs Online place names and maps. "
+            "Places off shows a short note and does not add stops.",
             "body_left",
         ),
         P(
@@ -3405,8 +3438,9 @@ def story():
             "How far counts as away starts at 1 km. The other choices are 500 m, 2 km, and 5 km. "
             "How quiet can still warn starts at −85 dBm. A hear quieter than that does not count and does not alert. −85 dBm itself can. "
             "The other choices are −75 dBm and −95 dBm. "
-            "Learning is its own group. Learn new access points starts on. How long to learn starts at 3 days. The other choices are 1 day, 7 days, and 14 days. "
-            "Fig. 27 shows a phone that already has the watch on. The three warning checks are on in that shot, and that is how they start. A new install starts with the watch off. The learning window starts at 3 days.",
+            "Learning is its own group. Learn new access points starts on. How long to learn starts at 3 days. The other choices are 1 hour, 1 day, 7 days, and 14 days. "
+            "1 hour is a walk through a small home. A larger place, with more access points, needs a longer window. §5.11.3. "
+            "Fig. 27 shows a phone that already has the watch on. The three warning checks are on in that shot, and that is how they start. A new install starts with the watch off. The learning window starts at 3 days. Fig. 31 shows the choices.",
             "How a warning reaches you is Beep, Voice, and System notification. Beep starts on. Voice starts on. System notification starts off. How sure before a warning starts at Medium. "
             "Beep, Voice, and System notification on this page do not change the watchlist switches or the GNSS switches. "
             "Network warnings and How long a warning spot stays are on Settings → TAK / CoT. Both stay dim until Watch trusted networks is on.",
@@ -3469,10 +3503,34 @@ def story():
             "A pin already sent for that name is taken down."
         ),
         P("5.11.3 The learning window", "h3"),
+        figure_wrap(
+            "fig-trusted-learn.png",
+            "Fig. 31 — How long to learn. 1 day is selected in this shot. It starts at 3 days.",
+            "The choices are 1 hour, 1 day, 3 days, 7 days, and 14 days. "
+            "This shot has 1 day selected. A new install starts at 3 days. "
+            "The choices do not list the names.",
+        ),
         P(
             "The window starts when you trust the name. It is 3 days unless you pick another length, counted from that moment. "
             "Trusting the same name again starts the window over, and replaces the access points with the ones you check this time. "
-            "Changing the length does not, by itself, forget what was already learned."
+            "Changing the length does not, by itself, forget what was already learned. "
+            "The name row says Learning has 2 days left, or the hours or minutes that remain. The choices do not list the names. "
+            "Under a minute, it says Learning has under a minute left. When the window is over, the line says Learning has ended. "
+            "Turning Learn new access points off hides those lines. Pause learning does not stop the clock."
+        ),
+        P(
+            "Pick the length for how long you expect to be among the radios of that name. "
+            "1 hour is a walk through a small home. Mark the name, walk the rooms, and the other band or the extender can be saved while you are still there. "
+            "1 day covers a house or a shop you do not finish in one walk. "
+            "3 days is the start. It fits a place you come back to, where a radio of that name may not be on the air the first afternoon. "
+            "7 days and 14 days are for a larger site: more buildings, or more access points than you will pass in the first days."
+        ),
+        P(
+            "A longer window stays quiet longer. "
+            "A new address with security you already learned, heard near a usual place, is saved and does not warn. "
+            "A known address heard far away can add a place instead of warning. "
+            "Leave the window open only while you still expect to meet radios that belong to that name. "
+            "When those radios are saved, Pause learning on the name ends the quiet period early."
         ),
         P(
             "While the window is open, Learn new access points is on, and Pause learning is off, a new address can be added with no dialog. "
@@ -3707,6 +3765,275 @@ def story():
         ]),
     ]
 
+    # 5.12 Cell connection monitoring
+    flow += [
+        P("5.12 Cell connection monitoring", "h2"),
+        P(
+            "Cell connection monitoring watches the tower this phone is camped on. "
+            "The first time you stay still at a place, Fieldwatch learns that camp. "
+            "A later visit can warn when the camp is one this phone has not used there, "
+            "or when a place that stayed on 4G or 5G drops to 2G or 3G. "
+            "The warning says what this phone did. It does not say why."
+        ),
+        P(
+            "It reads the camp the phone already has, about every 2 seconds while Fieldwatch is scanning. "
+            "It does not ask the radio to measure again. "
+            "It does not hear another phone, a camera, or a tracker on the carrier network. "
+            "Those stay invisible, the same as before. §3.1."
+        ),
+        callout(
+            "A change is not a cause",
+            "This page does not protect you, and it does not name an attack. "
+            "A dialog is not proof that someone changed the tower. "
+            "Fieldwatch cannot tell the cause. "
+            "A quiet watch is an empty report. It is not an all-clear. "
+            "A new cell at a familiar place can be ordinary: a carrier change, a small cell, a different face of the same site. "
+            "A drop to 2G or 3G can be ordinary too. In the US, a drop to 2G is the one to take seriously. "
+            "If this phone has a Mobile network security notification, that is the phone’s own setting. Fieldwatch does not read it. "
+            "See the Notice page.",
+            "warn",
+        ),
+        P(
+            "Monitor the cell connection starts off. "
+            "With it off, the dialog stays hidden, nothing new is learned, and nothing new warns. "
+            "Places already learned stay. "
+            "A warning that was already open does not beep again when you turn the switch back on. "
+            "Turn it on when you want the dialog."
+        ),
+        figure_wrap(
+            "fig-cell.png",
+            "Fig. 28 — Cell connection monitoring. The watch is on in this shot. It starts off.",
+            "Monitor the cell connection is the switch. Under Warnings, two checks start on: Warn on a new cell, and Warn on a drop to 2G or 3G. "
+            "Both run only while Monitor the cell connection is on. "
+            "How long to learn is on that card. The start is 3 days. The other choices are None, 1 day, 7 days, and 14 days. "
+            "Fig. 28 shows a phone that already has the watch on. How long to learn is in that shot, at 3 days, which is how it starts. Warn on a new cell is on in that shot, and that is how it starts. The drop check is on the same card, under this shot. A new install starts with the watch off.",
+            "How a warning reaches you is Beep, Voice, and System notification. Beep starts on. Voice starts on. System notification starts off. "
+            "Beep, Voice, and System notification on this page do not change the watchlist, GNSS, or trusted networks. "
+            "There is no TAK pin for this warning, and no mark on the path map.",
+        ),
+        P(
+            "After you turn Monitor the cell connection on, the first still visit to a place only learns. It does not warn. "
+            "How long to learn is counted from that visit. The start is 3 days. "
+            "While it lasts, a later visit stores a new 4G or 5G cell and does not warn. "
+            "The place row says Learning has 2 days left, or the hours or minutes that remain. "
+            "The choices do not list the places. "
+            "When the window is over, the row says Learning has ended. "
+            "None stops when that first visit ends, and the next new cell can warn. None has no clock. "
+            "At a place you use, that can be several cells, and that is ordinary while the place is still filling in. "
+            "Learn this cell saves that camp, and that cell does not warn again. "
+            "A cell you use without a warning is saved on its own. "
+            "Dismiss does not save it, so that cell can warn again after it has been gone for 10 minutes. "
+            "Once the cells you use at that place are saved, a later warning is a camp this phone has not used there. "
+            "The dialog still does not name a cause. "
+            "A drop to 2G or 3G does not fade as those other cells are learned. "
+            "It ends when the phone has been back on 4G or 5G for 10 minutes, or when you learn that 2G or 3G camp. "
+            "Learning it keeps later drops at that place quiet."
+        ),
+        P("5.12.1 A place", "h3"),
+        P(
+            "A place is where this phone stayed still, within about 300 m of where that stay was saved. "
+            "Still means slower than a walk, under about 0.7 m/s, and inside about 4 m of where it stopped. "
+            "If the phone does not report a speed, the 4 m step is the test. "
+            "The GPS fix has to be tighter than 100 m. "
+            "A coarser fix, a missing fix, or a paused GPS receiver does not open a place, does not learn, and does not warn. "
+            "Tag detections with GPS has to be on, and the fix has to be a live one."
+        ),
+        P(
+            "A drive does not open a place, and it does not save the cells you pass. "
+            "The first time you stay still somewhere new, Fieldwatch learns the camp and does not warn. "
+            "A later still visit stays quiet while How long to learn is open, and can warn after it ends. "
+            "Stopping after a drive counts once you have stayed inside about 4 m. That later stay is the visit."
+        ),
+        P(
+            "A visit ends when a usable fix is farther than about 300 m from the place, or when you turn the watch off. "
+            "A first visit that learned at least one cell is kept. Later visits learn quietly until How long to learn ends, and can warn after that. None can warn on the next visit. "
+            "A visit that saved nothing is dropped."
+        ),
+        P(
+            "A cell is saved only when the phone fills the generation, the network, the area, and the cell id. "
+            "A zero is a real id. "
+            "An empty reading does not learn and does not warn. "
+            "The generation is 2G, 3G, 4G, or 5G. "
+            "A 3G camp counts as 3G, including the older 3G radios some phones still report, so a drop to that camp still warns."
+        ),
+        P(
+            "The same cell coming back with a different area code updates the area Fieldwatch stored. "
+            "That change does not warn on its own. "
+            "A different network is a new cell. A different cell id is a new cell. "
+            "PCI and Channel are shown on the place page when the phone filled them. "
+            "A change of either one, on a cell you already use here, does not warn."
+        ),
+        P(
+            "Country is the country of the first three digits of the network, when that country is known. "
+            "Operator is the name assigned to the whole network code, when the list shipped with Fieldwatch has one name for that code. "
+            "The network number stays on the line above. A code with no single name leaves Operator off. "
+            "The name is who that code is assigned to. It does not say the radio is that company’s tower, and it does not name a cause. "
+            "The names are stored in the app. Fieldwatch does not look them up online. "
+            "Band is added on the place page when the channel number maps to a band, with the downlink frequency. "
+            "A channel that fits more than one band names each of them, as in n2 or n25, and the frequency they share is shown once. "
+            "A 2G channel that is 1800 in one plan and 1900 in the other lists both frequencies. The channel number stays."
+        ),
+        P(
+            "A place keeps up to 32 cells. The 33rd replaces the one heard least recently. "
+            "A cell this phone uses without a warning is saved on its own. "
+            "A cell that raised a warning is saved when you tap Learn this cell. "
+            "With Warn on a drop to 2G or 3G on, a 2G or 3G camp that would raise that warning is not saved until you tap Learn this cell."
+        ),
+        P("5.12.2 The three warnings", "h3"),
+        figure_wrap(
+            "fig-cell-dialog.png",
+            "Fig. 30 — This phone camped on a cell it has not used here. The numbers in this shot are an example.",
+            "Both warnings need a place that an earlier visit already learned, and they need their own switch. "
+            "Both switches start on. "
+            "One dialog at a time. A cell warning waits while a GNSS dialog or a trusted-network dialog is on screen.",
+            "<b>Warn on a new cell.</b> You are still at a place this phone already learned, and the camp is one it has not used there. "
+            "The title is <b>This phone camped on a cell it has not used here.</b> "
+            "The paragraph is <b>This phone is camped on a tower it has not used at this place. Fieldwatch cannot tell the cause.</b> "
+            "One warning per cell. It ends when that cell has been gone for 10 minutes, or when you dismiss it or learn it. "
+            "Fig. 30 is that dialog on the Live display. "
+            "The network, the area, and the cell id in the shot were filled in so the dialog could be photographed. "
+            "They are not a tower this phone measured, and they are not a cause. "
+            "Country, Operator, PCI, Channel, and Band are not in that shot.",
+        ),
+        P(
+            "<b>Warn on a drop to 2G or 3G.</b> The place’s learned cells are 4G, 5G, or both, and the phone is now camped on 2G or 3G. "
+            "This one can warn while you are moving, as long as you are still inside that place. "
+            "It stays quiet if the place already learned a 2G or 3G cell, if you are outside every learned place, or if the GPS fix is missing, coarse, or paused. "
+            "A 2G camp says <b>This phone dropped to 2G.</b> The paragraph is <b>This phone dropped to 2G. Fieldwatch cannot tell the cause.</b> "
+            "A 3G camp says <b>This phone dropped to 3G.</b> The paragraph is <b>This phone dropped to 3G. Fieldwatch cannot tell the cause.</b> "
+            "One drop warning at a time. It keeps the generation it started with. "
+            "It ends when the phone has been back on 4G or 5G for 10 minutes, or when you dismiss it. "
+            "A blank or unknown generation does not count as back on 4G or 5G. "
+            "In the US, a drop to 2G is the one to take seriously. Allow 2G can be turned off in the phone’s own settings."
+        ),
+        P(
+            "A still camp that is both new and 2G or 3G can open both warnings. "
+            "The drop is the dialog you see. The new-cell warning waits behind it. "
+            "Dismissing the drop can then show the new cell."
+        ),
+        P(
+            "Details, under the paragraph, lists Generation, Network, Country, Operator, Area, Cell, PCI, Channel, and Band. "
+            "Country and Operator are included when the list has them. PCI, Channel, and Band are included when the phone filled them. "
+            "A channel that fits more than one band names each of them. "
+            "The dialog does not show signal or timing advance. Those can appear in the sit report when the phone filled them."
+        ),
+        P("5.12.3 What you can do with the dialog", "h3"),
+        P(
+            "Beep is the same sound as the other warnings, on the media volume. The dialog still shows if Beep is off. "
+            "Voice speaks the title sentence only, once, when that warning becomes the dialog on screen. It does not read the cell id. "
+            "A warning waiting behind another dialog stays quiet until it is the one you see. "
+            "System notification is a silent shade card. It starts off. The title is the sentence, and the card uses the paragraph. It does not include the cell id. The dialog still shows."
+        ),
+        P(
+            "Fig. 30 shows the two buttons. "
+            "Learn this cell saves that camp on the place and ends the warning. "
+            "On a drop, saving the 2G or 3G camp means a later drop at that place stays quiet, because the place has now learned 2G or 3G. "
+            "Dismiss closes the dialog. It does not forget the cell. "
+            "A dismissed new cell stays closed while it is still being heard, and it can open again after it has been gone for 10 minutes. "
+            "A dismissed drop stays closed until 4G or 5G has been continuous for 10 minutes. "
+            "Forget this place is not on the dialog. It is on the place page, and a swipe on the place list asks the same question."
+        ),
+        P("5.12.4 Places", "h3"),
+        figure_wrap(
+            "fig-cell-lower.png",
+            "Fig. 29 — What this cannot see, and a place. This place is 4G and 5G, 5 cells.",
+            "Beep and Voice are on in this shot, and that is how they start. System notification is off, and that is how it starts. "
+            "What this cannot see has no switches. The three lines are the limits in §5.12.9. "
+            "Until a place exists, the list says no places yet, and that a place is learned the first time the phone stays still there.",
+            "The card shows the place this phone is inside, when there is one, and then the latest visits, up to 10. "
+            "When more are saved, the last row is a count, such as 24 more places. That row opens the full list. "
+            "The full list is grouped Here, Today, This week, and Older.",
+            "The title is the street and city when Online place names and maps is on and this phone is online. "
+            "Offline, or with that switch off, the title is the coordinate. That is where this phone was standing. "
+            "Privacy mode masks the title and leaves the street off. "
+            "Under the title, the row shows the generations it has learned, how many cells, and the last visit. "
+            "Fig. 29 is one place, 4G and 5G, five cells. That shot does not include the map. "
+            "When Online place names and maps is on, a map sits above the list. "
+            "Each pin is a place where this phone stood. A tap opens that place. "
+            "A pinch zooms and a drag moves the picture. A double tap returns to the full view. "
+            "The place this phone is inside uses a different color. "
+            "Back from a pin returns to this page with the map at the top. "
+            "Privacy mode leaves the map off. With the switch off, the list is alone. "
+            "With no connection, a picture already saved still shows. Where none was saved, the list is alone. "
+            "Places far from this phone stay on the list. When there is no fix, the map uses the newest place.",
+            "When this phone has a fix from the last 30 seconds, the row adds a line under the last visit. "
+            "Here means you are inside that place, within 300 m. "
+            "Farther away, the line is a distance, in meters until 1 km and then in kilometers. "
+            "The line is left off when there is no current fix. "
+            "Fig. 29 says Here, and Learning has 2 days left.",
+            "Tap the row. The back arrow returns to the list that opened the place. "
+            "From the full list, the next press returns to this page. From this page, the next press returns to Settings. "
+            "Each cell is its own section. The title is the generation. "
+            "Network, Country, Operator, Area, and Cell are lines in that section. Country and Operator are included when the list has them. PCI and Channel are included when the phone filled them, and Band when that channel maps to a band. More than one band is named on that line. "
+            "Camped is a line in that section. The number is how many stays used it. First camped and Last camped are lines in that section, with the time on the right. Signal is the strength of that last camp, in dBm, when the phone filled it. A cell saved before First camped uses the last time already stored. A later stay keeps that date and moves Last camped. "
+            "A stay counts once, including a hop back to that cell before you leave. The reading every couple of seconds does not add to the count. "
+            "Remove this cell is at the bottom of that section, so it belongs to that cell. The place stays. "
+            "Swipe the row to the left to forget the place. The row snaps back, and the place stays until you confirm. "
+            "The question is the same one as Forget this place on the place page. "
+            "Confirming deletes the place and the cells learned there, and ends an open warning for that place.",
+        ),
+        P("5.12.5 A SIM that is in the phone, and a phone with no SIM", "h3"),
+        P(
+            "Fieldwatch does not check whether the plan is activated. "
+            "An inactive SIM is enough when the phone is camped and Android fills the network, the area, and the cell id. "
+            "A normal call does not have to work. A signal on the status bar is the ordinary case. "
+            "If the phone shows no service and is not camped, the watch stays quiet and does not warn. "
+            "Diagnostics then shows Registered cell off, or on with Network, Area, or Cell empty. "
+            "This was not tried with an inactive SIM on the phones used to write this section."
+        ),
+        P(
+            "With no SIM, the phone is usually not camped, so nothing is learned and nothing warns. "
+            "Towers nearby can still be counted as neighbor cells on Diagnostics. They are not saved. "
+            "If the phone camps for emergency calls with no SIM, and it fills the network, the area, and the cell id, that camp is treated like any other. "
+            "Whether it camps that way depends on the phone and on the network nearby. "
+            "This was not tried with the SIM taken out."
+        ),
+        P("5.12.6 Diagnostics", "h3"),
+        P(
+            "Settings → Diagnostics lists the camp even when Monitor the cell connection is off. "
+            "Registered cell is on or off. "
+            "Generation is 2G, 3G, 4G, or 5G when the phone is camped, and blank when it is not. "
+            "Empty fields names Network, Area, or Cell when that part was missing. It does not print the network code, the country, or the operator. "
+            "Neighbor cells is a count. Those towers are not saved, and a change in that count does not warn. "
+            "Second SIM is on, off, or not returned. Not returned means the phone did not answer. It is not proof of one SIM. "
+            "There are no GPS coordinates, no country, and no operator name. Copy includes these lines with the rest of the page."
+        ),
+        P("5.12.7 On the sit report", "h3"),
+        P(
+            "Reports → Debrief adds a Cell connection monitoring section when a warning overlapped the sit. "
+            "The lines are the warning sentence, the time in UTC, Generation, Network, Country, Operator, Area, and Cell, for the fields the phone filled and the names the list has. "
+            "Signal is included, in dBm, when the phone filled it. "
+            "Timing advance is the phone’s own reading when it filled one. A 5G reading, on a phone that provides it, is a different number from a 4G or 2G reading. The line is left off when the phone did not fill it. "
+            "There are no coordinates. "
+            "The section follows the GNSS section and comes before privacy. "
+            "The same block is in the Debrief PDF. "
+            "AI Export pastes the sit report, so the section is included. "
+            "Compare does not add it. The log is unchanged. Sit export is unchanged. "
+            "There is no mark on Reports → Path, and no pin on TAK."
+        ),
+        P(
+            "Privacy mode masks the area and the cell id in that sit section as the word masked. "
+            "The generation, the network, the country, and the operator stay. "
+            "The dialog still shows the numbers. The place page still shows the numbers."
+        ),
+        P("5.12.8 Export, restore, and a new phone", "h3"),
+        P(
+            "Export settings includes the switches on this page and How long to learn: the watch, the two warnings, beep, voice, the notification, and the length. "
+            "It does not include the places. The page has no export of its own. "
+            "Restore defaults turns Monitor the cell connection off, puts the other switches back to the start, and sets How long to learn to 3 days. The places stay. "
+            "Uninstalling Fieldwatch deletes the places."
+        ),
+        P("5.12.9 What this will not catch", "h3"),
+        bullets([
+            "It does not see another phone, a SIM tracker, a silent text, an identity request, or the cipher. A camera or a tracker that only talks on the carrier network stays invisible.",
+            "A quiet watch is an empty report. It is not an all-clear. A copy of a cell you already use here stays quiet. A PCI change, or a channel change, on that same cell stays quiet.",
+            "If this phone has a Mobile network security notification, that is the phone’s own setting. Fieldwatch does not read it.",
+            "The first still visit to a place only learns. How long to learn can keep later visits quiet. None does not. A drive does not save the cells you pass. A fix coarser than 100 m, a missing fix, or a paused GPS receiver stays quiet.",
+            "A place that already learned 2G or 3G does not warn on a later drop. Neighbor cells are counted on Diagnostics and are not saved. A second SIM is noted there and is not compared.",
+            "There is no path mark and no TAK pin. Compare, the log, and Sit export do not list the warning.",
+        ]),
+    ]
+
     # 6 Views
     flow += [
         PageBreak(),
@@ -3859,7 +4186,8 @@ def story():
         ),
         P(
             "Two surfaces only: Wi-Fi <b>access-point</b> scan results, and BLE advertisements. "
-            "No cellular, no Wi-Fi clients, no Bluetooth Classic inquiry, no direction finding."
+            "Cell connection monitoring is a separate reading of the tower this phone is camped on (§5.12). "
+            "No cellular scan of other phones, no Wi-Fi clients, no Bluetooth Classic inquiry, no direction finding."
         ),
         P("7.1 Wi-Fi passive scanning", "h2"),
         P(
@@ -4079,7 +4407,7 @@ def story():
         P("<b>The phone’s radios are the limit, not just the signatures.</b> Fieldwatch is a "
             "stock-API listener on a phone. It cannot put Wi-Fi in promiscuous "
             "or 802.11 monitor mode, cannot capture raw frames or probe-only stations, cannot "
-            "lock onto one channel, and cannot hear LTE/5G at all. If the camera is quiet on "
+            "lock onto one channel, and cannot hear another device on LTE/5G. The tower this phone is camped on is a separate reading (§5.12). If the camera is quiet on "
             "Wi-Fi and BLE, this phone will not invent a detection. A dedicated sniffer (external "
             "adapter / monitor-mode device) is a different collection system — Fieldwatch does not "
             "replace it.", "body_left"),
@@ -4222,7 +4550,7 @@ def story():
             "<b>New detections only</b> — hide radios already here. Always AND. Mark seen / Reset seen sit on the Live display (§5.3.2). First turn-on snapshots what is on the air. Randomized BLE addresses still look new. All traffic or Reset filter turns this off and clears already-seen.",
             "<b>Keep signature matches only</b> — hide radios that match no signature. While class Show only or Show only selected signatures is narrowing the Live display, this is already true: the switch stays on and disabled until you turn those off.",
             "<b>Keep watched only</b> — hide radios that are not a bookmarked signature match and not a Named radio with Alert on. Always AND. Hide these still applies (Keep watched only + Hide Surveillance drops bookmarked cameras). Label-only names stay on Keep named only. The Live display shows a Keep watched only strip while this is on.",
-            "<b>Keep named only</b> — hide radios that do not have a custom name (Settings → Named radios). Alert can still be off. Not the same as Keep signature matches only or Keep watched only. A random / privacy MAC will not follow a rotation. The Live display shows a Keep named only strip while this is on.",
+            "<b>Keep named only</b> — hide radios that do not have a custom name (Settings → Alerts → Named radios). Alert can still be off. Not the same as Keep signature matches only or Keep watched only. A random / privacy MAC will not follow a rotation. The Live display shows a Keep named only strip while this is on.",
             "<b>Hide Mine</b> — radios marked Mine stay off the Live display. The sit, the log, and Debrief still include them. Always AND. Turning on Moving with you leaves this on. The Moving with you preset replaces the whole filter, so this goes off with the rest.",
             "<b>Hide Fast Pair account-key</b> — drop plaza Fast Pair chips that are already paired, when Fast Pair is the only signature on the row. Pairing-mode stays (chip Fast Pair pairing, subtitle pair). A Pixel that also matched Google still shows. This is not Hide selected Fast Pair, which removes the whole family including pairing-mode. Always AND. What the two payloads mean: §9.5.",
             "<b>Selected signature classes</b> — Live display only; signatures still label. <b>Show only</b> keeps radios of the class chips you pick. <b>Hide these</b> drops those classes and leaves the rest, including unmatched radios. Show only with no class picked leaves the Live display unchanged. Class chips sit two across with the same glyphs as the Live display. Cameras / Drones / Finder tags / Phones / PCs and the rest are these chips — Show only or Hide these, then Save current as… if you want a named preset. Class vs color: §9.5.",
@@ -5075,7 +5403,7 @@ def story():
             "and learning-window Wi-Fi never alert while they are hidden."
         ),
         bullets([
-            "Device: open detail → bookmark icon to be notified when that radio appears. Prefills a name (advertised name or type guess). Settings → Named radios lists those MACs: rename, Observer notes, Alert on/off, remove one, Clear all. Signature watches are not on that list. A rotated BLE address stays until you delete it.",
+            "Device: open detail → bookmark icon to be notified when that radio appears. Prefills a name (advertised name or type guess). Settings → Alerts → Named radios lists those MACs: rename, Observer notes, Alert on/off, remove one, Clear all. Signature watches are not on that list. A rotated BLE address stays until you delete it.",
             "Signature: the bookmark requests an alert when a new match appears. Stock bookmarks on first launch / Restore: Extra attention (Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hobby BLE serial, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, plus roadside / public camera + ALPR: Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) and every built-in Drone-class row (DJI, Remote ID, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie).",
             "Master switch: Settings → Watchlist alerts. Off suppresses beep, voice, vibration, flash, and jump. Beep and Voice are independent (pip, spoken phrase, or both). Jump works with any of those. Settings → System notification (off by default) posts a silent shade card; skip it in the field.",
         ]),
@@ -5097,12 +5425,12 @@ def story():
         ),
         P("10.2.1 Voice on watched signature", "h3"),
         P(
-            "Voice is the second watchlist cue. It starts on. Turn it off under Settings → "
+            "Voice is the second watchlist cue. It starts on. Turn it off under Settings → Alerts → "
             "Voice on watched signature if you only want the pip. Watchlist alerts still gates it — master off means no pip, "
             "no speech, no flash, no jump."
         ),
         P(
-            "Settings → <b>What to say</b> picks the phrase (chips, enabled while Voice is on). "
+            "Settings → Alerts → <b>What to say</b> picks the phrase (chips, enabled while Voice is on). "
             "Default is <b>Class + signature</b>. <b>Class</b> is the same bucket as the Live display glyph. A bookmarked AirTag, "
             "Chipolo, or Tile all say “finder tags.” Axon says “public safety.” ISP / routers "
             "says “I S P routers.” Use that in a pocket or on a drive when you need the kind. "
@@ -5111,7 +5439,7 @@ def story():
             "name are spoken as a pause (Ray-Ban / Meta glasses → “Ray-Ban Meta glasses”)."
         ),
         P(
-            "A <b>named radio</b> (detail bookmark, Settings → Named radios) always speaks "
+            "A <b>named radio</b> (detail bookmark, Settings → Alerts → Named radios) always speaks "
             "the watch name — the prefilled advertised name or type guess, or the custom name you "
             "typed on Named radios (“Peter’s Mesh Node”). Class / Signature / Both does not "
             "apply. An unmatched radio still speaks that name, not “unmatched.” A "
@@ -5119,11 +5447,22 @@ def story():
             "same radio, a signature bookmark speaks that family, not whichever chip landed first."
         ),
         P(
+            "<b>Signature and network</b> is a third name, and it is not a name for one address. "
+            "Settings → Alerts → Signature and network lists them. On the radio, Custom signature and network alert opens the form. "
+            "The words you type replace the signature for every radio of that signature with that network name. "
+            "The announcement does not say the network name unless you type those words. "
+            "Another network name on the same signature still says the signature, including a longer name. "
+            "What to say set to Class leaves the words saved and says the class. "
+            "Signature says the words you typed. Class + signature says the class, then those words. "
+            "A name on one radio is still the whole announcement, ahead of these words. "
+            "The live list keeps the signature name. Export settings keeps the list. The catalog does not change."
+        ),
+        P(
             "Pip and voice still mix three ways: pip then phrase about 400 ms after the double pip (the default), pip only, or "
             "spoken phrase only. Use voice-only when you cannot look. "
             "Use pip only on a sit when speech would be noise. Use both when you want a heads-up "
             "then the words. Test alert plays the same mix — with Voice on and Class selected you "
-            "hear “finder tags”; Signature says “Apple AirTags”; Class + signature says both. "
+            "hear “finder tags”; Signature says “Apple AirTags”; Class + signature says both. It does not use a name on one radio or a name for a signature and a network. "
             "Jump to new watched detection works with beep, voice, or both; it is not tied to the pip. "
             "Hunt’s geiger tick never speaks."
         ),
@@ -5398,6 +5737,15 @@ def story():
             "<b>Anomalies</b> is not a second inventory: Extra attention, Signature hits, and tracking callouts already list named matches. "
             "Anomalies only keeps cues that are not those sections (Fast Pair in pairing mode, a very loud unnamed radio, a high randomized-BLE count). "
             "AirTag / SmartTag / Tile rosters and Extra attention reprints are omitted."
+        ),
+        P(
+            "When a cell-connection warning overlapped the sit, Debrief adds a <b>Cell connection monitoring</b> section "
+            "after the GNSS section and before privacy. "
+            "The lines are the warning sentence, the time in UTC, and the generation, network, country, operator, area, and cell the phone filled. Country and operator are included when the list has them. "
+            "Signal and timing advance are included when the phone filled them. There are no coordinates. "
+            "Privacy mode masks the area and the cell id as the word masked. The generation, the network, the country, and the operator stay. "
+            "AI Export pastes the sit report, so the section is included. Compare does not add it. "
+            "The log and Sit export are unchanged. §5.12."
         ),
         P(
             "If Settings → Tag detections with GPS is on and you have moved about 45 m or more, Debrief tests "
@@ -5702,7 +6050,7 @@ def story():
         ),
         P("<b>Setup.</b> Filters → Show only, then Surveillance, or the camera names you care about (Flock, Raven, and the rest). High performance. Walk the block. Roadside / public camera + ALPR rows (Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus) beep and get Extra attention “!” — the card says what that family is used for. When a chip appears, look with your eyes, then write what you saw — not what the chip said.", "body_left"),
         P(
-            "<b>Honest limits.</b> Newer poles are often cellular-first and RF-quiet on Wi-Fi/BLE; no chip does not mean no camera. Fieldwatch cannot hear LTE, cannot see associated clients, and cannot promiscuously capture. IEEE B4:1E:52 plus a Flock-* SSID is high confidence; LiteOn / Espressif / Raspberry Pi OUIs are low unless a name or UUID corroborates. Phone GPS is where <i>you</i> were, not where the pole is. Full limits: §7.6.1.",
+            "<b>Honest limits.</b> Newer poles are often cellular-first and RF-quiet on Wi-Fi/BLE; no chip does not mean no camera. Fieldwatch cannot hear another device on LTE, cannot see associated clients, and cannot promiscuously capture. The tower this phone is camped on is a separate reading (§5.12). IEEE B4:1E:52 plus a Flock-* SSID is high confidence; LiteOn / Espressif / Raspberry Pi OUIs are low unless a name or UUID corroborates. Phone GPS is where <i>you</i> were, not where the pole is. Full limits: §7.6.1.",
             "body_left",
         ),
         P(
@@ -6307,7 +6655,8 @@ def story():
         P("14.2 Limits that are not bugs", "h2"),
         P(
             "Stock Android will not give Fieldwatch Wi-Fi clients, Classic Bluetooth inquiry, "
-            "cellular / LTE / C-V2X, or a bearing. Those absences are the platform, not a "
+            "a cellular scan of other phones, LTE / C-V2X, or a bearing. Cell connection monitoring "
+            "reads only the tower this phone is camped on (§5.12). Those absences are the platform, not a "
             "broken install. Chapter 3 is the full list. Chapter 7 is the APIs. Faster Wi-Fi "
             "AP scans (§7.1.1) is the optional way to shrink the Wi-Fi batch gap after you turn "
             "off OS scan throttling in Developer options."
@@ -6360,21 +6709,22 @@ def story():
             ["Decode hexagon", "Small hexagon inside a signature name chip (same color as the name) when that signature has a Decode fields map. Dual-chip radios mark only the mapped name(s). Catalog check, not a parse of this packet. Hidden when Display → Signature names is off. Extra attention “!”, the cyan Observer notes chip, the phosphor alerted bell, and a live value chip are separate. Same mark on the Signatures list, By class signature rows, and detail Decoded fields. §5.4, §9.6."],
             ["Live value", "One decoded word on a Live list row, in the signature color. Live row must be on for that Decode fields entry, and this advertisement must have produced the word. Strong values use a heavier chip. Stock: DULT and Find Hub Separated; Remote ID Emergency, plus Ground, Airborne, Undeclared, and RID failure. A System message shows Takeoff, Live GPS, or Fixed. Strength list, Hybrid, Timeline, By class. Not radar. Signature names off still shows the word. §5.4.1."],
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
-            ["Named radios", "Settings list of one-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. Does not include signature bookmarks. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Keep named only (any custom name). Keep watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
+            ["Named radios", "On Settings → Alerts, under What to say. One-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. A name on one radio is the whole announcement. Does not include signature bookmarks or Signature and network. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Keep named only (any custom name). Keep watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the co-travel callouts. A blank name is filled. Filters → Hide Mine takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
             ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
-            ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as masked, and the byte count stays. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8."],
+            ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as masked, and the byte count stays. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. In a cell-connection warning on that sit report, the area and the cell id show as masked. The generation, the network, the country, and the operator stay. The dialog and the place page still show the numbers. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8, §5.12."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus an operator pin when op_lat/op_lon decoded. The callsign says Takeoff, Pilot, or Fixed; Location heading/speed go in track). A radio that leaves keeps its name for How long a spot stays (1 hour unless you change it). This phone’s marker still refreshes about every 2 minutes. Turning the feed off, or Privacy mode on, takes those radio spots off the map. What to send: Extra attention, Payload location, Watchlist, All signatures. GNSS warnings (Off, While alerting, Red line, Any hit) adds a line on this phone’s marker and a pin or ellipse where the phone was. A short hit is a pin. A longer hit is an ellipse half as wide as the stretch, kept 1 hour, 6 hours, 24 hours, or until deleted. BLE Flood warnings (Off or On) adds a line and does not add a pin. A Wi-Fi beacon flood uses that same line. The Network warnings switch for a trusted network is on this page and stays dim until Watch trusted networks is on. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. The GNSS mark is §5.8.13. §5.8, §5.8.12, §12.15, §12.16."],
             ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention, and the top-bar icons. Green and red become shades of red, so read the words beside the icons. Phone brightness is unchanged. Fig. 9, §5.1, §5.7."],
-            ["Diagnostics", "Settings, under Show Live tour. Shows whether scanning is running, and the state of Wi-Fi, Bluetooth, Location, and GPS. What to check names a switch that is off and needs to be on. It does not name Wi-Fi scanning or Bluetooth scanning while that radio is already on. The rest of the page is the phone, Android version, catalog, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. When the GNSS check is on, it also shows settling or the monitor state, and the calibration grade. Copy puts those lines on the clipboard. No network names, addresses, or GPS coordinates. An empty Live list points here when a scan is blocked. When Location is off, Live also shows a banner. §5.7, §5.9."],
+            ["Diagnostics", "Settings, under Show Live tour. Shows whether scanning is running, and the state of Wi-Fi, Bluetooth, Location, and GPS. What to check names a switch that is off and needs to be on. It does not name Wi-Fi scanning or Bluetooth scanning while that radio is already on. The rest of the page is the phone, Android version, catalog, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. When the GNSS check is on, it also shows settling or the monitor state, and the calibration grade. It also lists the registered cell, the generation when this phone is camped, which of Network, Area, or Cell were empty, the neighbor count, and a second SIM. A second SIM the phone did not answer says not returned. No network code, no country, no operator, and no GPS coordinates. Those cell lines stay when Cell connection monitoring is off. Copy puts those lines on the clipboard. No network names or addresses. An empty Live list points here when a scan is blocked. When Location is off, Live also shows a banner. §5.7, §5.9, §5.12."],
             ["GNSS interference", "A change in this phone’s own GPS that can mean interference, or, with Warn when the signal holds on, a pattern that can mean spoofing. Not a located radio, and not a named jammer or spoofer. Calibrate once outside before the check will turn on. The first minute is not the baseline. A warning can come after about two minutes. A cradle, a router, or another phone against this phone can cause a hit. Popup, then a red line on Live. Record raw GNSS during interference, off until you turn it on, saves the raw measurements around a hit. Share last recording is on that page. Privacy mode does not record. The top-bar GPS mark is red for that same stretch, gray while the check is warming up, paused, graded Poor, or the scan is stopped, and green once armed and quiet. Debrief lists the hit. The Path map marks where this phone was. That spot is not the source. On TAK, the same hit can leave a Magenta pin or ellipse where this phone was. §5.1, §5.8.13, §5.9."],
             ["Trusted networks", "Settings page for Wi-Fi names you mark on a radio’s page. Watch trusted networks starts off. A later sighting of that exact name can alert when the security is weaker, the maker was not learned, or this phone is far from the places it usually hears that name. This network travels leaves the away check off for a hotspot, or a team network, that rides with you. A shop you visit every day can still notice a new factory maker, or the name showing up somewhere else. An open shop has no weaker security left to find. The phone does not join the network or ask for its password. The dialog does not say an attack, a jammer, or a spoofer was found. Debrief can list the alert, with no coordinates. The Network warnings switch starts off, on Settings → TAK / CoT, and stays dim until Watch trusted networks is on. §5.11."],
+            ["Cell connection monitoring", "Settings page for the tower this phone is camped on at a place. Monitor the cell connection starts off. The first still visit only learns. How long to learn starts at 3 days and can keep later visits quiet. None stops after that first visit. A later visit can then warn when the camp is one this phone has not used there. A place that learned only 4G and 5G can warn on a drop to 2G or 3G, including while the phone is moving inside that place, and that drop still warns during the learning time. The dialog says what this phone did. It can list the country, the operator, the channel, and the band. The place page lists the same lines. A channel that fits more than one band names each of them. Fieldwatch cannot tell the cause. A quiet watch is an empty report. It does not see another phone. Fig. 30 is the new-cell dialog. The numbers in that shot are an example. Debrief can list a warning that overlapped the sit, with no coordinates. Compare does not. There is no path mark and no TAK pin. §5.12."],
             ["GNSS mark (TAK)", "A Magenta map mark for a GNSS hit, separate from the Cyan Fieldwatch marker. Settings → TAK / CoT feed → GNSS warnings: Off, While alerting, Red line, or Any hit. Off sends nothing. A stretch under about 100 m is a pin at the start fix. A longer hit is one ellipse from that start to the latest fix, half as wide as it is long. The ellipse stops growing when the hit ends. The 10-minute ended line does not stretch it. Callsign Possible GNSS interference. The card says where this phone was, and that this is not the source. How long the mark stays: 1 hour (the start), 6 hours, 24 hours, or Until deleted. The time starts at the last update. Until deleted stays until GNSS warnings is set to Off. Needs the feed on, Privacy mode off, the check armed, and a GPS fix. A pause is not a hit. §5.8.13."],
             ["Heard here (TAK)", "CoT pin at this phone’s GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not DF."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second operator pin. The callsign says Takeoff, Pilot, or Fixed. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
             ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark). BLE FFFA and Wi-Fi FA:0B:BC both qualify."],
-            ["Reports", "Bottom tab. Sits stay on this page. Using… names the sit for Path, Debrief, Sit export, and Compare. Those four open their own pages, marked by a green bar. Log Export and Signature candidates are under them. Clear log is on Log Export. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings. §5.6."],
+            ["Reports", "Bottom tab. Sits stay on this page. Using… names the sit for Path, Debrief, Sit export, and Compare. Those four open their own pages, marked by a green bar. Seen at more than one place, Log Export, and Signature candidates are under them. Clear log is on Log Export. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings. §5.6."],
             ["Sit (named)", "Optional window of watching, started from Reports → Start sit. Path, Debrief, Compare this-sit, Sit export, and AI Export use that start/end instead of the last 15 minutes in RAM. Cap 6000 unique radios. Extra attention / payload / bookmarks / watched signatures stay when full; unnamed BLE drops first. Checkpoints to app storage about every 10 s. One at a time; keep 10 closed. Live list stays ~400. Not DF. §5.6."],
             ["Show map with live path", "Display switch, off by default, above RSSI bars. A north-up map of this phone across the top of Live, with the list still underneath on By class, Strength list, Timeline, and Hybrid. Radar dims the switch and does not turn it off. The line starts where you are when the map opens and draws as soon as you move. It keeps a point every few meters, so a bend follows the street. The road already driven stays where it was. Green is a real stop, about 25 m for about 40 seconds. With no sit, the line is the later of when the switch turned on and 15 minutes ago. An open sit draws from the start of the sit. Dots are watchlist alerts. Pinch or drag holds the view. Recenter follows you again. Two zoom levels: the whole path, and a close view that keeps this phone in the center with the short side about 220 m. Double-tap the map to switch zoom. Two facing modes: north up, and direction of travel. Tap the button to switch facing. Zoom stays. The picture shows which of the four you are in. Standing still keeps the last direction. A turn in place does not turn the map. Reports → Path stays north-up, with no button. §5.7.1 is the map key. Not the Reports page. §5.3.4."],
             ["Path", "Reports page. North-up plot of this phone for the selected sit (or last 15 minutes). The line is the same driven trace as Show map with live path (§5.3.4). One fix draws as a single point and a length of 0. Leave the page in front to watch an open sit grow, or the last-15-minute snake move; the plot redraws about every three seconds. Black dot is the start. Blue dot is you, at the last point. MAC alerts and signature alerts are drawn once. A decoded latitude and longitude uses the last advertised position. Anything else is a class icon at the strongest RSSI. A count is several in one place. A lone class icon has no number box; tap it for that one radio. Tap a known-camera mark for the same kind of card. It names the kind, the company when the list has one, and the facing when one is stored. A number is several of that kind. Extra attention alone does not plot unless that signature is bookmarked. The list puts the Wi-Fi or BLE icon next to the MAC. Observer notes sit on a MAC-alert row. Thick green is a real stop. Time ticks. Head labeled Now while live, End on a saved sit. On an open or saved sit, an advertised aircraft track within 2 km is a white dotted line on that plot. The letter figure draws the same track in black dots, with a class icon at the last position and a person icon for the operator. The last position is a class icon. Tap it for that one radio. A count means it shares that spot. One stored fix is that icon, with no line. The operator is a person icon. A farther aircraft with a UAS id gets its own map, up to three. Last 15 minutes stays this phone. The map from Settings → Location and Maps when Online place names and maps is on and the phone is online; offline: the trace only. The lower right names the map. Privacy mode does not hide those tiles. The Debrief and Compare path figures use those same MAC alerts and signature alerts. A decoded position is the last advertised fix. An advertised aircraft on that figure is the drone class icon in the Path key, with the live status, UAS id, last position, motion, and the operator position. Extra attention on that figure is red, a MAC alert is blue, and another signature alert is green. §5.6.1."],
@@ -6439,9 +6789,9 @@ def story():
             ["Signature color (stock)", "Built-in rows share a palette by class: red pentest, amber cameras/ALPR/UniFi Protect/DJI, purple phones/Find My, cyan wearable trackers, green mesh, orange glasses and audio, teal public safety and vehicle, silver home IoT/ISP Wi-Fi (including UniFi AP)/retail signage/Unknown. Unmatched radios use RSSI color (≥−55 green, −55 to −70 amber, −70 to −85 orange, else red). Change any row. §9.5."],
             ["UniFi AP", "Wi-Fi-only catalog signature (ISP / routers). Factory SSIDs UniFi* / UAP-* / UBNT* plus Ubiquiti IEEE OUIs on the BSSID or a vendor IE. Virtual BSSIDs miss the MAC OUI but still hit on a Ubiquiti vendor IE. A separate UniFi row is name-only on either radio. UniFi Protect cameras stay Surveillance. §9.5, Appendix B."],
             ["Tag detections with GPS", "Settings switch, on by default. Current GPS/network updates while scanning; stamps each hear (detail, Moving with you, Places, Debrief, log lat/lon, heard-here TAK pins) and records the driven line for Show map with live path and Reports → Path. Last-known older than 30 s ignored. Operator phone at hear-time, not the other radio. Advertised TAK pins (Remote ID) do not need this. High-accuracy Location or the path stays 0. §5.3.4, §5.7, §5.8."],
-            ["Places", "Settings switch, on by default. A stable tracker heard at two or more places in the last 7 days, and a return after a quiet stretch. Lines on the radio page and in the sit report, with where this phone was. Each radio keeps the latest 8 stops. A ninth confirmed stop drops the oldest. Many hears at one stop are still one stop. A single jumped fix does not erase an older stop. A stop from another day includes the date. Online place names adds the street. Filters → Seen at more than one place limits Live to the ones you can hear now. A changing address is skipped. Ordinary Wi-Fi and Bluetooth stay off. No beep, no TAK marker. Not in Export settings. §5.5, §5.7, §5.10, §8."],
+            ["Places", "Settings switch, on by default. A stable tracker heard at two or more places in the last 7 days, and a return after a quiet stretch. Lines on the radio page, in the sit report, and on Reports → Seen at more than one place, with where this phone was. That report draws a map and does not need a sit. Each stop there is numbered. The name is the advertised name, or the type when there is no name. A saved name is used instead. Tap a radio to open it, including one that has left Live. Each radio has its own color. Each radio keeps the latest 8 stops. A ninth confirmed stop drops the oldest. Many hears at one stop are still one stop. A single jumped fix does not erase an older stop. A stop from another day includes the date. Online place names adds the street. Filters → Seen at more than one place limits Live to the ones you can hear now. A changing address is skipped. Ordinary Wi-Fi and Bluetooth stay off. No beep, no TAK marker. Not in Export settings. §5.5, §5.6, §5.7, §5.10, §8."],
             ["Share as text", "Device-detail button. Plain dump of the open radio (identity, signal, decode, session). Not the sit report and not the rotating log."],
-            ["Voice (watchlist)", "Settings → Voice on watched signature, on by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class + signature. A named radio speaks its watch name instead, including a custom name from Named radios. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix. Jump works with voice alone. §5.7, §10.2.1."],
+            ["Voice (watchlist)", "Settings → Alerts → Voice on watched signature, on by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class + signature. A named radio speaks its own name instead, as the whole announcement. Signature and network replaces only the signature, for every radio of that signature with that network name, and stays quiet while What to say is Class. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix and does not use those names. Jump works with voice alone. §5.7, §10.2.1."],
             ["Hunt", "Opened from the detail page of one Bluetooth radio. A full-screen heat cloud of where this phone heard that radio, with the large RSSI number and a sparkline. The map stays close on you. License plate readers and other sensors from Known cameras can sit under the cloud. Leave the page and the cloud stays until Reset, or until you hunt a different radio. Steps and the way the phone is facing fill in the walk. Until GPS is ready, the page says No GPS yet. This walk is not on a map. There are no streets, the corner stays empty, and the scale stays in meters, but the dot, the circle, the heat, and the ring still move. Known cameras stay off until the streets show. Two fresh fixes place a short walk, about the first 20 m, on the map, and the steps you already took stay behind the dot. A longer walk stays off the map. Open the same radio again and that blank walk continues. Reset, or a different radio, starts over. Once the walk is on the map, GPS corrects it only when a good fix agrees. Hunt works on any phone. A phone with a step sensor tracks the walk better. A missing or silent sensor counts steps from the walking motion, which is less steady. Turning in place does not move the dot. The circle around the dot shows how sure the place is. It starts at about four meters, grows as the walk gets longer, and turns amber when the phone is not held flat. Steps pause until it is flat again. On a mapped walk, the lower-left reading matches the dot. Before that, the corner stays empty. Color runs from blue (weak) through cyan, green, yellow, and orange to red (powerful, about −45 dBm or louder). Hold the phone flat, screen up, top pointing the way you walk, and walk slowly in a pattern so the cloud can build. A small ring marks the hottest spot. Let it guide the next pass. It is where this phone heard the radio loudest, not the radio, and a wall can shift that spot. The radio is usually nearby. Night mode leaves the cloud in its own colors. A reading of 127 is ignored. Loudest-this-hunt sits with the sparkline. Beep and Vibrate are at the bottom, off by default. They tick faster as the signal gets louder, go quiet when there is no packet or the radio has left, and they never speak. An optional body-block turn gives a rough heading (§12.13). Walls, metal, people, and floors change the number without a change in range. Not a distance, not a pin on the other radio, and not direction finding. The button that used to be N switches north up and the direction of travel. A double-tap changes the Show map with live path zoom. It does not point at the radio. §5.3.4. Wi-Fi is left out, because the phone only reports access points in batches, even with Faster Wi-Fi AP scans."],
             ["lat / lon (log)", "CSV columns and JSON fields on each new log row when Tag detections with GPS is on and a fix exists. Operator phone at hear-time, not the other radio. Empty/null otherwise. In CSV these columns sit before vendor_ie so older files still parse."],
             ["Where you were", "Debrief / AI Export section. Operator path split into stays (~40 m) and transits. Lat/lon once per stay, optional street name, loud radios heard there. Not lat/lon on every inventory line."],
@@ -6599,7 +6949,7 @@ def story():
             ["Ruijie", "Wi-Fi @Reyee* / Reyee* / Ruijie* plus Ruijie Networks IEEE OUIs", "Reyee campus / SMB APs. Renamed SSID still hits on BSSID. ISP / routers class."],
             ["DWnet", "DWnet Technologies IEEE OUIs", "Consumer / SMB APs. Cloud SSIDs are house names. ISP / routers class."],
             ["WAVLINK", "Wi-Fi WAVLINK* plus Winstars IEEE OUI 80:3F:5D", "Consumer APs. ISP / routers class."],
-            ["Samsung SmartTags", "Names SmartTag / Smart Tag / Galaxy SmartTag; UUID FD5A; mfg 0x0075", "FD5A is the usual SmartTag service."],
+            ["Samsung SmartTags", "Names SmartTag / Smart Tag / Galaxy SmartTag; UUID FD5A", "FD5A is the SmartTag service. Company ID 0x0075 is Samsung generally and is not this row."],
             ["Tile Trackers", "Name Tile; UUIDs FEED, FEEC, FEDD; mfg 0x00C7", "FEEC is a Tile that is not activated yet. Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
             ["Google Find Hub", "BLE service FEAA, data prefix 40 (nearby) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. The list shows Nearby or Separated. Separated is the heavier chip and can hold a MAC about a day. Finder tags class. Decode: mode plus 20-byte EID. Chipolo / Pebblebee / moto tag name rows may dual-label. §5.4.1."],
             ["DULT tracker", "BLE service data FCB2 (any payload). Finder tags class. No Extra attention.", "IETF Detecting Unwanted Location Trackers location-enabled advertisement. The list shows Near owner or Separated. Separated is the heavier chip and can hold a MAC about a day. Decode: Network ID plus that bit. A bare FCB2 UUID list does not match. Chipolo / Pebblebee / moto tag names may dual-label. §5.4.1."],
@@ -6831,7 +7181,7 @@ def story():
             ["Create-from-device matches all BLE", "The signature includes a Radio kind rule with match-any.", "Delete that signature. Open detail → Create signature from device again and keep MAC, name, or UUID rules only. Do not add Radio kind alone."],
             ["Export share sheet empty / fails", "No log lines yet, or the viewer cannot take a content URI.", "Wait for a few observations. Share to Files or Drive, not to an app that rejects text/plain."],
             ["Debrief looks empty / thin", "Live display has few radios in the last 15 minutes, unnamed BLE already evicted (~3 min), or a drive already filled the ~400 cap so earlier streets dropped.", "Scan a few minutes first. Text and PDF use the same memory snapshot, not the on-disk log. On a trip, tap Debrief every 10–15 min or at stops (§11.4.1) — radios moving with you stay in each file. Use Log export for the full hour."],
-            ["Cannot find Log Export / Sit export / Debrief / Signature candidates", "Those rows are on the Reports tab, each on its own page.", "Bottom bar → Reports. Path, Debrief, Sit export, and Compare are the four rows under Using…. Log Export and Signature candidates are under those. Clear log is on the Log Export page. Opening Signature candidates does not start the search. Settings still has GPS, place names, and logging on/off."],
+            ["Cannot find Log Export / Sit export / Debrief / Signature candidates", "Those rows are on the Reports tab, each on its own page.", "Bottom bar → Reports. Path, Debrief, Sit export, and Compare are the four rows under Using…. Seen at more than one place, Log Export, and Signature candidates are under those. Clear log is on the Log Export page. Opening Signature candidates does not start the search. Settings still has GPS, place names, and logging on/off."],
             ["Cannot find Debrief / AI Export", "Debrief is a row on Reports. AI Export is on that page, and again on Compare.", "Bottom bar → Reports, then Debrief. Settings still has Tag GPS, Online place names, and logging on/off. One-radio AI Export is on the device-detail page, not Reports."],
             ["Signature candidates is empty", "Logging was off, the log is short, or leftover radios are randomized / house-like / one-off MACs.", "Logging on in Settings, sit a while, then open Signature candidates and tap Find candidates again. A family needs two distinct radios sharing a unique ID. One loud unmatched MAC is Create from device, not a family."],
             ["No vendor-IE families (Roku-class hidden APs)", "Older log rows have no vendor_ie column.", "Expected until new Wi-Fi packets are written after this build. Name globs and stable OUIs still mine from old parts. Log export of a new sit if you need IEs off-phone."],
@@ -6870,7 +7220,7 @@ def story():
             ["Moving with you flashes on the highway", "Passing BLE only overlaps for a few seconds, so it fails the trail-moved gates. A tag in the car should not flash: “still here” grows with speed (about 400 m of phone travel at 55 mph) so a few quiet seconds are not a miss. §8.5.", "Keep Tag detections with GPS on. Passing phones will still appear and leave — that is the filter working. Roadside APs stay off. A tag in the car should stay; if it does not, Start over after you have ~50 m of path and confirm the tag is still advertising."],
             ["LE color / “What this looks like” flips on and off", "BLE advertisements rotate payloads (for example iBeacon, then Nearby).", "Fieldwatch keeps manufacturer records per company and type for that radio, so a hit should stay labeled when the payload rotates."],
             ["Debrief PDF will not open in the other app", "The other app did not get read permission, or it rejects application/pdf.", "Share to Files, Drive, or a PDF viewer."],
-            ["Restore defaults wiped custom signatures", "Restore rewrites config.json from the catalog.", "Expected. Export signatures from Settings before Restore if you want a backup. Import that JSON to get customs back (stock ids merge extra rules; they are not cloned). Named radios and Settings switches go with Export settings."],
+            ["Restore defaults wiped custom signatures", "Restore rewrites config.json from the catalog.", "Expected. Export signatures from Settings before Restore if you want a backup. Import that JSON to get customs back (stock ids merge extra rules; they are not cloned). Named radios, names for a signature and a network name, and Settings switches go with Export settings."],
             ["Import signatures says not a Fieldwatch pack", "The file is a log, a photo, a settings pack, or config.json, not an exported catalog pack.", "Export from Settings → Export signatures. The file starts with format fieldwatch-signatures. Settings packs start with fieldwatch-settings — use Import settings. Logs stay on Reports."],
             ["Import settings says that is a signature pack", "You picked fieldwatch-signatures JSON.", "Use Import signatures for the catalog. Settings backup is Export settings / Import settings (fieldwatch-settings)."],
             ["Import settings did not bring my custom signatures", "Settings pack does not include the catalog.", "Expected. Import signatures for rows you added or edited. Import settings for switches, presets, and named radios."],
@@ -6892,9 +7242,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.37 (versionCode 47), field build of 29 October 2026"],
-                ["Document version", "1.1.37"],
-                ["Document date", "29 October 2026"],
+                ["Software version", "1.1.38 (versionCode 48), field build of 2 November 2026"],
+                ["Document version", "1.1.38"],
+                ["Document date", "2 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "Unclassified. Operationally sensitive if filled with site logs."],

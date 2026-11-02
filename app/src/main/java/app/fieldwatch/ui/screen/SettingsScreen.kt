@@ -111,6 +111,7 @@ fun SettingsScreen(
     state: FieldwatchUi,
     vm: FieldwatchViewModel,
     onRadioBookmarks: () -> Unit,
+    onSpokenNames: () -> Unit,
     onScanStatus: () -> Unit,
     onShowLiveTour: () -> Unit = {},
 ) {
@@ -141,11 +142,16 @@ fun SettingsScreen(
     val gnssRecordings by vm.gnssRecordings.collectAsStateWithLifecycle()
     val gnssReady = gnssProfile != null
     var topicName by rememberSaveable { mutableStateOf<String?>(null) }
+    var closeCellPlace by remember { mutableStateOf<(() -> Unit)?>(null) }
     var mapMenu by rememberSaveable { mutableStateOf(false) }
     var positionMenu by rememberSaveable { mutableStateOf(false) }
     var confirmClearMaps by rememberSaveable { mutableStateOf(false) }
     val topic = topicName?.let { name -> SettingsTopic.entries.firstOrNull { it.name == name } }
-    BackHandler(enabled = topic != null) { topicName = null }
+    val leaveTopic = {
+        val close = closeCellPlace
+        if (close != null) close() else topicName = null
+    }
+    BackHandler(enabled = topic != null, onBack = leaveTopic)
     val scroll = rememberScrollState()
     LaunchedEffect(topicName) { scroll.scrollTo(0) }
     LaunchedEffect(settings.onlineLookup) {
@@ -158,7 +164,7 @@ fun SettingsScreen(
                 title = topic?.title() ?: LanguageText.text("tab.settings"),
                 navigationIcon = {
                     if (topic != null) {
-                        IconButton(onClick = { topicName = null }) {
+                        IconButton(onClick = leaveTopic) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, LanguageText.text("chrome.back"))
                         }
                     }
@@ -166,7 +172,18 @@ fun SettingsScreen(
             )
         },
     ) { pad ->
-        Column(
+        if (topic == SettingsTopic.CELL) {
+            CellWatchPage(
+                vm,
+                settings,
+                state.phoneLat,
+                state.phoneLon,
+                onPlaceBack = { closeCellPlace = it },
+                modifier = Modifier
+                    .padding(pad)
+                    .fillMaxSize(),
+            )
+        } else Column(
             Modifier
                 .padding(pad)
                 .fillMaxSize()
@@ -181,9 +198,7 @@ fun SettingsScreen(
                     takInstallTag = state.takInstallTag,
                     gnssReady = gnssReady,
                     languageName = language.snap.activeName,
-                    namedRadioCount = state.watchlist.count { it.deviceKey != null },
                     onOpen = { topicName = it.name },
-                    onNamedRadios = onRadioBookmarks,
                 )
             }
             if (topic == SettingsTopic.APPEARANCE) {
@@ -382,7 +397,7 @@ fun SettingsScreen(
             }
 
             if (topic == SettingsTopic.WATCHLIST) {
-            SectionCard(LanguageText.text("settings.topic.watchlist"), showTitle = false) {
+            SectionCard(LanguageText.text("settings.topic.alerts"), showTitle = false) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(LanguageText.text("ui.watchlist.alerts"), Modifier.weight(1f))
                 FieldwatchSwitch(settings.alertsEnabled, { on -> vm.updateSettings { it.copy(alertsEnabled = on) } })
@@ -434,6 +449,30 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            }
+            SettingsTopicRow(
+                LanguageText.text("settings.named.radios"),
+                namedRadiosValue(state.watchlist.count { it.deviceKey != null }),
+                onRadioBookmarks,
+            )
+            Text(
+                LanguageText.text("alerts.named.note"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 14.dp),
+            )
+            SettingsTopicRow(
+                LanguageText.text("settings.spoken.names"),
+                spokenNamesValue(settings),
+                onSpokenNames,
+            )
+            Text(
+                LanguageText.text("alerts.signature.note"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 14.dp),
+            )
+            SectionCard(LanguageText.text("settings.topic.alerts"), showTitle = false) {
             FieldwatchActionButton(
                 onClick = vm::testWatchBeep,
                 modifier = Modifier.fillMaxWidth(),
@@ -851,7 +890,7 @@ fun SettingsScreen(
                     mapOf(
                         "beep" to LanguageText.text("ui.beep.label"),
                         "voice" to LanguageText.text("ui.voice.label"),
-                        "watchlist" to LanguageText.text("settings.topic.watchlist"),
+                        "watchlist" to LanguageText.text("settings.topic.alerts"),
                     ),
                 ),
             )
@@ -1365,9 +1404,10 @@ private fun SensorAlertRow(
 private enum class SettingsTopic(val titleKey: String) {
     APPEARANCE("settings.topic.appearance"),
     SCANNING("settings.topic.scanning"),
-    WATCHLIST("settings.topic.watchlist"),
+    WATCHLIST("settings.topic.alerts"),
     LOCATION("settings.topic.location.maps"),
     GNSS("settings.topic.gnss"),
+    CELL("settings.topic.cell"),
     TRUSTED("settings.topic.trusted"),
     TAK("settings.topic.tak"),
     LOGGING("settings.topic.logging"),
@@ -1386,9 +1426,7 @@ private fun SettingsTopicList(
     takInstallTag: String,
     gnssReady: Boolean,
     languageName: String,
-    namedRadioCount: Int,
     onOpen: (SettingsTopic) -> Unit,
-    onNamedRadios: () -> Unit,
 ) {
     val scanLabel = when (settings.intensity) {
         ScanIntensity.SAVER -> LanguageText.text("ui.battery.saver")
@@ -1396,21 +1434,21 @@ private fun SettingsTopicList(
         ScanIntensity.PERFORMANCE -> LanguageText.text("ui.high.performance")
     }
     fun onOff(on: Boolean) = if (on) "on" else "off"
-    val rows: List<Pair<SettingsTopic?, String>> = listOf(
+    val rows: List<Pair<SettingsTopic, String>> = listOf(
         SettingsTopic.APPEARANCE to "Night ${onOff(settings.nightMode)} · Privacy ${onOff(settings.demoMode)}",
         SettingsTopic.LANGUAGE to languageName,
         SettingsTopic.SCANNING to scanLabel,
         SettingsTopic.WATCHLIST to "Alerts ${onOff(settings.alertsEnabled)}",
-        null to when (namedRadioCount) {
-            0 -> LanguageText.text("display.none")
-            1 -> LanguageText.text("ui.1.radio")
-            else -> "$namedRadioCount radios"
-        },
         SettingsTopic.LOCATION to "GPS ${onOff(settings.tagLocation)} · Places ${onOff(settings.placeWatch)}",
         SettingsTopic.GNSS to when {
             !gnssReady -> LanguageText.text("ui.needs.calibration")
             settings.gnssMonitor -> LanguageText.text("ui.on.label")
             else -> LanguageText.text("ui.off.label")
+        },
+        SettingsTopic.CELL to if (settings.cellWatch) {
+            LanguageText.text("ui.on.label")
+        } else {
+            LanguageText.text("ui.off.label")
         },
         SettingsTopic.TRUSTED to if (settings.trustedWatch) {
             LanguageText.text("ui.on.label")
@@ -1427,10 +1465,31 @@ private fun SettingsTopicList(
         SettingsTopic.BACKUP to LanguageText.text("ui.export.import"),
     )
     rows.forEach { (item, value) ->
-        if (item == null) {
-            SettingsTopicRow(LanguageText.text("settings.named.radios"), value, onNamedRadios)
-        } else {
-            SettingsTopicRow(item.title(), value) { onOpen(item) }
+        SettingsTopicRow(item.title(), value) { onOpen(item) }
+    }
+}
+
+@Composable
+private fun namedRadiosValue(count: Int): String = when (count) {
+    0 -> LanguageText.text("display.none")
+    1 -> LanguageText.text("ui.1.radio")
+    else -> "$count radios"
+}
+
+@Composable
+private fun spokenNamesValue(settings: AppSettings): String {
+    val count = settings.spokenNames.size
+    return buildString {
+        append(
+            when (count) {
+                0 -> LanguageText.text("display.none")
+                1 -> LanguageText.text("spoken.one")
+                else -> LanguageText.text("spoken.count", mapOf("n" to count.toString()))
+            },
+        )
+        if (count > 0 && settings.alertVoiceWhat == AlertVoiceWhat.CLASS) {
+            append(" · ")
+            append(LanguageText.text("spoken.held"))
         }
     }
 }

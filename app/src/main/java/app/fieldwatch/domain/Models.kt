@@ -165,9 +165,16 @@ fun spokenWatchPhrase(
     fleets: List<Fleet>,
     what: AlertVoiceWhat,
     target: WatchTarget? = null,
+    spokenNames: List<SpokenName> = emptyList(),
+    watchlist: List<WatchTarget> = emptyList(),
 ): String {
-    if (target?.deviceKey != null) {
-        val named = target.label.trim().takeIf {
+    val individual = watchlist.firstOrNull { row ->
+        row.deviceKey == device.key &&
+            row.label.trim().isNotEmpty() &&
+            !row.label.trim().equals(device.mac, ignoreCase = true)
+    } ?: target?.takeIf { it.deviceKey != null }
+    if (individual?.deviceKey != null) {
+        val named = individual.label.trim().takeIf {
             it.isNotEmpty() && !it.equals(device.mac, ignoreCase = true)
         } ?: device.listTitle().takeIf {
             it.isNotBlank() && !it.equals(device.mac, ignoreCase = true)
@@ -178,7 +185,11 @@ fun spokenWatchPhrase(
     val id = preferred ?: device.fleetIds.firstOrNull() ?: return "unmatched"
     val fleet = fleets.firstOrNull { it.id == id } ?: return "unmatched"
     val cls = fleet.kind.speechLabel()
-    val sig = fleet.speechName()
+    val sig = if (what == AlertVoiceWhat.CLASS) {
+        fleet.speechName()
+    } else {
+        SpokenNames.words(spokenNames, id, device.name, device.mac) ?: fleet.speechName()
+    }
     return when (what) {
         AlertVoiceWhat.CLASS -> cls
         AlertVoiceWhat.SIGNATURE -> sig
@@ -1177,6 +1188,52 @@ object MapFrame {
     }
 }
 
+/**
+ * Camera marks on Show live path and Reports → Path. Hunt is unchanged.
+ * An older file that saved the path-only choice reads as on.
+ */
+@Serializable(with = MapCameraMarksSerializer::class)
+enum class MapCameraMarks {
+    /** Every camera in this picture. */
+    VIEW,
+
+    /** No camera marks. */
+    OFF,
+    ;
+
+    /** On, then off. */
+    fun next(): MapCameraMarks = when (this) {
+        VIEW -> OFF
+        OFF -> VIEW
+    }
+
+    fun descriptionKey(): String = when (this) {
+        VIEW -> "map.cameras.view"
+        OFF -> "map.cameras.off"
+    }
+
+    companion object {
+        /** A tap already showed [pending]. The saved value replaces it once the file catches up. */
+        fun onScreen(pending: MapCameraMarks?, saved: MapCameraMarks): MapCameraMarks =
+            if (pending != null && pending != saved) pending else saved
+    }
+}
+
+object MapCameraMarksSerializer : KSerializer<MapCameraMarks> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("MapCameraMarks", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: MapCameraMarks) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): MapCameraMarks = when (decoder.decodeString()) {
+        "OFF" -> MapCameraMarks.OFF
+        "VIEW", "PATH" -> MapCameraMarks.VIEW
+        else -> MapCameraMarks.VIEW
+    }
+}
+
 @Serializable
 data class AppSettings(
     /** Kept in settings packs. The UI is always dark; Night mode is the red overlay. */
@@ -1193,6 +1250,11 @@ data class AppSettings(
     val alertVoice: Boolean = true,
     /** Class (Live glyph), signature name, or both. Only used while [alertVoice] is on. */
     val alertVoiceWhat: AlertVoiceWhat = AlertVoiceWhat.BOTH,
+    /**
+     * Spoken stand-in for a signature plus one advertised network name.
+     * Missing JSON is none. Export settings keeps the list. The catalog does not.
+     */
+    val spokenNames: List<SpokenName> = emptyList(),
     val snapToBeep: Boolean = true,
     val alertShade: Boolean = false,
     val tagLocation: Boolean = true,
@@ -1238,6 +1300,11 @@ data class AppSettings(
      * north-up or travel, zoomed out.
      */
     val mapFrame: Int = -1,
+    /**
+     * Camera marks on Show live path and Reports → Path.
+     * Missing JSON shows every camera in the picture.
+     */
+    val mapCameras: MapCameraMarks = MapCameraMarks.VIEW,
     /** Kept so an older file still decodes. The double-tap no longer reads it. */
     val mapHome: Int = MapFrame.NORTH,
     val viewMode: ViewMode = ViewMode.BY_CLASS,
@@ -1377,7 +1444,7 @@ data class AppSettings(
     val trustedFloorDbm: Int = -85,
     /** Learn new access points during the window. Missing JSON is on. */
     val trustedLearn: Boolean = true,
-    /** Days after the name was trusted. Missing JSON is 3. */
+    /** Days after the name was trusted. 0 is 1 hour. Missing JSON is 3 days. */
     val trustedLearnDays: Int = 3,
     /** Beep for this feature. Not the watchlist beep. */
     val trustedBeep: Boolean = true,
@@ -1391,6 +1458,23 @@ data class AppSettings(
     val trustedTak: Boolean = false,
     /** How long that pin stays. Missing JSON is 1 hour. */
     val trustedTakHold: TakGnssHold = TakGnssHold.HOUR,
+    /** Watch this phone's serving cell. Off until chosen. Places are a separate file. */
+    val cellWatch: Boolean = false,
+    /** Warn when a learned place is still and the serving cell is new. */
+    val cellWarnNew: Boolean = true,
+    /** Warn when a 4G or 5G place drops to 2G or 3G. */
+    val cellWarnDrop: Boolean = true,
+    /**
+     * Days after a place is opened. 0 is none: the first visit is the only quiet one.
+     * Missing JSON is 3, the same start trusted networks use.
+     */
+    val cellLearnDays: Int = 3,
+    /** Beep for this feature. Not the watchlist beep. */
+    val cellBeep: Boolean = true,
+    /** Speak a cell warning. Not the watchlist voice. */
+    val cellVoice: Boolean = true,
+    /** System notification for this feature. Off until chosen. */
+    val cellShade: Boolean = false,
 )
 
 const val DISCLAIMER_REV = 3

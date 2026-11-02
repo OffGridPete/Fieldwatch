@@ -54,7 +54,7 @@ A locally administered address (the local bit) has no vendor. It is stored as th
 
 ## Learning
 
-**Learn new access points** defaults on. The learning window defaults to 3 days from the moment that name was trusted, and it can be changed. While the window is open, and learning is on:
+**Learn new access points** defaults on. The learning window defaults to 3 days from the moment that name was trusted. The choices are 1 hour, 1 day, 3 days, 7 days, and 14 days. 1 hour is stored as 0. The name row says Learning has 2 days left, or the hours or minutes that remain. The choices do not list the names. When the window is over, the row says Learning has ended. The same lines are in all 26 bundled languages. Turning the switch off hides the lines. Pause learning does not stop the clock. While the window is open, and learning is on:
 
 - A new BSSID with the same name, a security profile already in the set, and a good fix near a usual place is added silently.
 - A sibling is the easy case: same OUI, same security, only the last bytes differ, near a usual place. A locally administered address is not a sibling.

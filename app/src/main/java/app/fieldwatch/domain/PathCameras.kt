@@ -31,6 +31,17 @@ object PathCameras {
         val cameras: List<FlockCamera> = emptyList(),
     )
 
+    /**
+     * Cameras already saved on a sit, plus the step the fold has finished.
+     * [committed] is what the next fold keeps. [cameras] is that list plus
+     * whatever is beside the current tip, which is what the report shows.
+     */
+    data class Fold(
+        val kept: GpsSample?,
+        val committed: List<FlockCamera>,
+        val cameras: List<FlockCamera>,
+    )
+
     fun tally(
         path: List<GpsSample>,
         plates: Boolean,
@@ -40,50 +51,63 @@ object PathCameras {
         val kept = keptPoints(path)
         if (kept.isEmpty()) return Tally(plates, others, pathReady = false, counts = emptyList())
         val best = HashMap<Seen, Hit>()
-        for (i in kept.indices) {
-            val here = kept[i]
-            val prev = if (i == 0) here else kept[i - 1]
-            val found = near(here.lat, here.lon, searchM)
-            for (cam in found) {
-                val row = rowOf(cam) ?: continue
-                val approach = approach(prev.lat, prev.lon, here.lat, here.lon, cam.lat, cam.lon)
-                if (approach.meters > FlockApproach.PATH_M) continue
-                val rank = if (cam.facings.isEmpty()) {
-                    NEAR
-                } else if (looking(cam, approach.lat, approach.lon)) {
-                    FACING
-                } else {
-                    AWAY
-                }
-                val id = Seen(cam.key, row)
-                val old = best[id]
-                if (old == null || rank > old.rank) best[id] = Hit(rank, cam)
+        absorb(kept, 0, kept.lastIndex, best, near)
+        return finish(plates, others, best)
+    }
+
+    /**
+     * One more slice of a sit path. [points] starts at [anchor] when the sit
+     * already has one, and is the whole path when [anchor] is null.
+     * A camera the path already came near stays. The moving tip is counted
+     * for the report and is not frozen, so the saved list matches [tally]
+     * of the same points.
+     */
+    fun extend(
+        anchor: GpsSample?,
+        points: List<GpsSample>,
+        committed: List<FlockCamera>,
+        near: (Double, Double, Double) -> List<FlockCamera>,
+    ): Fold {
+        val chain = when {
+            anchor == null -> points
+            points.isEmpty() -> return Fold(anchor, committed.sortedBy { it.key }, committed.sortedBy { it.key })
+            sameFix(points.first(), anchor) -> points
+            else -> ArrayList<GpsSample>(points.size + 1).apply {
+                add(anchor)
+                addAll(points)
             }
         }
-        val facing = IntArray(Row.entries.size)
-        val onPath = IntArray(Row.entries.size)
-        val cameras = ArrayList<FlockCamera>()
-        for ((id, hit) in best) {
-            when (hit.rank) {
-                FACING -> {
-                    facing[id.row.ordinal]++
-                    cameras.add(hit.camera)
-                }
-                NEAR -> {
-                    onPath[id.row.ordinal]++
-                    cameras.add(hit.camera)
-                }
-            }
+        val kept = keptPoints(chain)
+        if (kept.isEmpty()) {
+            val sorted = committed.sortedBy { it.key }
+            return Fold(anchor, sorted, sorted)
         }
-        cameras.sortBy { it.key }
-        val counts = ArrayList<Count>()
-        for (row in Row.entries) {
-            val face = facing[row.ordinal]
-            val nearCount = onPath[row.ordinal]
-            if (face == 0 && nearCount == 0) continue
-            counts.add(Count(row.labelKey, face, nearCount))
-        }
-        return Tally(plates, others, pathReady = true, counts, cameras)
+        val frozenLast = lastFrozenIndex(kept)
+        val best = HashMap<Seen, Hit>()
+        seed(best, committed)
+        val searchFrom = if (anchor == null) 0 else 1
+        if (searchFrom <= frozenLast) absorb(kept, searchFrom, frozenLast, best, near)
+        val frozen = camerasOf(best)
+        val show = HashMap(best)
+        if (frozenLast < kept.lastIndex) absorb(kept, kept.lastIndex, kept.lastIndex, show, near)
+        return Fold(kept[frozenLast], frozen, camerasOf(show))
+    }
+
+    /**
+     * Counts for a list the sit already saved. Does not search the camera files.
+     * No stored direction is on the path. A stored direction that was saved
+     * was facing the path. Gunshot detectors are left out.
+     */
+    fun fromSaved(
+        saved: List<FlockCamera>,
+        plates: Boolean,
+        others: Boolean,
+        pathReady: Boolean,
+    ): Tally {
+        if (!pathReady) return Tally(plates, others, pathReady = false, counts = emptyList())
+        val best = HashMap<Seen, Hit>()
+        seed(best, saved)
+        return finish(plates, others, best)
     }
 
     /**
@@ -158,6 +182,18 @@ object PathCameras {
         return tally.copy(plates = plates, others = others, counts = counts, cameras = cameras)
     }
 
+    /** Marks for the path maps. A layer switch that is off leaves that list out. Gunshot detectors stay off. */
+    fun forMap(cameras: List<FlockCamera>, platesOn: Boolean, othersOn: Boolean): List<FlockCamera> {
+        if (!platesOn && !othersOn) return emptyList()
+        return cameras.filter { cam ->
+            when (cam.kind) {
+                SensorKind.PLATE -> platesOn
+                SensorKind.GUNSHOT -> false
+                else -> othersOn
+            }
+        }
+    }
+
     /**
      * Sit report and the path printed with it.
      * A layer switch that is off leaves that list out of the counts and the marks.
@@ -188,6 +224,91 @@ object PathCameras {
     private data class Seen(val key: Long, val row: Row)
 
     private data class Hit(val rank: Int, val camera: FlockCamera)
+
+    private fun seed(best: HashMap<Seen, Hit>, cameras: List<FlockCamera>) {
+        for (cam in cameras) {
+            val row = rowOf(cam) ?: continue
+            val rank = if (cam.facings.isEmpty()) NEAR else FACING
+            val id = Seen(cam.key, row)
+            val old = best[id]
+            if (old == null || rank > old.rank) best[id] = Hit(rank, cam)
+        }
+    }
+
+    private fun absorb(
+        kept: List<GpsSample>,
+        from: Int,
+        to: Int,
+        best: HashMap<Seen, Hit>,
+        near: (Double, Double, Double) -> List<FlockCamera>,
+    ) {
+        for (i in from..to) {
+            val here = kept[i]
+            val prev = if (i == 0) here else kept[i - 1]
+            val found = near(here.lat, here.lon, searchM)
+            for (cam in found) {
+                val row = rowOf(cam) ?: continue
+                val approach = approach(prev.lat, prev.lon, here.lat, here.lon, cam.lat, cam.lon)
+                if (approach.meters > FlockApproach.PATH_M) continue
+                val rank = if (cam.facings.isEmpty()) {
+                    NEAR
+                } else if (looking(cam, approach.lat, approach.lon)) {
+                    FACING
+                } else {
+                    AWAY
+                }
+                val id = Seen(cam.key, row)
+                val old = best[id]
+                if (old == null || rank > old.rank) best[id] = Hit(rank, cam)
+            }
+        }
+    }
+
+    private fun finish(plates: Boolean, others: Boolean, best: Map<Seen, Hit>): Tally {
+        val facing = IntArray(Row.entries.size)
+        val onPath = IntArray(Row.entries.size)
+        for ((id, hit) in best) {
+            when (hit.rank) {
+                FACING -> facing[id.row.ordinal]++
+                NEAR -> onPath[id.row.ordinal]++
+            }
+        }
+        return Tally(plates, others, pathReady = true, countsOf(facing, onPath), camerasOf(best))
+    }
+
+    private fun countsOf(facing: IntArray, onPath: IntArray): List<Count> {
+        val counts = ArrayList<Count>()
+        for (row in Row.entries) {
+            val face = facing[row.ordinal]
+            val nearCount = onPath[row.ordinal]
+            if (face == 0 && nearCount == 0) continue
+            counts.add(Count(row.labelKey, face, nearCount))
+        }
+        return counts
+    }
+
+    private fun camerasOf(best: Map<Seen, Hit>): List<FlockCamera> {
+        val cameras = ArrayList<FlockCamera>()
+        for (hit in best.values) {
+            if (hit.rank == FACING || hit.rank == NEAR) cameras.add(hit.camera)
+        }
+        cameras.sortBy { it.key }
+        return cameras
+    }
+
+    /** Last kept point that is a full step, not only the moving end. */
+    private fun lastFrozenIndex(kept: List<GpsSample>): Int {
+        var frozen = 0
+        for (i in 1 until kept.size) {
+            if (Geo.meters(kept[frozen].lat, kept[frozen].lon, kept[i].lat, kept[i].lon) >= STEP_M) {
+                frozen = i
+            }
+        }
+        return frozen
+    }
+
+    private fun sameFix(a: GpsSample, b: GpsSample): Boolean =
+        a.at == b.at && a.lat == b.lat && a.lon == b.lon
 
     private enum class Row(val labelKey: String) {
         FLOCK("ui.cameras.kind.flock"),

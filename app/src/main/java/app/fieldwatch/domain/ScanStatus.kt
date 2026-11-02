@@ -114,6 +114,7 @@ object ScanStatus {
         radiosOnAir: Int = 0,
         gnssRows: List<Pair<String, String>> = emptyList(),
         tak: TakDiagFacts = TakDiagFacts(),
+        cellRows: List<Pair<String, String>> = emptyList(),
     ): ScanStatusReport {
         val rows = listOf(
             LanguageText.text("ui.app.label") to "${phone.versionName} (${phone.versionCode})",
@@ -133,7 +134,7 @@ object ScanStatus {
             LanguageText.text("ui.location.permission") to if (phone.locationPermission) LanguageText.text("diag.granted") else LanguageText.text("diag.missing"),
             LanguageText.text("ui.gps.fix") to ageLabel(phone.gpsFixAgeMs),
             LanguageText.text("tab.filters") to filtersLabel(phone),
-        ) + takRows(tak) + gnssRows
+        ) + takRows(tak) + gnssRows + cellRows
         val verdict = verdict(radio, phone, radiosOnAir)
         val checks = checks(radio, phone, radiosOnAir)
         val blocked = isBlocked(radio, phone.locationOn, phone.locationPermission)

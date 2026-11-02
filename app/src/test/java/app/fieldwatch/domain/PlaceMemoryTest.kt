@@ -219,6 +219,35 @@ class PlaceMemoryTest {
     }
 
     @Test
+    fun placeLinesStayAfterTheAdvertisementIsGone() {
+        val file = File.createTempFile("places", ".json")
+        try {
+            val places = PlaceStore(file)
+            val fleets = listOf(Fleet(id = "tile", name = "Tile", kind = SignatureClass.FINDER))
+            val start = System.currentTimeMillis() - 40 * MINUTE
+            val device = tile().copy(latitude = home.first, longitude = home.second)
+            places.hear(listOf(device.copy(lastSeen = start)), fleets, emptyList(), null, "Home")
+            places.hear(listOf(device.copy(lastSeen = start + 1_000L)), fleets, emptyList(), null, "Home")
+            val away = device.copy(latitude = store.first, longitude = store.second)
+            val later = start + 20 * MINUTE
+            places.hear(listOf(away.copy(lastSeen = later)), fleets, emptyList(), null, "Store")
+            places.hear(listOf(away.copy(lastSeen = later + 1_000L)), fleets, emptyList(), null, "Store")
+            val bare = device.copy(
+                name = "",
+                fleetIds = emptySet(),
+                lastSeen = later + 1_000L,
+            )
+            val lines = places.linesFor(bare, emptyList(), emptySet(), System.currentTimeMillis())
+            assertTrue(lines.any { it.startsWith("Seen at ") })
+            val other = bare.copy(key = "BLE:AA:BB:CC:DD:EE:FF", mac = "AA:BB:CC:DD:EE:FF")
+            assertTrue(places.linesFor(other, emptyList(), emptySet(), System.currentTimeMillis()).isEmpty())
+            assertTrue(places.linesFor(bare, emptyList(), setOf(bare.key), System.currentTimeMillis()).isEmpty())
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun storeRoundTripKeepsTheRecord() {
         val file = File.createTempFile("places", ".json")
         try {
@@ -237,6 +266,7 @@ class PlaceMemoryTest {
             loaded.load()
             assertEquals(store.snapshot().single().id, loaded.snapshot().single().id)
             assertEquals(2, loaded.snapshot().single().places.single().count)
+            assertEquals("Tile", loaded.snapshot().single().label)
         } finally {
             file.delete()
         }

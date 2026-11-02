@@ -130,6 +130,130 @@ object Geo {
     }
 
     /**
+     * Width of a path for the number on the path screen.
+     * A short path uses [spanM]. A long drive uses the farthest of the
+     * north, south, east, and west fixes, which is the same span for a road.
+     */
+    fun reachM(samples: List<GpsSample>): Double {
+        if (samples.size < 2) return 0.0
+        if (samples.size <= REACH_EXACT) return spanM(samples)
+        var south = samples[0]
+        var north = samples[0]
+        var west = samples[0]
+        var east = samples[0]
+        for (sample in samples) {
+            if (sample.lat < south.lat) south = sample
+            if (sample.lat > north.lat) north = sample
+            if (sample.lon < west.lon) west = sample
+            if (sample.lon > east.lon) east = sample
+        }
+        val ends = arrayOf(south, north, west, east)
+        var best = 0.0
+        for (end in ends) {
+            val far = farthest(samples, end)
+            val span = meters(end.lat, end.lon, far.lat, far.lon)
+            if (span > best) best = span
+            val far2 = farthest(samples, far)
+            val span2 = meters(far.lat, far.lon, far2.lat, far2.lon)
+            if (span2 > best) best = span2
+        }
+        return best
+    }
+
+    private fun farthest(samples: List<GpsSample>, from: GpsSample): GpsSample {
+        var best = from
+        var bestM = 0.0
+        for (sample in samples) {
+            val span = meters(from.lat, from.lon, sample.lat, sample.lon)
+            if (span > bestM) {
+                bestM = span
+                best = sample
+            }
+        }
+        return best
+    }
+
+    /**
+     * True when some pair is at least [limitM] apart.
+     * A drive stops at the first far pair. A path still inside one place is one pass.
+     */
+    fun widerThan(samples: List<GpsSample>, limitM: Double): Boolean {
+        val n = samples.size
+        if (n < 2 || limitM <= 0.0 || !limitM.isFinite()) return false
+        var minLat = samples[0].lat
+        var maxLat = samples[0].lat
+        var minLon = samples[0].lon
+        var maxLon = samples[0].lon
+        var south = 0
+        var north = 0
+        var west = 0
+        var east = 0
+        for (i in 1 until n) {
+            val s = samples[i]
+            var grew = false
+            if (s.lat < minLat) {
+                minLat = s.lat
+                south = i
+                grew = true
+            } else if (s.lat > maxLat) {
+                maxLat = s.lat
+                north = i
+                grew = true
+            }
+            if (s.lon < minLon) {
+                minLon = s.lon
+                west = i
+                grew = true
+            } else if (s.lon > maxLon) {
+                maxLon = s.lon
+                east = i
+                grew = true
+            }
+            if (grew && extremePairAtLeast(samples, south, north, west, east, limitM)) return true
+        }
+        val corner = maxOf(
+            meters(minLat, minLon, maxLat, maxLon),
+            meters(minLat, maxLon, maxLat, minLon),
+        )
+        if (corner < limitM) return false
+        return spanM(samples) >= limitM
+    }
+
+    /** Pairs that include a point at or after [fromIndex]. Earlier points were already inside [limitM]. */
+    fun widerThanNew(samples: List<GpsSample>, fromIndex: Int, limitM: Double): Boolean {
+        if (samples.size < 2 || limitM <= 0.0 || !limitM.isFinite()) return false
+        val start = fromIndex.coerceIn(0, samples.size)
+        if (start <= 1) return widerThan(samples, limitM)
+        for (i in start until samples.size) {
+            val a = samples[i]
+            for (j in 0 until i) {
+                if (meters(a.lat, a.lon, samples[j].lat, samples[j].lon) >= limitM) return true
+            }
+        }
+        return false
+    }
+
+    private fun extremePairAtLeast(
+        samples: List<GpsSample>,
+        south: Int,
+        north: Int,
+        west: Int,
+        east: Int,
+        limitM: Double,
+    ): Boolean {
+        val idx = intArrayOf(south, north, west, east)
+        for (i in 0 until 3) {
+            for (j in i + 1 until 4) {
+                if (idx[i] == idx[j]) continue
+                val p = samples[idx[i]]
+                val q = samples[idx[j]]
+                if (meters(p.lat, p.lon, q.lat, q.lon) >= limitM) return true
+            }
+        }
+        return false
+    }
+
+    /**
      * One stretch of the operator path: a sit (clustered within [stayM]) or a
      * hop between sits. Coordinates are the phone at hear-time.
      */
@@ -510,6 +634,8 @@ object Geo {
      * and out of one.
      */
     const val DRIVE_STEP_M = 4.0
+    /** At or under this many fixes, [reachM] is the exact pair distance. */
+    private const val REACH_EXACT = 512
     const val DRIVE_MAX_ACCURACY_M = 25f
     const val TRACK_CAP = 16_000
 

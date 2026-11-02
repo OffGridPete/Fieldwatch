@@ -18,6 +18,7 @@ import app.fieldwatch.domain.AircraftTrail
 import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.MapBasemap
 import app.fieldwatch.domain.MapOverlay
+import app.fieldwatch.domain.MapCameraMarks
 import app.fieldwatch.domain.MapFrame
 import app.fieldwatch.domain.MapLookAhead
 import app.fieldwatch.domain.MapKey
@@ -72,6 +73,7 @@ import app.fieldwatch.domain.HuntPlain
 import app.fieldwatch.domain.FamilyVerdict
 import app.fieldwatch.domain.LogRadio
 import app.fieldwatch.domain.RadioBookmarks
+import app.fieldwatch.domain.SpokenNames
 import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.Rssi
 import app.fieldwatch.domain.RssiSample
@@ -86,6 +88,7 @@ import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
 import app.fieldwatch.domain.SettingsExchange
 import app.fieldwatch.domain.SettingsPack
+import app.fieldwatch.domain.CellBook
 import app.fieldwatch.domain.TrustedBook
 import app.fieldwatch.domain.TrustedNets
 import app.fieldwatch.domain.TwinHear
@@ -101,6 +104,7 @@ import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.PairingFlood
 import app.fieldwatch.domain.PlaceMemory
+import app.fieldwatch.domain.PlaceReport
 import app.fieldwatch.domain.ListSort
 import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
@@ -282,6 +286,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     /** Zoom or compass tap. Shown at once. The settings file catches up after. */
     private val _shownMapFrame = MutableStateFlow<Int?>(null)
     val shownMapFrame: StateFlow<Int?> = _shownMapFrame.asStateFlow()
+    private val _shownMapCameras = MutableStateFlow<MapCameraMarks?>(null)
+    val shownMapCameras: StateFlow<MapCameraMarks?> = _shownMapCameras.asStateFlow()
     private val _livePathZoomIn = MutableStateFlow(false)
     val livePathZoomIn: StateFlow<Boolean> = _livePathZoomIn
     private val liveFlight = MapFlight()
@@ -379,6 +385,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun dismissGnss() {
         app.gnss.dismiss()
+        app.announceCell()
     }
 
     val trustedNotice = app.trusted.notice
@@ -391,21 +398,68 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun dismissTrusted(ssid: String, bssid: String) {
         app.trusted.dismiss(ssid, bssid, System.currentTimeMillis())
         app.alerter.clearTrustedNote()
+        app.announceCell()
     }
 
     fun learnTrusted(ssid: String, bssid: String) {
         app.trusted.learnAp(ssid, bssid, System.currentTimeMillis())
         app.alerter.clearTrustedNote()
+        app.announceCell()
     }
 
     fun ignoreTrusted(ssid: String, bssid: String) {
         app.trusted.ignore(ssid, bssid)
         app.alerter.clearTrustedNote()
+        app.announceCell()
     }
 
     fun rememberTrusted(ssid: String, bssid: String) {
         app.trusted.remember(ssid, bssid, System.currentTimeMillis())
         app.alerter.clearTrustedNote()
+        app.announceCell()
+    }
+
+    val cellBook = app.cells.bookFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, CellBook())
+
+    fun learnCell(episodeId: Long) {
+        app.cells.learn(episodeId, System.currentTimeMillis())
+        app.announceCell()
+    }
+
+    fun dismissCell(episodeId: Long) {
+        app.cells.dismiss(episodeId, System.currentTimeMillis())
+        app.announceCell()
+    }
+
+    fun removeCell(placeId: String, key: String) = app.cells.removeCell(placeId, key)
+
+    fun forgetCellPlace(placeId: String) {
+        app.cells.forget(placeId, System.currentTimeMillis())
+        app.announceCell()
+    }
+
+    private var cellNamesJob: Job? = null
+
+    /** Street names for cell places. One pass while the list is open. A saved name is kept. */
+    fun refreshCellPlaceNames() {
+        if (cellNamesJob?.isActive == true) return
+        cellNamesJob = viewModelScope.launch {
+            val tried = HashSet<String>()
+            while (isActive) {
+                val settings = app.config.settings
+                if (!settings.onlineLookup || settings.demoMode) return@launch
+                if (!PlaceLookup.online(app)) return@launch
+                val missing = app.cells.bookFlow.value.places
+                    .filter { it.name.isBlank() && Geo.cellKey(it.lat, it.lon) !in tried }
+                    .distinctBy { Geo.cellKey(it.lat, it.lon) }
+                    .take(8)
+                if (missing.isEmpty()) return@launch
+                val found = PlaceLookup.namesAt(app, missing.map { it.lat to it.lon })
+                missing.forEach { tried += Geo.cellKey(it.lat, it.lon) }
+                if (found.isNotEmpty()) app.cells.applyNames(found)
+            }
+        }
     }
 
     fun trustNetwork(ssid: String, picks: List<TwinHear>) {
@@ -416,6 +470,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun forgetTrusted(ssid: String) {
         app.trusted.forget(ssid)
         app.alerter.clearTrustedNote()
+        app.announceCell()
     }
 
     fun renameTrusted(ssid: String, label: String) = app.trusted.rename(ssid, label)
@@ -766,14 +821,6 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         runCatching { app.unregisterReceiver(locationReceiver) }
         super.onCleared()
     }
-
-    /**
-     * Startup refreshes the path on another thread. A lock created later in this
-     * class is still null, and synchronizing on it closes the app.
-     */
-    private val cameraCacheLock = Any()
-    private var cameraCacheStamp = Long.MIN_VALUE
-    @Volatile private var cameraCache: PathCameras.Report? = null
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -1142,6 +1189,19 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 val on = !config.settings.showLivePath
                 if (on) armLivePath()
                 config.copy(settings = config.settings.copy(showLivePath = on))
+            }
+        }
+    }
+
+    /** Camera control under the compass. On, then off. */
+    fun cycleMapCameras() {
+        val settings = app.config.settings
+        val current = _shownMapCameras.value ?: settings.mapCameras
+        val next = current.next()
+        _shownMapCameras.value = next
+        viewModelScope.launch {
+            app.config.update { config ->
+                config.copy(settings = config.settings.copy(mapCameras = next))
             }
         }
     }
@@ -2320,7 +2380,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     decaySec = next.decaySec,
                 )
             }
-            if (next.alertVoice || next.gnssVoice || next.trustedVoice || next.anySensorAlert()) app.alerter.prepareVoice()
+            if (next.alertVoice || next.gnssVoice || next.trustedVoice || next.cellVoice || next.anySensorAlert()) {
+                app.alerter.prepareVoice()
+            }
+            app.announceCell()
             if (layerAlertsChanged(prev, next)) {
                 app.syncFlock(force = prev.flockLayer != next.flockLayer || prev.sensorLayer != next.sensorLayer)
             }
@@ -2578,6 +2641,30 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     /** Fill street names for this radio's places when Online place names is on. */
     fun refreshPlaceStreets(device: Sighting) {
         viewModelScope.launch { streetsForDevice(device) }
+    }
+
+    /** Place records for Reports. Empty when Places is off, so the page does not list a hidden file. */
+    fun placeRecords(): List<PlaceMemory.Record> {
+        if (!app.config.settings.placeWatch) return emptyList()
+        return app.places.snapshot()
+    }
+
+    /**
+     * Street names for the places report. The geocoder names up to eight stops per pass.
+     * Coordinates stay on the row when a street is not ready.
+     */
+    fun refreshPlaceReportStreets() {
+        viewModelScope.launch {
+            val settings = app.config.settings
+            if (!settings.placeWatch || !settings.onlineLookup || settings.demoMode) return@launch
+            val now = System.currentTimeMillis()
+            val points = placeLookupFixes(app.places.snapshot(), now).map { it.lat to it.lon }
+            if (points.isEmpty()) return@launch
+            val missing = points.filter { (lat, lon) -> Geo.cellKey(lat, lon) !in _placeStreets.value }
+            if (missing.isEmpty()) return@launch
+            val found = PlaceLookup.namesAt(app, missing)
+            if (found.isNotEmpty()) _placeStreets.update { it + found }
+        }
     }
 
     private suspend fun streetsForDevice(device: Sighting): Map<String, String> {
@@ -3267,7 +3354,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             policy = next.detectionPolicy(),
             decaySec = next.decaySec,
         )
-        if (next.alertVoice || next.gnssVoice || next.trustedVoice || next.anySensorAlert()) app.alerter.prepareVoice()
+        if (next.alertVoice || next.gnssVoice || next.trustedVoice || next.cellVoice || next.anySensorAlert()) {
+            app.alerter.prepareVoice()
+        }
+        app.announceCell()
         if (layerAlertsChanged(prev, next)) {
             app.syncFlock(force = prev.flockLayer != next.flockLayer || prev.sensorLayer != next.sensorLayer)
         }
@@ -3348,15 +3438,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun refreshSitPath() {
         viewModelScope.launch(Dispatchers.Default) {
-            val cameras = try {
-                withContext(Dispatchers.IO) { cachedCameraReport() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                emptyCameraReport()
-            }
             val model = try {
-                buildSitPath(cameras)
+                buildSitPath()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -3418,7 +3501,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private fun buildSitPath(cameras: PathCameras.Report): SitPathPlot.Model {
+    private fun buildSitPath(): SitPathPlot.Model {
         val now = System.currentTimeMillis()
         val source = app.sits.debriefSource(now)
         val customNames = RadioBookmarks.labels(app.config.watchlist)
@@ -3444,7 +3527,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 else -> null
             }
             pathRadios = source.devices
-            val tally = PathCameras.tally(raw, cameras.plates, cameras.others, cameras.near)
+            val tally = pathCameraTally(source.pathCameras, raw)
             val pictures = AircraftTrail.pictures(
                 source.devices.mapNotNull { device ->
                     AircraftTrail.source(
@@ -3459,7 +3542,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     samples = samples,
                     dots = if (samples.isNotEmpty()) plot.points else emptyList(),
                     lengthM = Geo.pathLengthM(samples),
-                    spanM = Geo.spanM(samples),
+                    spanM = Geo.reachM(samples),
                     title = source.name,
                     emptyHint = empty,
                     live = app.sits.ui.value.open != null,
@@ -3492,14 +3575,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             SitPathPlot.PlotRadios(emptyList())
         }
         val windowPath = app.operatorPathCopy().filter { it.at >= start }
-        val tally = PathCameras.tally(windowPath, cameras.plates, cameras.others, cameras.near)
+        val tally = pathCameraTally(null, windowPath)
         val gnssMarks = app.gnss.marks().filter { it.at >= start || (it.endedAt > 0L && it.endedAt >= start) }
         return AircraftTrail.overlay(
             SitPathPlot.Model(
                 samples = samples,
                 dots = plot.points,
                 lengthM = Geo.pathLengthM(samples),
-                spanM = Geo.spanM(samples),
+                spanM = Geo.reachM(samples),
                 title = LanguageText.text("ui.last.15.minutes"),
                 emptyHint = empty,
                 live = true,
@@ -3522,6 +3605,24 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun openPathRadio(key: String): Boolean {
         val device = pathRadios.firstOrNull { it.key == key } ?: return false
         select(device)
+        return true
+    }
+
+    /** Opens a places-report radio. A radio that has left the live list still opens. */
+    fun openPlaceRadio(deviceKey: String): Boolean {
+        val live = app.devices.devices.value.firstOrNull { it.key == deviceKey }
+        if (live != null) {
+            select(live)
+            return true
+        }
+        val held = app.sits.sighting(deviceKey)
+        if (held != null) {
+            select(if (held.gone) held else held.copy(gone = true))
+            return true
+        }
+        val record = app.places.snapshot().firstOrNull { it.deviceKey == deviceKey } ?: return false
+        val remembered = PlaceReport.remembered(record) ?: return false
+        select(remembered)
         return true
     }
 
@@ -3614,50 +3715,28 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    /** Length and time of the two list files. A change reloads them. */
-    private fun cameraStamp(): Long {
-        fun part(list: SensorList): Long {
-            val file = FlockFiles.file(app.filesDir, list)
-            if (!file.isFile) return 0L
-            return file.lastModified() xor file.length()
+    /**
+     * Cameras for the path screen. A sit that already saved the on-path list
+     * does not search the files again. An older sit still counts once.
+     */
+    private fun pathCameraTally(saved: List<FlockCamera>?, path: List<GpsSample>): PathCameras.Tally {
+        if (saved != null) {
+            val (plates, others) = app.cameraListsOnDisk()
+            return PathCameras.fromSaved(saved, plates, others, path.isNotEmpty())
         }
-        val plates = part(SensorList.PLATES)
-        val other = part(SensorList.OTHER)
-        return plates xor other.rotateLeft(1) xor if (plates == 0L && other == 0L) 1L else 0L
+        val report = app.cameraReport()
+            ?: return PathCameras.fromSaved(emptyList(), plates = false, others = false, path.isNotEmpty())
+        return PathCameras.tally(path, report.plates, report.others, report.near)
     }
 
-    /** Same lists as [cameraReport], kept until a file on disk changes. A failed read keeps the last good copy. */
-    private fun cachedCameraReport(): PathCameras.Report {
-        try {
-            val stamp = cameraStamp()
-            synchronized(cameraCacheLock) {
-                val held = cameraCache
-                if (held != null && stamp == cameraCacheStamp) return held
-            }
-            val fresh = cameraReport()
-            synchronized(cameraCacheLock) {
-                cameraCache = fresh
-                cameraCacheStamp = stamp
-            }
-            return fresh
-        } catch (_: Exception) {
-            return cameraCache ?: emptyCameraReport()
+    /** File flags for a sit that already saved its cameras, or the searchable lists. */
+    private fun debriefCameras(saved: List<FlockCamera>?): PathCameras.Report {
+        if (saved != null) {
+            val (plates, others) = app.cameraListsOnDisk()
+            return PathCameras.Report(plates, others) { _, _, _ -> emptyList() }
         }
-    }
-
-    private fun emptyCameraReport(): PathCameras.Report =
-        PathCameras.Report(plates = false, others = false) { _, _, _ -> emptyList() }
-
-    /** Both saved lists. The sit report and Reports → Path leave out a layer whose switch is off. */
-    private fun cameraReport(): PathCameras.Report {
-        val plates = FlockFiles.read(app.filesDir, SensorList.PLATES)?.cameras
-        val others = FlockFiles.read(app.filesDir, SensorList.OTHER)?.cameras
-        val index = FlockIndex()
-        val all = ArrayList<FlockCamera>((plates?.size ?: 0) + (others?.size ?: 0))
-        if (plates != null) all.addAll(plates)
-        if (others != null) all.addAll(others)
-        if (all.isNotEmpty()) index.replace(all)
-        return PathCameras.Report(plates != null, others != null, index::near)
+        return app.cameraReport()
+            ?: PathCameras.Report(plates = false, others = false) { _, _, _ -> emptyList() }
     }
 
     private fun debriefSubject(doc: DebriefDoc): String =
@@ -3691,7 +3770,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             DebriefPlaces.Off
         }
         publishExport(0.32f, LanguageText.text("ui.building.debrief"))
-        val cameras = withContext(Dispatchers.IO) { cachedCameraReport() }
+        val savedCameras = source?.pathCameras
+        val cameras = withContext(Dispatchers.IO) { debriefCameras(savedCameras) }
         val trustedLines = app.trusted.linesIn(
             window?.startAt ?: (now - 15 * 60_000L),
             window?.endAt ?: now,
@@ -3715,6 +3795,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 placeRecords = if (settings.placeWatch) app.places.snapshot() else emptyList(),
                 cameras = cameras,
                 trusted = trustedLines,
+                cells = source?.cells ?: app.cells.marks(),
+                savedCameras = savedCameras,
             ).withDemoMacs(
                 devices.map { it.mac } + trustedLines.map { it.bssid },
                 settings.demoMode,
@@ -3754,7 +3836,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     DebriefPlaces.Off
                 }
                 publishExport(0.4f, LanguageText.text("ui.building.ai.export.prompt"))
-                val cameras = withContext(Dispatchers.IO) { cachedCameraReport() }
+                val savedCameras = source?.pathCameras
+                val cameras = withContext(Dispatchers.IO) { debriefCameras(savedCameras) }
                 val trustedLines = app.trusted.linesIn(
                     window?.startAt ?: (now - 15 * 60_000L),
                     window?.endAt ?: now,
@@ -3777,6 +3860,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         placeRecords = if (settings.placeWatch) app.places.snapshot() else emptyList(),
                         cameras = cameras,
                         trusted = trustedLines,
+                        cells = source?.cells ?: app.cells.marks(),
+                        savedCameras = savedCameras,
                     )
                     val masked = MacUtil.redactPrivateText(
                         raw,
@@ -4366,6 +4451,33 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun isWatched(deviceKey: String): Boolean =
         app.config.watchlist.any { it.deviceKey == deviceKey && it.alert }
     fun isFleetWatched(id: String): Boolean = app.config.watchlist.any { it.fleetId == id }
+
+    fun saveSpokenName(fleetId: String, networkName: String, label: String) {
+        updateSettings { current ->
+            current.copy(spokenNames = SpokenNames.save(current.spokenNames, fleetId, networkName, label))
+        }
+    }
+
+    fun removeSpokenName(fleetId: String, networkName: String) {
+        updateSettings { current ->
+            current.copy(spokenNames = SpokenNames.remove(current.spokenNames, fleetId, networkName))
+        }
+    }
+
+    fun updateSpokenName(id: String, networkName: String, label: String) {
+        updateSettings { current ->
+            val row = current.spokenNames.firstOrNull { it.id == id } ?: return@updateSettings current
+            current.copy(
+                spokenNames = SpokenNames.save(current.spokenNames, row.fleetId, networkName, label, id),
+            )
+        }
+    }
+
+    fun deleteSpokenName(id: String) {
+        updateSettings { current ->
+            current.copy(spokenNames = SpokenNames.delete(current.spokenNames, id))
+        }
+    }
 
     fun testWatchBeep() {
         val settings = app.config.settings
