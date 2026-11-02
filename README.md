@@ -91,7 +91,7 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
   </tr>
 </table>
 
-One phone. Wi-Fi, Bluetooth LE, this phone's GPS, and the cell this phone is camped on. The map and the sit stay on the device.
+One phone. Wi-Fi, Bluetooth LE, this phone's GPS, and this phone's cell connection. The map and the sit stay on the device.
 
 ## Technical papers
 
