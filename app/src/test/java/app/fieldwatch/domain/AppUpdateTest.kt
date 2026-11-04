@@ -26,16 +26,18 @@ class AppUpdateTest {
     @Test
     fun thePublishedNotesFileIsThisVersion() {
         val published =
-            "When this phone is online at start, Fieldwatch asks GitHub whether a newer version is there. " +
-                "A newer one shows the notes, with Update now and Later. " +
-                "Later skips that version until a newer one is published. " +
-                "Settings can check again. Update now downloads the app, and Android still asks you to confirm the install. " +
-                "If GitHub does not answer, the app on this phone stays as it is.\n\n" +
-                "On-screen notes are shorter. They say what the control does. " +
-                "The scan status no longer calls the scan passive. " +
-                "Settings notes under the switches are one line. The longer explanation stays in the user guide."
+            "This is a small update which cleans up some text on warning dialogs. " +
+                "Also an opportunity for you to test out the new auto update feature.\n\n" +
+                "Warning dialogs for GPS, a cell, a trusted network, and a flood use one layout. " +
+                "The reason is a paragraph. Readings sit under Details, with the label and the value on one line.\n\n" +
+                "The update offer has a Release Notes heading. Long notes scroll.\n\n" +
+                "When an app on this phone is generating the GPS location, the warning is Possible GPS interference. " +
+                "It says an app on this phone is generating the GPS location, and this phone is using that instead of the satellites.\n\n" +
+                "A cell warning keeps what happened in the title. " +
+                "The paragraph says Fieldwatch cannot tell the cause.\n\n" +
+                "Bundled language files are written for this version."
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
-        assertEquals(AppUpdateNote(50, "1.1.40", published), AppUpdate.parse(file.readText()))
+        assertEquals(AppUpdateNote(51, "1.1.41", published), AppUpdate.parse(file.readText()))
     }
 
     @Test
