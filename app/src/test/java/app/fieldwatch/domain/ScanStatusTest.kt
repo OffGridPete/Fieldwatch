@@ -92,7 +92,7 @@ class ScanStatusTest {
             report.verdict,
         )
         assertTrue(report.blocked)
-        assertEquals("waiting on OS (12s ago)", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
+        assertEquals("waiting on Android (12s ago)", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
         assertEquals("parked", report.rows.first { it.first == "BLE" }.second)
         assertEquals("0", report.rows.first { it.first == "BLE results last minute" }.second)
         assertTrue(report.checks.any { it.contains("The Wi-Fi radio is on.") })
@@ -300,7 +300,7 @@ class ScanStatusTest {
             phone(),
             now,
         )
-        assertEquals("waiting on OS", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
+        assertEquals("waiting on Android", report.rows.first { it.first == "Last Wi-Fi scan" }.second)
         assertTrue(report.blocked)
     }
 

@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
         val app = application as FieldwatchApp
         if (app.pendingCrash != null) return
         vm.refreshPermissions()
+        vm.onAppUpdateResume()
         if (RadioPermissions.granted(this) && !app.devices.stats.value.scanning) {
             vm.startScan()
         }

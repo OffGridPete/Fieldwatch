@@ -100,7 +100,7 @@ object EnglishCopy {
     const val FORMAT = "fieldwatch-language"
     const val FORMAT_VERSION = 1
 
-    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all
+    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all + AppUpdateLines.all
     val byKey: Map<String, EnglishLine> = lines.associateBy { it.key }
     val placeholders: Map<String, Set<String>> = lines.associate { it.key to placeholderNames(it.text) }
 
@@ -313,7 +313,7 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("map.key.rejected.body", "The map service did not accept this key. Check the key and that the account allows this app.", LanguageSlot.BODY),
     en("map.key.failed.title", "Map did not load", LanguageSlot.BODY),
     en("map.key.failed.body", "Check the key and that this phone can reach the internet.", LanguageSlot.BODY),
-    en("settings.map.about", "Show map with live path, Reports → Path, and the path figure use this map. OpenStreetMap covers the world. USGS and FAA maps cover the United States. A map marked Key needs a key from that service. The key stays on this phone.", LanguageSlot.BODY),
+    en("settings.map.about", "Used for the live path and Reports. OpenStreetMap covers the world. USGS and FAA maps cover the United States.", LanguageSlot.BODY),
     en("settings.map.needs.online", "Turn on Online place names and maps to load a map.", LanguageSlot.BODY),
     en("settings.map.clear", "Clear saved maps", LanguageSlot.CONTROL),
     en(
@@ -326,26 +326,26 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("map.position.gps", "GPS", LanguageSlot.CONTROL),
     en(
         "settings.map.position.about",
-        "Lower left of the map, where this phone is now. {gps} shows coordinates. {grid} shows the MGRS grid. {off} hides it.",
+        "Lower left of the map. {gps} is coordinates. {grid} is the MGRS grid. {off} hides it.",
         LanguageSlot.BODY,
     ),
     en("settings.named.radios", "Named radios", LanguageSlot.CONTROL),
     en("settings.spoken.names", "Signature and network", LanguageSlot.CONTROL),
     en(
         "alerts.named.note",
-        "A name on one radio is the whole announcement. It is said ahead of the class and the signature.",
+        "That name is what gets said.",
         LanguageSlot.BODY,
     ),
     en(
         "alerts.signature.note",
-        "Words said instead of the signature, for every radio of that signature with that network name.",
+        "Said for that signature and network name.",
         LanguageSlot.BODY,
     ),
     en("spoken.name", "Spoken name", LanguageSlot.CONTROL),
     en("spoken.card.title", "Custom signature and network alert", LanguageSlot.CONTROL),
     en(
         "spoken.card.note",
-        "The name said if this radio alerts, for every radio of that signature with this network name. Turning this on does not start an alert.",
+        "The name said for this signature and network.",
         LanguageSlot.BODY,
     ),
     en("spoken.alert.say", "Alert to say", LanguageSlot.CONTROL),
@@ -463,7 +463,7 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("diag.starting", "starting", LanguageSlot.CONTROL),
     en("diag.running", "running", LanguageSlot.CONTROL),
     en("diag.none", "none", LanguageSlot.CONTROL),
-    en("diag.waiting.age", "waiting on OS ({age})", LanguageSlot.CONTROL),
+    en("diag.waiting.age", "waiting on Android ({age})", LanguageSlot.CONTROL),
     en("diag.seconds.ago", "{n}s ago", LanguageSlot.CONTROL),
     en("diag.minutes.ago", "{n} min ago", LanguageSlot.CONTROL),
     en("diag.filter.hiding", "A filter is hiding radios. Filters is {filters}. Set Filters to All Traffic to see everything the phone hears.", LanguageSlot.BODY),

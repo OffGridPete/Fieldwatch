@@ -113,6 +113,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.fieldwatch.domain.AppUpdatePrompt
 import app.fieldwatch.domain.HeaderTone
 import app.fieldwatch.domain.MapKeyProblem
 import app.fieldwatch.domain.ListLine
@@ -285,12 +286,99 @@ private fun PermissionGate(onRequest: () -> Unit) {
     }
 }
 
+@Composable
+private fun AppUpdateLayer(vm: FieldwatchViewModel) {
+    val context = LocalContext.current
+    val prompt by vm.appUpdate.collectAsStateWithLifecycle()
+    val pending by vm.appUpdateIntent.collectAsStateWithLifecycle()
+    LaunchedEffect(pending) {
+        val intent = pending ?: return@LaunchedEffect
+        val started = runCatching { context.startActivity(intent) }.isSuccess
+        if (started) vm.consumeAppUpdateIntent() else vm.appUpdateIntentFailed()
+    }
+    when (val shown = prompt) {
+        null -> Unit
+        AppUpdatePrompt.Checking -> AppUpdateWait(LanguageText.text("update.checking"), vm::dismissAppUpdate)
+        AppUpdatePrompt.Downloading -> AppUpdateWait(LanguageText.text("update.downloading"), vm::dismissAppUpdate)
+        is AppUpdatePrompt.Offer -> AlertDialog(
+            onDismissRequest = vm::laterAppUpdate,
+            title = { Text("Fieldwatch ${shown.note.versionName}") },
+            text = {
+                Column(
+                    Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    Text(shown.note.notes)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = vm::installOfferedUpdate) { Text(LanguageText.text("update.now")) }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::laterAppUpdate) { Text(LanguageText.text("update.later")) }
+            },
+        )
+        is AppUpdatePrompt.Current -> AppUpdateNotice(
+            title = LanguageText.text("update.current.title"),
+            body = LanguageText.text("update.current.body", mapOf("version" to shown.versionName)),
+            onClose = vm::dismissAppUpdate,
+        )
+        AppUpdatePrompt.Unreachable -> AppUpdateNotice(
+            title = LanguageText.text("update.unreachable.title"),
+            body = LanguageText.text("update.unreachable.body"),
+            onClose = vm::dismissAppUpdate,
+        )
+        AppUpdatePrompt.Failed -> AppUpdateNotice(
+            title = LanguageText.text("update.failed.title"),
+            body = LanguageText.text("update.failed.body"),
+            onClose = vm::dismissAppUpdate,
+        )
+        AppUpdatePrompt.Allow -> AlertDialog(
+            onDismissRequest = vm::dismissAppUpdate,
+            title = { Text(LanguageText.text("update.allow.title")) },
+            text = { Text(LanguageText.text("update.allow.body")) },
+            confirmButton = {
+                TextButton(onClick = vm::openUnknownInstallSettings) {
+                    Text(LanguageText.text("ui.open.android.settings"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::dismissAppUpdate) { Text(LanguageText.text("language.cancel")) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun AppUpdateWait(title: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) },
+        confirmButton = { },
+    )
+}
+
+@Composable
+private fun AppUpdateNotice(title: String, body: String, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text(title) },
+        text = { Text(body) },
+        confirmButton = {
+            TextButton(onClick = onClose) { Text(LanguageText.text("ui.ok.label")) }
+        },
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
     val nav = rememberNavController()
     val route = nav.currentBackStackEntryAsState().value?.destination?.route ?: "live"
     val context = LocalContext.current
+    AppUpdateLayer(vm)
     val export by vm.export.collectAsStateWithLifecycle()
     val candidates by vm.candidates.collectAsStateWithLifecycle()
     val gnssStatus by vm.gnssStatus.collectAsStateWithLifecycle()

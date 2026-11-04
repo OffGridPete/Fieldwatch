@@ -9,7 +9,7 @@ object FieldwatchDisclaimer {
         "Detections, pattern matches, “Moving with you” / “possible tail,” Debrief text, " +
             "and AI Export are hypotheses — not identity, not a legal finding, and not a " +
             "complete RF capture. Radios that are off, asleep, randomized, cellular-only, " +
-            "or hidden by the OS will not appear."
+            "or hidden by Android will not appear."
 
     const val LIABILITY =
         "You are solely responsible for how you use this app and for following local law. " +

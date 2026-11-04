@@ -125,7 +125,7 @@ class WifiRadio(
     fun throttleHint(): String {
         val now = System.currentTimeMillis()
         return when {
-            failStreak.get() > 0 -> "Wi-Fi waiting on OS"
+            failStreak.get() > 0 -> "Wi-Fi waiting on Android"
             awaitingScan.get() -> "Wi-Fi scanning"
             nextAllowedAt.get() - now > 1_500L -> {
                 val sec = ((nextAllowedAt.get() - now + 999L) / 1000L).toInt().coerceAtLeast(1)

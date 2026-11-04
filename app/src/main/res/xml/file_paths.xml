@@ -7,4 +7,5 @@
     <cache-path name="signatures" path="signatures/" />
     <cache-path name="settings" path="settings/" />
     <cache-path name="language" path="language/" />
+    <cache-path name="update" path="update/" />
 </paths>

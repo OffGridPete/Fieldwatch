@@ -331,8 +331,6 @@ private fun CellWatchCards(
     }
     SectionCard(LanguageText.text("cell.cannot")) {
         Note(LanguageText.text("cell.cannot.other"))
-        Note(LanguageText.text("cell.cannot.quiet"))
-        Note(LanguageText.text("cell.cannot.phone"))
     }
 }
 

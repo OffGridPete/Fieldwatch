@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.39")
-    c.drawString(48, 94, "2 November 2026")
+    c.drawString(48, 108, "Version 1.1.40")
+    c.drawString(48, 94, "3 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.39  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.40  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -989,8 +989,11 @@ def story():
         P(
             "Fieldwatch is not on the Play Store; you install an APK yourself (sideload). Package "
             "name <font face='Courier'>app.fieldwatch</font>. Minimum Android 10 (API 29); this "
-            "build targets API 35. Tested on a Galaxy A54; meant for most Android 10+ phones. The app does not "
-            "self-update, so keep a copy of the APK you trust."
+            "build targets API 35. Tested on a Galaxy A54; meant for most Android 10+ phones. "
+            "When the phone is online at start, Fieldwatch asks whether a newer build is on GitHub. "
+            "Update now downloads it, and Android still asks you to confirm the install. "
+            "Later skips that version until a newer one is published. Settings can check again. "
+            "Keep a copy of the APK you trust."
         ),
         P(
             "<b>From the Fieldwatch APK repository (usual path).</b> Download "
@@ -1078,7 +1081,7 @@ def story():
                 ["Filters", "Which radios appear on Live. Presets and Radios stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Signatures still label and can beep. Logging is unchanged."],
                 ["Signatures", "The pattern catalog — which radios get a name. Tap a class to open its signatures, then a row to edit. Bookmark a signature to alert when that family appears. Hide a family on Filters."],
                 ["Reports", "Named sits, Path, Debrief, Sit export, Compare, AI Export, Seen at more than one place, Signature candidates, Log export. Start and End sit live here."],
-                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Language, Scanning, Alerts, Location and Maps, GNSS interference, Cell connection monitoring, Trusted networks, TAK / CoT, Logging, Signatures, Settings backup. Named radios and Signature and network are on Alerts. Show Live tour and Diagnostics stay on the list. Row layout is Live → Display, not here. Language is the section after §5.7."],
+                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Language, Scanning, Alerts, Location and Maps, GNSS interference, Cell connection monitoring, Trusted networks, TAK / CoT, Logging, Signatures, Settings backup. Named radios and Signature and network are on Alerts. Show Live tour, Diagnostics, and Check for an update stay on the list. Row layout is Live → Display, not here. Language is the section after §5.7."],
                 ["Tune (top right on Live)", "The sliders icon. Opens <b>Display</b> over Live: View (Radar, Strength list, Timeline, Hybrid, By class), Sort, Brief hold, Title line, Subtitle line, then switches. <b>Show map with live path</b> is the first switch, above RSSI bars. It is off until you turn it on (§5.3.4). Then signature names, Frequency, and first/last. This is how you change the picture — appearance, sorting, and which fields each row shows. Tap Tune again, or tap the dimmed list, to close it. Not on Settings. §5.3."],
             ],
             [1.7 * inch, 4.8 * inch],
@@ -1357,7 +1360,7 @@ def story():
                 ["Filters", "Which radios appear. Presets and Radios (Both, Wi-Fi only, BLE only) stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Reset filter is under the list. Signatures still label and can alert. See §8 and Figs. 15–17."],
                 ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). The line under the title says Bookmark to alert. Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). A bookmark alerts (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
                 ["Reports", "Sits stay on this page. Using… names the sit that Path, Debrief, Sit export, and Compare will use. Those four open their own pages. Seen at more than one place, Log Export, and Signature candidates are under them. Clear log is on the Log Export page. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings."],
-                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Scanning, Alerts (beep, voice, What to say, Named radios, Signature and network), Location and Maps (GPS tagging, Places, place names, the map, Known cameras, and Display location on map), GNSS interference (calibrate before the check will turn on, §5.9), Cell connection monitoring (off until you turn Monitor the cell connection on, §5.12), Trusted networks (off until you turn the watch on, §5.11), TAK / CoT feed (off), Logging, Signatures (export / import, Update stock catalog from GitHub, restore defaults), Settings backup. Show Live tour and Diagnostics stay on the list. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
+                ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Scanning, Alerts (beep, voice, What to say, Named radios, Signature and network), Location and Maps (GPS tagging, Places, place names, the map, Known cameras, and Display location on map), GNSS interference (calibrate before the check will turn on, §5.9), Cell connection monitoring (off until you turn Monitor the cell connection on, §5.12), Trusted networks (off until you turn the watch on, §5.11), TAK / CoT feed (off), Logging, Signatures (export / import, Update stock catalog from GitHub, restore defaults), Settings backup. Show Live tour, Diagnostics, and Check for an update stay on the list. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
             ],
             [1.2 * inch, 5.3 * inch],
         ),
@@ -2270,7 +2273,7 @@ def story():
             "Map, Known cameras, and Display location on map are on Location and Maps. "
             "Named radios is on Alerts, not on this list. "
             "Cell connection monitoring, GNSS interference, and Trusted networks say On in this shot. Each of those starts off. Privacy mode is on. "
-            "Logging, Signatures, Settings backup, Show Live tour, and Diagnostics are further down. "
+            "Logging, Signatures, Settings backup, Show Live tour, Diagnostics, and Check for an update are further down. "
             "This is not where you hide radios on the Live display, "
             "and not where you tap Debrief. Mute a noisy OUI or name with the per-rule switches "
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
@@ -3806,7 +3809,7 @@ def story():
             "Monitor the cell connection is the switch. Under Warnings, two checks start on: Warn on a new cell, and Warn on a drop to 2G or 3G. "
             "Both run only while Monitor the cell connection is on. "
             "How long to learn is on that card. The start is 3 days. The other choices are None, 1 day, 7 days, and 14 days. "
-            "Fig. 28 shows a phone that already has the watch on. How long to learn is in that shot, at 3 days, which is how it starts. Warn on a new cell is on in that shot, and that is how it starts. The drop check is on the same card, under this shot. A new install starts with the watch off.",
+            "Fig. 28 shows a phone that already has the watch on. How long to learn is 14 days in that shot. A new install starts at 3 days. Warn on a new cell and the drop check are on in that shot, and that is how they start. A new install starts with the watch off.",
             "How a warning reaches you is Beep, Voice, and System notification. Beep starts on. Voice starts on. System notification starts off. "
             "Beep, Voice, and System notification on this page do not change the watchlist, GNSS, or trusted networks. "
             "There is no TAK pin for this warning, and no mark on the path map.",
@@ -3937,7 +3940,7 @@ def story():
             "fig-cell-lower.png",
             "Fig. 29 — What this cannot see, and a place. This place is 4G and 5G, 5 cells.",
             "Beep and Voice are on in this shot, and that is how they start. System notification is off, and that is how it starts. "
-            "What this cannot see has no switches. The three lines are the limits in §5.12.9. "
+            "What this cannot see has no switches. The line names the other radios this page does not cover. §5.12.9 has the rest. "
             "Until a place exists, the list says no places yet, and that a place is learned the first time the phone stays still there.",
             "The card shows the place this phone is inside, when there is one, and then the latest visits, up to 10. "
             "When more are saved, the last row is a count, such as 24 more places. That row opens the full list. "
@@ -3959,7 +3962,7 @@ def story():
             "Here means you are inside that place, within 300 m. "
             "Farther away, the line is a distance, in meters until 1 km and then in kilometers. "
             "The line is left off when there is no current fix. "
-            "Fig. 29 says Here, and Learning has 2 days left.",
+            "Fig. 29 says Here, and Learning has 13 days left.",
             "Tap the row. The back arrow returns to the list that opened the place. "
             "From the full list, the next press returns to this page. From this page, the next press returns to Settings. "
             "Each cell is its own section. The title is the generation. "
@@ -7240,9 +7243,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.39 (versionCode 49), field build of 2 November 2026"],
-                ["Document version", "1.1.39"],
-                ["Document date", "2 November 2026"],
+                ["Software version", "1.1.40 (versionCode 50), field build of 3 November 2026"],
+                ["Document version", "1.1.40"],
+                ["Document date", "3 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "A copy filled with a sit log is sensitive."],

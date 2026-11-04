@@ -226,7 +226,10 @@ class LanguagePackTest {
         assertEquals(addedLater, current.newSince)
         assertTrue(current.newKeys.contains("cell.master"))
         assertFalse(current.newKeys.contains("tab.pause"))
-        val caughtUp = ok(pack("tab.live" to "Direct", writtenFor = "1.1.38"))
+        val since138 = ok(pack("tab.live" to "Direct", writtenFor = "1.1.38"))
+        assertEquals(14, since138.newSince)
+        assertTrue(since138.newKeys.contains("update.now"))
+        val caughtUp = ok(pack("tab.live" to "Direct", writtenFor = "1.1.40"))
         assertEquals(0, caughtUp.newSince)
         val missing = ok(pack("tab.live" to "Direct"))
         assertNull(missing.newSince)
@@ -329,12 +332,12 @@ class LanguagePackTest {
             // The trusted-network setting notes sit past 28 KiB.
             // The report and device sentences sit past 96 KiB.
             // The signature-and-network note sits past 112 KiB.
-            // 120 KiB still refuses a runaway line.
+            // The in-app update lines sit past 120 KiB. 121 KiB still refuses a runaway line.
             assertReject(parsed)
             assertEquals(LanguageErrors.LARGE, (parsed as LanguageParse.Reject).messageKey)
             assertTrue(
                 "cap-fill file is ${bytes.size} bytes",
-                bytes.size < LanguagePack.MAX_BYTES + 120 * 1024,
+                bytes.size < LanguagePack.MAX_BYTES + 121 * 1024,
             )
         }
         val shipped = repoFile("app/src/main/assets/lang")
@@ -580,7 +583,7 @@ class LanguagePackTest {
             val parsed = LanguagePack.parse(File(dir, "${bundled.tag}.json").readBytes())
             val preview = (parsed as LanguageParse.Ok).preview
             assertEquals(bundled.name, preview.language)
-            assertEquals("${bundled.tag} writtenFor", "1.1.39", preview.writtenFor)
+            assertEquals("${bundled.tag} writtenFor", "1.1.40", preview.writtenFor)
             assertTrue("${bundled.tag} display.live.path", preview.accepted.containsKey("display.live.path"))
             assertTrue("${bundled.tag} display.recenter", preview.accepted.containsKey("display.recenter"))
             assertTrue("${bundled.tag} map.north.up", preview.accepted.containsKey("map.north.up"))

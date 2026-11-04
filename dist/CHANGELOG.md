@@ -4,6 +4,13 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## Unreleased
+
+## 1.1.40 — 3 November 2026
+
+- When this phone is online at start, Fieldwatch asks GitHub whether a newer version is there. A newer one shows the notes, with Update now and Later. Later skips that version until a newer one is published. Settings can check again. Update now downloads the app, and Android still asks you to confirm the install. If GitHub does not answer, the app on this phone stays as it is.
+- On-screen notes are shorter. They say what the control does. The scan status no longer calls the scan passive. Settings notes under the switches are one line. The longer explanation stays in the user guide.
+
 ## 1.1.39 — 2 November 2026
 
 - A language file that comes with the app says it was written for this version. An imported file reports the keys added after the version it was written for. A translated line from an older file still shows.

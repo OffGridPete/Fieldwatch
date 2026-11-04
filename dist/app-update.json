@@ -1,0 +1,5 @@
+{
+  "versionCode": 50,
+  "versionName": "1.1.40",
+  "notes": "When this phone is online at start, Fieldwatch asks GitHub whether a newer version is there. A newer one shows the notes, with Update now and Later. Later skips that version until a newer one is published. Settings can check again. Update now downloads the app, and Android still asks you to confirm the install. If GitHub does not answer, the app on this phone stays as it is.\n\nOn-screen notes are shorter. They say what the control does. The scan status no longer calls the scan passive. Settings notes under the switches are one line. The longer explanation stays in the user guide."
+}

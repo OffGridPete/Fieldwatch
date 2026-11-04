@@ -1168,6 +1168,15 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            FieldwatchActionButton(
+                onClick = vm::checkForAppUpdate,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(LanguageText.text("update.settings")) }
+            Text(
+                LanguageText.text("update.settings.note"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             Text(
                 "Fieldwatch ${app.fieldwatch.BuildConfig.VERSION_NAME}  ·  Catalog ${state.catalogVersion}",
