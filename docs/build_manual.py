@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.40")
-    c.drawString(48, 94, "3 November 2026")
+    c.drawString(48, 108, "Version 1.1.41")
+    c.drawString(48, 94, "4 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.40  ·  Off Grid Pete LLC")
+    c.drawString(48, 28, "v1.1.41  ·  Off Grid Pete LLC")
     draw_ig_mark(c, 148, 30, 5.2, MUTED)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
@@ -3112,8 +3112,8 @@ def story():
         P(
             "A hit stays open at least a minute, and it takes about 20 quiet readings to clear. "
             "While it is open, those earlier readings stay the comparison, so the bad stretch does not become the new normal. "
-            "If the change is still there after about 15 minutes, Fieldwatch closes the warning and says the receiver may have adapted. "
-            "The condition may still be present. "
+            "If the change is still there after about 15 minutes, Fieldwatch closes the warning and says the receiver may have adjusted. "
+            "This can still be going on. "
             "One stretch is one warning. The level can go up. It does not open a second warning for the same stretch. "
             "Debrief keeps one row. On ATAK it is one mark. §5.8.13."
         ),
@@ -3194,7 +3194,9 @@ def story():
             "A careful false signal can still get past these checks. A wrong position can also be a side effect of interference. "
             "The switch is on in Fig. 22. It starts off. "
             "<b>Beep</b> is the same pip as a watchlist hit, on the media volume. The popup and the red line still show if Beep is off. "
-            "<b>Voice</b> says possible GPS interference, or possible GPS spoofing. It speaks again only when the level goes up. "
+            "<b>Voice</b> says possible GPS interference, or possible GPS spoofing. "
+            "When an app on this phone is generating the location, it says that too. "
+            "It speaks again only when the level goes up. "
             "It uses the media volume and is separate from the watchlist Voice switch. "
             "<b>System notification</b> for this warning is silent. Off unless you turn it on. The popup and the red line still show. It is separate from the watchlist System notification switch.",
         ),
@@ -3269,9 +3271,11 @@ def story():
             "If Warn when the signal holds is on and that pattern hits as well, the dialog title is "
             "<b>Possible GPS interference and spoofing</b>. "
             "The red line says GNSS for that same notice. "
-            "The body names the bands that changed, such as GPS L1, and says a router or other electronics next to the phone can cause this. "
+            "The body says a router or other electronics next to the phone can cause this. "
+            "Details names the bands that changed, such as GPS L1. "
             "Fieldwatch cannot tell where it comes from or how far away it is. "
-            "A mock location app is its own message. That is the developer mock-location switch, not a radio.",
+            "The same dialog is used when an app on this phone is generating the GPS location. "
+            "The body says this phone is using that location instead of the satellites.",
         ),
         figure_wrap(
             "fig-gnss-live.png",
@@ -3891,9 +3895,9 @@ def story():
             "One dialog at a time. A cell warning waits while a GNSS dialog or a trusted-network dialog is on screen.",
             "<b>Warn on a new cell.</b> You are still at a place this phone already learned, and the camp is one it has not used there. "
             "The title is <b>This phone camped on a cell it has not used here.</b> "
-            "The paragraph is <b>This phone is camped on a tower it has not used at this place. Fieldwatch cannot tell the cause.</b> "
+            "The paragraph is <b>Fieldwatch cannot tell the cause.</b> "
             "One warning per cell. It ends when that cell has been gone for 10 minutes, or when you dismiss it or learn it. "
-            "Fig. 30 is that dialog on the Live display. "
+            "Fig. 30 is that dialog. "
             "The network, the area, the cell id, PCI, the channel, and the band frequency in the shot were filled in so the dialog could be photographed. "
             "They are not a tower this phone measured, and they are not a cause.",
         ),
@@ -3901,8 +3905,8 @@ def story():
             "<b>Warn on a drop to 2G or 3G.</b> The place's learned cells are 4G, 5G, or both, and the phone is now camped on 2G or 3G. "
             "This one can warn while you are moving, as long as you are still inside that place. "
             "It stays quiet if the place already learned a 2G or 3G cell, if you are outside every learned place, or if the GPS fix is missing, coarse, or paused. "
-            "A 2G camp says <b>This phone dropped to 2G.</b> The paragraph is <b>This phone dropped to 2G. Fieldwatch cannot tell the cause.</b> "
-            "A 3G camp says <b>This phone dropped to 3G.</b> The paragraph is <b>This phone dropped to 3G. Fieldwatch cannot tell the cause.</b> "
+            "A 2G camp says <b>This phone dropped to 2G.</b> The paragraph is <b>Fieldwatch cannot tell the cause.</b> "
+            "A 3G camp says <b>This phone dropped to 3G.</b> The paragraph is <b>Fieldwatch cannot tell the cause.</b> "
             "One drop warning at a time. It keeps the generation it started with. "
             "It ends when the phone has been back on 4G or 5G for 10 minutes, or when you dismiss it. "
             "A blank or unknown generation does not count as back on 4G or 5G. "
@@ -7243,9 +7247,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.40 (versionCode 50), field build of 3 November 2026"],
-                ["Document version", "1.1.40"],
-                ["Document date", "3 November 2026"],
+                ["Software version", "1.1.41 (versionCode 51), field build of 4 November 2026"],
+                ["Document version", "1.1.41"],
+                ["Document date", "4 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "A copy filled with a sit log is sensitive."],

@@ -72,6 +72,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.NavigationBarDefaults
 import app.fieldwatch.ui.component.FieldwatchActionButton
+import app.fieldwatch.ui.component.ReleaseNotes
 import app.fieldwatch.ui.component.FieldwatchDropdownField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -303,15 +304,7 @@ private fun AppUpdateLayer(vm: FieldwatchViewModel) {
         is AppUpdatePrompt.Offer -> AlertDialog(
             onDismissRequest = vm::laterAppUpdate,
             title = { Text("Fieldwatch ${shown.note.versionName}") },
-            text = {
-                Column(
-                    Modifier
-                        .heightIn(max = 360.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    Text(shown.note.notes)
-                }
-            },
+            text = { ReleaseNotes(shown.note.notes) },
             confirmButton = {
                 TextButton(onClick = vm::installOfferedUpdate) { Text(LanguageText.text("update.now")) }
             },

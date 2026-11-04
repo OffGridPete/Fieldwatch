@@ -238,7 +238,6 @@ data class GnssMark(
     fun reportLine(): String {
         val head = when (kind) {
             "spoofing" -> "Possible GNSS spoofing"
-            "mock" -> "Mock location app"
             else -> "Possible GNSS interference"
         }
         val end = if (endedAt > 0L) " Ended ${GnssCopy.utcHm(endedAt)} UTC." else ""
@@ -314,13 +313,15 @@ object GnssBands {
 
 object GnssCopy {
     const val INTRO =
-        "Fieldwatch watches this phone's GPS receiver and notices a change. If this was already happening when the check started, it can be missed."
+        "If this was already happening when the check started, it can be missed."
     const val ROUTER =
         "A Wi-Fi router or other electronics next to the phone can cause this. Fieldwatch cannot tell where it comes from or how far away it is."
     const val SPOOF_LIMIT =
-        "Spoofing checks are partial. A careful spoofer can avoid them. A wrong position can also be a side effect of interference."
+        "A careful fake GPS signal can get past these checks. A wrong position can also come from interference."
     const val MOCK =
-        "A mock location app is on. That is the developer mock-location switch, not a radio spoofer."
+        "An app on this phone is generating the GPS location. This phone is using that instead of the satellites."
+    const val ADJUSTED =
+        "The receiver may have adjusted. This can still be going on."
     const val PAUSED = "GNSS paused by the phone"
 
     fun utcHm(ms: Long): String = stamp(ms, utc = true)
@@ -341,8 +342,10 @@ object GnssCopy {
     fun body(detail: String, kinds: Set<GnssKind>, adapted: Boolean): String = buildString {
         append(detail.trim())
         if (adapted) {
-            append("\n\nThe receiver may have adapted. The condition may still be present.")
+            append("\n\n")
+            append(ADJUSTED)
         }
+        if (GnssKind.MOCK in kinds && kinds.size == 1) return@buildString
         append("\n\n")
         append(INTRO)
         append("\n\n")
@@ -351,17 +354,15 @@ object GnssCopy {
             append("\n\n")
             append(SPOOF_LIMIT)
         }
-        if (GnssKind.MOCK in kinds) {
+        if (GnssKind.MOCK in kinds && !detail.contains(MOCK)) {
             append("\n\n")
             append(MOCK)
         }
     }.trim()
 
     /** Dialog title. GPS, not GNSS, so the popup does not open on a jargon word. */
-    fun popupTitle(kinds: Set<GnssKind>, confidence: GnssConfidence): String {
-        if (GnssKind.MOCK in kinds && kinds.size == 1) return "Mock location app"
-        return "${head(kinds).replace("GNSS", "GPS")} (${confidence.label()})"
-    }
+    fun popupTitle(kinds: Set<GnssKind>, confidence: GnssConfidence): String =
+        "${head(kinds).replace("GNSS", "GPS")} (${confidence.label()})"
 
     /**
      * Plain popup. The reason comes first. Numbers stay in [details] on the notice.
@@ -377,13 +378,16 @@ object GnssCopy {
                 lives.forEach { live ->
                     if (live.why.isBlank()) return@forEach
                     if (isNotEmpty()) append("\n\n")
-                    append(head(setOf(live.kind)).replace("GNSS", "GPS"))
-                    append(". ")
+                    if (live.kind != GnssKind.MOCK) {
+                        append(head(setOf(live.kind)).replace("GNSS", "GPS"))
+                        append(". ")
+                    }
                     append(live.why.trim())
                 }
             }
             if (adapted) {
-                append("\n\nThe receiver may have adjusted. The condition may still be there.")
+                append("\n\n")
+                append(ADJUSTED)
             }
             val note = popupNote(kinds)
             if (note.isNotEmpty()) {
@@ -408,7 +412,7 @@ object GnssCopy {
         bothDropped ->
             "This phone's GPS got weaker. The receiver turned its gain down and the satellite signals dropped."
         signalOnly ->
-            "The satellite signals got weaker. This phone is not reporting receiver gain, so this hint is lighter."
+            "The satellite signals got weaker. This phone is not reporting receiver gain."
         else ->
             "The receiver turned its gain down more than usual. The satellite signals did not drop as much."
     }
@@ -439,21 +443,20 @@ object GnssCopy {
         GnssKind.SPOOFING in kinds && GnssKind.INTERFERENCE in kinds ->
             "A router, a charger, or another phone against this one can do the same thing. A wrong position can come from that too. Fieldwatch cannot tell the source or how far away it is."
         GnssKind.SPOOFING in kinds ->
-            "This is a hint. A careful fake GPS signal can get past these checks. Fieldwatch cannot tell the source or how far away it is."
+            "A careful fake GPS signal can get past these checks. Fieldwatch cannot tell the source or how far away it is."
         else ->
             "A router, a charger, or another phone against this one can do the same thing. Fieldwatch cannot tell the source or how far away it is."
     }
 
     fun phrase(kinds: Set<GnssKind>): String = when {
-        GnssKind.MOCK in kinds && kinds.size == 1 -> "Mock location app is on"
+        GnssKind.MOCK in kinds && kinds.size == 1 ->
+            "Possible G P S interference. An app on this phone is generating the location."
         GnssKind.SPOOFING in kinds && GnssKind.INTERFERENCE !in kinds ->
             "Possible G P S spoofing. Position may be wrong."
         else -> "Possible G P S interference"
     }
 
     private fun head(kinds: Set<GnssKind>): String = when {
-        GnssKind.MOCK in kinds && GnssKind.INTERFERENCE !in kinds && GnssKind.SPOOFING !in kinds ->
-            "Mock location app"
         GnssKind.INTERFERENCE in kinds && GnssKind.SPOOFING in kinds ->
             "Possible GNSS interference and spoofing"
         GnssKind.SPOOFING in kinds -> "Possible GNSS spoofing"
@@ -469,7 +472,7 @@ object GnssCopy {
 
 /**
  * Popup and red line. The alert floor gates the popup, the line, the beep, and voice.
- * A weaker hit still stays on the sit. Mock location always alerts.
+ * A weaker hit still stays on the sit. An app-generated GPS location always alerts.
  */
 class GnssAlerts {
     private var showDialog = false
@@ -755,8 +758,7 @@ class GnssDetector(config: GnssConfig = GnssConfig()) {
                 val top = lives.maxBy { it.confidence }
                 val name = when (top.kind) {
                     GnssKind.SPOOFING -> "spoofing"
-                    GnssKind.MOCK -> "mock location"
-                    GnssKind.INTERFERENCE -> "interference"
+                    else -> "interference"
                 }
                 "ALERT: $name (${top.confidence.label()})"
             }

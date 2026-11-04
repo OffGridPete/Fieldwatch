@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import app.fieldwatch.ui.component.NoticeBody
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -624,15 +625,12 @@ fun TrustedAlertDialog(vm: FieldwatchViewModel) {
         onDismissRequest = { vm.dismissTrusted(shown.ssid, shown.bssid) },
         title = { Text(TrustedNets.sentence(shown.ssid, shown.reasons)) },
         text = {
-            Column {
-                Text(MacUtil.screenMac(shown.bssid, ui.settings.demoMode))
-                if (shown.ouiNote) {
-                    Text(
-                        LanguageText.text("trusted.oui.note", mapOf("oui" to "00:13:37")),
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
+            val note = if (shown.ouiNote) {
+                LanguageText.text("trusted.oui.note", mapOf("oui" to "00:13:37"))
+            } else {
+                ""
             }
+            NoticeBody(note, MacUtil.screenMac(shown.bssid, ui.settings.demoMode))
         },
         confirmButton = {
             // One column. The dialog dismiss slot sits beside this column and covers the last action.

@@ -705,6 +705,7 @@ internal object LanguageAddedIn {
         put("update.failed.title", "1.1.40")
         put("update.later", "1.1.40")
         put("update.now", "1.1.40")
+        put("update.notes", "1.1.41")
         put("update.settings", "1.1.40")
         put("update.settings.note", "1.1.40")
         put("update.unreachable.body", "1.1.40")

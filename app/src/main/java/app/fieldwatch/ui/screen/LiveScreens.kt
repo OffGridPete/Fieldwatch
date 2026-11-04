@@ -38,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import java.util.Locale
 import app.fieldwatch.domain.GnssCopy
 import app.fieldwatch.ui.component.DecodeGlyph
+import app.fieldwatch.ui.component.NoticeBody
 import app.fieldwatch.ui.component.FieldwatchSwitch
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import androidx.compose.material.icons.Icons
@@ -201,24 +202,7 @@ fun LivePane(
             AlertDialog(
                 onDismissRequest = { vm.dismissGnss() },
                 title = { Text(gnssNotice.title) },
-                text = {
-                    Column {
-                        Text(gnssNotice.body)
-                        if (gnssNotice.details.isNotBlank()) {
-                            Text(
-                                LanguageText.text("ui.details.label"),
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(top = 14.dp),
-                            )
-                            Text(
-                                gnssNotice.details,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp),
-                            )
-                        }
-                    }
-                },
+                text = { NoticeBody(gnssNotice.body, gnssNotice.details) },
                 confirmButton = {
                     TextButton(onClick = { vm.dismissGnss() }) { Text(LanguageText.text("ui.ok.label")) }
                 },
@@ -263,7 +247,7 @@ fun LivePane(
             AlertDialog(
                 onDismissRequest = { vm.dismissPairingFlood() },
                 title = { Text(floodNotice.title()) },
-                text = { Text(floodNotice.body()) },
+                text = { NoticeBody(floodNotice.body()) },
                 confirmButton = {
                     TextButton(onClick = { vm.dismissPairingFlood() }) { Text(LanguageText.text("ui.continue.label")) }
                 },

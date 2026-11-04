@@ -111,6 +111,7 @@ internal object AppUpdateLines {
         en("update.failed.title", "Could not install the update", LanguageSlot.CONTROL),
         en("update.later", "Later", LanguageSlot.CONTROL),
         en("update.now", "Update now", LanguageSlot.CONTROL),
+        en("update.notes", "Release Notes", LanguageSlot.CONTROL),
         en("update.settings", "Check for an update", LanguageSlot.CONTROL),
         en("update.settings.note", "Looks on GitHub when this phone is online. The install still asks you to confirm.", LanguageSlot.BODY),
         en("update.unreachable.body", "GitHub did not answer. The app on this phone is unchanged.", LanguageSlot.BODY),

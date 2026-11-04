@@ -98,6 +98,7 @@ class AppUpdateTest {
             "update.failed.title",
             "update.later",
             "update.now",
+            "update.notes",
             "update.settings",
             "update.settings.note",
             "update.unreachable.body",
@@ -106,10 +107,12 @@ class AppUpdateTest {
         assertEquals(keys.size, AppUpdateLines.all.size)
         for (key in keys) {
             val line = EnglishCopy.byKey.getValue(key)
-            assertEquals(key, "1.1.40", line.addedIn)
+            val added = if (key == "update.notes") "1.1.41" else "1.1.40"
+            assertEquals(key, added, line.addedIn)
             assertTrue(line.text.isNotBlank())
         }
         assertEquals("Update now", EnglishCopy.text("update.now"))
+        assertEquals("Release Notes", EnglishCopy.text("update.notes"))
         assertEquals("Later", EnglishCopy.text("update.later"))
         assertTrue(EnglishCopy.text("update.current.body").contains("{version}"))
     }

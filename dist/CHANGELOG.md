@@ -6,6 +6,14 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## Unreleased
 
+## 1.1.41 — 4 November 2026
+
+- Warning dialogs for GPS, a cell, a trusted network, and a flood use one layout. The reason is a paragraph. Readings sit under Details, with the label and the value on one line.
+- The update offer has a Release Notes heading. Long notes scroll.
+- When an app on this phone is generating the GPS location, the warning is Possible GPS interference. It says an app on this phone is generating the GPS location, and this phone is using that instead of the satellites.
+- A cell warning keeps what happened in the title. The paragraph says Fieldwatch cannot tell the cause.
+- Bundled language files are written for this version. Release Notes is the line added since 1.1.40.
+
 ## 1.1.40 — 3 November 2026
 
 - When this phone is online at start, Fieldwatch asks GitHub whether a newer version is there. A newer one shows the notes, with Update now and Later. Later skips that version until a newer one is published. Settings can check again. Update now downloads the app, and Android still asks you to confirm the install. If GitHub does not answer, the app on this phone stays as it is.

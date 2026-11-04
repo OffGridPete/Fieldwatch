@@ -1523,15 +1523,18 @@ object DebriefReport {
         val rows = marks.filter { it.at in start..end || (it.endedAt > 0L && it.endedAt in start..end) }
             .sortedBy { it.at }
         if (rows.isEmpty()) return null
+        val appOnly = rows.all { it.kind == "mock" }
         return buildString {
-            appendLine(GnssCopy.INTRO)
-            appendLine()
-            appendLine(GnssCopy.ROUTER)
-            if (rows.any { it.kind == "spoofing" }) {
+            if (!appOnly) {
+                appendLine(GnssCopy.INTRO)
                 appendLine()
-                appendLine(GnssCopy.SPOOF_LIMIT)
+                appendLine(GnssCopy.ROUTER)
+                if (rows.any { it.kind == "spoofing" }) {
+                    appendLine()
+                    appendLine(GnssCopy.SPOOF_LIMIT)
+                }
+                appendLine()
             }
-            appendLine()
             rows.forEach { appendLine(it.reportLine()) }
             if (onPath) {
                 appendLine()

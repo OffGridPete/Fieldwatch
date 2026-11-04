@@ -275,7 +275,6 @@ object SitPathPlot {
     ) {
         fun title(): String = when (kind) {
             "spoofing" -> "Possible GNSS spoofing"
-            "mock" -> "Mock location app"
             else -> "Possible GNSS interference"
         }
 

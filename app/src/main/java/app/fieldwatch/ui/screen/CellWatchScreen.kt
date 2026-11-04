@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import app.fieldwatch.ui.component.NoticeBody
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
@@ -248,24 +249,7 @@ fun CellAlertDialog(vm: FieldwatchViewModel) {
     AlertDialog(
         onDismissRequest = { vm.dismissCell(episode.id) },
         title = { Text(CellCopy.sentence(episode.kind)) },
-        text = {
-            Column {
-                Text(CellCopy.body(episode.kind))
-                if (details.isNotBlank()) {
-                    Text(
-                        LanguageText.text("ui.details.label"),
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(top = 14.dp),
-                    )
-                    Text(
-                        details,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
-            }
-        },
+        text = { NoticeBody(CellCopy.body(episode.kind), details) },
         confirmButton = {
             Column(horizontalAlignment = Alignment.End) {
                 TextButton(onClick = { vm.learnCell(episode.id) }) {

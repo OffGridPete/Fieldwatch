@@ -56,12 +56,12 @@ import androidx.compose.ui.unit.sp
 import app.fieldwatch.data.PathTiles
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.HuntHeat
+import app.fieldwatch.domain.PayloadLocation
 import app.fieldwatch.ui.theme.nightIf
 import app.fieldwatch.domain.FlockCredit
 import app.fieldwatch.domain.FlockIndex
 import app.fieldwatch.domain.LanguageText
 import app.fieldwatch.domain.MapFrame
-import app.fieldwatch.domain.PayloadLocation
 import app.fieldwatch.domain.SitPathPlot
 import kotlin.math.abs
 import kotlin.math.ceil
