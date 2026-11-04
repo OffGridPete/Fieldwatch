@@ -520,14 +520,21 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(48, 28, "v1.1.41  ·  Off Grid Pete LLC")
-    draw_ig_mark(c, 148, 30, 5.2, MUTED)
+    label = "v1.1.41  ·  Off Grid Pete LLC"
+    c.drawString(48, 28, label)
+    # Fixed x values ran the Instagram mark into "LLC".
+    ig_s, x_s = 5.2, 5.0
+    x = 48 + c.stringWidth(label, "Helvetica", 8) + 8
+    draw_ig_mark(c, x, 30, ig_s, MUTED)
+    x += ig_s * 1.15 + 6
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    c.drawString(160, 28, "@OffGridPete")
-    draw_x_mark(c, 238, 30, 5.0, MUTED)
+    c.drawString(x, 28, "@OffGridPete")
+    x += c.stringWidth("@OffGridPete", "Helvetica", 8) + 28
+    draw_x_mark(c, x, 30, x_s, MUTED)
+    x += x_s + 7
     c.setFillColor(MUTED)
-    c.drawString(250, 28, "@OGridPete")
+    c.drawString(x, 28, "@OGridPete")
     c.drawRightString(PAGE_W - 48, 28, f"{doc.page}")
     c.restoreState()
 
@@ -1304,7 +1311,7 @@ def story():
         ),
         figure_wrap(
             "fig-flood.png",
-            "Fig. 1 — Pairing flood. Hide these takes this burst off Live. Continue leaves it up.",
+            "Fig. 2 — Pairing flood. Hide these takes this burst off Live. Continue leaves it up.",
             "A burst of new Bluetooth addresses in a few seconds raises one dialog, as in this figure, then a single red line. "
             "<b>Pairing flood</b> is many new addresses advertising a pairing popup at about the same loudness. "
             "<b>Name flood</b> is many new randomized addresses that only advertise a name. "
@@ -1345,7 +1352,7 @@ def story():
         ),
         figure_wrap(
             "fig-signatures.png",
-            "Fig. 2 — Signatures.",
+            "Fig. 3 — Signatures.",
             "Signatures is the pattern catalog. The title shows how many signatures are loaded (stock plus any you added). "
             "The line under the title says Bookmark to alert. "
             "Name A–Z lists every signature. Class A–Z, shown here, groups them. Tap a class to open its signatures. "
@@ -1357,8 +1364,8 @@ def story():
             ["Tab", "Function"],
             [
                 ["Live", "The on-screen picture: radar, list, timeline, hybrid, or By class. Tune (top right) opens Display. Tap this tab again to Pause (radios still scan and log); tap Live to run the list. Double-tap FIELDWATCH to jump to the top. A running sit shows FIELDWATCH · SIT; start and end are on Reports. A pairing flood, a name flood, or a Wi-Fi beacon flood shows one dialog, then a red line with Hide this burst. A GNSS hit is a separate dialog, then its own red line, with no Hide button. §5.9."],
-                ["Filters", "Which radios appear. Presets and Radios (Both, Wi-Fi only, BLE only) stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Reset filter is under the list. Signatures still label and can alert. See §8 and Figs. 15–17."],
-                ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). The line under the title says Bookmark to alert. Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). A bookmark alerts (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 2, §9.6."],
+                ["Filters", "Which radios appear. Presets and Radios (Both, Wi-Fi only, BLE only) stay open at the top. Moving with you, Seen at more than one place, and New detections are switches on this list. Keep or hide, Selected signature classes, Selected signatures, and Signal, name, MAC, vendor open their own page. The row names what is selected in that section. Reset filter is under the list. Signatures still label and can alert. See §8 and Figs. 35–38."],
+                ["Signatures", "The pattern catalog. Title shows how many signatures are loaded (stock plus any you added). The line under the title says Bookmark to alert. Name A–Z or Class A–Z (classes start collapsed; tap to open). Tap a row to edit (rules, color, Decode fields on BLE). A bookmark alerts (beep and/or spoken class). No matching on/off — hide on Filters. + adds a blank signature. Fig. 3, §9.6."],
                 ["Reports", "Sits stay on this page. Using… names the sit that Path, Debrief, Sit export, and Compare will use. Those four open their own pages. Seen at more than one place, Log Export, and Signature candidates are under them. Clear log is on the Log Export page. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings."],
                 ["Settings", "A list of topics. Tap a row for that page. The row shows the current choice. Back returns to the list. Appearance (Night mode, Keep screen on, Privacy mode), Scanning, Alerts (beep, voice, What to say, Named radios, Signature and network), Location and Maps (GPS tagging, Places, place names, the map, Known cameras, and Display location on map), GNSS interference (calibrate before the check will turn on, §5.9), Cell connection monitoring (off until you turn Monitor the cell connection on, §5.12), Trusted networks (off until you turn the watch on, §5.11), TAK / CoT feed (off), Logging, Signatures (export / import, Update stock catalog from GitHub, restore defaults), Settings backup. Show Live tour, Diagnostics, and Check for an update stay on the list. Row layout is Live display → Display (tune), not here. TAK: §5.8."],
             ],
@@ -1392,7 +1399,7 @@ def story():
         ),
         figure_wrap(
             "fig-display.png",
-            "Fig. 3 — Display. Show map with live path is the top switch. It is on here. It starts off.",
+            "Fig. 4 — Display. Show map with live path is the top switch. It is on here. It starts off.",
             "View is the first dropdown. That is Radar vs Strength list vs Timeline vs Hybrid vs By class. "
             "Sort, Brief hold, Title line, and Subtitle line follow. "
             "<b>Show map with live path</b> is the first switch, above RSSI bars, and it starts off. "
@@ -1568,7 +1575,7 @@ def story():
         P("5.3.4 Show map with live path", "h3"),
         figure_wrap(
             "fig-live-path.png",
-            "Fig. 3 — Show map with live path. The close view sits over the list. Drag the bar under the map.",
+            "Fig. 5 — Show map with live path. The close view sits over the list. Drag the bar under the map.",
             "The switch is on Display, just above <b>RSSI bars</b>. It starts off. "
             "Turn it on and a north-up map sits over the list. Drag the bar. "
             "It stays where you leave it, from about a fifth of the screen to about three quarters. "
@@ -1748,7 +1755,7 @@ def story():
         P("5.5 Device detail", "h2"),
         figure_wrap(
             "fig-detail.png",
-            "Fig. 4 — Device detail. The custom name is the big title.",
+            "Fig. 6 — Device detail. The custom name is the big title.",
             "Tap a row or a radar blip. Detail is the full decode of that observation, resolved "
             "offline from packed IEEE and Bluetooth SIG tables (no network). Jargon is spelled "
             "out in plain language (for example BR/EDR not supported = BLE-only, no classic "
@@ -1914,7 +1921,7 @@ def story():
         ),
         figure_wrap(
             "fig-hunt.png",
-            "Fig. 5 — Hunt.",
+            "Fig. 7 — Hunt.",
             "<b>Hunt</b> is for one Bluetooth radio. Open it from the detail page for that radio. "
             "The screen is a heat cloud of where this phone heard it. "
             "If you have loaded license plate readers or other sensors, those marks can sit on the same map, under the cloud. "
@@ -1983,7 +1990,7 @@ def story():
         P("5.6 Reports tab", "h2"),
         figure_wrap(
             "fig-reports.png",
-            "Fig. 6 — Reports. The line above those four rows names the sit they use.",
+            "Fig. 8 — Reports. The line above those four rows names the sit they use.",
             "Reports is the bottom tab next to Settings. Sits stay open here. "
             "The line under Sits says radios heard during a named stretch of time. "
             "Start sit is at the top. With no sit running, the helper under that button says Select Sit for actions below. "
@@ -1996,7 +2003,7 @@ def story():
         P("Named sits", "h3"),
         figure_wrap(
             "fig-sit.png",
-            "Fig. 6 — Live, sit running.",
+            "Fig. 9 — Live, sit running.",
             "A sit is a named window of <b>everything heard</b>, kept even after the Live list "
             "drops the MAC. Start sit and End sit are on Reports. Name is optional "
             "(blank becomes a timestamp). Radios currently heard are copied in; new hears are "
@@ -2040,7 +2047,7 @@ def story():
         ]),
         figure_wrap(
             "fig-reports-sit.png",
-            "Fig. 6 — Debrief. Text and PDF are the same report.",
+            "Fig. 10 — Debrief. Text and PDF are the same report.",
             "Debrief (text) and Debrief (PDF) are the same report. "
             "The line under the buttons names the window, here the last 15 minutes still in memory. "
             "Show unmatched rotating BLE adds those addresses to the lists. The counts already include them. "
@@ -2051,7 +2058,7 @@ def story():
         P("5.6.1 Path", "h3"),
         figure_wrap(
             "fig-path.png",
-            "Fig. 6 — Path for Trip to Lake House. North stays up.",
+            "Fig. 11 — Path for Trip to Lake House. North stays up.",
             "Reports → Path is its own page: a north-up plot of <b>this phone</b> for the sit you selected "
             "(open sit, a saved sit, or last 15 minutes). "
             "Tag detections with GPS must have been on, and the window needs a GPS fix, "
@@ -2159,7 +2166,7 @@ def story():
         P("Compare sits", "h3"),
         figure_wrap(
             "fig-compare.png",
-            "Fig. 6 — Compare. Pick a second saved sit.",
+            "Fig. 12 — Compare. Pick a second saved sit.",
             "Compare is its own page. This sit versus a second saved sit. Same window as Debrief. Text and PDF, same letter layout. "
             "The line at the top names this sit. In this figure it is the last 15 minutes still in memory. "
             "Second sit is the list of sits already saved on this phone. "
@@ -2172,7 +2179,7 @@ def story():
         P("5.6.2 Sit export", "h3"),
         figure_wrap(
             "fig-sit-export.png",
-            "Fig. 6 — Sit export. One row per radio. This is not the log.",
+            "Fig. 13 — Sit export. One row per radio. This is not the log.",
             "Sit export is its own page, opened from the row under the green bar. "
             "Format starts at Log file — CSV. Both radios, Wi-Fi only, or BLE only, then Share or Save to SD card / storage. "
             "The dropdown also has JSON lines, GPX, KML, WiGLE, GeoJSON, and an ATAK data package. Log Export does not have the last two. "
@@ -2201,7 +2208,7 @@ def story():
         P("5.6.3 Log export", "h3"),
         figure_wrap(
             "fig-log.png",
-            "Fig. 6 — Log Export. Share or save the log. Clear log is on this page.",
+            "Fig. 14 — Log Export. Share or save the log. Clear log is on this page.",
             "Log Export is its own page. The line at the top is how many lines this session, and how much is on disk. "
             "The rotating file on disk is JSON lines: "
             "<font face='Courier'>files/logs/fieldwatch-NNN.jsonl</font>, one hear per line — the session tape, not the sit roster. "
@@ -2243,7 +2250,7 @@ def story():
         ),
         figure_wrap(
             "fig-candidates.png",
-            "Fig. 7 — Signature candidates. Find candidates starts the search.",
+            "Fig. 15 — Signature candidates. Find candidates starts the search.",
             "Opening this page does not read the log. The note says it reads the whole log, not the sit above, and that it can take a while. "
             "After Find candidates, each card is one family: proposed name, class guess, radio count (number plus a Wi-Fi or Bluetooth icon), the rule in "
             "monospace, one sentence why it is not a house SSID, and a couple of examples. "
@@ -2268,7 +2275,7 @@ def story():
         ),
         figure_wrap(
             "fig-settings.png",
-            "Fig. 8 — Settings. Alerts sits under Scanning. Named radios is on that page.",
+            "Fig. 16 — Settings. Alerts sits under Scanning. Named radios is on that page.",
             "Settings opens on this list. Appearance, Language, Scanning, Alerts, Location and Maps, GNSS interference, Cell connection monitoring, Trusted networks, and TAK / CoT are here. "
             "Map, Known cameras, and Display location on map are on Location and Maps. "
             "Named radios is on Alerts, not on this list. "
@@ -2279,13 +2286,13 @@ def story():
             "on a signature. Hide a whole family on Filters. See §7.6, §8.",
         ),
         bullets([
-            "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, Extra attention, and the top-bar icons follow that, so green and red become shades of red. Read the words beside the icons. Phone brightness does not change. Restore defaults turns it off. Fig. 9, §5.1.",
+            "<b>Night mode</b> starts off. It turns the field display red on black so a dark sit stays dim. Text, loudness, Hunt, Extra attention, and the top-bar icons follow that, so green and red become shades of red. Read the words beside the icons. Phone brightness does not change. Restore defaults turns it off. Fig. 17, §5.1.",
             "<b>Keep screen on</b> starts on. The display stays awake while Fieldwatch is in front, so Samsung does not park Bluetooth. Turn it off when you pocket the phone.",
             "<b>Privacy mode</b> starts off. It hides the last three octets of each MAC on Live, radar, timeline, detail, Hunt, Named radios, and watchlist cards, shown as **:**:**. GPS on detail, and coordinates in Debrief, AI Export, and detail Share, show as “masked.” Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as “masked,” and the byte count stays. Street names are left out of those reports. A Remote ID UAS id in those reports, including the path key under the map, is masked the same way. In a cell-connection warning on that sit report, the area and the cell id show as “masked.” The generation, the network, the country, and the operator stay. The dialog and the place page still show the numbers the phone filled. The vendor prefix stays. Logs, matching, Moving with you, and saved signatures still use the real address and position. The TAK / CoT feed pauses while Privacy mode is on, so full addresses and coordinates are not sent (§5.8).",
         ]),
         figure_wrap(
             "fig-settings-night.png",
-            "Fig. 9 — Appearance. Night mode is on.",
+            "Fig. 17 — Appearance. Night mode is on.",
             "Red on black so a dark sit stays dim. The top-bar icons follow the same red. Phone brightness does not change. Restore defaults turns it off.",
         ),
         P("Radios, watchlist, logging, and backup", "h3"),
@@ -2353,7 +2360,7 @@ def story():
             "A missing key, a key the service rejects, or a map that does not load opens one popup. "
             "OpenStreetMap, the USGS maps, and FAA VFR Sectional stay quiet when a picture is missing. "
             "Restore defaults sets Map back to OpenStreetMap and leaves the keys you saved. "
-            "Fig. 8 is the Settings list. The Map list and the key field are on Location and Maps."
+            "Fig. 16 is the Settings list. The Map list and the key field are on Location and Maps."
         ),
         P("5.7.2 Known cameras and detectors", "h3"),
         callout(
@@ -2398,7 +2405,7 @@ def story():
         ),
         figure_wrap(
             "fig-layers.png",
-            "Fig. 8 — Location and Maps. Known cameras and Voice Alerts.",
+            "Fig. 18 — Location and Maps. Known cameras and Voice Alerts.",
             "Settings → Location and Maps, scrolled to Known cameras. "
             "Each list has its own switch, a Saved date, and Update. "
             "Voice Alerts sits under each list. The list switches are on in this shot, and Alert for plate readers is on. They start off. "
@@ -2970,11 +2977,11 @@ def story():
         P("5.8.15 What ATAK shows", "h3"),
         figure(
             "fig-atak-gnss.png",
-            "Fig. 26 — A GNSS mark on ATAK. The ellipse is the hit. Cyan is this phone.",
+            "Fig. 19 — A GNSS mark on ATAK. The ellipse is the hit. Cyan is this phone.",
             6.9 * inch,
         ),
         P(
-            "The mark is Magenta, so you can tell it from the other Fieldwatch icons (Fig. 26). "
+            "The mark is Magenta, so you can tell it from the other Fieldwatch icons (Fig. 19). "
             "The moving phone is Cyan. An operator pin is Orange. An advertised aircraft is Yellow. Extra attention heard here is Maroon."
         ),
         table(
@@ -3160,7 +3167,7 @@ def story():
         P("5.9.1 Calibrate this phone", "h3"),
         figure_wrap(
             "fig-settings-gnss.png",
-            "Fig. 21 — GNSS interference, after calibration. This phone graded Good.",
+            "Fig. 20 — GNSS interference, after calibration. This phone graded Good.",
             "Stand where the sky is open. A roof, a router, or a radio next to the phone can spoil the minute. "
             "Tap <b>Calibrate this phone</b>. The line counts down. "
             "Stop calibration leaves the last result unchanged. "
@@ -3189,10 +3196,10 @@ def story():
         ),
         figure_wrap(
             "fig-settings-gnss-levels.png",
-            "Fig. 22 — Sensitivity and Warning level. Each is Low, Medium, or High.",
+            "Fig. 21 — Sensitivity and Warning level. Each is Low, Medium, or High.",
             "<b>Warn when the signal holds</b> looks for gain falling while the signal holds or rises, plus a clock or a position that does not match the network. "
             "A careful false signal can still get past these checks. A wrong position can also be a side effect of interference. "
-            "The switch is on in Fig. 22. It starts off. "
+            "The switch is on in Fig. 21. It starts off. "
             "<b>Beep</b> is the same pip as a watchlist hit, on the media volume. The popup and the red line still show if Beep is off. "
             "<b>Voice</b> says possible GPS interference, or possible GPS spoofing. "
             "When an app on this phone is generating the location, it says that too. "
@@ -3202,7 +3209,7 @@ def story():
         ),
         P(
             "<b>Record raw GNSS during interference</b> is off until you turn it on, and it stays dimmed until the check is on. "
-            "Fig. 23 shows it on. "
+            "Fig. 22 shows it on. "
             "It saves this phone's raw GPS measurements from about a minute before a hit until 30 seconds after the hit ends. "
             "<b>Share last recording</b> is on this same page. The file stays on this phone until you share it. "
             "Privacy mode does not record. Older recordings are removed when the saved files pass about 20 MB. "
@@ -3210,9 +3217,9 @@ def story():
         ),
         figure_wrap(
             "fig-settings-gnss-more.png",
-            "Fig. 23 — Keep the GPS receiver awake, Count satellites fading together, and Gain reads backwards.",
+            "Fig. 22 — Keep the GPS receiver awake, Count satellites fading together, and Gain reads backwards.",
             "<b>Keep the GPS receiver awake</b> uses more battery. Android 12 and newer. Older phones ignore it. "
-            "It is on in Fig. 23. It starts off. "
+            "It is on in Fig. 22. It starts off. "
             "<b>Count satellites fading together</b> watches for satellites fading at the same time. A hand, a pocket, or getting in a car can do that. Leave it off unless you are testing it. "
             "<b>Gain reads backwards</b> is for a few phones that report gain backwards. Turn it on only if a Wi-Fi router makes the AGC number in Diagnostics go up.",
         ),
@@ -3266,7 +3273,7 @@ def story():
         P("5.9.4 What a hit looks like", "h3"),
         figure_wrap(
             "fig-gnss-dialog.png",
-            "Fig. 24 — Possible GPS interference. OK closes it. The red line stays.",
+            "Fig. 23 — Possible GPS interference. OK closes it. The red line stays.",
             "The dialog title is <b>Possible GPS interference</b>, with Low, Medium, or High. "
             "If Warn when the signal holds is on and that pattern hits as well, the dialog title is "
             "<b>Possible GPS interference and spoofing</b>. "
@@ -3279,7 +3286,7 @@ def story():
         ),
         figure_wrap(
             "fig-gnss-live.png",
-            "Fig. 25 — After OK, the red line stays. This is not the flood line.",
+            "Fig. 24 — After OK, the red line stays. This is not the flood line.",
             "Dismiss the dialog and the red line stays across the top of Live: "
             "<b>Possible GNSS interference</b>, then the level. "
             "It stays until the condition ends. "
@@ -3440,14 +3447,14 @@ def story():
         ),
         figure_wrap(
             "fig-trusted.png",
-            "Fig. 27 — Trusted networks. The watch is on in this shot. It starts off.",
+            "Fig. 25 — Trusted networks. The watch is on in this shot. It starts off.",
             "The watch is its own switch. Under Warnings, three checks start on: Warn on weaker security, Warn on an unknown maker, and Warn when far from usual places. "
             "How far counts as away starts at 1 km. The other choices are 500 m, 2 km, and 5 km. "
             "How quiet can still warn starts at −85 dBm. A hear quieter than that does not count and does not alert. −85 dBm itself can. "
             "The other choices are −75 dBm and −95 dBm. "
             "Learning is its own group. Learn new access points starts on. How long to learn starts at 3 days. The other choices are 1 hour, 1 day, 7 days, and 14 days. "
             "1 hour is a walk through a small home. A larger place, with more access points, needs a longer window. §5.11.3. "
-            "Fig. 27 shows a phone that already has the watch on. The three warning checks are on in that shot, and that is how they start. A new install starts with the watch off. The learning window starts at 3 days. Fig. 31 shows the choices.",
+            "Fig. 25 shows a phone that already has the watch on. The three warning checks are on in that shot, and that is how they start. A new install starts with the watch off. The learning window starts at 3 days. Fig. 26 shows the choices.",
             "How a warning reaches you is Beep, Voice, and System notification. Beep starts on. Voice starts on. System notification starts off. How sure before a warning starts at Medium. "
             "Beep, Voice, and System notification on this page do not change the watchlist switches or the GNSS switches. "
             "Network warnings and How long a warning spot stays are on Settings → TAK / CoT. Both stay dim until Watch trusted networks is on.",
@@ -3512,7 +3519,7 @@ def story():
         P("5.11.3 The learning window", "h3"),
         figure_wrap(
             "fig-trusted-learn.png",
-            "Fig. 31 — How long to learn. 1 day is selected in this shot. It starts at 3 days.",
+            "Fig. 26 — How long to learn. 1 day is selected in this shot. It starts at 3 days.",
             "The choices are 1 hour, 1 day, 3 days, 7 days, and 14 days. "
             "This shot has 1 day selected. A new install starts at 3 days. "
             "The choices do not list the names.",
@@ -3809,11 +3816,11 @@ def story():
         ),
         figure_wrap(
             "fig-cell.png",
-            "Fig. 28 — Cell connection monitoring. The watch is on in this shot. It starts off.",
+            "Fig. 27 — Cell connection monitoring. The watch is on in this shot. It starts off.",
             "Monitor the cell connection is the switch. Under Warnings, two checks start on: Warn on a new cell, and Warn on a drop to 2G or 3G. "
             "Both run only while Monitor the cell connection is on. "
             "How long to learn is on that card. The start is 3 days. The other choices are None, 1 day, 7 days, and 14 days. "
-            "Fig. 28 shows a phone that already has the watch on. How long to learn is 14 days in that shot. A new install starts at 3 days. Warn on a new cell and the drop check are on in that shot, and that is how they start. A new install starts with the watch off.",
+            "Fig. 27 shows a phone that already has the watch on. How long to learn is 14 days in that shot. A new install starts at 3 days. Warn on a new cell and the drop check are on in that shot, and that is how they start. A new install starts with the watch off.",
             "How a warning reaches you is Beep, Voice, and System notification. Beep starts on. Voice starts on. System notification starts off. "
             "Beep, Voice, and System notification on this page do not change the watchlist, GNSS, or trusted networks. "
             "There is no TAK pin for this warning, and no mark on the path map.",
@@ -3889,7 +3896,7 @@ def story():
         P("5.12.2 The three warnings", "h3"),
         figure_wrap(
             "fig-cell-dialog.png",
-            "Fig. 30 — This phone camped on a cell it has not used here. The numbers in this shot are an example.",
+            "Fig. 28 — This phone camped on a cell it has not used here. The numbers in this shot are an example.",
             "Both warnings need a place that an earlier visit already learned, and they need their own switch. "
             "Both switches start on. "
             "One dialog at a time. A cell warning waits while a GNSS dialog or a trusted-network dialog is on screen.",
@@ -3897,7 +3904,7 @@ def story():
             "The title is <b>This phone camped on a cell it has not used here.</b> "
             "The paragraph is <b>Fieldwatch cannot tell the cause.</b> "
             "One warning per cell. It ends when that cell has been gone for 10 minutes, or when you dismiss it or learn it. "
-            "Fig. 30 is that dialog. "
+            "Fig. 28 is that dialog. "
             "The network, the area, the cell id, PCI, the channel, and the band frequency in the shot were filled in so the dialog could be photographed. "
             "They are not a tower this phone measured, and they are not a cause.",
         ),
@@ -3931,7 +3938,7 @@ def story():
             "System notification starts off. It is silent. The title is the sentence, and the text is the paragraph. It does not include the cell id. The dialog still shows."
         ),
         P(
-            "Fig. 30 shows the two buttons. "
+            "Fig. 28 shows the two buttons. "
             "Learn this cell saves that camp on the place and ends the warning. "
             "On a drop, saving the 2G or 3G camp means a later drop at that place stays quiet, because the place has now learned 2G or 3G. "
             "Dismiss closes the dialog. It does not forget the cell. "
@@ -4054,7 +4061,7 @@ def story():
         P("6.1 Classic radar", "h2"),
         figure_wrap(
             "fig-radar.png",
-            "Fig. 10 — Classic radar.",
+            "Fig. 30 — Classic radar.",
             "<b>What it shows.</b> A polar plot. You are the center. Each filtered device is a blip.",
         ),
         bullets([
@@ -4081,7 +4088,7 @@ def story():
         P("6.2 Strength-ranked live list", "h2"),
         figure_wrap(
             "fig-list.png",
-            "Fig. 11 — Strength list. Privacy mode hides the end of each MAC.",
+            "Fig. 31 — Strength list. Privacy mode hides the end of each MAC.",
             "<b>What it shows.</b> Devices in Display → Sort order (default Strongest averaged over 30 s; every option is in §5.3). This is "
             "the view Display was built for: one row per radio, as dense or as spare as you set. "
             "Each row: class glyph in a circle (unmatched = ?); first line from Title line (default MAC); "
@@ -4108,7 +4115,7 @@ def story():
         P("6.3 Timeline view", "h2"),
         figure_wrap(
             "fig-timeline.png",
-            "Fig. 12 — Timeline.",
+            "Fig. 32 — Timeline.",
             "<b>What it shows.</b> One card per filtered device heard in the last 15 minutes, in Display → Sort order. Title and subtitle follow the same Display lines as the list, including the class glyph and the Wi-Fi / Bluetooth icon on the subtitle. Under that identity is a time strip: left = 15 minutes ago, right = now. Solid segments are on-air windows; gaps are real dropouts. The number is current RSSI, not an average over the bar; Frequency, if on, sits under it. The clock ticks about once a second so a sitting radio's bar grows toward the right until it fills the window.",
         ),
         P("<b>How to interpret.</b> A continuous growing bar is a fixture (home AP, or a phone that keeps advertising). Wi-Fi scan waits do not count as dropouts — sitting APs stay one bar. A new segment appears only after the device is marked gone (longer of Stale and Brief hold) and then heard again. A short tick that repeats is a low-duty advertiser. A bar that starts when you turned a corner and ends when you left is geometry, not “the device left the universe.” After 15 minutes of continuous presence the bar is full width; it does not grow past the left edge.", "body_left"),
@@ -4125,7 +4132,7 @@ def story():
         P("6.4 Hybrid view", "h2"),
         figure_wrap(
             "fig-hybrid.png",
-            "Fig. 13 — Hybrid.",
+            "Fig. 33 — Hybrid.",
             "<b>What it shows.</b> The strength list (same Title/Subtitle, Sort, and extra-fact switches) plus a full-width sparkline of recent RSSI samples (up to 40 points kept per device) and the same &gt;&gt; / &lt;&lt; trend mark. Scale is fixed: top = −30 dBm, bottom = −100 dBm. A faint 10 dB grid with a left-hand scale (−30 / −50 / −70 / −100) and four vertical columns. A dot marks the newest packet. 127 (not available) is omitted from the line. There is no banner on this view; the grid is the legend. In a plaza, drop back to Strength list and Subtitle None before you blame the sparkline for the clutter.",
         ),
         P("<b>How to interpret.</b> Left = older packets, right = newest, up = stronger. A line high on the strip is loud. A line near the bottom is weak. A flat line at one height means the radio is sitting still at that strength — that is the usual Wi-Fi picture between 30 s scans. The line only climbs or drops when RSSI actually changes. After 40 samples the waveform shifts left. The chevron is the short answer: &gt;&gt; much stronger (~+8 dB), &gt; stronger (~+3 dB), = steady, &lt; weaker, &lt;&lt; much weaker. A sawtooth is often a Bluetooth radio that transmits in bursts, not motion.", "body_left"),
@@ -4142,7 +4149,7 @@ def story():
         P("6.5 By class", "h2"),
         figure_wrap(
             "fig-by-class.png",
-            "Fig. 14 — By class.",
+            "Fig. 34 — By class.",
             "<b>What it shows.</b> An outline of the same filtered Live display. Every signature class "
             "(Audio, Wearables, Cameras, …) is a row with the class glyph, A–Z by class name. "
             "Show all (default) keeps empty classes dimmed at 0 so the list does not jump; Collapse empty hides those zeros. "
@@ -4512,7 +4519,7 @@ def story():
         P("8. Filters", "h1"),
         figure_wrap(
             "fig-filters-top.png",
-            "Fig. 15 — Filters. Presets, Radios, and the three switches.",
+            "Fig. 35 — Filters. Presets, Radios, and the three switches.",
             "Filters are how you stop staring at every radio in a plaza. They sit on the second "
             "tab, next to the Live display, because the usual loop is look at the list, then trim it. Nothing "
             "on this tab turns the radios off. Debrief, AI Export, and the on-disk log ignore "
@@ -4528,7 +4535,7 @@ def story():
         P("8.1 What this tab changes", "h2"),
         figure_wrap(
             "fig-filters-mid.png",
-            "Fig. 16 — The rest of Filters. A chevron opens that page.",
+            "Fig. 36 — The rest of Filters. A chevron opens that page.",
             "Hearing radios and showing them are separate jobs. Fieldwatch always records what it "
             "hears; the filter only changes what the Live display (radar, list, timeline, hybrid, By class) shows. The log "
             "still writes every observation, including radios the current filter would hide, so "
@@ -4545,7 +4552,7 @@ def story():
             "A preset still replaces the whole filter, including which sections are on. "
             "Reset filter, under the list, clears every clause, including class picks, remembered signature picks, and "
             "New detections only (the already-seen set is cleared). "
-            "Fig. 15 is the top of this list. Fig. 16 continues through Reset filter. Fig. 17 is Selected signatures, and the class page next to that section."
+            "Fig. 35 is the top of this list. Fig. 36 continues through Reset filter. Fig. 37 is Selected signatures. Fig. 38 is the class page."
         ),
         P("Inside the pages, in the same order:", "body_left"),
         bullets([
@@ -4582,7 +4589,7 @@ def story():
         P("8.3 Keep signature matches only, classes, and selected families", "h2"),
         figure_wrap(
             "fig-filters-selected.png",
-            "Fig. 17 — Selected signatures. Show only or Hide these, then open a class.",
+            "Fig. 37 — Selected signatures. Show only or Hide these, then open a class.",
             "<b>Keep signature matches only</b> hides radios that match no signature, so the Live display is pattern hits "
             "of every class. If the list goes empty, nothing matching is in earshot — signatures "
             "always label; Filters only hide radios from the Live display. Class <b>Show only</b> or Show only "
@@ -4593,7 +4600,7 @@ def story():
         ),
         figure_wrap(
             "fig-filters-classes.png",
-            "Fig. 17 — Selected signature classes. Show only or Hide these, then the classes.",
+            "Fig. 38 — Selected signature classes. Show only or Hide these, then the classes.",
             "Selected signature classes is its own page. "
             "Pick Show only or Hide these, then the classes to show or hide on Live. "
             "Show only with nothing picked leaves Live unchanged. "
@@ -4836,7 +4843,7 @@ def story():
         P("9.1 What a signature is", "h2"),
         figure_wrap(
             "fig-signatures.png",
-            "Fig. 2 (repeated) — Signatures. Bookmark to alert.",
+            "Fig. 3 (repeated) — Signatures. Bookmark to alert.",
             "The line under the title says Bookmark to alert. This figure is Class A–Z. Tap a class to open its signatures. "
             "A signature is a named bundle of match rules, a color, and optional cluster flags. "
             "It is not proof of vendor identity. Built-in only marks where a row came from; you "
@@ -5180,7 +5187,7 @@ def story():
         P("9.6 Decode fields", "h2"),
         figure_wrap(
             "fig-decode-editor-row.png",
-            "Fig. 18 — Signature editor (Ruuvi).",
+            "Fig. 39 — Signature editor (Ruuvi).",
             "After a signature matches, Fieldwatch can map <b>cleartext</b> bytes "
             "in that advertisement to labels — temperature, model, Remote ID location, and so on. "
             "Remote ID uses this map on BLE FFFA and on Wi-Fi FA:0B:BC (framed as FFFA). "
@@ -5198,7 +5205,7 @@ def story():
         ),
         figure_wrap(
             "fig-decode-fields.png",
-            "Fig. 19 — Decode fields.",
+            "Fig. 40 — Decode fields.",
             "This is BLE advertisements only: no pairing, no GATT connect, no crypto. "
             "Encrypted or unknown payloads stay hex, the same as Maker data already does. "
             "Apple Continuity, Fast Pair, Eddystone, and Microsoft stay on the built-in "
@@ -6323,8 +6330,8 @@ def story():
         ),
         figure_wrap(
             "fig-hunt.png",
-            "Fig. 5 (repeated) — Hunt.",
-            "Fig. 5 shows a hunt that already has a map. Before GPS locks, this same page is blank, and the line reads No GPS yet. This walk is not on a map. How that picture works is just above.",
+            "Fig. 7 (repeated) — Hunt.",
+            "Fig. 7 shows a hunt that already has a map. Before GPS locks, this same page is blank, and the line reads No GPS yet. This walk is not on a map. How that picture works is just above.",
             "<b>Walk a pattern.</b> Cross the room, the car, or the floor in a loop: forward, back, and out to both sides. "
             "Walk slowly, and watch the heat, the large RSSI number, the sparkline, and loudest-this-hunt. Closer to 0 is louder where you are. "
             "Standing in one spot paints one patch. Keep moving so the colors can separate. "
@@ -6638,12 +6645,12 @@ def story():
         P(
             "Six stages, left to right, then the next row. Filters hide radios on Live; Display "
             "(Tune) hides fields on the row. Matching, the log, and Debrief still see what was "
-            "heard. Fig. 20, then §7 (hear), §9 (match), §8 (filter), §5.3 (Display), §10 (watch), "
+            "heard. Fig. 41, then §7 (hear), §9 (match), §8 (filter), §5.3 (Display), §10 (watch), "
             "§11 (log / sits / Debrief), §5.8 (TAK)."
         ),
         diagram(
             "how-it-works.png",
-            "Fig. 20 — How a hear becomes a row.",
+            "Fig. 41 — How a hear becomes a row.",
         ),
         PageBreak(),
         P(
@@ -6719,11 +6726,11 @@ def story():
             ["Flood", "A burst of new Bluetooth addresses in a few seconds, or many new Wi-Fi names in one scan at about the same loudness, gone by the next scan. A name flood counts randomized addresses. A factory address with a stable name stays out of that count. The first Wi-Fi scan of a session stays quiet. A repeated name, a mesh, an extender, or a guest network is not counted. One dialog, then a red line: Pairing flood, Name flood, or Wi-Fi beacon flood. A pairing or name dialog says this can be many radios already advertising, such as in a store, or one radio changing its address. A Flipper Zero, or an ESP32 running Marauder or Bruce, can do the second. The advertisement does not name the tool. Hide these turns Hide this burst on and takes this burst, and later bursts in the hold, off Live. Continue leaves the radios up. During a sit, that answer holds until the sit ends. Later bursts keep the red line and do not open the dialog. Ending the sit asks again. With no sit open, the choice holds for about 15 minutes from the tap and does not slide. A later burst in that time keeps the red line. After 15 minutes the next burst asks again. Starting a sit while those 15 minutes are still running keeps the answer until the sit ends. Turning Hide this burst off brings the open burst back and leaves later bursts in that hold on Live. Hide this burst takes those addresses off the Live display until they would have left on their own. After the red line clears, Hiding N flood radios stays until they leave or that switch is turned off. The sit file and the log still keep those packets. Alerts stay quiet for those addresses. Debrief and Compare print one line per burst and leave those addresses out of the radio counts and lists. The line says how many were set aside. Compare names the sit. A sit saved before those addresses were stored still counts them with the other radios. §5.1, §5.6."],
             ["Privacy mode", "Settings switch, off by default. Masks the last three octets of MACs on the screen and in Debrief / AI Export / detail Share (AA:BB:CC:**:**:**). GPS last-fix and sit-report coordinates show as masked; street names omitted. Raw advertisement bytes on the radio page, in Share as text, and in one-radio AI Export show as masked, and the byte count stays. A Remote ID UAS id in Debrief, Compare, and AI Export, including the path key under the map, is masked. In a cell-connection warning on that sit report, the area and the cell id show as masked. The generation, the network, the country, and the operator stay. The dialog and the place page still show the numbers. Reports → Path still loads map tiles when Online place names and maps is on, and an aircraft card titled with a UAS id reads Aircraft. Logs, matching, filters, Hunt math, Moving with you, and saved signatures stay full. Pauses a TAK / CoT feed so full MACs and coordinates are not sent. §5.7, §5.8, §5.12."],
             ["TAK / CoT feed", "Settings switch, off by default. UDP Cursor-on-Target markers to ATAK / WinTAK / iTAK. Destination chips: This phone (127.0.0.1:10011), LAN multicast (239.2.3.1:6969), Custom. UDP only — not a TAK server TCP client. Heard-here Extra attention at operator GPS at the loudest hear (callsign ends in (here)); advertised lat/lon on the aircraft (Remote ID BLE FFFA or Wi-Fi FA:0B:BC keeps one moving marker via sticky UAS ID, plus an operator pin when op_lat/op_lon decoded. The callsign says Takeoff, Pilot, or Fixed; Location heading/speed go in track). A radio that leaves keeps its name for How long a spot stays (1 hour unless you change it). This phone's marker still refreshes about every 2 minutes. Turning the feed off, or Privacy mode on, takes those radio spots off the map. What to send: Extra attention, Payload location, Watchlist, All signatures. GNSS warnings (Off, While alerting, Red line, Any hit) adds a line on this phone's marker and a pin or ellipse where the phone was. A short hit is a pin. A longer hit is an ellipse half as wide as the stretch, kept 1 hour, 6 hours, 24 hours, or until deleted. BLE Flood warnings (Off or On) adds a line and does not add a pin. A Wi-Fi beacon flood uses that same line. The Network warnings switch for a trusted network is on this page and stays dim until Watch trusted networks is on. Settings shows last send. Privacy mode pauses it. Not DF, not a Remote ID plugin, not the Live display. The GNSS mark is §5.8.13. §5.8, §5.8.12, §12.15, §12.16."],
-            ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention, and the top-bar icons. Green and red become shades of red, so read the words beside the icons. Phone brightness is unchanged. Fig. 9, §5.1, §5.7."],
+            ["Night mode", "Settings → Appearance, off by default. Red-on-black field display: text, chips, RSSI, Hunt, Extra attention, and the top-bar icons. Green and red become shades of red, so read the words beside the icons. Phone brightness is unchanged. Fig. 17, §5.1, §5.7."],
             ["Diagnostics", "Settings, under Show Live tour. Shows whether scanning is running, and the state of Wi-Fi, Bluetooth, Location, and GPS. What to check names a switch that is off and needs to be on. It does not name Wi-Fi scanning or Bluetooth scanning while that radio is already on. The rest of the page is the phone, Android version, catalog, and the Faster Wi-Fi, background usage, and Unrestricted battery switches. When the GNSS check is on, it also shows settling or the monitor state, and the calibration grade. It also lists the registered cell, the generation when this phone is camped, which of Network, Area, or Cell were empty, the neighbor count, and a second SIM. A second SIM the phone did not answer says not returned. No network code, no country, no operator, and no GPS coordinates. Those cell lines stay when Cell connection monitoring is off. Copy puts those lines on the clipboard. No network names or addresses. An empty Live list points here when a scan is blocked. When Location is off, Live also shows a banner. §5.7, §5.9, §5.12."],
             ["GNSS interference", "A change in this phone's own GPS that can mean interference, or, with Warn when the signal holds on, a pattern that can mean spoofing. Not a located radio, The warning does not name a cause. Calibrate once outside before the check will turn on. The first minute is not the baseline. A warning can come after about two minutes. A cradle, a router, or another phone against this phone can cause a hit. Popup, then a red line on Live. Record raw GNSS during interference, off until you turn it on, saves the raw measurements around a hit. Share last recording is on that page. Privacy mode does not record. The top-bar GPS mark is red for that same stretch, gray while the check is warming up, paused, graded Poor, or the scan is stopped, and green once armed and quiet. Debrief lists the hit. The Path map marks where this phone was. That spot is not the source. On TAK, the same hit can leave a Magenta pin or ellipse where this phone was. §5.1, §5.8.13, §5.9."],
             ["Trusted networks", "Settings page for Wi-Fi names you mark on a radio's page. Watch trusted networks starts off. A later sighting of that exact name can alert when the security is weaker, the maker was not learned, or this phone is far from the places it usually hears that name. This network travels leaves the away check off for a hotspot, or a team network, that rides with you. A shop you visit every day can still notice a new factory maker, or the name showing up somewhere else. An open shop has no weaker security left to find. The phone does not join the network or ask for its password. The dialog does not name a cause. Debrief can list the alert, with no coordinates. The Network warnings switch starts off, on Settings → TAK / CoT, and stays dim until Watch trusted networks is on. §5.11."],
-            ["Cell connection monitoring", "Settings page for the tower this phone is camped on at a place. Monitor the cell connection starts off. The first still visit only learns. How long to learn starts at 3 days and can keep later visits quiet. None stops after that first visit. A later visit can then warn when the camp is one this phone has not used there. A place that learned only 4G and 5G can warn on a drop to 2G or 3G, including while the phone is moving inside that place, and that drop still warns during the learning time. The dialog says what this phone did. It can list the country, the operator, the channel, and the band. The place page lists the same lines. A channel that fits more than one band names each of them. Fieldwatch cannot tell the cause. A quiet watch is an empty report. It does not see another phone. Fig. 30 is the new-cell dialog. The numbers in that shot are an example. Debrief can list a warning that overlapped the sit, with no coordinates. Compare does not. There is no path mark and no TAK pin. §5.12."],
+            ["Cell connection monitoring", "Settings page for the tower this phone is camped on at a place. Monitor the cell connection starts off. The first still visit only learns. How long to learn starts at 3 days and can keep later visits quiet. None stops after that first visit. A later visit can then warn when the camp is one this phone has not used there. A place that learned only 4G and 5G can warn on a drop to 2G or 3G, including while the phone is moving inside that place, and that drop still warns during the learning time. The dialog says what this phone did. It can list the country, the operator, the channel, and the band. The place page lists the same lines. A channel that fits more than one band names each of them. Fieldwatch cannot tell the cause. A quiet watch is an empty report. It does not see another phone. Fig. 28 is the new-cell dialog. The numbers in that shot are an example. Debrief can list a warning that overlapped the sit, with no coordinates. Compare does not. There is no path mark and no TAK pin. §5.12."],
             ["GNSS mark (TAK)", "A Magenta map mark for a GNSS hit, separate from the Cyan Fieldwatch marker. Settings → TAK / CoT feed → GNSS warnings: Off, While alerting, Red line, or Any hit. Off sends nothing. A stretch under about 100 m is a pin at the start fix. A longer hit is one ellipse from that start to the latest fix, half as wide as it is long. The ellipse stops growing when the hit ends. The 10-minute ended line does not stretch it. Callsign Possible GNSS interference. The card says where this phone was, and that this is not the source. How long the mark stays: 1 hour (the start), 6 hours, 24 hours, or Until deleted. The time starts at the last update. Until deleted stays until GNSS warnings is set to Off. Needs the feed on, Privacy mode off, the check armed, and a GPS fix. A pause is not a hit. §5.8.13."],
             ["Heard here (TAK)", "CoT pin at this phone's GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not a bearing."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second operator pin. The callsign says Takeoff, Pilot, or Fixed. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
@@ -6805,7 +6812,7 @@ def story():
             ["Appearance", "BLE GAP field: what the device claims to be (headphones, mouse, watch…). Used in the detail “What this looks like” guess."],
             ["New detections only", "Filters switch. Mark seen / Reset seen are on the Live display above the tabs while the filter is on. Already-seen grows only on first turn-on (plus the next Wi-Fi scan) or Mark seen. Reset seen clears it to zero. New radios stay while heard, then at least Brief hold after the last packet. Live display hint: New only · N hidden."],
             ["Sit", "One session of watching radios — a room, a walk, or a drive. Path, Debrief, Sit export, and Compare this-sit use the selected sit, or last 15 minutes in memory. Log export is the rotating session file. §5.6, §11.4."],
-            ["Pipeline", "How a hear becomes a row: on the air → ScanService → catalog match → Live + Tune → watchlist / Hunt → log, sits, TAK. Fig. 20, Chapter 14."],
+            ["Pipeline", "How a hear becomes a row: on the air → ScanService → catalog match → Live + Tune → watchlist / Hunt → log, sits, TAK. Fig. 41, Chapter 14."],
             ["Hear-time", "The moment Fieldwatch heard that packet. GPS on a detection is this phone at hear-time, not the other radio's location."],
             ["Chip (signature)", "The colored signature name on a Live display row. A pattern hit, not identity. Display → Signature names hides chips without dropping the radio."],
             ["OUI", "Organizationally Unique Identifier — first 24 bits (three bytes) of a MAC, assigned to a vendor. The same module vendor appears in many products."],
@@ -7158,8 +7165,8 @@ def story():
             ["I want a Cameras / Drones / Surveillance chip", "Those class sits are not stock presets.", "Filters → Show only, pick the class chip, Save current as… Restore default signatures & presets puts the short stock set back and wipes custom chips."],
             ["Filters chips look dead while Pause is on", "Pause freezes only the Live display.", "Expected. Filters and Settings still take taps. The frozen list does not change until you tap Live again while you are already on that tab."],
             ["I deleted a preset but the Live display still looks the same", "Delete removes the snapshot, not the filter that is on.", "Expected. Apply another chip or tap Reset filter to change what the Live display shows."],
-            ["Cannot find Radar / list / By class / how to change the view", "Display is closed, or you are looking on Settings / Filters.", "Live display → tap Tune (sliders icon, top right). View is the first dropdown. Tap Tune again or tap the dimmed list to close. §4.4, §5.3, Fig. 3."],
-            ["Cannot find Title line / Subtitle line / Frequency under RSSI", "Display is closed, or you are looking on Settings.", "Live display → tap Tune (sliders icon, top right). Title and Subtitle are dropdowns under Brief hold. Frequency is a switch; channel · MHz sit under the RSSI, not on the identity line. Fig. 3."],
+            ["Cannot find Radar / list / By class / how to change the view", "Display is closed, or you are looking on Settings / Filters.", "Live display → tap Tune (sliders icon, top right). View is the first dropdown. Tap Tune again or tap the dimmed list to close. §4.4, §5.3, Fig. 4."],
+            ["Cannot find Title line / Subtitle line / Frequency under RSSI", "Display is closed, or you are looking on Settings.", "Live display → tap Tune (sliders icon, top right). Title and Subtitle are dropdowns under Brief hold. Frequency is a switch; channel · MHz sit under the RSSI, not on the identity line. Fig. 4."],
             ["List still shows “Apple, Inc. · AirTag…”", "Display → Subtitle is Name + type, which uses the same type guess as detail.", "IEEE vendor is on the detail page. To stop seeing the guess, set Subtitle to Advertised name or None."],
             ["A “!” on a Live display row", "A matched signature has Extra attention filled (stock: Hobby BLE serial, Axon, WatchGuard Video, Ray-Ban / Meta glasses, Snap Spectacles, Fieldy, Plaud Note, Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Cradlepoint, AirLink, Compex, Novatel Wireless, Utility Inc, Flock, Penguin, Pigvision, FS Ext Battery, Genetec AutoVu, Rekor, Motorola Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus).", "Open detail and read Extra attention. Pattern match, not identity. Meta company IDs also match Quest. Fieldy / Plaud Note are recording wearables, not proof someone is recording you. Camera / ALPR rows are roadside or public CCTV / plate readers, not that pole. Hide that family on Filters if it is local noise. Not the decode hexagon and not the phosphor alerted bell."],
             ["A bell on a Live display row", "That radio already fired a watchlist alert this session (beep / voice / flash).", "Expected. It stays until you leave Fieldwatch. Extra attention is the red “!”. Newest alert sorts by the same event. Radar keeps a phosphor ring on that blip after the ping."],
@@ -7198,7 +7205,7 @@ def story():
             ["Hunt starts off where I am, or the dot sticks", "GPS has not locked, the phone is not flat, or this phone has no working step sensor. A walk that is already on the map can still sit a few meters off a coarse fix.", "Before GPS locks, the page says No GPS yet. This walk is not on a map. Hold the phone flat, screen up, and walk a slow pattern. The circle starts at about four meters and grows as you walk. Amber means the phone is tilted and steps are paused. Two fresh fixes place about the first 20 m. A longer blank walk stays off the map. Allow physical activity if Android asks. Hunt works on any phone. A phone with a step sensor tracks the walk better. §12.13."],
             ["Where you were has coords but no street", "Online place names is off, or on with no internet / no geocoder.", "Expected. Stays still print lat/lon. Distance does not need internet. Turn the switch off if you want no lookup attempt."],
             ["Last fix or Debrief shows “masked” instead of lat/lon", "Privacy mode is on.", "Expected. Settings → Privacy mode hides GPS coordinates on the screen and in sit reports. Street names are omitted too. The log still has lat/lon. A TAK / CoT feed is paused. Turn Privacy mode off when you need the pin or the overlay."],
-            ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Appearance → Night mode Off. Restore defaults also turns Night mode off. Fig. 9."],
+            ["The whole UI went red / I want green chips back", "Night mode is on.", "Settings → Appearance → Night mode Off. Restore defaults also turns Night mode off. Fig. 17."],
             ["Screen pulses lighter and darker", "The phone's Adaptive brightness is chasing the light sensor. Fieldwatch does not set the brightness. Keep screen on only holds the display awake, so the pulse stays in view.", "Turn Adaptive brightness off in the phone's Display settings for the sit. Night Light and Extra dim can change the look too. Fieldwatch Night mode only turns the screen red. §13.2."],
             ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this phone, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 0–2) on BLE FFFA or Wi-Fi FA:0B:BC (Android 11+); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected. §5.8.3, §12.16."],
