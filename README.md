@@ -14,7 +14,7 @@ If you spot an error, something stupid, or have a feature idea — in the app or
 
 There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guide, and I encourage you to [download it](https://github.com/OffGridPete/Fieldwatch/raw/main/dist/Fieldwatch_User_Manual.pdf) so you can get the most out of the app.
 
-**Stay updated.** Fieldwatch isn't on the Play Store. Install [Obtainium](https://github.com/ImranR98/Obtainium) and add https://github.com/OffGridPete/Fieldwatch. It can download and install a new release for you.
+**Stay updated.** Fieldwatch isn't on the Play Store. Once it is installed, opening the app while the phone is online checks GitHub for a newer build. If there is one, Fieldwatch shows the release notes. Update now downloads it. Android still asks you to confirm the install. Later sets that build aside until a newer one is published. Settings has Check for an update if you want to look yourself. [Obtainium](https://github.com/ImranR98/Obtainium) can still watch https://github.com/OffGridPete/Fieldwatch.
 
 **Official builds.** The only official Fieldwatch builds are the releases in this repo. Other builds and translations are not made or reviewed by Off Grid Pete LLC.
 
