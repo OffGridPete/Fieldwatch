@@ -270,7 +270,7 @@ object HuntHeat {
         return (sumC / n).toFloat() to (sumR / n).toFloat()
     }
 
-    /** Same radio keeps the cloud. Reset, or a different radio, starts over. */
+    /** True when this radio's previous walk should continue. A fresh start does not. */
     fun resumes(carriedKey: String?, deviceKey: String, fresh: Boolean): Boolean =
         !fresh && carriedKey != null && carriedKey == deviceKey
 

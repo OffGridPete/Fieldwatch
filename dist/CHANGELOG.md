@@ -6,6 +6,15 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## Unreleased
 
+## 1.1.42 — 5 November 2026
+
+- A live sit map keeps up on a long drive. The line, the stops, and the camera marks stay where they were.
+- On Reports → Path, the camera picture for that view slides with the map. Where two wedges of the same color overlap, the tint is painted once.
+- Hunt on a radio's detail page starts a new hunt. Leaving Hunt clears the walk.
+- When the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost.
+- Filters can hide randomized Bluetooth. Wi-Fi stays. The sit still keeps those radios.
+- Bundled language files are written for this version. Signal Lost and Hide randomized Bluetooth are the lines added since 1.1.41.
+
 ## 1.1.41 — 4 November 2026
 
 - Warning dialogs for GPS, a cell, a trusted network, and a flood use one layout. The reason is a paragraph. Readings sit under Details, with the label and the value on one line.

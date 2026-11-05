@@ -144,6 +144,7 @@ class SettingsExchangeTest {
             """{"showWifi":false,"showBle":true}""",
         )
         assertFalse(oldFilter.hideMine)
+        assertFalse(oldFilter.hideRandomizedBle)
         assertFalse(oldFilter.showWifi)
         assertEquals("plaza -80", pack.presets.last().name)
         assertEquals(setOf("hide-phones"), pack.hiddenPresetIds)

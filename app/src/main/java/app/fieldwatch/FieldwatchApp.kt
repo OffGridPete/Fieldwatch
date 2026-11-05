@@ -580,6 +580,14 @@ class FieldwatchApp : Application() {
     private val operatorPath = ArrayList<GpsSample>(64)
     private val driveApex = Geo.DriveApex()
     private var pathLengthM = 0.0
+    private var pathSnap: List<GpsSample> = emptyList()
+    private var pathSnapN = -1
+    private var pathSnapHeadAt = Long.MIN_VALUE
+    private var pathSnapHeadLat = Double.NaN
+    private var pathSnapHeadLon = Double.NaN
+    private var pathSnapTipAt = Long.MIN_VALUE
+    private var pathSnapTipLat = Double.NaN
+    private var pathSnapTipLon = Double.NaN
     @Volatile
     private var locating = false
     @Volatile
@@ -1131,13 +1139,45 @@ class FieldwatchApp : Application() {
             if (last != null && !Geo.hopPlausible(last, lat, lon, at)) {
                 return
             }
-            Geo.extendDrivePath(operatorPath, driveApex, lat, lon, at, cap = Geo.TRACK_CAP)
-            pathLengthM = Geo.pathLengthM(operatorPath)
+            val before = operatorPath.size
+            val frozen = if (before >= 2) operatorPath[before - 2] else null
+            val tip = if (before >= 1) operatorPath[before - 1] else null
+            val trimmed = Geo.extendDrivePath(operatorPath, driveApex, lat, lon, at, cap = Geo.TRACK_CAP)
+            pathLengthM = if (trimmed) {
+                Geo.pathLengthM(operatorPath)
+            } else {
+                Geo.advanceDriveLength(pathLengthM, before, frozen, tip, operatorPath)
+            }
         }
         if (::sits.isInitialized) sits.recordPath(lat, lon, at)
     }
 
-    fun operatorPathCopy(): List<GpsSample> = synchronized(pathLock) { operatorPath.toList() }
+    fun operatorPathCopy(): List<GpsSample> = synchronized(pathLock) {
+        val n = operatorPath.size
+        val head = if (n > 0) operatorPath[0] else null
+        val tip = if (n > 0) operatorPath[n - 1] else null
+        if (n == pathSnapN &&
+            samePathEnd(head, pathSnapHeadAt, pathSnapHeadLat, pathSnapHeadLon) &&
+            samePathEnd(tip, pathSnapTipAt, pathSnapTipLat, pathSnapTipLon)
+        ) {
+            return pathSnap
+        }
+        val copy = operatorPath.toList()
+        pathSnap = copy
+        pathSnapN = n
+        pathSnapHeadAt = head?.at ?: Long.MIN_VALUE
+        pathSnapHeadLat = head?.lat ?: Double.NaN
+        pathSnapHeadLon = head?.lon ?: Double.NaN
+        pathSnapTipAt = tip?.at ?: Long.MIN_VALUE
+        pathSnapTipLat = tip?.lat ?: Double.NaN
+        pathSnapTipLon = tip?.lon ?: Double.NaN
+        copy
+    }
+
+    private fun samePathEnd(sample: GpsSample?, at: Long, lat: Double, lon: Double): Boolean {
+        if (sample == null) return at == Long.MIN_VALUE
+        return sample.at == at && sample.lat == lat && sample.lon == lon
+    }
 
     fun operatorPathLengthM(): Double = synchronized(pathLock) { pathLengthM }
 
@@ -1146,6 +1186,14 @@ class FieldwatchApp : Application() {
             operatorPath.clear()
             driveApex.clear()
             pathLengthM = 0.0
+            pathSnap = emptyList()
+            pathSnapN = -1
+            pathSnapHeadAt = Long.MIN_VALUE
+            pathSnapHeadLat = Double.NaN
+            pathSnapHeadLon = Double.NaN
+            pathSnapTipAt = Long.MIN_VALUE
+            pathSnapTipLat = Double.NaN
+            pathSnapTipLon = Double.NaN
         }
         devices.clearGpsTrails()
     }

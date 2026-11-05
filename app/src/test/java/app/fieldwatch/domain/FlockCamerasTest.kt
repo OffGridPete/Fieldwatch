@@ -5,7 +5,9 @@ import app.fieldwatch.data.SensorList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import kotlin.math.floor
 import org.junit.Test
 import java.io.DataOutputStream
 import java.io.File
@@ -528,6 +530,128 @@ class FlockCamerasTest {
         index.clear()
         assertFalse(index.hasCameras())
     }
+
+    @Test
+    fun aPaddedGatherMatchesTheExactBox() {
+        val index = FlockIndex()
+        index.replace(
+            listOf(
+                FlockCamera(1L, 39.0, -104.0, listOf(15)),
+                FlockCamera(2L, 39.001, -104.03, emptyList()),
+                FlockCamera(3L, 39.002, -103.99, listOf(200)),
+            ),
+        )
+        val south = 38.99
+        val north = 39.01
+        val west = -104.02
+        val east = -103.98
+        val direct = marksOf(index, south, north, west, east)
+        val gather = index.gatherFor(null, south, north, west, east)
+        assertFalse(gather.cells)
+        assertTrue(gather.south < south)
+        assertTrue(gather.west < west)
+        assertEquals(direct, packed(gather, south, north, west, east))
+        assertTrue(gather.visible(south, north, west, east).none { it.lon == -104.03 })
+        val inside = index.gatherFor(gather, south + 0.001, north - 0.001, west + 0.001, east - 0.001)
+        assertSame(gather, inside)
+        index.replace(listOf(FlockCamera(1L, 39.0, -104.0, emptyList())))
+        assertTrue(index.gatherFor(gather, south, north, west, east) !== gather)
+    }
+
+    @Test
+    fun aCellGatherKeepsAnEdgeCell() {
+        val cell = FlockIndex.CELL_DEG
+        val band = 1950
+        val south = band * cell + cell * 0.55
+        val north = south + cell
+        val edgeLat = band * cell + cell * 0.2
+        val outsideLat = 38.995
+        assertTrue(edgeLat < south)
+        assertEquals(floor(south / cell).toInt(), floor(edgeLat / cell).toInt())
+        assertTrue(floor(outsideLat / cell).toInt() < floor(south / cell).toInt())
+        val plates = List(8_001) { i ->
+            FlockCamera(i + 1L, 39.015 + (i % 400) * 0.00003, -104.0, emptyList(), flock = true)
+        }
+        val index = FlockIndex()
+        index.replace(
+            plates + listOf(
+                FlockCamera(9_000_001L, edgeLat, -104.03, listOf(10)),
+                FlockCamera(9_000_002L, outsideLat, -104.0, emptyList()),
+            ),
+        )
+        val west = -104.05
+        val east = -103.95
+        val direct = marksOf(index, south, north, west, east)
+        val gather = index.gatherFor(null, south, north, west, east)
+        assertTrue(gather.cells)
+        assertTrue(gather.south < south)
+        assertTrue(direct.any { it.lat == edgeLat })
+        assertTrue(direct.none { it.lat == outsideLat })
+        assertTrue(gather.visible(south, north, west, east).any { it.lat == edgeLat })
+        assertTrue(gather.visible(south, north, west, east).none { it.lat == outsideLat })
+        assertEquals(direct, packed(gather, south, north, west, east))
+        val close = index.gatherFor(gather, 39.024, 39.030, west, east)
+        assertFalse(close.cells)
+        assertTrue(close !== gather)
+    }
+
+    @Test
+    fun paddingDoesNotFlipSliceAndCell() {
+        val index = FlockIndex()
+        val core = List(8_000) { i ->
+            FlockCamera(i + 1L, 39.0 + (i % 20) * 0.00001, -104.0, emptyList())
+        }
+        val extra = List(200) { i ->
+            FlockCamera(20_000L + i, 39.025, -104.0, emptyList())
+        }
+        index.replace(core + extra)
+        val south = 38.999
+        val north = 39.011
+        val west = -104.1
+        val east = -103.9
+        val gather = index.gatherFor(null, south, north, west, east)
+        assertFalse(gather.cells)
+        assertEquals(south, gather.south, 0.0)
+        assertEquals(north, gather.north, 0.0)
+        assertEquals(west, gather.west, 0.0)
+        assertEquals(east, gather.east, 0.0)
+        val marks = marksOf(index, south, north, west, east)
+        assertEquals(8_000, marks.sumOf { it.count })
+        assertTrue(marks.none { it.lat == 39.025 })
+        assertEquals(marks, packed(gather, south, north, west, east))
+    }
+
+    @Test
+    fun aDateLineGatherStaysOnTheExactBox() {
+        val index = FlockIndex()
+        index.replace(listOf(FlockCamera(1L, 10.5, 179.5, emptyList())))
+        val gather = index.gatherFor(null, 10.0, 11.0, 179.0, -179.0)
+        assertTrue(gather.west > gather.east)
+        assertEquals(179.0, gather.west, 0.0)
+        assertEquals(-179.0, gather.east, 0.0)
+        assertSame(gather, index.gatherFor(gather, 10.0, 11.0, 179.0, -179.0))
+        assertTrue(index.gatherFor(gather, 10.0, 11.0, 178.0, -178.0) !== gather)
+    }
+
+    private fun marksOf(
+        index: FlockIndex,
+        south: Double,
+        north: Double,
+        west: Double,
+        east: Double,
+    ): List<FlockMark> = index.marks(south, north, west, east, { lat, lon -> lat.toFloat() to lon.toFloat() }, { _, _ -> true })
+
+    private fun packed(
+        gather: CameraGather,
+        south: Double,
+        north: Double,
+        west: Double,
+        east: Double,
+    ): List<FlockMark> = FlockIndex.pack(
+        gather.visible(south, north, west, east),
+        { lat, lon -> lat.toFloat() to lon.toFloat() },
+        { _, _ -> true },
+    )
 
     private fun tempDir(): File = File.createTempFile("flock", "").apply {
         delete()

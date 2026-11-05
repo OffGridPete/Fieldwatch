@@ -370,11 +370,48 @@ class SitSession(
     private val cells = ArrayList<CellMark>(cells.size + 4).apply { addAll(cells) }
     var dirty: Boolean = false
         private set
+    private var pathSnap: List<GpsSample> = emptyList()
+    private var pathSnapN = -1
+    private var pathSnapHeadAt = Long.MIN_VALUE
+    private var pathSnapHeadLat = Double.NaN
+    private var pathSnapHeadLon = Double.NaN
+    private var pathSnapTipAt = Long.MIN_VALUE
+    private var pathSnapTipLat = Double.NaN
+    private var pathSnapTipLon = Double.NaN
+    /** Bumps when an alert dot would move or appear. A louder hear does not. */
+    private var alertGen = 0
+    private var alertSnap: List<Sighting> = emptyList()
+    private var alertSnapGen = -1
+    private var alertSnapSince = Long.MIN_VALUE
+    private var alertSnapKeys: Set<String> = emptySet()
+    private var alertSnapFleets: Set<String> = emptySet()
+    private var alertSnapHidden: Set<String> = emptySet()
 
     val open: Boolean get() = summary.open
     val radioCount: Int get() = radios.size
     val atCap: Boolean get() = radios.size >= Sit.RADIO_CAP
-    val operatorPath: List<GpsSample> get() = path.toList()
+    val operatorPath: List<GpsSample>
+        get() {
+            val n = path.size
+            val head = if (n > 0) path[0] else null
+            val tip = if (n > 0) path[n - 1] else null
+            if (n == pathSnapN &&
+                samePathEnd(head, pathSnapHeadAt, pathSnapHeadLat, pathSnapHeadLon) &&
+                samePathEnd(tip, pathSnapTipAt, pathSnapTipLat, pathSnapTipLon)
+            ) {
+                return pathSnap
+            }
+            val copy = path.toList()
+            pathSnap = copy
+            pathSnapN = n
+            pathSnapHeadAt = head?.at ?: Long.MIN_VALUE
+            pathSnapHeadLat = head?.lat ?: Double.NaN
+            pathSnapHeadLon = head?.lon ?: Double.NaN
+            pathSnapTipAt = tip?.at ?: Long.MIN_VALUE
+            pathSnapTipLat = tip?.lat ?: Double.NaN
+            pathSnapTipLon = tip?.lon ?: Double.NaN
+            return copy
+        }
     val pathCount: Int get() = path.size
 
     init {
@@ -419,6 +456,14 @@ class SitSession(
         watchedFleetIds: Set<String>,
         hiddenKeys: Set<String>,
     ): List<Sighting> {
+        if (alertGen == alertSnapGen &&
+            since == alertSnapSince &&
+            alertKeys == alertSnapKeys &&
+            watchedFleetIds == alertSnapFleets &&
+            hiddenKeys == alertSnapHidden
+        ) {
+            return alertSnap
+        }
         val out = ArrayList<Sighting>()
         for (radio in radios.values) {
             if (radio.key in hiddenKeys) continue
@@ -426,6 +471,12 @@ class SitSession(
             if (radio.key !in alertKeys && radio.fleetIds.none { it in watchedFleetIds }) continue
             out += radio.toSighting()
         }
+        alertSnap = out
+        alertSnapGen = alertGen
+        alertSnapSince = since
+        alertSnapKeys = alertKeys
+        alertSnapFleets = watchedFleetIds
+        alertSnapHidden = hiddenKeys
         return out
     }
 
@@ -577,7 +628,9 @@ class SitSession(
         if (!open) return false
         val existing = radios[device.key]
         if (existing != null) {
-            radios[device.key] = merge(existing, device, fleets)
+            val merged = merge(existing, device, fleets)
+            radios[device.key] = merged
+            if (alertPlaceMoved(existing, merged)) alertGen++
             dirty = true
             return true
         }
@@ -588,6 +641,7 @@ class SitSession(
             if (radios.size >= Sit.RADIO_CAP || tight) return false
         }
         radios[device.key] = SitRadio.from(device, fleets)
+        alertGen++
         dirty = true
         evict(fleets, watchDeviceKeys, watchedFleetIds)
         return true
@@ -651,6 +705,7 @@ class SitSession(
         watchedFleetIds: Set<String>,
     ) {
         if (radios.size <= Sit.RADIO_CAP) return
+        val before = radios.size
         fun drop(predicate: (SitRadio) -> Boolean) {
             if (radios.size <= Sit.RADIO_CAP) return
             val victims = radios.values.filter(predicate).sortedBy { it.lastSeen }
@@ -663,6 +718,25 @@ class SitSession(
                 row.fleetIds.isEmpty()
         }
         drop { row -> !pinnedRadio(row, watchDeviceKeys, watchedFleetIds) }
+        if (radios.size != before) alertGen++
+    }
+
+    /** True when this hear would move a dot, add one, or drop one. Strength does not. */
+    private fun alertPlaceMoved(old: SitRadio, merged: SitRadio): Boolean {
+        val since = summary.startAt
+        if ((old.lastSeen >= since) != (merged.lastSeen >= since)) return true
+        if (old.fleetIds != merged.fleetIds) return true
+        if (old.extraAttention != merged.extraAttention) return true
+        if (old.payloadLat != merged.payloadLat || old.payloadLon != merged.payloadLon) return true
+        val a = old.gpsTrail.lastOrNull()
+        val b = merged.gpsTrail.lastOrNull()
+        if (a == null || b == null) return a != null || b != null
+        return a.lat != b.lat || a.lon != b.lon
+    }
+
+    private fun samePathEnd(sample: GpsSample?, at: Long, lat: Double, lon: Double): Boolean {
+        if (sample == null) return at == Long.MIN_VALUE
+        return sample.at == at && sample.lat == lat && sample.lon == lon
     }
 
     private fun merge(old: SitRadio, next: Sighting, fleets: List<Fleet>): SitRadio {

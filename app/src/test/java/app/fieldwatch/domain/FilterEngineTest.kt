@@ -121,6 +121,57 @@ class FilterEngineTest {
     }
 
     @Test
+    fun hideRandomizedBleDropsLocalBitBluetoothAndKeepsWifi() {
+        val hide = FilterState(hideRandomizedBle = true)
+        val stable = labeled.copy(randomized = false)
+        val wifi = labeled.copy(
+            key = "WIFI:AA:BB:CC:DD:EE:FF",
+            kind = RadioKind.WIFI,
+            randomized = true,
+        )
+        // AirTag C5:5F:72:12:DF:24. Android calls it random. The local bit is clear.
+        val airtag = labeled.copy(
+            key = "BLE:C5:5F:72:12:DF:24",
+            mac = "C5:5F:72:12:DF:24",
+            randomized = false,
+            facts = RadioFacts(addressType = "Random"),
+        )
+        assertFalse(MacUtil.isRandomized(airtag.mac))
+        assertFalse(engine.pass(labeled, hide))
+        assertFalse(engine.pass(airtag, hide))
+        assertTrue(engine.pass(airtag.copy(facts = RadioFacts(addressType = "Public")), hide))
+        assertTrue(engine.pass(stable, hide))
+        assertTrue(engine.pass(wifi, hide))
+        assertTrue(engine.pass(wifi.copy(facts = RadioFacts(addressType = "Random")), hide))
+        assertTrue(engine.pass(labeled, FilterState()))
+        assertTrue(engine.pass(airtag, FilterState()))
+        assertTrue(hide.whoStaysOn())
+        assertFalse(hide.clearWhoStays().hideRandomizedBle)
+    }
+
+    @Test
+    fun hideRandomizedBleStaysAndInOrLogic() {
+        val filter = FilterState(
+            hideRandomizedBle = true,
+            logic = FilterLogic.OR,
+            nameQuery = "anything",
+        )
+        val airtag = labeled.copy(
+            name = "anything",
+            randomized = false,
+            facts = RadioFacts(addressType = "Random"),
+        )
+        assertFalse(engine.pass(labeled.copy(name = "anything"), filter))
+        assertFalse(engine.pass(airtag, filter))
+        assertTrue(
+            engine.pass(
+                labeled.copy(key = "WIFI:AA:BB:CC:DD:EE:FF", kind = RadioKind.WIFI, name = "anything"),
+                filter,
+            ),
+        )
+    }
+
+    @Test
     fun hideMineStaysAndInOrLogic() {
         val filter = FilterState(
             hideMine = true,

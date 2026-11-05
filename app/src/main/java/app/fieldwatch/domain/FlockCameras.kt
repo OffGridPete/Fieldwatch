@@ -268,7 +268,58 @@ class FlockIndex {
         east: Double,
         project: (Double, Double) -> Pair<Float, Float>,
         inside: (Float, Float) -> Boolean,
-    ): List<FlockMark> = snap.marks(south, north, west, east, project, inside)
+    ): List<FlockMark> = pack(snap.indexed(south, north, west, east).marks, project, inside)
+
+    /**
+     * Cameras for a box around [south]/[north]/[west]/[east]. A later picture
+     * inside that box reuses [previous] when the slice-or-cell choice matches.
+     * The caller keeps [previous]. This index does not.
+     */
+    internal fun gatherFor(
+        previous: CameraGather?,
+        south: Double,
+        north: Double,
+        west: Double,
+        east: Double,
+    ): CameraGather {
+        val wide = snap.wide(south, north)
+        if (
+            previous != null &&
+            previous.revision == revision &&
+            previous.cells == wide &&
+            previous.covers(south, north, west, east)
+        ) {
+            return previous
+        }
+        var boxSouth = south
+        var boxNorth = north
+        var boxWest = west
+        var boxEast = east
+        if (west <= east) {
+            val padLat = (0.5 * (north - south)).coerceAtLeast(CELL_DEG)
+            val padLon = (0.5 * (east - west)).coerceAtLeast(CELL_DEG)
+            val padSouth = south - padLat
+            val padNorth = north + padLat
+            if (snap.wide(padSouth, padNorth) == wide) {
+                boxSouth = padSouth
+                boxNorth = padNorth
+                boxWest = west - padLon
+                boxEast = east + padLon
+            }
+        }
+        val indexed = snap.indexed(boxSouth, boxNorth, boxWest, boxEast)
+        return CameraGather(
+            revision,
+            indexed.cells,
+            boxSouth,
+            boxNorth,
+            boxWest,
+            boxEast,
+            indexed.marks,
+            indexed.band,
+            indexed.col,
+        )
+    }
 
     fun near(lat: Double, lon: Double, radiusM: Double): List<FlockCamera> = snap.near(lat, lon, radiusM)
 
@@ -283,38 +334,34 @@ class FlockIndex {
         val cells: Array<Cell>,
         val bands: IntArray,
     ) {
-        fun marks(
-            south: Double,
-            north: Double,
-            west: Double,
-            east: Double,
-            project: (Double, Double) -> Pair<Float, Float>,
-            inside: (Float, Float) -> Boolean,
-        ): List<FlockMark> {
-            if (lats.isEmpty()) return emptyList()
+        fun wide(south: Double, north: Double): Boolean {
+            if (lats.isEmpty()) return false
             val lo = lower(lats, south)
             val hi = upper(lats, north)
-            if (hi <= lo) return emptyList()
-            val raw = if (hi - lo > SLICE_CAP) {
-                cellsIn(south, north, west, east)
-            } else {
-                val list = ArrayList<FlockMark>(hi - lo)
-                for (i in lo until hi) {
-                    if (!lonIn(lons[i], west, east)) continue
-                    list.add(
-                        FlockMark(
-                            lats[i],
-                            lons[i],
-                            1,
-                            facings[i],
-                            flocks[i],
-                            SensorKind.entries[kinds[i].toInt()],
-                        ),
-                    )
-                }
-                list
+            return hi - lo > SLICE_CAP
+        }
+
+        fun indexed(south: Double, north: Double, west: Double, east: Double): IndexedMarks {
+            if (lats.isEmpty()) return IndexedMarks.NONE
+            val lo = lower(lats, south)
+            val hi = upper(lats, north)
+            if (hi <= lo) return IndexedMarks.NONE
+            if (hi - lo > SLICE_CAP) return cellsIndexed(south, north, west, east)
+            val list = ArrayList<FlockMark>(hi - lo)
+            for (i in lo until hi) {
+                if (!lonIn(lons[i], west, east)) continue
+                list.add(
+                    FlockMark(
+                        lats[i],
+                        lons[i],
+                        1,
+                        facings[i],
+                        flocks[i],
+                        SensorKind.entries[kinds[i].toInt()],
+                    ),
+                )
             }
-            return pack(raw, project, inside)
+            return IndexedMarks(false, list, IntArray(0), IntArray(0))
         }
 
         fun near(lat: Double, lon: Double, radiusM: Double): List<FlockCamera> {
@@ -343,22 +390,25 @@ class FlockIndex {
             return out
         }
 
-        private fun cellsIn(south: Double, north: Double, west: Double, east: Double): List<FlockMark> {
-            if (cells.isEmpty()) return emptyList()
+        private fun cellsIndexed(south: Double, north: Double, west: Double, east: Double): IndexedMarks {
+            if (cells.isEmpty()) return IndexedMarks(true, emptyList(), IntArray(0), IntArray(0))
             val band0 = floor(south / CELL_DEG).toInt()
             val band1 = floor(north / CELL_DEG).toInt()
             val col0 = floor(west / CELL_DEG).toInt()
             val col1 = floor(east / CELL_DEG).toInt()
             val lo = lowerInt(bands, band0)
             val hi = upperInt(bands, band1)
-            val out = ArrayList<FlockMark>()
+            val marks = ArrayList<FlockMark>()
+            val band = ArrayList<Int>()
+            val col = ArrayList<Int>()
             for (i in lo until hi) {
                 val cell = cells[i]
-                val colOk = if (west <= east) cell.col in col0..col1 else cell.col >= col0 || cell.col <= col1
-                if (!colOk) continue
-                out.add(cell.mark)
+                if (!colHits(cell.col, west, east, col0, col1)) continue
+                marks.add(cell.mark)
+                band.add(cell.band)
+                col.add(cell.col)
             }
-            return out
+            return IndexedMarks(true, marks, band.toIntArray(), col.toIntArray())
         }
 
         companion object {
@@ -438,6 +488,17 @@ class FlockIndex {
         }
     }
 
+    private class IndexedMarks(
+        val cells: Boolean,
+        val marks: List<FlockMark>,
+        val band: IntArray,
+        val col: IntArray,
+    ) {
+        companion object {
+            val NONE = IndexedMarks(false, emptyList(), IntArray(0), IntArray(0))
+        }
+    }
+
     private data class Cell(val band: Int, val col: Int, val mark: FlockMark)
 
     companion object {
@@ -453,6 +514,10 @@ class FlockIndex {
 
         internal fun lonIn(lon: Double, west: Double, east: Double): Boolean {
             return if (west <= east) lon in west..east else lon >= west || lon <= east
+        }
+
+        internal fun colHits(col: Int, west: Double, east: Double, col0: Int, col1: Int): Boolean {
+            return if (west <= east) col in col0..col1 else col >= col0 || col <= col1
         }
 
         internal fun pack(
@@ -587,6 +652,54 @@ class FlockIndex {
             return lo
         }
     }
+}
+
+/**
+ * Cameras read for one geographic box. The map keeps this and cuts it back to
+ * the picture. A date-line box is stored exact. A cell keeps the band it was
+ * built with, because the averaged center can sit just outside the view.
+ */
+internal class CameraGather(
+    val revision: Int,
+    val cells: Boolean,
+    val south: Double,
+    val north: Double,
+    val west: Double,
+    val east: Double,
+    val marks: List<FlockMark>,
+    private val band: IntArray,
+    private val col: IntArray,
+) {
+    fun covers(south: Double, north: Double, west: Double, east: Double): Boolean {
+        if (west > east || this.west > this.east) return sameBox(south, north, west, east)
+        return south >= this.south && north <= this.north && west >= this.west && east <= this.east
+    }
+
+    /** The marks a fresh read of this box would return, in the same order. */
+    fun visible(south: Double, north: Double, west: Double, east: Double): List<FlockMark> {
+        if (sameBox(south, north, west, east)) return marks
+        if (cells) {
+            val band0 = floor(south / FlockIndex.CELL_DEG).toInt()
+            val band1 = floor(north / FlockIndex.CELL_DEG).toInt()
+            val col0 = floor(west / FlockIndex.CELL_DEG).toInt()
+            val col1 = floor(east / FlockIndex.CELL_DEG).toInt()
+            val out = ArrayList<FlockMark>()
+            for (i in marks.indices) {
+                if (band[i] !in band0..band1) continue
+                if (!FlockIndex.colHits(col[i], west, east, col0, col1)) continue
+                out.add(marks[i])
+            }
+            return out
+        }
+        val out = ArrayList<FlockMark>()
+        for (mark in marks) {
+            if (mark.lat in south..north && FlockIndex.lonIn(mark.lon, west, east)) out.add(mark)
+        }
+        return out
+    }
+
+    private fun sameBox(south: Double, north: Double, west: Double, east: Double): Boolean =
+        south == this.south && north == this.north && west == this.west && east == this.east
 }
 
 /** Lines for the map card. A crowd names the kind and the count only. */

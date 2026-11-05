@@ -1408,4 +1408,294 @@ class SitPathPlotTest {
             for (pt in run) assertTrue(layout.onPicture(pt.x, pt.y))
         }
     }
+
+    @Test
+    fun aCachedGroundMatchesTheLaidOutLine() {
+        val samples = List(500) { i ->
+            GpsSample(i * 1_000L, 36.0 + i * 0.0001, -115.0 + i * 0.00008)
+        }
+        val model = SitPathPlot.Model(
+            samples = samples,
+            dots = emptyList(),
+            lengthM = 0.0,
+            spanM = 0.0,
+            title = "drive",
+        )
+        val view = SitPathPlot.Viewport(36.02, -114.98, 800f, 600f)
+        val full = SitPathPlot.layout(model, 1080f, 1800f, viewport = view, courseDeg = 35.0)!!
+        val ground = SitPathPlot.ground(model)
+        val traced = SitPathPlot.prepare(
+            ground,
+            1080f,
+            1800f,
+            viewport = view,
+            courseDeg = 35.0,
+            trace = true,
+        )!!
+        assertEquals(full.path.size, traced.layout.path.size)
+        for (i in full.path.indices) {
+            assertEquals(full.path[i].x, traced.layout.path[i].x, 0.001f)
+            assertEquals(full.path[i].y, traced.layout.path[i].y, 0.001f)
+        }
+        val light = SitPathPlot.prepare(
+            ground,
+            1080f,
+            1800f,
+            viewport = view,
+            courseDeg = 35.0,
+            trace = false,
+        )!!
+        assertTrue(light.layout.path.isEmpty())
+        assertEquals(full.samples.size, light.layout.samples.size)
+        for (i in light.layout.samples.indices) {
+            assertEquals(full.samples[i].at, light.layout.samples[i].at)
+            val sample = light.layout.samples[i]
+            val pt = light.layout.project(sample.lat, sample.lon)
+            assertEquals(full.path[i].x, pt.x, 0.001f)
+            assertEquals(full.path[i].y, pt.y, 0.001f)
+        }
+    }
+
+    @Test
+    fun aCachedStrokeMatchesTheClippedLine() {
+        val samples = ArrayList<GpsSample>()
+        var at = 0L
+        val stayLat = 36.02
+        for (i in 0 until 20) {
+            samples.add(GpsSample(at, stayLat - (20 - i) * 0.00015, -115.0))
+            at += 1_000L
+        }
+        for (i in 0 until 45) {
+            samples.add(GpsSample(at, stayLat, -115.0))
+            at += 1_000L
+        }
+        for (i in 1..20) {
+            samples.add(GpsSample(at, stayLat + i * 0.00015, -115.0))
+            at += 1_000L
+        }
+        val model = SitPathPlot.Model(
+            samples = samples,
+            dots = emptyList(),
+            lengthM = 0.0,
+            spanM = 0.0,
+            title = "stops",
+        )
+        val view = SitPathPlot.Viewport(stayLat, -115.0, 80f, 80f)
+        val full = SitPathPlot.layout(model, 1080f, 1800f, viewport = view, courseDeg = 35.0)!!
+        val light = SitPathPlot.prepare(
+            SitPathPlot.ground(model),
+            1080f,
+            1800f,
+            viewport = view,
+            courseDeg = 35.0,
+            trace = false,
+        )!!
+        data class Seg(val x1: Float, val y1: Float, val x2: Float, val y2: Float)
+        val blue = ArrayList<Seg>()
+        val green = ArrayList<Seg>()
+        light.stroke(
+            { x1, y1, x2, y2, _ -> blue.add(Seg(x1, y1, x2, y2)) },
+            { x1, y1, x2, y2, _ -> green.add(Seg(x1, y1, x2, y2)) },
+        )
+        val clipped = ArrayList<Seg>()
+        for (run in SitPathPlot.clipPolyline(
+            full.path,
+            full.pictureLeft,
+            full.pictureTop,
+            full.pictureRight,
+            full.pictureBottom,
+        )) {
+            for (i in 1 until run.size) {
+                val a = run[i - 1]
+                val b = run[i]
+                clipped.add(Seg(a.x, a.y, b.x, b.y))
+            }
+        }
+        assertTrue(blue.isNotEmpty())
+        assertTrue(blue.size < full.path.size - 1)
+        assertEquals(clipped.size, blue.size)
+        for (i in blue.indices) {
+            assertEquals(clipped[i].x1, blue[i].x1, 0.001f)
+            assertEquals(clipped[i].y1, blue[i].y1, 0.001f)
+            assertEquals(clipped[i].x2, blue[i].x2, 0.001f)
+            assertEquals(clipped[i].y2, blue[i].y2, 0.001f)
+        }
+        val stays = Geo.realStops(full.samples)
+        val expectGreen = ArrayList<Seg>()
+        for (i in 1 until full.path.size) {
+            if (!Geo.stopCovers(stays, full.samples[i - 1].at, full.samples[i].at)) continue
+            val seg = SitPathPlot.clipSegment(
+                full.path[i - 1],
+                full.path[i],
+                full.pictureLeft,
+                full.pictureTop,
+                full.pictureRight,
+                full.pictureBottom,
+            ) ?: continue
+            expectGreen.add(Seg(seg.first.x, seg.first.y, seg.second.x, seg.second.y))
+        }
+        assertTrue(expectGreen.isNotEmpty())
+        assertEquals(expectGreen.size, green.size)
+        for (i in green.indices) {
+            assertEquals(expectGreen[i].x1, green[i].x1, 0.001f)
+            assertEquals(expectGreen[i].y1, green[i].y1, 0.001f)
+            assertEquals(expectGreen[i].x2, green[i].x2, 0.001f)
+            assertEquals(expectGreen[i].y2, green[i].y2, 0.001f)
+        }
+    }
+
+    @Test
+    fun aFingerPanLandsOnTheSamePixels() {
+        val samples = listOf(
+            GpsSample(0L, 36.0, -115.0),
+            GpsSample(8_000L, 36.03, -115.01),
+        )
+        val model = SitPathPlot.Model(samples, emptyList(), 0.0, 0.0, "pan")
+        val ground = SitPathPlot.ground(model)
+        val course = 35.0
+        val view = SitPathPlot.Viewport(36.015, -115.005, 600f, 900f, course)
+        val before = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = view, courseDeg = course, trace = false,
+        )!!
+        val panX = 72f
+        val panY = -40f
+        val moved = view.panScreen(panX, panY, before.layout.metersPerPx, course)
+        val after = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = moved, courseDeg = course, trace = false,
+        )!!
+        val spotLat = 36.016
+        val spotLon = -115.006
+        val from = before.layout.project(spotLat, spotLon)
+        val to = after.layout.project(spotLat, spotLon)
+        assertEquals(from.x + panX, to.x, 1.5f)
+        assertEquals(from.y + panY, to.y, 1.5f)
+        val focus = before.layout.project(spotLat, spotLon)
+        val (focusLat, focusLon) = before.layout.unproject(focus.x, focus.y)
+        val zoomed = view.zoomAbout(1.6f, focusLat, focusLon)
+        val closer = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = zoomed, courseDeg = course, trace = false,
+        )!!
+        val focusNow = closer.layout.project(focusLat, focusLon)
+        assertEquals(focus.x, focusNow.x, 1.5f)
+        assertEquals(focus.y, focusNow.y, 1.5f)
+        val applied = view.halfEastM / zoomed.halfEastM
+        val other = before.layout.project(36.02, -115.008)
+        val otherNow = closer.layout.project(36.02, -115.008)
+        assertEquals(focus.x + (other.x - focus.x) * applied, otherNow.x, 2f)
+        assertEquals(focus.y + (other.y - focus.y) * applied, otherNow.y, 2f)
+    }
+
+    @Test
+    fun aFollowTurnIsARotationAroundThePhone() {
+        val here = GpsSample(2L, 36.0, -115.0)
+        val start = GpsSample(1L, 36.0 - 80.0 / 110_540.0, -115.0)
+        val model = SitPathPlot.Model(listOf(start, here), emptyList(), 80.0, 80.0, "turn")
+        val northLat = 36.0 + 200.0 / 110_540.0
+        val eastLon = -115.0 + 120.0 / (111_320.0 * kotlin.math.cos(Math.toRadians(36.0)))
+        val lay0 = SitPathPlot.layout(
+            model,
+            1080f,
+            1800f,
+            followHalfM = MapFrame.CLOSE_HALF_M,
+            courseDeg = 0.0,
+        )!!
+        val lay20 = SitPathPlot.layout(
+            model,
+            1080f,
+            1800f,
+            followHalfM = MapFrame.CLOSE_HALF_M,
+            courseDeg = 20.0,
+        )!!
+        val pivotX = (lay0.pictureLeft + lay0.pictureRight) / 2f
+        val pivotY = (lay0.pictureTop + lay0.pictureBottom) / 2f
+        val you0 = lay0.project(here.lat, here.lon)
+        val you20 = lay20.project(here.lat, here.lon)
+        assertEquals(pivotX, you0.x, 1.5f)
+        assertEquals(pivotY, you0.y, 1.5f)
+        assertEquals(you0.x, you20.x, 1.5f)
+        assertEquals(you0.y, you20.y, 1.5f)
+        val turn = (-MapFrame.shortestTurn(0.0, 20.0)).toFloat()
+        val spot0 = lay0.project(northLat, eastLon)
+        val spot20 = lay20.project(northLat, eastLon)
+        val spun = SitPathPlot.picturePoint(
+            spot0.x, spot0.y,
+            pivotX, pivotY, pivotX, pivotY,
+            1f, turn, pivotX, pivotY,
+        )
+        assertEquals(spot20.x, spun.x, 1.5f)
+        assertEquals(spot20.y, spun.y, 1.5f)
+        val back = SitPathPlot.pictureSource(
+            spun.x, spun.y,
+            pivotX, pivotY, pivotX, pivotY,
+            1f, turn, pivotX, pivotY,
+        )
+        assertEquals(spot0.x, back.x, 0.05f)
+        assertEquals(spot0.y, back.y, 0.05f)
+        assertEquals(0f, SitPathPlot.rotationPadPx(0.4, 400f, 700f), 0.01f)
+        assertTrue(SitPathPlot.rotationPadPx(20.0, 400f, 700f) > 12f)
+    }
+
+    @Test
+    fun aPanShiftMatchesTheRepaintedPixels() {
+        val samples = listOf(
+            GpsSample(0L, 36.0, -115.0),
+            GpsSample(8_000L, 36.03, -115.01),
+        )
+        val model = SitPathPlot.Model(samples, emptyList(), 0.0, 0.0, "shift")
+        val ground = SitPathPlot.ground(model)
+        val course = 35.0
+        val view = SitPathPlot.Viewport(36.015, -115.005, 600f, 900f, course)
+        val before = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = view, courseDeg = course, trace = false,
+        )!!
+        val panX = 72f
+        val panY = -40f
+        val moved = view.panScreen(panX, panY, before.layout.metersPerPx, course)
+        val after = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = moved, courseDeg = course, trace = false,
+        )!!
+        val spotLat = 36.016
+        val spotLon = -115.006
+        val from = before.layout.project(spotLat, spotLon)
+        val to = after.layout.project(spotLat, spotLon)
+        val cx = (before.layout.pictureLeft + before.layout.pictureRight) / 2f
+        val cy = (before.layout.pictureTop + before.layout.pictureBottom) / 2f
+        val origin = before.layout.project(moved.centerLat, moved.centerLon)
+        val k = view.halfEastM / moved.halfEastM
+        val shifted = SitPathPlot.picturePoint(
+            from.x, from.y, origin.x, origin.y, cx, cy, k, 0f, cx, cy,
+        )
+        assertEquals(to.x, shifted.x, 1.5f)
+        assertEquals(to.y, shifted.y, 1.5f)
+        assertEquals(from.x + panX, shifted.x, 1.5f)
+        assertEquals(from.y + panY, shifted.y, 1.5f)
+        val focus = before.layout.project(spotLat, spotLon)
+        val (focusLat, focusLon) = before.layout.unproject(focus.x, focus.y)
+        val zoomed = view.zoomAbout(1.6f, focusLat, focusLon)
+        val closer = SitPathPlot.prepare(
+            ground, 1080f, 1800f, viewport = zoomed, courseDeg = course, trace = false,
+        )!!
+        val originZ = before.layout.project(zoomed.centerLat, zoomed.centerLon)
+        val kZ = view.halfEastM / zoomed.halfEastM
+        val other = before.layout.project(36.02, -115.008)
+        val otherNow = closer.layout.project(36.02, -115.008)
+        val otherShift = SitPathPlot.picturePoint(
+            other.x, other.y, originZ.x, originZ.y, cx, cy, kZ, 0f, cx, cy,
+        )
+        assertEquals(otherNow.x, otherShift.x, 2f)
+        assertEquals(otherNow.y, otherShift.y, 2f)
+        val focusShift = SitPathPlot.picturePoint(
+            focus.x, focus.y, originZ.x, originZ.y, cx, cy, kZ, 0f, cx, cy,
+        )
+        assertEquals(focus.x, focusShift.x, 1.5f)
+        assertEquals(focus.y, focusShift.y, 1.5f)
+        val turned = SitPathPlot.picturePoint(
+            other.x, other.y, originZ.x, originZ.y, cx, cy, kZ, 12f, cx, cy,
+        )
+        val turnedBack = SitPathPlot.pictureSource(
+            turned.x, turned.y, originZ.x, originZ.y, cx, cy, kZ, 12f, cx, cy,
+        )
+        assertEquals(other.x, turnedBack.x, 0.05f)
+        assertEquals(other.y, turnedBack.y, 0.05f)
+    }
 }

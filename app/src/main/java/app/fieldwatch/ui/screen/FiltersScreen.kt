@@ -280,6 +280,19 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(LanguageText.text("ui.hide.randomized.ble"), Modifier.weight(1f))
+                FieldwatchSwitch(
+                    filter.hideRandomizedBle,
+                    { on -> vm.updateFilter { it.copy(hideRandomizedBle = on) } },
+                )
+            }
+            Text(
+                LanguageText.text("ui.hide.randomized.ble.note"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             }
             }
 
@@ -648,6 +661,7 @@ private fun whoStaysValue(filter: FilterState): String? {
         if (filter.customNamesOnly) add(LanguageText.text("ui.keep.named.only"))
         if (filter.hideMine) add(LanguageText.text("ui.hide.mine"))
         if (filter.hideFastPairAccountKey) add(LanguageText.text("ui.fast.pair"))
+        if (filter.hideRandomizedBle) add(LanguageText.text("ui.hide.randomized.ble"))
     }
     return parts.joinToString(" · ").ifBlank { null }
 }

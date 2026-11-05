@@ -117,6 +117,43 @@ object Geo {
         return sum
     }
 
+    /**
+     * Length after one [extendDrivePath] that did not drop the oldest point.
+     * [beforeSize], [frozen], and [oldTip] are the path from before that call.
+     * A trim still needs [pathLengthM].
+     */
+    fun advanceDriveLength(
+        prior: Double,
+        beforeSize: Int,
+        frozen: GpsSample?,
+        oldTip: GpsSample?,
+        path: List<GpsSample>,
+    ): Double {
+        val n = path.size
+        if (n < 2) return 0.0
+        if (beforeSize < 2 || oldTip == null) return pathLengthM(path)
+        val end = path[n - 1]
+        val prev = path[n - 2]
+        val from = frozen ?: return pathLengthM(path)
+        val updated = when {
+            n == beforeSize -> {
+                prior - meters(from.lat, from.lon, oldTip.lat, oldTip.lon) +
+                    meters(from.lat, from.lon, end.lat, end.lon)
+            }
+            n == beforeSize + 1 &&
+                prev.at == oldTip.at && prev.lat == oldTip.lat && prev.lon == oldTip.lon -> {
+                prior + meters(oldTip.lat, oldTip.lon, end.lat, end.lon)
+            }
+            n == beforeSize + 1 -> {
+                prior - meters(from.lat, from.lon, oldTip.lat, oldTip.lon) +
+                    meters(from.lat, from.lon, prev.lat, prev.lon) +
+                    meters(prev.lat, prev.lon, end.lat, end.lon)
+            }
+            else -> pathLengthM(path)
+        }
+        return if (updated.isFinite()) updated.coerceAtLeast(0.0) else pathLengthM(path)
+    }
+
     fun spanM(samples: List<GpsSample>): Double {
         if (samples.size < 2) return 0.0
         var max = 0.0

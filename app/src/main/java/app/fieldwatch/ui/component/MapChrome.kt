@@ -392,7 +392,10 @@ internal fun DrawScope.drawMapTiles(
         return
     }
     val fade = androidx.compose.ui.graphics.Paint().apply { this.alpha = alpha }
-    drawContext.canvas.saveLayer(Rect(0f, 0f, size.width, size.height), fade)
+    drawContext.canvas.saveLayer(
+        Rect(0f, 0f, size.width, size.height),
+        fade,
+    )
     try {
         for (tile in back) drawOneTile(tile, project, 1f)
         for (tile in top) drawOneTile(tile, project, 1f)

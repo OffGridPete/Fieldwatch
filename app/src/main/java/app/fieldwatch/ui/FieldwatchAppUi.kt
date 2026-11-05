@@ -949,7 +949,7 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
                         onBack = onBack,
                         onCreateFleet = { vm.beginCreateFrom(device); nav.navigate("fleets") },
                         onHunt = {
-                            vm.startHunt(device)
+                            vm.startHunt(device, fresh = true)
                             nav.navigate("hunt")
                         },
                         demoMode = state.settings.demoMode,

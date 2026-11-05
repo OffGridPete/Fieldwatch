@@ -507,6 +507,12 @@ data class FilterState(
     val classes: Set<SignatureClass> = emptySet(),
     /** Live hide: radios marked Mine. The sit and Debrief still include them. */
     val hideMine: Boolean = false,
+    /**
+     * Live hide: Bluetooth rows whose address can change.
+     * That is the local bit, or an address Android calls random.
+     * Wi-Fi stays. The sit still keeps them.
+     */
+    val hideRandomizedBle: Boolean = false,
 ) {
     /** Show only is narrowing Live to at least one picked class. Empty Show only does not hide unmatched. */
     fun classIncludeActive(): Boolean =
@@ -519,7 +525,8 @@ data class FilterState(
 
     /** Keep or hide row. On when any of its switches is on. */
     fun whoStaysOn(): Boolean =
-        namedOnly || customNamesOnly || watchedOnly || hideMine || hideFastPairAccountKey
+        namedOnly || customNamesOnly || watchedOnly || hideMine ||
+            hideFastPairAccountKey || hideRandomizedBle
 
     /**
      * Selected signatures is one list.
@@ -591,6 +598,7 @@ data class FilterState(
         watchedOnly = false,
         hideMine = false,
         hideFastPairAccountKey = false,
+        hideRandomizedBle = false,
     )
 
     fun clearClasses(): FilterState = copy(
@@ -1654,6 +1662,14 @@ data class Sighting(
 ) {
     val displayName: String
         get() = name.ifBlank { if (hiddenSsid) "<hidden>" else mac }
+
+    /**
+     * Bluetooth row the detail page calls a random address.
+     * The local bit, or an address type of Random. Wi-Fi is never this.
+     */
+    fun randomBleAddress(): Boolean =
+        kind == RadioKind.BLE &&
+            (randomized || facts.addressType.equals("Random", ignoreCase = true))
 
     /** Custom name from Named radios, else advertised / hidden / MAC. */
     fun reportName(customNames: Map<String, String>): String {

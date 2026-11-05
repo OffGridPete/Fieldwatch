@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.41")
-    c.drawString(48, 94, "4 November 2026")
+    c.drawString(48, 108, "Version 1.1.42")
+    c.drawString(48, 94, "5 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -520,7 +520,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    label = "v1.1.41  ·  Off Grid Pete LLC"
+    label = "v1.1.42  ·  Off Grid Pete LLC"
     c.drawString(48, 28, label)
     # Fixed x values ran the Instagram mark into "LLC".
     ig_s, x_s = 5.2, 5.0
@@ -1951,8 +1951,8 @@ def story():
             "When two fresh fixes agree, and you are still within about the first 20 m, Hunt places that short walk on the map. "
             "The dot lands on the fix, and the steps you already took stay behind it. The line goes away. "
             "If you have already walked farther than that, the walk stays on the blank picture, and a later fix leaves it there. "
-            "Leave the page and open the same radio again, and a blank walk continues where you left it. "
-            "Reset this hunt, or a hunt on a different radio, starts over. "
+            "Leave the page and the walk is cleared. Hunt on that radio's detail page starts a new one. "
+            "Reset this hunt starts over too. "
             "Once the walk is on the map, a good fix can correct it, and the reading in the lower left matches the dot. "
             "Privacy mode shows masked in that corner.",
             "The map stays close on you. Pinch out to see the whole walk, or pinch in to a few meters of ground. "
@@ -1960,7 +1960,8 @@ def story():
             "Night mode leaves this cloud in its own colors. The map fills the space above the number.",
             "Watch the large RSSI number, the sparkline, and loudest-this-hunt. Closer to 0 is louder where you are standing. "
             "A reading of 127 is ignored. It means the strength was not available. "
-            "Leave the page and the cloud stays until you tap Reset this hunt, or until you hunt a different radio.",
+            "When the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost. "
+            "Leave the page and the cloud is cleared.",
             "Beep and Vibrate sit under Reset and Back. Both start off, and the phone remembers what you chose. "
             "They tick faster as the signal gets louder. The sound is a short click, not the watchlist chirp. "
             "They are on in this shot. They stay quiet when there is no packet, or when the radio has left. "
@@ -4565,6 +4566,7 @@ def story():
             "<b>Keep named only</b> — hide radios that do not have a custom name (Settings → Alerts → Named radios). Alert can still be off. Not the same as Keep signature matches only or Keep watched only. A random / privacy MAC will not follow a rotation. The Live display shows a Keep named only strip while this is on.",
             "<b>Hide Mine</b> — radios marked Mine stay off the Live display. The sit, the log, and Debrief still include them. Always AND. Turning on Moving with you leaves this on. The Moving with you preset replaces the whole filter, so this goes off with the rest.",
             "<b>Hide Fast Pair account-key</b> — drop plaza Fast Pair chips that are already paired, when Fast Pair is the only signature on the row. Pairing-mode stays (chip Fast Pair pairing, subtitle pair). A Pixel that also matched Google still shows. This is not Hide selected Fast Pair, which removes the whole family including pairing-mode. Always AND. What the two payloads mean: §9.5.",
+            "<b>Hide randomized Bluetooth</b> — Bluetooth addresses that can change stay off the Live display. That is the local bit, or an address the phone calls random. Wi-Fi stays. The sit still keeps them. Always AND.",
             "<b>Selected signature classes</b> — Live display only; signatures still label. <b>Show only</b> keeps radios of the class chips you pick. <b>Hide these</b> drops those classes and leaves the rest, including unmatched radios. Show only with no class picked leaves the Live display unchanged. Class chips sit two across with the same glyphs as the Live display. Cameras / Drones / Finder tags / Phones / PCs and the rest are these chips — Show only or Hide these, then Save current as… if you want a named preset. Class vs color: §9.5.",
             "<b>Selected signatures</b> — one list, grouped Class A–Z (tap a class to open its signatures, same outline as the Signatures tab). <b>Show only</b> and <b>Hide these</b> sit above that list, the same way Selected signature classes works. Show only keeps radios that match a signature you turn on. Hide these drops those signatures and leaves the rest, including unmatched radios. Show only with nothing picked leaves the Live display unchanged. Turning a chip off keeps the picks. Reset filter forgets them. Show only and Hide these share the same picks.",
             "<b>Signal, name, MAC, vendor</b> — last RSSI ≥ slider (default −100 dBm = off); substring of name or MAC; substring of MAC or vendor string.",
@@ -4580,7 +4582,7 @@ def story():
             "(“BLE + signatures only + RSSI ≥ −70”)."
         ),
         P(
-            "<b>OR</b>: radios, Keep signature matches only, Keep named only, Keep watched only, Hide Mine, class Hide these, Hide selected, Moving with you, and New detections only still apply. Among the optional "
+            "<b>OR</b>: radios, Keep signature matches only, Keep named only, Keep watched only, Hide Mine, Hide randomized Bluetooth, class Hide these, Hide selected, Moving with you, and New detections only still apply. Among the optional "
             "clauses (name query, OUI query, RSSI floor if raised above −100, class Show only), any one pass is "
             "enough. Use this when you want a broad search (“name contains Flock OR OUI contains B41E52”). "
             "AND/OR never overrides a hidden class or signature — if Hide these Finder tags is on, "
@@ -6307,7 +6309,7 @@ def story():
             "<b>When the streets come on.</b> Hunt waits for a second fresh fix that agrees with the first, and only if you are still inside about the first 20 meters. "
             "It then places that whole short walk on the map. The dot lands on the agreeing fix, and the steps you already took, with the hears along them, stay behind the dot. The line goes away. "
             "If you have already walked past about 20 meters, the walk stays on the blank picture. A fix that arrives later leaves it there, and the line stays until the streets are actually showing. "
-            "Leave Hunt and open the same radio again, and that blank walk continues. Reset this hunt starts a new one. So does opening Hunt on a different radio.",
+            "Leave Hunt and the walk is cleared. Opening Hunt from that radio's detail page starts a new one. Reset this hunt starts over too.",
             "body_left",
         ),
         P(
@@ -6349,6 +6351,7 @@ def story():
             "They tick on the last strength the phone heard, faster when the signal is louder, and they go quiet when there is no packet or the radio has left. "
             "If you turned Beep on and hear nothing, raise the media volume. "
             "About −45 dBm or louder means look here, in a pocket, a bag, or your hand. It is not a tape measure. "
+            "When the packets stop for a few seconds, or the radio leaves the list, the large number reads - - and the line under it reads -- dBm · Signal Lost. "
             "When the packets stop, pause. You may have walked behind a wall. "
             "If the radio leaves the Live display, the address has likely changed or the radio has left. "
             "Go back, pick the new row if it is still the same family, and start Hunt again. Do not convert dBm to feet.",
@@ -6783,6 +6786,7 @@ def story():
             ["Keep named only", "Filter that hides radios without a custom name. Alert can be off. Not Keep signature matches only or Keep watched only. Random / privacy MACs stay pinned to that address. §5.5, §8.1."],
             ["Hide Mine", "Filter that hides radios marked Mine. Live display only. The sit, the log, and Debrief still include them. Always AND. Turning on Moving with you leaves this on. The preset replaces the whole filter. §8.1."],
             ["Hide Fast Pair account-key", "Filter that hides Fast Pair-only radios whose payload is the longer account-key filter, not the 3-byte pairing-mode model ID. Pairing-mode stays (chip Fast Pair pairing, subtitle pair). Dual-chip radios stay. Hide selected Fast Pair drops both. Always AND. §8.1, §9.5."],
+            ["Hide randomized Bluetooth", "Filter that hides Bluetooth addresses that can change. That is the local bit, or an address the phone calls random. Wi-Fi stays. The sit still keeps them. Always AND. §8.1."],
             ["Show only selected signatures", "Filters → Selected signatures, chip Show only. One list, grouped Class A–Z. Only radios matching the signatures you turn on stay on the Live display. Nothing picked leaves Live unchanged. The same picks are used if you switch to Hide these. §8.1–8.3."],
             ["Hide selected signatures", "Filters → Selected signatures, chip Hide these. The families you turn on drop off the Live display. The list stays open. Turning the chip off keeps the picks. Nothing picked hides nothing. Prefer class Hide these when the whole Finder tags / ISP bucket is clutter."],
             ["Pause (Live display)", "Freezes the Live display. Radios and the log keep running. Filters and Settings still update; the new filter applies when you run the Live display again. Detail opened from a paused row is that snapshot, even if the radio has since gone. Tap the Live tab again (the control then reads Live) to run again. Mark seen while paused uses the frozen list."],
@@ -6804,7 +6808,7 @@ def story():
             ["Places", "Settings switch, on by default. A stable tracker heard at two or more places in the last 7 days, and a return after a quiet stretch. Lines on the radio page, in the sit report, and on Reports → Seen at more than one place, with where this phone was. That report draws a map and does not need a sit. Each stop there is numbered. The name is the advertised name, or the type when there is no name. A saved name is used instead. Tap a radio to open it, including one that has left Live. Each radio has its own color. Each radio keeps the latest 8 stops. A ninth confirmed stop drops the oldest. Many hears at one stop are still one stop. A single jumped fix does not erase an older stop. A stop from another day includes the date. Online place names adds the street. Filters → Seen at more than one place limits Live to the ones you can hear now. A changing address is skipped. Ordinary Wi-Fi and Bluetooth stay off. No beep, no TAK marker. Not in Export settings. §5.5, §5.6, §5.7, §5.10, §8."],
             ["Share as text", "Device-detail button. Plain dump of the open radio (identity, signal, decode, session). Not the sit report and not the rotating log."],
             ["Voice (watchlist)", "Settings → Alerts → Voice on watched signature, on by default. What to say (signature watches): Class, Signature, or Class + signature. Default Class + signature. A named radio speaks its own name instead, as the whole announcement. Signature and network replaces only the signature, for every radio of that signature with that network name, and stays quiet while What to say is Class. Independent of Beep. Not Hunt. Overlapping speech is dropped. On-device TTS. Test alert plays the signature mix and does not use those names. Jump works with voice alone. §5.7, §10.2.1."],
-            ["Hunt", "Opened from the detail page of one Bluetooth radio. A full-screen heat cloud of where this phone heard that radio, with the large RSSI number and a sparkline. The map stays close on you. License plate readers and other sensors from Known cameras can sit under the cloud. Leave the page and the cloud stays until Reset, or until you hunt a different radio. Steps and the way the phone is facing fill in the walk. Until GPS is ready, the page says No GPS yet. This walk is not on a map. There are no streets, the corner stays empty, and the scale stays in meters, but the dot, the circle, the heat, and the ring still move. Known cameras stay off until the streets show. Two fresh fixes place a short walk, about the first 20 m, on the map, and the steps you already took stay behind the dot. A longer walk stays off the map. Open the same radio again and that blank walk continues. Reset, or a different radio, starts over. Once the walk is on the map, GPS corrects it only when a good fix agrees. Hunt works on any phone. A phone with a step sensor tracks the walk better. A missing or silent sensor counts steps from the walking motion, which is less steady. Turning in place does not move the dot. The circle around the dot shows how sure the place is. It starts at about four meters, grows as the walk gets longer, and turns amber when the phone is not held flat. Steps pause until it is flat again. On a mapped walk, the lower-left reading matches the dot. Before that, the corner stays empty. Color runs from blue (weak) through cyan, green, yellow, and orange to red (powerful, about −45 dBm or louder). Hold the phone flat, screen up, top pointing the way you walk, and walk slowly in a pattern so the cloud can build. A small ring marks the hottest spot. Let it guide the next pass. It is where this phone heard the radio loudest, not the radio, and a wall can shift that spot. The radio is usually nearby. Night mode leaves the cloud in its own colors. A reading of 127 is ignored. Loudest-this-hunt sits with the sparkline. Beep and Vibrate are at the bottom, off by default. They tick faster as the signal gets louder, go quiet when there is no packet or the radio has left, and they never speak. An optional body-block turn gives a rough heading (§12.13). Walls, metal, people, and floors change the number without a change in range. Not a distance, and not a pin on the other radio. The button switches between north up and the direction of travel. A double-tap changes the Show map with live path zoom. It does not point at the radio. §5.3.4. Wi-Fi is left out, because the phone only reports access points in batches, even with Faster Wi-Fi AP scans."],
+            ["Hunt", "Opened from the detail page of one Bluetooth radio. A full-screen heat cloud of where this phone heard that radio, with the large RSSI number and a sparkline. The map stays close on you. License plate readers and other sensors from Known cameras can sit under the cloud. Leave the page and the cloud is cleared. Hunt on that radio's detail page starts a new walk. Steps and the way the phone is facing fill in the walk. Until GPS is ready, the page says No GPS yet. This walk is not on a map. There are no streets, the corner stays empty, and the scale stays in meters, but the dot, the circle, the heat, and the ring still move. Known cameras stay off until the streets show. Two fresh fixes place a short walk, about the first 20 m, on the map, and the steps you already took stay behind the dot. A longer walk stays off the map. Opening Hunt again starts a new walk. Reset this hunt starts over too. When the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost. Once the walk is on the map, GPS corrects it only when a good fix agrees. Hunt works on any phone. A phone with a step sensor tracks the walk better. A missing or silent sensor counts steps from the walking motion, which is less steady. Turning in place does not move the dot. The circle around the dot shows how sure the place is. It starts at about four meters, grows as the walk gets longer, and turns amber when the phone is not held flat. Steps pause until it is flat again. On a mapped walk, the lower-left reading matches the dot. Before that, the corner stays empty. Color runs from blue (weak) through cyan, green, yellow, and orange to red (powerful, about −45 dBm or louder). Hold the phone flat, screen up, top pointing the way you walk, and walk slowly in a pattern so the cloud can build. A small ring marks the hottest spot. Let it guide the next pass. It is where this phone heard the radio loudest, not the radio, and a wall can shift that spot. The radio is usually nearby. Night mode leaves the cloud in its own colors. A reading of 127 is ignored. Loudest-this-hunt sits with the sparkline. Beep and Vibrate are at the bottom, off by default. They tick faster as the signal gets louder, go quiet when there is no packet or the radio has left, and they never speak. An optional body-block turn gives a rough heading (§12.13). Walls, metal, people, and floors change the number without a change in range. Not a distance, and not a pin on the other radio. The button switches between north up and the direction of travel. A double-tap changes the Show map with live path zoom. It does not point at the radio. §5.3.4. Wi-Fi is left out, because the phone only reports access points in batches, even with Faster Wi-Fi AP scans."],
             ["lat / lon (log)", "CSV columns and JSON fields on each new log row when Tag detections with GPS is on and a fix exists. Operator phone at hear-time, not the other radio. Empty/null otherwise. In CSV these columns sit before vendor_ie so older files still parse."],
             ["Where you were", "Debrief / AI Export section. Operator path split into stays (~40 m) and transits. Lat/lon once per stay, optional street name, loud radios heard there. Not lat/lon on every inventory line."],
             ["Fast Pair", "Google tap-to-pair. Service UUID 0xFE2C. Catalog signature (on): Android phones and many buds. Three-byte model ID in pairing mode (Live display chip Fast Pair pairing); longer payloads are an account-key filter. Filters → Hide Fast Pair account-key drops account-key-only chips. Hide selected Fast Pair drops both. §8.1, §9.5."],
@@ -7254,9 +7258,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.41 (versionCode 51), field build of 4 November 2026"],
-                ["Document version", "1.1.41"],
-                ["Document date", "4 November 2026"],
+                ["Software version", "1.1.42 (versionCode 52), field build of 5 November 2026"],
+                ["Document version", "1.1.42"],
+                ["Document date", "5 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "A copy filled with a sit log is sensitive."],

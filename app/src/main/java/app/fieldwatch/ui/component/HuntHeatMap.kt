@@ -58,6 +58,7 @@ import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.HuntHeat
 import app.fieldwatch.domain.PayloadLocation
 import app.fieldwatch.ui.theme.nightIf
+import app.fieldwatch.domain.CameraGather
 import app.fieldwatch.domain.FlockCredit
 import app.fieldwatch.domain.FlockIndex
 import app.fieldwatch.domain.LanguageText
@@ -138,33 +139,59 @@ fun HuntHeatMap(
     }
     // Drawn angle turns through the gap between GPS courses. Tiles stay on the heading reached.
     val drawnCourse = rememberEasedCourse(appliedCourse)
-    val layout = remember(model, boxSize, viewport, drawnCourse) {
+    val ground = remember(model.samples, model.dots, model.frameSamples) {
+        SitPathPlot.ground(model)
+    }
+    val drawn = remember(ground, boxSize, viewport, drawnCourse, model.minHalfSpanM) {
         if (boxSize.width < 8 || boxSize.height < 8) null
-        else SitPathPlot.layout(
-            model,
+        else SitPathPlot.prepare(
+            ground,
             boxSize.width.toFloat(),
             boxSize.height.toFloat(),
             viewport = viewport,
             minHalfM = HuntHeat.PINCH_HALF_M,
             courseDeg = drawnCourse,
+            minHalfSpanM = model.minHalfSpanM,
+            trace = false,
         )
     }
-    val tileLayout = remember(model, boxSize, viewport, appliedCourse) {
+    val tileDrawn = remember(ground, boxSize, viewport, appliedCourse, model.minHalfSpanM) {
         if (boxSize.width < 8 || boxSize.height < 8) null
-        else SitPathPlot.layout(
-            model,
+        else SitPathPlot.prepare(
+            ground,
             boxSize.width.toFloat(),
             boxSize.height.toFloat(),
             viewport = viewport,
             minHalfM = HuntHeat.PINCH_HALF_M,
             courseDeg = appliedCourse,
+            minHalfSpanM = model.minHalfSpanM,
+            trace = false,
         )
     }
+    val layout = drawn?.layout
+    val tileLayout = tileDrawn?.layout
     val onTileWindowRef = remember { mutableStateOf(onTileWindow) }
     onTileWindowRef.value = onTileWindow
     LaunchedEffect(tileLayout) {
         val window = tileLayout?.tileWindow() ?: return@LaunchedEffect
         onTileWindowRef.value?.invoke(window)
+    }
+    val cameraHold = remember { arrayOfNulls<CameraGather>(1) }
+    val cameraHoldIndex = remember { arrayOfNulls<FlockIndex>(1) }
+    val cameraMarks = remember(layout, flockIndex, flockGen) {
+        val lay = layout
+        val index = flockIndex
+        if (flockGen < 0 || lay == null || index == null) {
+            cameraHold[0] = null
+            cameraHoldIndex[0] = null
+            emptyList()
+        } else {
+            val prev = if (cameraHoldIndex[0] === index) cameraHold[0] else null
+            val (next, packed) = cameraMarksFor(lay, index, prev)
+            cameraHold[0] = next
+            cameraHoldIndex[0] = index
+            packed
+        }
     }
     // Rebuild only when the trail changes. A pinch reuses this picture.
     val heat = remember(trail) { rasterHuntHeat(trail) }
@@ -232,7 +259,14 @@ fun HuntHeatMap(
             clipRect(lay.plotLeft, lay.plotTop, lay.plotRight, lay.plotBottom) {
                 drawMapTiles(tiles, lay.project, alpha = 0.55f)
                 if (flockGen >= 0 && flockIndex != null) {
-                    drawFlockMarks(lay, flockIndex, night, measurer, flockCountStyle)
+                    drawFlockMarks(
+                        lay,
+                        flockIndex,
+                        night,
+                        measurer,
+                        flockCountStyle,
+                        prepared = cameraMarks,
+                    )
                 }
                 heat?.let { field ->
                     drawMapRaster(

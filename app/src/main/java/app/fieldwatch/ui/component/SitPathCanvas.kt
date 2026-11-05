@@ -34,6 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +77,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.fieldwatch.data.PathTiles
+import app.fieldwatch.domain.CameraGather
+import app.fieldwatch.domain.FlockIndex
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.MapFooter
 import app.fieldwatch.domain.MapFrame
@@ -97,7 +101,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sin
 
 /** Lower-left map line. Holds the last reading while this phone wanders in place. */
 @Composable
@@ -161,6 +169,11 @@ fun SitPathCanvas(
      * others on their own. Show live path keeps a chain of nearby marks.
      */
     splitStacked: Boolean = false,
+    /**
+     * Reports → Path records the camera picture when the view changes, then
+     * slides those paths. The live map leaves this off.
+     */
+    recordCameras: Boolean = false,
 ) {
     val track = MaterialTheme.colorScheme.onSurface
     val night = LocalNightMode.current
@@ -207,30 +220,57 @@ fun SitPathCanvas(
     } else {
         0f
     }
-    // Drawn angle turns through the gap between GPS courses. Tiles stay on the heading reached.
-    val drawnCourse = rememberEasedCourse(appliedCourse)
+    // Laid out at the settled heading. A turn rotates that picture instead of rebuilding it.
+    val motion = rememberCourseMotion(appliedCourse, boxSize.width.toFloat(), boxSize.height.toFloat())
+    val gesture = remember { LiveGesture() }
     val camerasShown = onCycleCameras != null && camerasReady
-    val layout = remember(model, boxSize, viewport, drawnCourse, followHalfM) {
-        if (boxSize.width < 8 || boxSize.height < 8) null
-        else SitPathPlot.layout(
-            model,
-            boxSize.width.toFloat(),
-            boxSize.height.toFloat(),
-            viewport = viewport,
-            followHalfM = followHalfM,
-            courseDeg = drawnCourse,
-        )
+    val ground = remember(model.samples, model.dots, model.frameSamples) {
+        SitPathPlot.ground(model)
     }
-    val tileLayout = remember(model, boxSize, viewport, appliedCourse, followHalfM) {
+    val drawn = remember(
+        ground, boxSize, viewport, appliedCourse, followHalfM, model.minHalfSpanM,
+    ) {
         if (boxSize.width < 8 || boxSize.height < 8) null
-        else SitPathPlot.layout(
-            model,
+        else SitPathPlot.prepare(
+            ground,
             boxSize.width.toFloat(),
             boxSize.height.toFloat(),
             viewport = viewport,
             followHalfM = followHalfM,
             courseDeg = appliedCourse,
+            minHalfSpanM = model.minHalfSpanM,
+            trace = false,
         )
+    }
+    val layout = drawn?.layout
+    val tileLayout = layout
+    val pendingView = gesture.pending
+    if (pendingView != null && layout != null && sameView(viewport, pendingView)) {
+        gesture.pending = null
+        val working = gesture.working
+        val cx = (layout.pictureLeft + layout.pictureRight) / 2f
+        val cy = (layout.pictureTop + layout.pictureBottom) / 2f
+        if (working == null || sameView(working, viewport)) {
+            gesture.shift.clear(cx, cy)
+            gesture.working = viewport
+            if (!gesture.finger) gesture.padPx.floatValue = 0f
+        } else if (viewport != null) {
+            syncPictureShift(layout, viewport, working, gesture.shift)
+        }
+    } else if (layout != null && gesture.finger && gesture.pending == null) {
+        val working = gesture.working
+        if (working != null) {
+            val base = viewport ?: SitPathPlot.viewportOf(layout, appliedCourse)
+            if (!sameView(working, base)) syncPictureShift(layout, base, working, gesture.shift)
+        }
+    }
+    val routeBlue = remember { Path() }
+    val routeGreen = remember { Path() }
+    val strokePad = max(motion.padPx.floatValue, gesture.padPx.floatValue)
+    remember(drawn, strokePad) {
+        routeBlue.reset()
+        routeGreen.reset()
+        drawn?.stroke(PathDrive(routeBlue), PathDrive(routeGreen), strokePad)
     }
     val onTileWindowRef = remember { mutableStateOf(onTileWindow) }
     onTileWindowRef.value = onTileWindow
@@ -239,10 +279,31 @@ fun SitPathCanvas(
         onTileWindowRef.value?.invoke(window)
     }
     val cameraIndex = if (flockGen >= 0) flockIndex else null
+    val cameraHold = remember { arrayOfNulls<CameraGather>(1) }
+    val cameraHoldIndex = remember { arrayOfNulls<FlockIndex>(1) }
     val cameraMarks = remember(layout, cameraIndex, flockGen) {
         val lay = layout
         val index = cameraIndex
-        if (lay == null || index == null) emptyList() else flockMarksOn(lay, index)
+        if (lay == null || index == null) {
+            cameraHold[0] = null
+            cameraHoldIndex[0] = null
+            emptyList()
+        } else {
+            val prev = if (cameraHoldIndex[0] === index) cameraHold[0] else null
+            val (next, packed) = cameraMarksFor(lay, index, prev)
+            cameraHold[0] = next
+            cameraHoldIndex[0] = index
+            packed
+        }
+    }
+    val cameraBold = onCycleCameras != null || expand
+    val cameraStamp = remember(recordCameras, cameraMarks, layout, night, cameraBold, measurer) {
+        val lay = layout
+        if (!recordCameras || lay == null || cameraMarks.isEmpty()) {
+            null
+        } else {
+            recordFlockMarks(lay, cameraMarks, night, flockCountStyle, cameraBold, measurer)
+        }
     }
     val clusters = remember(layout, model) {
         val lay = layout
@@ -270,7 +331,7 @@ fun SitPathCanvas(
     layoutRef.value = layout
     viewportRef.value = viewport
     onViewportRef.value = onViewport
-    courseRef.value = drawnCourse
+    courseRef.value = appliedCourse
     onToggleRef.value = onToggleClose
     val showRecenter = fitButton && viewport != null && onViewport != null
     val compass = onRotate != null
@@ -300,8 +361,25 @@ fun SitPathCanvas(
             .border(1.dp, outline, RoundedCornerShape(8.dp))
             .padding(8.dp)
     }
-    fun handleTap(pos: Offset) {
+    fun handleTap(raw: Offset) {
         val lay = layout
+        val pos = if (lay == null) {
+            raw
+        } else {
+            val src = SitPathPlot.pictureSource(
+                raw.x,
+                raw.y,
+                gesture.shift.originX,
+                gesture.shift.originY,
+                gesture.shift.centerX,
+                gesture.shift.centerY,
+                gesture.shift.scale,
+                motion.screenTurnDeg(),
+                (lay.pictureLeft + lay.pictureRight) / 2f,
+                (lay.pictureTop + lay.pictureBottom) / 2f,
+            )
+            Offset(src.x, src.y)
+        }
         val gnssHit = if (lay == null) emptyList() else gnssAt(model.gnss, lay, pos.x, pos.y)
         val radio = SitPathPlot.clusterAt(clusters, pos.x, pos.y, markers)
         val cam = if (lay == null) {
@@ -386,20 +464,31 @@ fun SitPathCanvas(
                             panAccum.getDistance() > slop
                         if (past) {
                             armed = true
-                            moveLiveCamera(
-                                zoomAccum, panAccum, focus, layoutRef, viewportRef, onViewportRef, courseRef,
-                            )
+                            armLiveCamera(zoomAccum, panAccum, focus, gesture, layoutRef, viewportRef, onViewportRef, courseRef, motion)
                             event.changes.forEach { it.consume() }
                         }
                     } else {
-                        moveLiveCamera(zoom, pan, focus, layoutRef, viewportRef, onViewportRef, courseRef)
+                        dragLiveCamera(zoom, pan, focus, gesture, layoutRef, viewportRef, onViewportRef, courseRef, motion)
                         event.changes.forEach { it.consume() }
                     }
                 }
-                if (!armed) {
+                if (armed) {
+                    releaseLiveCamera(gesture, layoutRef, viewportRef, onViewportRef)
+                } else {
                     val now = down.uptimeMillis
                     if (now - lastTapMs.longValue <= 280L) {
                         lastTapMs.longValue = 0L
+                        gesture.finger = false
+                        gesture.working = null
+                        gesture.pending = null
+                        gesture.padPx.floatValue = 0f
+                        val lay = layoutRef.value
+                        if (lay != null) {
+                            gesture.shift.clear(
+                                (lay.pictureLeft + lay.pictureRight) / 2f,
+                                (lay.pictureTop + lay.pictureBottom) / 2f,
+                            )
+                        }
                         viewportRef.value = null
                         onViewportRef.value?.invoke(null)
                         onToggleRef.value?.invoke()
@@ -429,118 +518,213 @@ fun SitPathCanvas(
                 (x + dx).coerceIn(lay.pictureLeft, (lay.pictureRight - textW).coerceAtLeast(lay.pictureLeft)),
                 (y + dy).coerceIn(lay.pictureTop, (lay.pictureBottom - textH).coerceAtLeast(lay.pictureTop)),
             )
+            val shift = gesture.shift
+            val turn = motion.screenTurnDeg()
+            val pivotX = (lay.pictureLeft + lay.pictureRight) / 2f
+            val pivotY = (lay.pictureTop + lay.pictureBottom) / 2f
+            val moving = shift.revision.intValue != Int.MIN_VALUE && (turn != 0f || !shift.idle())
+            val reach = max(lay.pictureRight - lay.pictureLeft, lay.pictureBottom - lay.pictureTop)
+            fun seen(x: Float, y: Float) = if (moving) lay.nearPicture(x, y, reach) else lay.nearPicture(x, y)
+            fun onScreen(x: Float, y: Float) = if (moving) seen(x, y) else onMap(x, y)
+            fun placed(x: Float, y: Float): Offset {
+                if (!moving) return Offset(x, y)
+                val p = SitPathPlot.picturePoint(
+                    x, y,
+                    shift.originX, shift.originY, shift.centerX, shift.centerY,
+                    shift.scale, turn, pivotX, pivotY,
+                )
+                return Offset(p.x, p.y)
+            }
+            fun DrawScope.drawMoved(block: DrawScope.() -> Unit) {
+                if (!moving) {
+                    block()
+                    return
+                }
+                val canvas = drawContext.canvas
+                canvas.save()
+                try {
+                    // The turn is around the picture. The drag then moves that result.
+                    canvas.translate(shift.centerX, shift.centerY)
+                    canvas.scale(shift.scale, shift.scale)
+                    canvas.translate(-shift.originX, -shift.originY)
+                    canvas.translate(pivotX, pivotY)
+                    canvas.rotate(turn)
+                    canvas.translate(-pivotX, -pivotY)
+                    block()
+                } finally {
+                    canvas.restore()
+                }
+            }
             clipRect(lay.plotLeft, lay.plotTop, lay.plotRight, lay.plotBottom) {
-                drawMapTiles(tiles, lay.project, alpha = 0.55f)
+                drawMoved { drawMapTiles(tiles, lay.project, alpha = 0.55f) }
             }
             clipRect(lay.pictureLeft, lay.pictureTop, lay.pictureRight, lay.pictureBottom) {
-                if (lay.path.size >= 2) {
-                    strokeOnMap(
-                        SitPathPlot.clipPolyline(
-                            lay.path, lay.pictureLeft, lay.pictureTop, lay.pictureRight, lay.pictureBottom,
-                        ),
-                        RouteBlue,
-                        ROUTE_PX,
+                if (lay.samples.size >= 2) {
+                    val route = Stroke(
+                        width = ROUTE_PX,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
                     )
-                    val trace = if (lay.samples.size >= 2) lay.samples else model.samples
-                    val stays = Geo.realStops(trace)
-                    for (i in 1 until lay.path.size) {
-                        val from = trace.getOrNull(i - 1)?.at ?: continue
-                        val to = trace.getOrNull(i)?.at ?: continue
-                        if (!Geo.stopCovers(stays, from, to)) continue
-                        val seg = SitPathPlot.clipSegment(
-                            lay.path[i - 1], lay.path[i],
-                            lay.pictureLeft, lay.pictureTop, lay.pictureRight, lay.pictureBottom,
-                        ) ?: continue
-                        drawLine(
-                            PhosphorActive.copy(alpha = 0.9f),
-                            Offset(seg.first.x, seg.first.y),
-                            Offset(seg.second.x, seg.second.y),
-                            strokeWidth = ROUTE_PX,
-                            cap = StrokeCap.Round,
-                        )
+                    val trace = lay.samples
+                    drawMoved {
+                        drawPath(routeBlue, RouteBlue, style = route)
+                        drawPath(routeGreen, PhosphorActive.copy(alpha = 0.9f), style = route)
+                        drawn?.stopCenters?.forEach { pt ->
+                            if (!seen(pt.x, pt.y)) return@forEach
+                            drawCircle(
+                                PhosphorActive.copy(alpha = 0.22f),
+                                radius = 16f,
+                                center = Offset(pt.x, pt.y),
+                            )
+                        }
+                        val dur = (trace.last().at - trace.first().at).coerceAtLeast(1L)
+                        listOf(0.25, 0.5, 0.75).forEach { frac ->
+                            val want = trace.first().at + (dur * frac).toLong()
+                            val idx = trace.indices.minByOrNull { abs(trace[it].at - want) } ?: return@forEach
+                            if (idx == 0 || idx == trace.lastIndex) return@forEach
+                            val pt = lay.project(trace[idx].lat, trace[idx].lon)
+                            if (!onScreen(pt.x, pt.y)) return@forEach
+                            drawCircle(muted, radius = 3f, center = Offset(pt.x, pt.y))
+                            if (!moving) {
+                                val label = TIME_FMT.format(Date(trace[idx].at))
+                                val measured = measurer.measure(label, labelStyle)
+                                drawText(
+                                    measured,
+                                    topLeft = labelAt(
+                                        pt.x, pt.y, measured.size.width, measured.size.height, 6f, -measured.size.height - 2f,
+                                    ),
+                                )
+                            }
+                        }
+                        val start = lay.project(trace.first().lat, trace.first().lon)
+                        if (onScreen(start.x, start.y)) {
+                            drawStartDot(start.x, start.y)
+                            if (!moving) {
+                                val startT = measurer.measure(LanguageText.text("ui.start.label"), labelStyle)
+                                drawText(
+                                    startT,
+                                    topLeft = labelAt(start.x, start.y, startT.size.width, startT.size.height, 8f, -6f),
+                                )
+                            }
+                        }
+                        val end = lay.project(trace.last().lat, trace.last().lon)
+                        if (onScreen(end.x, end.y) && !moving) {
+                            val endLabel = if (model.live) {
+                                LanguageText.text("ui.now.label")
+                            } else {
+                                LanguageText.text("ui.end.label")
+                            }
+                            val endT = measurer.measure(endLabel, labelStyle)
+                            drawText(
+                                endT,
+                                topLeft = labelAt(
+                                    end.x, end.y, endT.size.width, endT.size.height, 10f, -endT.size.height - 4f,
+                                ),
+                            )
+                        }
                     }
-                    stays.forEach { stay ->
-                        val pt = lay.project(stay.lat, stay.lon)
-                        if (!lay.nearPicture(pt.x, pt.y)) return@forEach
-                        drawCircle(PhosphorActive.copy(alpha = 0.22f), radius = 16f, center = Offset(pt.x, pt.y))
-                    }
-                    val dur = (trace.last().at - trace.first().at).coerceAtLeast(1L)
-                    listOf(0.25, 0.5, 0.75).forEach { frac ->
-                        val want = trace.first().at + (dur * frac).toLong()
-                        val idx = trace.indices.minByOrNull { abs(trace[it].at - want) } ?: return@forEach
-                        if (idx == 0 || idx == trace.lastIndex) return@forEach
-                        val pt = lay.path.getOrNull(idx) ?: return@forEach
-                        if (!onMap(pt.x, pt.y)) return@forEach
-                        val label = TIME_FMT.format(Date(trace[idx].at))
-                        val measured = measurer.measure(label, labelStyle)
-                        drawCircle(muted, radius = 3f, center = Offset(pt.x, pt.y))
-                        drawText(
-                            measured,
-                            topLeft = labelAt(
-                                pt.x, pt.y, measured.size.width, measured.size.height, 6f, -measured.size.height - 2f,
-                            ),
-                        )
-                    }
-                    val start = lay.path.first()
-                    val end = lay.path.last()
-                    if (onMap(start.x, start.y)) {
-                        drawStartDot(start.x, start.y)
-                        val startT = measurer.measure(LanguageText.text("ui.start.label"), labelStyle)
-                        drawText(
-                            startT,
-                            topLeft = labelAt(start.x, start.y, startT.size.width, startT.size.height, 8f, -6f),
-                        )
-                    }
-                    if (onMap(end.x, end.y)) {
-                        val endLabel = if (model.live) LanguageText.text("ui.now.label") else LanguageText.text("ui.end.label")
-                        val endT = measurer.measure(endLabel, labelStyle)
-                        drawText(
-                            endT,
-                            topLeft = labelAt(end.x, end.y, endT.size.width, endT.size.height, 10f, -endT.size.height - 4f),
-                        )
+                    if (moving) {
+                        val dur = (trace.last().at - trace.first().at).coerceAtLeast(1L)
+                        listOf(0.25, 0.5, 0.75).forEach { frac ->
+                            val want = trace.first().at + (dur * frac).toLong()
+                            val idx = trace.indices.minByOrNull { abs(trace[it].at - want) } ?: return@forEach
+                            if (idx == 0 || idx == trace.lastIndex) return@forEach
+                            val pt = lay.project(trace[idx].lat, trace[idx].lon)
+                            if (!onScreen(pt.x, pt.y)) return@forEach
+                            val at = placed(pt.x, pt.y)
+                            val label = TIME_FMT.format(Date(trace[idx].at))
+                            val measured = measurer.measure(label, labelStyle)
+                            drawText(
+                                measured,
+                                topLeft = labelAt(
+                                    at.x, at.y, measured.size.width, measured.size.height, 6f, -measured.size.height - 2f,
+                                ),
+                            )
+                        }
+                        val start = lay.project(trace.first().lat, trace.first().lon)
+                        if (onScreen(start.x, start.y)) {
+                            val at = placed(start.x, start.y)
+                            val startT = measurer.measure(LanguageText.text("ui.start.label"), labelStyle)
+                            drawText(
+                                startT,
+                                topLeft = labelAt(at.x, at.y, startT.size.width, startT.size.height, 8f, -6f),
+                            )
+                        }
+                        val end = lay.project(trace.last().lat, trace.last().lon)
+                        if (onScreen(end.x, end.y)) {
+                            val at = placed(end.x, end.y)
+                            val endLabel = if (model.live) {
+                                LanguageText.text("ui.now.label")
+                            } else {
+                                LanguageText.text("ui.end.label")
+                            }
+                            val endT = measurer.measure(endLabel, labelStyle)
+                            drawText(
+                                endT,
+                                topLeft = labelAt(
+                                    at.x, at.y, endT.size.width, endT.size.height, 10f, -endT.size.height - 4f,
+                                ),
+                            )
+                        }
                     }
                 }
-                drawAdvertised(lay, model.craft, model.pilots, model.dots, pilotPainter)
+                drawMoved { drawAdvertised(lay, model.craft, model.pilots, model.dots, pilotPainter) }
             }
             if (cameraMarks.isNotEmpty() && cameraIndex != null) {
                 clipRect(lay.plotLeft, lay.plotTop, lay.plotRight, lay.plotBottom) {
-                    drawFlockMarks(
-                        lay,
-                        cameraIndex,
-                        night,
-                        measurer,
-                        flockCountStyle,
-                        bold = onCycleCameras != null || expand,
-                        prepared = cameraMarks,
-                    )
+                    drawMoved {
+                        val stamp = cameraStamp
+                        if (stamp != null) {
+                            drawCameraStamp(stamp)
+                        } else {
+                            drawFlockMarks(
+                                lay,
+                                cameraIndex,
+                                night,
+                                measurer,
+                                flockCountStyle,
+                                bold = cameraBold,
+                                prepared = cameraMarks,
+                            )
+                        }
+                    }
                 }
             }
             clipRect(lay.pictureLeft, lay.pictureTop, lay.pictureRight, lay.pictureBottom) {
-                clusters.forEach { cluster ->
-                    if (!lay.nearPicture(cluster.center.x, cluster.center.y)) return@forEach
-                    val pt = Offset(cluster.center.x, cluster.center.y)
-                    if (expand) {
-                        drawCircle(Color.White, 17f, pt)
-                        drawCircle(Color(0xFF0F172A), 17f, pt, style = Stroke(width = 2.2f))
+                drawMoved {
+                    clusters.forEach { cluster ->
+                        if (!seen(cluster.center.x, cluster.center.y)) return@forEach
+                        val pt = Offset(cluster.center.x, cluster.center.y)
+                        if (expand) {
+                            drawCircle(Color.White, 17f, pt)
+                            drawCircle(Color(0xFF0F172A), 17f, pt, style = Stroke(width = 2.2f))
+                        }
+                        if (cluster.stacked) {
+                            val hot = selected?.id == cluster.id
+                            val radius = if (hot) 18f else 15f
+                            if (moving) drawCountPlate(pt, radius) else drawCountBadge(pt, cluster.members.size, radius, measurer)
+                        } else {
+                            val m = cluster.members.single()
+                            val fill = discColor(m.dot, night)
+                            val painter = glyphs[m.dot.classKind] ?: glyphs[null]!!
+                            drawClassDisc(pt, 12f, fill, painter)
+                        }
                     }
-                    if (cluster.stacked) {
-                        val hot = selected?.id == cluster.id
-                        drawCountBadge(pt, cluster.members.size, if (hot) 18f else 15f, measurer)
-                    } else {
-                        val m = cluster.members.single()
-                        val fill = discColor(m.dot, night)
-                        val painter = glyphs[m.dot.classKind] ?: glyphs[null]!!
-                        drawClassDisc(pt, 12f, fill, painter)
+                    if (lay.samples.isNotEmpty()) {
+                        val end = lay.project(lay.samples.last().lat, lay.samples.last().lon)
+                        if (seen(end.x, end.y)) drawYouDot(end.x, end.y, 6.2f, you)
+                    }
+                    model.gnss.forEach { pin ->
+                        val pt = lay.project(pin.lat, pin.lon)
+                        if (!seen(pt.x, pt.y)) return@forEach
+                        drawGnssDiamond(Offset(pt.x, pt.y), gnssInk)
                     }
                 }
-                if (lay.path.isNotEmpty()) {
-                    val end = lay.path.last()
-                    if (lay.nearPicture(end.x, end.y)) drawYouDot(end.x, end.y, 6.2f, you)
-                }
-                model.gnss.forEach { pin ->
-                    val pt = lay.project(pin.lat, pin.lon)
-                    if (!lay.nearPicture(pt.x, pt.y)) return@forEach
-                    drawGnssDiamond(Offset(pt.x, pt.y), gnssInk)
+                if (moving) {
+                    clusters.forEach { cluster ->
+                        if (!cluster.stacked || !seen(cluster.center.x, cluster.center.y)) return@forEach
+                        drawCountNumber(placed(cluster.center.x, cluster.center.y), cluster.members.size, measurer)
+                    }
                 }
             }
             val camPick = if (selected == null && selectedGnss == null) {
@@ -548,14 +732,15 @@ fun SitPathCanvas(
             } else {
                 null
             }
-            val leader = if (selected != null && onMap(selected.center.x, selected.center.y)) {
+            val leaderAt = if (selected != null && onScreen(selected.center.x, selected.center.y)) {
                 Offset(selected.center.x, selected.center.y)
             } else if (camPick != null) {
                 val pt = lay.project(camPick.lat, camPick.lon)
-                if (onMap(pt.x, pt.y)) Offset(pt.x, pt.y) else null
+                if (onScreen(pt.x, pt.y)) Offset(pt.x, pt.y) else null
             } else {
                 null
             }
+            val leader = leaderAt?.let { placed(it.x, it.y) }
             val cardKey = when {
                 selected != null -> "r:${selected.id}"
                 selectedGnss != null -> "g:$selectedGnss"
@@ -798,9 +983,9 @@ fun SitPathCanvas(
             }
         }
         if (onRotate != null) {
-            MapCompassButton(
+            TurningCompass(
                 frame = mapFrame,
-                northDeg = drawnCourse,
+                motion = motion,
                 onClick = onRotate,
                 modifier = Modifier.align(Alignment.TopEnd).padding(4.dp),
             )
@@ -819,6 +1004,21 @@ fun SitPathCanvas(
             )
         }
     }
+}
+
+@Composable
+private fun TurningCompass(
+    frame: Int,
+    motion: CourseMotion,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    MapCompassButton(
+        frame = frame,
+        northDeg = motion.shownDeg(),
+        onClick = onClick,
+        modifier = modifier,
+    )
 }
 
 /** Matches MapCompassButton: 4 dp from the corner, 48 dp plate. */
@@ -861,27 +1061,222 @@ internal fun cameraUnderCompass(
     return CameraControlBox(left, top, button)
 }
 
-private fun moveLiveCamera(
-    zoom: Float,
-    pan: Offset,
+private class PictureShift {
+    var scale = 1f
+    var originX = 0f
+    var originY = 0f
+    var centerX = 0f
+    var centerY = 0f
+    val revision = mutableIntStateOf(0)
+
+    fun idle(): Boolean = scale == 1f && originX == centerX && originY == centerY
+
+    fun clear(cx: Float, cy: Float) {
+        if (idle() && centerX == cx && centerY == cy) return
+        scale = 1f
+        originX = cx
+        originY = cy
+        centerX = cx
+        centerY = cy
+        revision.intValue++
+    }
+
+    fun show(scale: Float, originX: Float, originY: Float, cx: Float, cy: Float) {
+        val next = if (scale > 0f && scale.isFinite()) scale else 1f
+        if (this.scale == next && this.originX == originX && this.originY == originY &&
+            centerX == cx && centerY == cy
+        ) {
+            return
+        }
+        this.scale = next
+        this.originX = originX
+        this.originY = originY
+        this.centerX = cx
+        this.centerY = cy
+        revision.intValue++
+    }
+}
+
+private class LiveGesture {
+    val shift = PictureShift()
+    var working: SitPathPlot.Viewport? = null
+    var pending: SitPathPlot.Viewport? = null
+    var finger = false
+    val padPx = mutableFloatStateOf(0f)
+}
+
+private fun sameView(a: SitPathPlot.Viewport?, b: SitPathPlot.Viewport?): Boolean {
+    if (a === b) return true
+    if (a == null || b == null) return false
+    return a.centerLat == b.centerLat &&
+        a.centerLon == b.centerLon &&
+        a.halfEastM == b.halfEastM &&
+        a.halfNorthM == b.halfNorthM &&
+        (a.heldCourseDeg == b.heldCourseDeg || (a.heldCourseDeg.isNaN() && b.heldCourseDeg.isNaN()))
+}
+
+private fun syncPictureShift(
+    lay: SitPathPlot.Layout,
+    base: SitPathPlot.Viewport,
+    working: SitPathPlot.Viewport,
+    shift: PictureShift,
+) {
+    val cx = (lay.pictureLeft + lay.pictureRight) / 2f
+    val cy = (lay.pictureTop + lay.pictureBottom) / 2f
+    if (sameView(working, base)) {
+        shift.clear(cx, cy)
+        return
+    }
+    val k = if (working.halfEastM > 0f) base.halfEastM / working.halfEastM else 1f
+    val origin = lay.project(working.centerLat, working.centerLon)
+    if (!origin.x.isFinite() || !origin.y.isFinite() || !k.isFinite()) {
+        shift.clear(cx, cy)
+        return
+    }
+    shift.show(k, origin.x, origin.y, cx, cy)
+}
+
+private fun shiftPastMargin(lay: SitPathPlot.Layout, shift: PictureShift): Boolean {
+    val w = lay.pictureRight - lay.pictureLeft
+    val h = lay.pictureBottom - lay.pictureTop
+    val limit = min(w, h) * 0.85f
+    if (limit <= 0f) return false
+    val cx = (lay.pictureLeft + lay.pictureRight) / 2f
+    val cy = (lay.pictureTop + lay.pictureBottom) / 2f
+    val moved = SitPathPlot.picturePoint(
+        cx, cy,
+        shift.originX, shift.originY, shift.centerX, shift.centerY,
+        shift.scale, 0f, cx, cy,
+    )
+    val zoom = abs(shift.scale - 1f) * hypot(w, h) * 0.5f
+    return hypot(moved.x - cx, moved.y - cy) + zoom > limit
+}
+
+private fun unturn(pan: Offset, turnDeg: Float): Offset {
+    if (turnDeg == 0f || !turnDeg.isFinite()) return pan
+    val rad = Math.toRadians(-turnDeg.toDouble())
+    val c = cos(rad).toFloat()
+    val s = sin(rad).toFloat()
+    return Offset(pan.x * c - pan.y * s, pan.x * s + pan.y * c)
+}
+
+private fun sourcePoint(
     focus: Offset,
+    shift: PictureShift,
+    turnDeg: Float,
+    pivotX: Float,
+    pivotY: Float,
+): SitPathPlot.Pt = SitPathPlot.pictureSource(
+    focus.x,
+    focus.y,
+    shift.originX,
+    shift.originY,
+    shift.centerX,
+    shift.centerY,
+    shift.scale,
+    turnDeg,
+    pivotX,
+    pivotY,
+)
+
+private fun publishWorking(
+    gesture: LiveGesture,
+    next: SitPathPlot.Viewport,
+    onViewportRef: MutableState<((SitPathPlot.Viewport?) -> Unit)?>,
+) {
+    gesture.working = next
+    if (sameView(gesture.pending, next)) return
+    gesture.pending = next
+    onViewportRef.value?.invoke(next)
+}
+
+private fun armLiveCamera(
+    zoomAccum: Float,
+    panAccum: Offset,
+    focus: Offset,
+    gesture: LiveGesture,
     layoutRef: MutableState<SitPathPlot.Layout?>,
     viewportRef: MutableState<SitPathPlot.Viewport?>,
     onViewportRef: MutableState<((SitPathPlot.Viewport?) -> Unit)?>,
     courseRef: MutableState<Double>,
+    motion: CourseMotion,
+) {
+    val lay = layoutRef.value ?: return
+    gesture.finger = true
+    val pictureW = lay.pictureRight - lay.pictureLeft
+    val pictureH = lay.pictureBottom - lay.pictureTop
+    gesture.padPx.floatValue = max(pictureW, pictureH)
+    val course = courseRef.value
+    var next = viewportRef.value ?: SitPathPlot.viewportOf(lay, course)
+    val turn = motion.screenTurnDeg()
+    val pivotX = (lay.pictureLeft + lay.pictureRight) / 2f
+    val pivotY = (lay.pictureTop + lay.pictureBottom) / 2f
+    if (zoomAccum > 0f && zoomAccum != 1f && focus != Offset.Unspecified) {
+        val src = sourcePoint(focus, gesture.shift, turn, pivotX, pivotY)
+        val (lat, lon) = lay.unproject(src.x, src.y)
+        next = next.zoomAbout(zoomAccum, lat, lon)
+    }
+    if (panAccum != Offset.Zero) {
+        val pan = unturn(panAccum, turn)
+        next = next.panScreen(pan.x, pan.y, lay.metersPerPx, course)
+    }
+    publishWorking(gesture, next, onViewportRef)
+}
+
+private fun dragLiveCamera(
+    zoom: Float,
+    pan: Offset,
+    focus: Offset,
+    gesture: LiveGesture,
+    layoutRef: MutableState<SitPathPlot.Layout?>,
+    viewportRef: MutableState<SitPathPlot.Viewport?>,
+    onViewportRef: MutableState<((SitPathPlot.Viewport?) -> Unit)?>,
+    courseRef: MutableState<Double>,
+    motion: CourseMotion,
 ) {
     val lay = layoutRef.value ?: return
     if ((zoom == 1f || zoom <= 0f) && pan == Offset.Zero) return
-    var next = viewportRef.value ?: SitPathPlot.viewportOf(lay, courseRef.value)
+    val course = courseRef.value
+    val base = viewportRef.value ?: SitPathPlot.viewportOf(lay, course)
+    var working = gesture.working ?: base
+    val turn = motion.screenTurnDeg()
+    val pivotX = (lay.pictureLeft + lay.pictureRight) / 2f
+    val pivotY = (lay.pictureTop + lay.pictureBottom) / 2f
+    val east = if (base.halfEastM > 0f) working.halfEastM / base.halfEastM else 1f
+    val mpp = lay.metersPerPx * east
     if (zoom > 0f && zoom != 1f && focus != Offset.Unspecified) {
-        val (lat, lon) = lay.unproject(focus.x, focus.y)
-        next = next.zoomAbout(zoom, lat, lon)
+        val src = sourcePoint(focus, gesture.shift, turn, pivotX, pivotY)
+        val (lat, lon) = lay.unproject(src.x, src.y)
+        working = working.zoomAbout(zoom, lat, lon)
     }
     if (pan != Offset.Zero) {
-        next = next.panScreen(pan.x, pan.y, lay.metersPerPx, courseRef.value)
+        val laid = unturn(pan, turn)
+        working = working.panScreen(laid.x, laid.y, mpp, course)
     }
-    viewportRef.value = next
-    onViewportRef.value?.invoke(next)
+    gesture.working = working
+    syncPictureShift(lay, base, working, gesture.shift)
+    if (shiftPastMargin(lay, gesture.shift)) publishWorking(gesture, working, onViewportRef)
+}
+
+private fun releaseLiveCamera(
+    gesture: LiveGesture,
+    layoutRef: MutableState<SitPathPlot.Layout?>,
+    viewportRef: MutableState<SitPathPlot.Viewport?>,
+    onViewportRef: MutableState<((SitPathPlot.Viewport?) -> Unit)?>,
+) {
+    gesture.finger = false
+    val working = gesture.working
+    val lay = layoutRef.value
+    val cx = if (lay == null) 0f else (lay.pictureLeft + lay.pictureRight) / 2f
+    val cy = if (lay == null) 0f else (lay.pictureTop + lay.pictureBottom) / 2f
+    if (working == null || sameView(working, viewportRef.value)) {
+        gesture.pending = null
+        gesture.padPx.floatValue = 0f
+        if (lay != null) gesture.shift.clear(cx, cy)
+        return
+    }
+    gesture.pending = working
+    onViewportRef.value?.invoke(working)
 }
 
 private data class MapCardBox(
@@ -917,6 +1312,18 @@ private fun discColor(dot: SitPathPlot.Dot, night: Boolean): Color {
     return raw.nightIf(night)
 }
 
+private class PathDrive(val path: Path) : SitPathPlot.DriveSink {
+    private var open = false
+
+    override fun segment(x1: Float, y1: Float, x2: Float, y2: Float, join: Boolean) {
+        if (!join || !open) {
+            path.moveTo(x1, y1)
+            open = true
+        }
+        path.lineTo(x2, y2)
+    }
+}
+
 private fun pathMarkers(
     layout: SitPathPlot.Layout?,
     live: Boolean,
@@ -925,9 +1332,9 @@ private fun pathMarkers(
     labelStyle: TextStyle,
 ): List<SitPathPlot.HitMarker> {
     val lay = layout ?: return emptyList()
-    if (lay.path.size < 2 || width < 8f) return emptyList()
-    val start = lay.path.first()
-    val end = lay.path.last()
+    if (lay.samples.size < 2 || width < 8f) return emptyList()
+    val start = lay.project(lay.samples.first().lat, lay.samples.first().lon)
+    val end = lay.project(lay.samples.last().lat, lay.samples.last().lon)
     val startText = measurer.measure(LanguageText.text("ui.start.label"), labelStyle)
     val endText = measurer.measure(if (live) LanguageText.text("ui.now.label") else LanguageText.text("ui.end.label"), labelStyle)
     return listOf(
@@ -1005,9 +1412,12 @@ private fun DrawScope.drawClassDisc(center: Offset, radius: Float, fill: Color, 
     }
 }
 
-private fun DrawScope.drawCountBadge(center: Offset, count: Int, radius: Float, measurer: TextMeasurer) {
+private fun DrawScope.drawCountPlate(center: Offset, radius: Float) {
     drawCircle(ClusterInk, radius = radius + 2f, center = center)
     drawCircle(ClusterFill, radius = radius, center = center)
+}
+
+private fun DrawScope.drawCountNumber(center: Offset, count: Int, measurer: TextMeasurer) {
     val measured = measurer.measure(
         "$count",
         TextStyle(color = ClusterInk, fontSize = 12.sp, fontWeight = FontWeight.Bold),
@@ -1016,6 +1426,11 @@ private fun DrawScope.drawCountBadge(center: Offset, count: Int, radius: Float, 
         measured,
         topLeft = Offset(center.x - measured.size.width / 2f, center.y - measured.size.height / 2f),
     )
+}
+
+private fun DrawScope.drawCountBadge(center: Offset, count: Int, radius: Float, measurer: TextMeasurer) {
+    drawCountPlate(center, radius)
+    drawCountNumber(center, count, measurer)
 }
 
 private val PilotInk = Color(0xFF3D4A55)
@@ -1030,21 +1445,24 @@ private fun DrawScope.drawAdvertised(
     dots: List<SitPathPlot.Dot>,
     pilotPainter: Painter,
 ) {
+    val left = lay.pictureLeft
+    val top = lay.pictureTop
+    val right = lay.pictureRight
+    val bottom = lay.pictureBottom
+    fun near(x: Float, y: Float) = lay.nearPicture(x, y)
     tracks.forEach { track ->
         val samples = track.samples
         if (samples.isEmpty()) return@forEach
         val pts = samples.map { lay.project(it.lat, it.lon) }
         if (pts.size >= 2) {
             strokeOnMap(
-                SitPathPlot.clipPolyline(
-                    pts, lay.pictureLeft, lay.pictureTop, lay.pictureRight, lay.pictureBottom,
-                ),
+                SitPathPlot.clipPolyline(pts, left, top, right, bottom),
                 AircraftInk,
                 4.2f,
                 AircraftDots,
             )
             val start = pts.first()
-            if (lay.nearPicture(start.x, start.y)) {
+            if (near(start.x, start.y)) {
                 drawCircle(Color.White, radius = 4.6f, center = Offset(start.x, start.y))
                 drawCircle(
                     AircraftInk,
@@ -1056,7 +1474,7 @@ private fun DrawScope.drawAdvertised(
         }
         val end = pts.last()
         val covered = dots.any { SitPathPlot.sitsOnCraft(it, listOf(track)) }
-        if (!covered && lay.nearPicture(end.x, end.y)) {
+        if (!covered && near(end.x, end.y)) {
             drawCircle(Color.White, radius = 4.6f, center = Offset(end.x, end.y))
             drawCircle(
                 AircraftInk,
@@ -1068,7 +1486,7 @@ private fun DrawScope.drawAdvertised(
     }
     pilots.forEach { pilot ->
         val pt = lay.project(pilot.lat, pilot.lon)
-        if (!lay.nearPicture(pt.x, pt.y)) return@forEach
+        if (!near(pt.x, pt.y)) return@forEach
         drawPilotMark(Offset(pt.x, pt.y), pilotPainter)
     }
 }

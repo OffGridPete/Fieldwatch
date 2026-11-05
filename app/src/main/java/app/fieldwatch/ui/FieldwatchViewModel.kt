@@ -370,11 +370,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private val huntPeakRssi = MutableStateFlow(-127)
     private val huntSamples = MutableStateFlow<List<RssiSample>>(emptyList())
     private val huntTrail = MutableStateFlow<List<GpsSample>>(emptyList())
-    /** Radio whose cloud is kept after leaving Hunt. Reset or a new radio replaces it. */
+    /** Radio for the hunt that is open. Cleared on leave, so the next Hunt click starts over. */
     private var carriedHuntKey: String? = null
     /** Cloud already on the map when this session opened. New hears append after it. */
     private var huntBase = emptyList<GpsSample>()
-    /** A walk that was not on a map when Hunt closed. Coming back continues it. */
+    /** Kept only while a hunt is open. Leave clears it. */
     private var huntPlain: HuntPlain? = null
     private val _outlineOpenClasses = MutableStateFlow<Set<String>>(emptySet())
     val outlineOpenClasses: StateFlow<Set<String>> = _outlineOpenClasses
@@ -1113,12 +1113,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     /** Permission just arrived. Follow the step sensor and leave the walk where it is. */
     fun useHardwareSteps() = app.useHardwareSteps()
 
-    /** Sensors stop. The cloud stays until Reset, or until a different radio is hunted. */
+    /** Sensors stop. The next Hunt on a radio detail starts a new walk. */
     fun stopHunt() {
-        huntPlain = app.plainSnapshot()
-        huntTrail.value = HuntHeat.shown(huntBase, app.huntCloud.value)
         app.endHuntMotion()
         huntKey.value = null
+        carriedHuntKey = null
+        huntPlain = null
+        huntTrail.value = emptyList()
+        huntBase = emptyList()
         huntFlight.pending = null
         huntFlight.job?.cancel()
         huntFlight.job = null

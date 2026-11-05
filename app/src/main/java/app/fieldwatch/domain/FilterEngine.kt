@@ -59,6 +59,7 @@ class FilterEngine {
         if (!gates) return false
         if (filter.hideFastPairAccountKey && FastPair.isAccountKeyOnly(device)) return false
         if (filter.hideMine && device.key in mineKeys) return false
+        if (filter.hideRandomizedBle && device.randomBleAddress()) return false
         if (filter.seenAtPlaces && device.key !in placeKeys) return false
         if (!filter.movingWithYou) return true
         return CoTravel.withYou(device, travel, now)

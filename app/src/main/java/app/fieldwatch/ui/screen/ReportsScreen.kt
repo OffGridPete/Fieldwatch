@@ -401,6 +401,7 @@ fun ReportsScreen(
                         },
                         fitButton = false,
                         splitStacked = true,
+                        recordCameras = true,
                         onTileWindow = { next ->
                             if (SitPathPlot.tileWindowKey(next) != pathTileWindowKey) {
                                 pathTileWindow = next

@@ -52,6 +52,7 @@ import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.Hunt
+import app.fieldwatch.domain.HuntCue
 import app.fieldwatch.domain.MapFrame
 import app.fieldwatch.domain.MapLookAhead
 import app.fieldwatch.domain.PayloadLocation
@@ -283,8 +284,9 @@ fun HuntScreen(
                 Modifier.fillMaxWidth().height(44.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val lost = hunt.cue == HuntCue.QUIET || hunt.cue == HuntCue.GONE
                 Text(
-                    rssi?.toString() ?: "—",
+                    if (lost) "- -" else rssi?.toString() ?: "—",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 36.sp,
@@ -292,7 +294,12 @@ fun HuntScreen(
                 )
                 Column(Modifier.padding(start = 12.dp).weight(1f)) {
                     Text(
-                        rssi?.let { DeviceExplain.rssiExplain(it) } ?: LanguageText.text("ui.no.live.rssi"),
+                        if (lost) {
+                            "-- dBm · ${LanguageText.text("ui.signal.lost")}"
+                        } else {
+                            rssi?.let { DeviceExplain.rssiExplain(it) }
+                                ?: LanguageText.text("ui.no.live.rssi")
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

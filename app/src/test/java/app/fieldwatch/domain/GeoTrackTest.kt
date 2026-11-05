@@ -383,6 +383,63 @@ class GeoTrackTest {
         assertEquals(0.0, course.degrees, 2.0)
     }
 
+    @Test
+    fun runningLengthMatchesTheMeasuredPath() {
+        val path = mutableListOf<GpsSample>()
+        val apex = Geo.DriveApex()
+        var length = 0.0
+        var lat = 28.78
+        var lon = -81.37
+        var at = 1_000L
+        fun step(north: Double, east: Double, dt: Long) {
+            val next = offset(lat, lon, north, east)
+            lat = next.first
+            lon = next.second
+            at += dt
+            val before = path.size
+            val frozen = if (path.size >= 2) path[path.lastIndex - 1] else null
+            val tip = path.lastOrNull()
+            val trimmed = Geo.extendDrivePath(path, apex, lat, lon, at)
+            length = if (trimmed) {
+                Geo.pathLengthM(path)
+            } else {
+                Geo.advanceDriveLength(length, before, frozen, tip, path)
+            }
+            assertEquals(Geo.pathLengthM(path), length, 0.02)
+        }
+        repeat(6) { step(1.2, 0.0, 1_000L) }
+        repeat(8) { step(6.0, 1.0, 1_000L) }
+        repeat(12) { step(0.4, -0.2, 4_000L) }
+        assertTrue(path.zipWithNext().any { it.second.at - it.first.at >= Geo.STOP_MS })
+        repeat(4) { step(8.0, 0.0, 1_000L) }
+        val capped = ArrayList<GpsSample>()
+        val capApex = Geo.DriveApex()
+        var capLen = 0.0
+        var clat = 28.78
+        var clon = -81.37
+        var cat = 1_000L
+        var sawTrim = false
+        repeat(12) {
+            val next = offset(clat, clon, 10.0, 3.0)
+            clat = next.first
+            clon = next.second
+            cat += 1_000L
+            val before = capped.size
+            val frozen = if (capped.size >= 2) capped[capped.lastIndex - 1] else null
+            val tip = capped.lastOrNull()
+            val trimmed = Geo.extendDrivePath(capped, capApex, clat, clon, cat, cap = 6)
+            if (trimmed) sawTrim = true
+            capLen = if (trimmed) {
+                Geo.pathLengthM(capped)
+            } else {
+                Geo.advanceDriveLength(capLen, before, frozen, tip, capped)
+            }
+            assertEquals(Geo.pathLengthM(capped), capLen, 0.02)
+        }
+        assertTrue(sawTrim)
+        assertTrue(capped.size <= 6)
+    }
+
     private fun northOf(lat: Double, lon: Double, meters: Double): Pair<Double, Double> =
         offset(lat, lon, meters, 0.0)
 
