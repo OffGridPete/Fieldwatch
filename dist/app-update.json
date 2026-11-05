@@ -1,5 +1,5 @@
 {
-  "versionCode": 51,
-  "versionName": "1.1.41",
-  "notes": "This is a small update which cleans up some text on warning dialogs. Also an opportunity for you to test out the new auto update feature.\n\nWarning dialogs for GPS, a cell, a trusted network, and a flood use one layout. The reason is a paragraph. Readings sit under Details, with the label and the value on one line.\n\nThe update offer has a Release Notes heading. Long notes scroll.\n\nWhen an app on this phone is generating the GPS location, the warning is Possible GPS interference. It says an app on this phone is generating the GPS location, and this phone is using that instead of the satellites.\n\nA cell warning keeps what happened in the title. The paragraph says Fieldwatch cannot tell the cause.\n\nBundled language files are written for this version."
+  "versionCode": 52,
+  "versionName": "1.1.42",
+  "notes": "Map performance, especially during a long sit, has been enhanced in both the Live list map, and the Reports path map.\n\nHunt on a radio's detail page starts a new hunt. Leaving Hunt clears the walk.\n\nWhen the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost.\n\nFilters can hide randomized Bluetooth. Wi-Fi stays. The sit still keeps those radios.\n\nBundled language files are written for this version. Signal Lost and Hide randomized Bluetooth are the lines added since 1.1.41."
 }

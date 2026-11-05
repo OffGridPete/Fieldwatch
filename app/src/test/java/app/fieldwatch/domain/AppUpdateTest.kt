@@ -26,18 +26,15 @@ class AppUpdateTest {
     @Test
     fun thePublishedNotesFileIsThisVersion() {
         val published =
-            "This is a small update which cleans up some text on warning dialogs. " +
-                "Also an opportunity for you to test out the new auto update feature.\n\n" +
-                "Warning dialogs for GPS, a cell, a trusted network, and a flood use one layout. " +
-                "The reason is a paragraph. Readings sit under Details, with the label and the value on one line.\n\n" +
-                "The update offer has a Release Notes heading. Long notes scroll.\n\n" +
-                "When an app on this phone is generating the GPS location, the warning is Possible GPS interference. " +
-                "It says an app on this phone is generating the GPS location, and this phone is using that instead of the satellites.\n\n" +
-                "A cell warning keeps what happened in the title. " +
-                "The paragraph says Fieldwatch cannot tell the cause.\n\n" +
-                "Bundled language files are written for this version."
+            "Map performance, especially during a long sit, has been enhanced in both the Live list map, " +
+                "and the Reports path map.\n\n" +
+                "Hunt on a radio's detail page starts a new hunt. Leaving Hunt clears the walk.\n\n" +
+                "When the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost.\n\n" +
+                "Filters can hide randomized Bluetooth. Wi-Fi stays. The sit still keeps those radios.\n\n" +
+                "Bundled language files are written for this version. " +
+                "Signal Lost and Hide randomized Bluetooth are the lines added since 1.1.41."
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
-        assertEquals(AppUpdateNote(51, "1.1.41", published), AppUpdate.parse(file.readText()))
+        assertEquals(AppUpdateNote(52, "1.1.42", published), AppUpdate.parse(file.readText()))
     }
 
     @Test
