@@ -49,7 +49,7 @@ enum class SensorList(
     OTHER(
         "https://raw.githubusercontent.com/OffGridPete/Fieldwatch/main/dist/fieldwatch-sensors.geojson.gz",
         "road-sensors.bin",
-        616_965L,
+        623_103L,
         false,
     ),
 }
