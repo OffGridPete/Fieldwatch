@@ -645,7 +645,7 @@ def story():
         toc(),
         P("How this manual is organized", "h3"),
         P(
-            "Start with chapters 4 and 5. Chapter 4 is install, permissions, a short tour of the "
+            "Start with chapters 4 and 5. Chapter 4 is install, what each Android version can do (§4.1.1), permissions, a short tour of the "
             "five tabs, and the checklist for scanning as often as the phone allows (§4.5). "
             "Chapter 5 is the screens. Chapter 8 is Filters: which radios show on Live, including "
             "Moving with you (§8.5). Chapter 9 is Signatures: which patterns get a name. "
@@ -656,6 +656,7 @@ def story():
             ["If you want…", "Go to"],
             [
                 ["Install, first launch, and Quick start", "Chapter 4, then §4.4"],
+                ["What your Android version can and cannot do", "§4.1.1"],
                 ["How a hear becomes a row", "Chapter 14"],
                 ["Hear as often as the phone allows (battery is the cost)", "§4.5"],
                 ["What each tab and the tune icon is", "§4.4, then Chapter 5"],
@@ -1020,6 +1021,53 @@ def story():
         P(
             "When install finishes, open Fieldwatch from the launcher. Leave the persistent "
             "“Fieldwatch scanning” notification — Stop on that notification ends collection."
+        ),
+        P("4.1.1 What your Android version can do", "h2"),
+        P(
+            "Fieldwatch runs on Android 10 and newer. It will not install on an older phone. "
+            "The screens are the same on each version. What changes is which details the phone passes to the app. "
+            "Start at your version and keep every row above it. An Android 13 phone includes all four rows."
+        ),
+        table(
+            ["Android", "What you can and cannot do"],
+            [
+                [
+                    "Android 10",
+                    "Wi-Fi network names and addresses still show, and Bluetooth still shows. "
+                    "A Wi-Fi or Bluetooth name containing DJI is still labeled DJI. DJI's own Bluetooth broadcast is still labeled DJI. Remote ID sent over Bluetooth still works. "
+                    "The phone does not pass along extra details carried inside a Wi-Fi broadcast. Two drone identifiers live there. "
+                    "DroneID is the older DJI identifier. Remote ID over Wi-Fi is the other. Fieldwatch cannot see either one on Android 10. "
+                    "A drone that sends its name or its location only that way is missed, and it is not placed on the map. "
+                    "Faster Wi-Fi AP scans stays off. Android 10 will not say whether the phone is limiting how often it searches for Wi-Fi.",
+                ],
+                [
+                    "Android 11 and newer",
+                    "Fieldwatch can read those extra Wi-Fi details. "
+                    "DroneID on an older DJI aircraft is labeled DJI. Fieldwatch does not read a location from it, so the aircraft is not placed on the map. "
+                    "Remote ID over Wi-Fi can name the drone. When that broadcast includes a location, the map shows the aircraft there. "
+                    "The French Wi-Fi broadcast names the drone. Fieldwatch does not get a location, a heading, or the pilot's position from it. "
+                    "Faster Wi-Fi AP scans follows the phone's limit on how often Wi-Fi searches run.",
+                ],
+                [
+                    "Android 12 and newer",
+                    "Android asks for Bluetooth permission under the name Nearby devices. "
+                    "Keep the GPS receiver awake starts to work. It asks the phone to keep measuring GPS instead of pausing to save power, and it uses more battery. "
+                    "On Android 10 and 11 the phone ignores that switch.",
+                ],
+                [
+                    "Android 13 and newer",
+                    "Android asks for Nearby Wi-Fi devices, and it asks separately for permission to post notifications. "
+                    "The GPS interference check can use a gain reading from the GPS chip. Gain is how much that chip is amplifying the satellite signal. "
+                    "On Android 10, 11, and 12, Fieldwatch estimates the same reading from the satellites. §5.9.",
+                ],
+            ],
+            [1.5 * inch, 5.0 * inch],
+        ),
+        P(
+            "A newer version of Android still cannot hear a radio that is not Wi-Fi or Bluetooth. "
+            "The link between a DJI aircraft and its controller, including OcuSync, is a separate radio. Fieldwatch does not receive it. "
+            "Some aircraft send Remote ID in a Wi-Fi mode that Android does not reliably hand to an app. That path is missed on every version. "
+            "The DJI entry in Appendix B and Remote ID in §5.8.3 have the rest."
         ),
         P("4.2 Required permissions", "h2"),
         table(
@@ -2639,7 +2687,7 @@ def story():
         bullets([
             "Wi-Fi Neighbor Awareness Networking (NAN) stuffed beacons. Stock Android does not give those reliably.",
             "Fast fly-bys. Android's Wi-Fi scan limit. A hover or slow pass is more likely.",
-            "Android 10 for Wi-Fi RID. minSdk is still 29; vendor IEs need API 30.",
+            "Android 10 for Wi-Fi RID. minSdk is still 29; vendor IEs need API 30. §4.1.1.",
             "STA / client frames, probe requests, monitor mode, Wi-Fi Direct unless it already appears in a ScanResult. Fieldwatch still only sees AP beacons on Wi-Fi.",
         ]),
         P(
@@ -5094,7 +5142,7 @@ def story():
             "Tuya is 0x07D0 / FD50 / TUYA*, not the two-letter TY. Govee identity is name-only; "
             "once it matches, Decode fields read H5074/H5075 (0xEC88) and H510x/H517x (0x0001) "
             "temp / humidity / battery (§9.6). "
-            "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi), plus Wi-Fi vendor IE 26:37:12 for the older DroneID beacon. "
+            "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi), plus Wi-Fi vendor IE 26:37:12 for the older DroneID beacon. Android 11 or newer can see that field (§4.1.1). "
             "Osmo Action / Pocket / 360 / Nano are the Osmo row (0x08AA model IDs 0x0006–0x0022 plus OsmoAction* names), not DJI. "
             "DJI Power is a Bluetooth name that starts with Power2000, the Power 2000 station. It is Home IoT, not the DJI drone row. "
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
@@ -6530,7 +6578,7 @@ def story():
         ),
         P("<b>Setup.</b>", "body_left"),
         numbered([
-            "Android 11+ if you care about Wi-Fi RID (vendor IEs). Android 10 still hears BLE FFFA.",
+            "Android 11+ if you care about Wi-Fi RID (vendor IEs). Android 10 still hears BLE FFFA. §4.1.1.",
             "Live display: All traffic, High performance. Do not filter Drones only if you also want Extra attention on the same walk.",
             "For TAK: Privacy mode Off, Payload location On, Extra attention On. GPS tagging is not required for advertised aircraft pins. §12.15.",
             "A hover or slow pass beats a fast fly-by. OS Wi-Fi scans are batched.",
@@ -6552,7 +6600,7 @@ def story():
             [
                 ["Chip on BLE, nothing on Wi-Fi", "Expected. Many aircraft do both; Fieldwatch's Wi-Fi path is AP beacons with FA:0B:BC, not NAN."],
                 ["Wi-Fi AP labeled Remote ID, no lat/lon yet", "Wait for a Location message in that beacon pack. Basic ID has the UAS ID, not the pin."],
-                ["Nothing on Android 10 Wi-Fi", "Expected. Vendor IEs need Android 11+. BLE FFFA still works."],
+                ["Nothing on Android 10 Wi-Fi", "Expected. Vendor IEs need Android 11+. BLE FFFA still works. §4.1.1."],
                 ["Fast pass, no Wi-Fi chip", "OS scan throttle. Slow down or hover. BLE may still catch FFFA."],
                 ["Cloud of BLE dots on ATAK", "UAS ID not heard yet. First Basic ID jumps the uid onto one marker."],
                 ["Pin is kilometers away", "Advertised GPS on the aircraft. Not a Fieldwatch fix."],
@@ -6885,9 +6933,9 @@ def story():
             ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. A Polar strap that also sends FEA5 stays on Polar. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
-            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi; Wi-Fi vendor IE 26:37:12", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. The older DroneID beacon is vendor IE 26:37:12. It labels this row and does not fill a position. Android 11 or newer can see that field. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
+            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi; Wi-Fi vendor IE 26:37:12", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. The older DroneID beacon is vendor IE 26:37:12. It labels this row and does not fill a position. Android 11 or newer can see that field. §4.1.1. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
             ["DJI Power", "BLE name Power2000*", "DJI Power 2000 portable power station. Home IoT, not Drones. A radio that also carries company 0x08AA keeps this row and drops DJI. Other DJI radios stay on DJI. Not bookmarked. Decode fields: model id 4500 reads Power 2000 (§9.6)."],
-            ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and the operator. The French plate labels the row and does not fill position or the operator pin. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. Not a tail number. Drones class. Stock bookmark."],
+            ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and the operator. The French plate labels the row and does not fill position or the operator pin. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. §4.1.1. Not a tail number. Drones class. Stock bookmark."],
             ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],
             ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
             ["Parrot", "Names ANAFI* / Bebop* / Skycontroller*", "Parrot drones and the Skycontroller. Not company 0x0043 (automotive). Not IEEE 90:3A:E6. Disco* not used. Drones class. Stock bookmark."],
@@ -7213,7 +7261,7 @@ def story():
             ["Screen pulses lighter and darker", "The phone's Adaptive brightness is chasing the light sensor. Fieldwatch does not set the brightness. Keep screen on only holds the display awake, so the pulse stays in view.", "Turn Adaptive brightness off in the phone's Display settings for the sit. Night Light and Extra dim can change the look too. Fieldwatch Night mode only turns the screen red. §13.2."],
             ["ATAK map stays empty", "TAK feed off, Privacy mode on, wrong destination, or no qualifying radio with a pin.", "Settings → TAK / CoT feed On, Privacy mode Off. Extra attention and Payload location on. Destination: This phone for ATAK CIV on this phone, LAN multicast for other ATAKs. Confirm Feed status shows a send. Heard-here also needs GPS tagging and a live fix. §5.8, §12.15."],
             ["Remote ID is on the Live display but not on ATAK", "Payload location chip off, no Location message yet, or 0,0 / invalid coords.", "What to send → Payload location On. Wait for an ASTM Location message (type 1, protocol 0–2) on BLE FFFA or Wi-Fi FA:0B:BC (Android 11+); Basic ID has no lat/lon but a previous Location sticks this session. 0,0 is rejected. §5.8.3, §12.16."],
-            ["Wi-Fi drone, no Remote ID chip", "Android 10, NAN-only RID, or a fast fly-by.", "Vendor IEs need Android 11+. NAN still misses. Hover or slow pass. BLE FFFA still works on Android 10. §5.8.3, §12.16."],
+            ["Wi-Fi drone, no Remote ID chip", "Android 10, NAN-only RID, or a fast fly-by.", "Vendor IEs need Android 11+. NAN still misses. Hover or slow pass. BLE FFFA still works on Android 10. §4.1.1, §5.8.3, §12.16."],
             ["TAK pins sit on me, not on the other radio", "Heard-here: that family has no advertised lat/lon.", "Expected for Extra attention (Axon, glasses, Flipper, …). Remote ID Location is advertised position. GPS tagging off stops heard-here only."],
             ["TAK heard-here pin did not follow me when I walked away", "Heard-here holds the loudest hear.", "Expected. Walk closer to move it. Keep-alives stay on the same lat/lon. Not a bearing. §5.8.8."],
             ["Debrief is still last 15 minutes", "No named sit is running or selected.", "Expected. Reports → Start sit. While a sit is open, or you pick a saved sit in the radio list, Debrief follows that window. §5.6."],
