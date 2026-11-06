@@ -47,3 +47,21 @@ class Catalog98MigrationTest {
         assertFalse(nextEdited.rules.any { it.companyId == 0x0075 })
     }
 }
+
+class Catalog99MigrationTest {
+    @Test
+    fun savedDjiNoteUpdatesAndAnEditedNoteStays() {
+        val stock = DefaultCatalog.fleets().single { it.id == "fleet-dji" }
+        val saved = stock.copy(
+            notes = "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. " +
+                "Power stations named Power2000 are the DJI Power row. " +
+                "In-flight digital license plate is the Remote ID row.",
+        )
+        val custom = saved.copy(builtIn = false, name = "Mine")
+        val edited = saved.copy(notes = "My note")
+
+        assertEquals(stock.notes, catalog99Dji(saved, stock).notes)
+        assertEquals(saved.notes, catalog99Dji(custom, stock).notes)
+        assertEquals("My note", catalog99Dji(edited, stock).notes)
+    }
+}

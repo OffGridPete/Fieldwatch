@@ -61,6 +61,9 @@ class StockCatalogFileTest {
         assertTrue(meta.rules.any { it.kind == RuleKind.NAME_GLOB && it.text == "Meta RB Display*" })
         assertFalse(meta.rules.any { it.text.equals("FD5F", true) })
         assertTrue(pack.fleets.single { it.id == "fleet-axon" }.notes.contains("fixed ALPR"))
+        val dji = pack.fleets.single { it.id == "fleet-dji" }
+        assertTrue(dji.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("26:37:12", true) })
+        assertFalse(dji.rules.any { it.kind == RuleKind.OUI })
         val remote = pack.fleets.single { it.id == "fleet-remote-id" }
         assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("6A:5C:35", true) })
         assertTrue(remote.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("FA:0B:BC", true) })

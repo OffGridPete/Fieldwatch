@@ -6,6 +6,8 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## Unreleased
 
+- Catalog 99: DJI also matches the older DroneID Wi-Fi beacon, vendor IE 26:37:12. That labels the aircraft. It does not fill a position. ASTM Remote ID stays on the Remote ID row. Android 11 or newer can see that beacon field.
+
 ## 1.1.42 — 5 November 2026
 
 - A live sit map keeps up on a long drive. The line, the stops, and the camera marks stay where they were.

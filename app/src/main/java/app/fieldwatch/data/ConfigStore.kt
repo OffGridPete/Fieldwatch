@@ -1184,6 +1184,14 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V98
         }
+        if (version < CATALOG_V99) {
+            fleets = fleets.map { fleet ->
+                if (!fleet.builtIn || fleet.id != "fleet-dji") return@map fleet
+                val stock = catalog[fleet.id] ?: return@map fleet
+                catalog99Dji(fleet, stock)
+            }
+            version = CATALOG_V99
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1230,7 +1238,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 98
+        const val CATALOG_VERSION = 99
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1327,7 +1335,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V95 = 95
         private const val CATALOG_V96 = 96
         private const val CATALOG_V97 = 97
-        private const val CATALOG_V98 = CATALOG_VERSION
+        private const val CATALOG_V98 = 98
+        private const val CATALOG_V99 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1741,6 +1750,22 @@ private val FLOCK_LOOSE_NAMES = setOf("FLOCK", "FLCK", "CONDOR", "FALCON", "SPAR
 
 private const val SMARTTAG_NOTES_BEFORE_V98 =
     "Samsung SmartTag / SmartTag+ item finder. Addresses often rotate."
+
+private const val DJI_NOTES_BEFORE_V99 =
+    "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. " +
+        "Power stations named Power2000 are the DJI Power row. " +
+        "In-flight digital license plate is the Remote ID row."
+
+/**
+ * Catalog 99 copies the DJI note when the built-in row still has the catalog 98
+ * sentence. The older DroneID vendor IE is added by the stock-rule merge. A custom
+ * copy that is not built-in is left alone. An edited note stays.
+ */
+internal fun catalog99Dji(fleet: Fleet, stock: Fleet): Fleet {
+    if (!fleet.builtIn || fleet.id != "fleet-dji" || fleet.id != stock.id) return fleet
+    val notes = if (fleet.notes == DJI_NOTES_BEFORE_V99) stock.notes else fleet.notes
+    return fleet.copy(notes = notes)
+}
 
 /**
  * Catalog 98 drops Samsung company ID 0x0075 from the built-in SmartTag row.

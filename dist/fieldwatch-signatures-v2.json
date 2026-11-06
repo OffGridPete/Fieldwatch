@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 98,
+    "catalogVersion": 99,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -21569,13 +21569,21 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "VENDOR_IE_OUI",
+                    "text": "26:37:12",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. In-flight digital license plate is the Remote ID row.",
+            "notes": "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. The older DroneID beacon, vendor IE 26:37:12, labels this row and does not fill a position. In-flight ASTM Remote ID is the Remote ID row.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE",

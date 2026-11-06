@@ -5094,7 +5094,7 @@ def story():
             "Tuya is 0x07D0 / FD50 / TUYA*, not the two-letter TY. Govee identity is name-only; "
             "once it matches, Decode fields read H5074/H5075 (0xEC88) and H510x/H517x (0x0001) "
             "temp / humidity / battery (§9.6). "
-            "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi). "
+            "Shokz is OpenRun / OpenFit names, not Battery 0x180F. DJI is 0x08AA / DJI* (BLE and Wi-Fi), plus Wi-Fi vendor IE 26:37:12 for the older DroneID beacon. "
             "Osmo Action / Pocket / 360 / Nano are the Osmo row (0x08AA model IDs 0x0006–0x0022 plus OsmoAction* names), not DJI. "
             "DJI Power is a Bluetooth name that starts with Power2000, the Power 2000 station. It is Home IoT, not the DJI drone row. "
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
@@ -6885,7 +6885,7 @@ def story():
             ["GoPro", "UUIDs FEA5/FEA6; GoPro*", "Action cameras. Cameras class, not Glasses. A Polar strap that also sends FEA5 stays on Polar. Decode fields: company 0xF202 schema / awake / Wi-Fi AP / pairing / model / offload (§9.6)."],
             ["Osmo", "0x08AA model IDs 0x0006–0x0022; OsmoAction* / OsmoPocket* / Osmo360* / OsmoNano* / XtraEdgePro*", "DJI Osmo Action / Pocket / 360 / Nano cameras. Not Osmo Mobile gimbals. Not DJI aircraft (those stay DJI). Cameras class. Decode fields: 0x08AA model id (§9.6)."],
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
-            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
+            ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi; Wi-Fi vendor IE 26:37:12", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. The older DroneID beacon is vendor IE 26:37:12. It labels this row and does not fill a position. Android 11 or newer can see that field. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
             ["DJI Power", "BLE name Power2000*", "DJI Power 2000 portable power station. Home IoT, not Drones. A radio that also carries company 0x08AA keeps this row and drops DJI. Other DJI radios stay on DJI. Not bookmarked. Decode fields: model id 4500 reads Power 2000 (§9.6)."],
             ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and the operator. The French plate labels the row and does not fill position or the operator pin. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. Not a tail number. Drones class. Stock bookmark."],
             ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],

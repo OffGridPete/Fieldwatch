@@ -434,6 +434,20 @@ class DefaultCatalogTest {
     }
 
     @Test
+    fun catalog99OlderDjiDroneIdLabelsDji() {
+        val stock = DefaultCatalog.fleets()
+        val dji = stock.single { it.id == "fleet-dji" }
+        assertTrue(dji.rules.any { it.kind == RuleKind.VENDOR_IE_OUI && it.text.equals("26:37:12", true) })
+        assertFalse(dji.rules.any { it.kind == RuleKind.OUI })
+        val beacon = wifi("60:60:1F:11:22:33", "", "26:37:12")
+        val macOnly = wifi("60:60:1F:44:55:66", "")
+        val hits = SignatureEngine().match(listOf(beacon, macOnly), stock)
+        assertTrue("older DroneID beacon", "fleet-dji" in hits.getValue(beacon.key))
+        assertFalse("older DroneID is not Remote ID", "fleet-remote-id" in hits.getValue(beacon.key))
+        assertFalse("DJI address alone", "fleet-dji" in hits.getValue(macOnly.key))
+    }
+
+    @Test
     fun catalog92DropsBadLiteOnOuisNamesMetaDisplayAndSoftensAxon() {
         val stock = DefaultCatalog.fleets()
         val engine = SignatureEngine()

@@ -1066,7 +1066,7 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. In-flight digital license plate is the Remote ID row.",
+        notes = "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. Power stations named Power2000 are the DJI Power row. The older DroneID beacon, vendor IE 26:37:12, labels this row and does not fill a position. In-flight ASTM Remote ID is the Remote ID row.",
         builtIn = true,
         decode = CatalogDecodes.djiModel,
         rules = listOf(
@@ -1075,6 +1075,7 @@ object DefaultCatalog {
             bleGlob("DJI*"),
             wifiName("DJI"),
             wifiGlob("DJI*"),
+            vendorIe("26:37:12"),
         ),
     )
 
