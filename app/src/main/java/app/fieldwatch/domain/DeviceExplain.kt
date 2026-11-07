@@ -364,10 +364,14 @@ object DeviceExplain {
                     Hint("camera", "a GoPro", matched(raw), 7)
                 n == "osmo" ->
                     Hint("camera", "a DJI Osmo action camera", matched(raw), 7)
+                n == "ezviz" ->
+                    Hint("camera", "an EZVIZ camera on its setup network", matched(raw), 7)
                 n == "insta360" ->
                     Hint("camera", "an Insta360 camera", matched(raw), 7)
                 n == "dji power" ->
                     Hint("iot", "a DJI Power station", matched(raw), 7)
+                n == "xiaomi mi home" ->
+                    Hint("iot", "a Xiaomi Mi Home device", matched(raw), 7)
                 n == "dji" ->
                     Hint("drone", "a DJI drone or controller", matched(raw), 7)
                 n == "remote id" ->
@@ -380,6 +384,8 @@ object DeviceExplain {
                     Hint("drone", "a Parrot ANAFI or Bebop drone", matched(raw), 7)
                 n == "hoverair" ->
                     Hint("drone", "a HOVERAir flying camera", matched(raw), 7)
+                n == "expresslrs" ->
+                    Hint("drone", "an ExpressLRS radio in Wi-Fi setup", matched(raw), 7)
                 n == "netgear" || n == "orbi" ->
                     Hint("ap", "a NETGEAR or Orbi access point", matched(raw), 6)
                 n == "tp-link" ->

@@ -122,6 +122,7 @@ object DefaultCatalog {
         insta360(),
         dji(),
         djiPower(),
+        xiaomiMiHome(),
         remoteId(),
         skydio(),
         autel(),
@@ -134,6 +135,7 @@ object DefaultCatalog {
         yuneec(),
         swellPro(),
         crazyflie(),
+        expressLrs(),
         netgear(),
         tpLink(),
         asus(),
@@ -267,6 +269,7 @@ object DefaultCatalog {
         utilityInc(),
         tapo(),
         reolink(),
+        ezviz(),
         hikvision(),
         dahua(),
         meshtastic(),
@@ -1092,6 +1095,18 @@ object DefaultCatalog {
         rules = listOf(
             bleGlob("Power2000*"),
         ),
+    )
+
+    private fun xiaomiMiHome() = Fleet(
+        id = "fleet-xiaomi-mihome",
+        name = "Xiaomi Mi Home",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Service FE95 is used by sensors, locks, lights, scooters, and bands in that family, including some Qingping sensors. It does not name the model, and it is not a phone.",
+        builtIn = true,
+        rules = listOf(uuid("FE95")),
     )
 
     private fun netgear() = Fleet(
@@ -2427,6 +2442,18 @@ object DefaultCatalog {
             name("Reolink"),
             glob("Reolink*"),
         ),
+    )
+
+    private fun ezviz() = Fleet(
+        id = "fleet-ezviz",
+        name = "EZVIZ",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "A name that starts with EZVIZ_ is the setup access point. The characters after the underscore are a serial, not a model. It is a home camera, and that access point is often off.",
+        builtIn = true,
+        rules = listOf(wifiGlob("EZVIZ_*")),
     )
 
     private fun hikvision() = Fleet(
@@ -3804,6 +3831,18 @@ object DefaultCatalog {
         notes = "Bitcraze Crazyflie lab drone. The name starts with Crazyflie. The Bitcraze company id is not a rule.",
         builtIn = true,
         rules = listOf(glob("Crazyflie*")),
+    )
+
+    private fun expressLrs() = Fleet(
+        id = "fleet-elrs",
+        name = "ExpressLRS",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "The name is the setup network. It can be the transmitter, the receiver, or a backpack. The link used in flight does not advertise this.",
+        builtIn = true,
+        rules = listOf(wifiGlob("ExpressLRS*")),
     )
 
     private fun cradlepoint() = Fleet(

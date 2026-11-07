@@ -666,7 +666,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(255, stock.size)
+        assertEquals(258, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -719,6 +719,92 @@ class DefaultCatalogTest {
         assertTrue("SmartTag name", "fleet-smarttag" in hits.getValue(named.key))
         assertTrue("Smart Tag name", "fleet-smarttag" in hits.getValue(spaced.key))
         assertTrue("FD5A", "fleet-smarttag" in hits.getValue(uuid.key))
+    }
+
+    @Test
+    fun catalog100AddsExpressLrsXiaomiMiHomeAndEzviz() {
+        val stock = DefaultCatalog.fleets()
+        val elrs = stock.single { it.id == "fleet-elrs" }
+        val xiaomi = stock.single { it.id == "fleet-xiaomi-mihome" }
+        val ezviz = stock.single { it.id == "fleet-ezviz" }
+        assertEquals(SignatureClass.DRONE, elrs.kind)
+        assertEquals(SignatureClass.HOME, xiaomi.kind)
+        assertEquals(SignatureClass.CAMERA, ezviz.kind)
+        assertTrue(elrs.attentionNote.isBlank())
+        assertTrue(xiaomi.attentionNote.isBlank())
+        assertTrue(ezviz.attentionNote.isBlank())
+        assertEquals(RadioKind.WIFI, elrs.rules.single().radio)
+        assertEquals("ExpressLRS*", elrs.rules.single().text)
+        assertEquals(RuleKind.SERVICE_UUID, xiaomi.rules.single().kind)
+        assertEquals("FE95", xiaomi.rules.single().text)
+        assertFalse(xiaomi.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        assertEquals(RadioKind.WIFI, ezviz.rules.single().radio)
+        assertEquals("EZVIZ_*", ezviz.rules.single().text)
+        assertFalse(ezviz.rules.any { it.kind == RuleKind.OUI })
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        assertTrue("ExpressLRS is bookmarked", "fleet-elrs" in watched)
+        assertFalse("Xiaomi is not bookmarked", "fleet-xiaomi-mihome" in watched)
+        assertFalse("EZVIZ is not bookmarked", "fleet-ezviz" in watched)
+
+        val tx = wifi("02:00:00:00:10:01", "ExpressLRS TX")
+        val rx = wifi("02:00:00:00:10:02", "ExpressLRS RX")
+        val txPack = wifi("02:00:00:00:10:03", "ExpressLRS TX Backpack")
+        val vrxPack = wifi("02:00:00:00:10:04", "ExpressLRS VRx Backpack")
+        val aatPack = wifi("02:00:00:00:10:05", "ExpressLRS AAT Backpack")
+        val lower = wifi("02:00:00:00:10:06", "expresslrs")
+        val mine = wifi("02:00:00:00:10:07", "MyExpressLRS")
+        val bleName = ble(name = "ExpressLRS TX").copy(key = "BLE:elrs", mac = "AA:BB:CC:DD:10:01")
+        val ez = wifi("02:00:00:00:10:08", "EZVIZ_C123456")
+        val ezLower = wifi("02:00:00:00:10:09", "ezviz_C654321")
+        val ezBare = wifi("02:00:00:00:10:0A", "EZVIZ")
+        val ezDash = wifi("02:00:00:00:10:0B", "EZVIZ-C123")
+        val ezMid = wifi("02:00:00:00:10:0C", "my EZVIZ_1")
+        val fe95 = ble(name = "", serviceUuids = listOf("FE95"))
+            .copy(key = "BLE:fe95", mac = "AA:BB:CC:DD:10:02")
+        val fe95Long = ble(name = "", serviceUuids = listOf("0000FE95-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:fe95l", mac = "AA:BB:CC:DD:10:03")
+        val company = ble(name = "", manufacturerId = 0x038F, manufacturerDataHex = "0102")
+            .copy(key = "BLE:mi", mac = "AA:BB:CC:DD:10:04")
+        val djiMac = wifi("60:60:1F:99:88:77", "")
+        val hits = SignatureEngine().match(
+            listOf(
+                tx, rx, txPack, vrxPack, aatPack, lower, mine, bleName,
+                ez, ezLower, ezBare, ezDash, ezMid,
+                fe95, fe95Long, company, djiMac,
+            ),
+            stock,
+        )
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("ExpressLRS TX", "fleet-elrs" in ids(tx))
+        assertTrue("ExpressLRS RX", "fleet-elrs" in ids(rx))
+        assertTrue("TX backpack", "fleet-elrs" in ids(txPack))
+        assertTrue("VRx backpack", "fleet-elrs" in ids(vrxPack))
+        assertTrue("AAT backpack", "fleet-elrs" in ids(aatPack))
+        assertTrue("lowercase ExpressLRS", "fleet-elrs" in ids(lower))
+        assertFalse("ExpressLRS in the middle", "fleet-elrs" in ids(mine))
+        assertFalse("Bluetooth name", "fleet-elrs" in ids(bleName))
+        assertTrue("EZVIZ setup name", "fleet-ezviz" in ids(ez))
+        assertFalse("EZVIZ setup is not Hikvision", "fleet-hikvision" in ids(ez))
+        assertTrue("lowercase EZVIZ_", "fleet-ezviz" in ids(ezLower))
+        assertFalse("EZVIZ without the underscore", "fleet-ezviz" in ids(ezBare))
+        assertFalse("EZVIZ with a dash", "fleet-ezviz" in ids(ezDash))
+        assertFalse("EZVIZ_ in the middle", "fleet-ezviz" in ids(ezMid))
+        assertTrue("FE95", "fleet-xiaomi-mihome" in ids(fe95))
+        assertTrue("long-form FE95", "fleet-xiaomi-mihome" in ids(fe95Long))
+        assertFalse("Xiaomi company id", "fleet-xiaomi-mihome" in ids(company))
+        assertFalse("DJI address alone", "fleet-dji" in ids(djiMac))
+        assertTrue(
+            DeviceExplain.guess(tx, listOf("ExpressLRS")).headline
+                .contains("an ExpressLRS radio in Wi-Fi setup"),
+        )
+        assertTrue(
+            DeviceExplain.guess(fe95, listOf("Xiaomi Mi Home")).headline
+                .contains("a Xiaomi Mi Home device"),
+        )
+        assertTrue(
+            DeviceExplain.guess(ez, listOf("EZVIZ")).headline
+                .contains("an EZVIZ camera on its setup network"),
+        )
     }
 
     private fun tagged(tail: String, name: String, manufacturerId: Int?) =

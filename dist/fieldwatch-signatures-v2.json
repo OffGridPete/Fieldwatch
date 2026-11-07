@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 99,
+    "catalogVersion": 100,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -23531,6 +23531,31 @@
             "kind": "GLASSES"
         },
         {
+            "id": "fleet-elrs",
+            "name": "ExpressLRS",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ExpressLRS*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "The name is the setup network. It can be the transmitter, the receiver, or a backpack. The link used in flight does not advertise this.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
+        },
+        {
             "id": "fleet-extreme",
             "name": "Extreme",
             "enabled": true,
@@ -24314,6 +24339,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-ezviz",
+            "name": "EZVIZ",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "EZVIZ_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "A name that starts with EZVIZ_ is the setup access point. The characters after the underscore are a serial, not a model. It is a home camera, and that access point is often off.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-fast-pair",
@@ -63588,6 +63638,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-xiaomi-mihome",
+            "name": "Xiaomi Mi Home",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE95",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Service FE95 is used by sensors, locks, lights, scooters, and bands in that family, including some Qingping sensors. It does not name the model, and it is not a phone.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-yuneec",

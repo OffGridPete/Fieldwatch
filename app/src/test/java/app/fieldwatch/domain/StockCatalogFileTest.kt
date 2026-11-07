@@ -80,6 +80,17 @@ class StockCatalogFileTest {
         assertTrue(pack.fleets.single { it.id == "fleet-parrot" }.rules.any {
             it.kind == RuleKind.NAME_GLOB && it.text == "Skycontroller*"
         })
+        val elrs = pack.fleets.single { it.id == "fleet-elrs" }
+        assertEquals(RadioKind.WIFI, elrs.rules.single().radio)
+        assertEquals("ExpressLRS*", elrs.rules.single().text)
+        val xiaomi = pack.fleets.single { it.id == "fleet-xiaomi-mihome" }
+        assertEquals(RuleKind.SERVICE_UUID, xiaomi.rules.single().kind)
+        assertEquals("FE95", xiaomi.rules.single().text)
+        assertFalse(xiaomi.rules.any { it.kind == RuleKind.MANUFACTURER_ID })
+        val ezviz = pack.fleets.single { it.id == "fleet-ezviz" }
+        assertEquals(RadioKind.WIFI, ezviz.rules.single().radio)
+        assertEquals("EZVIZ_*", ezviz.rules.single().text)
+        assertFalse(ezviz.rules.any { it.kind == RuleKind.OUI })
     }
 
     private fun distPackFile(): File {

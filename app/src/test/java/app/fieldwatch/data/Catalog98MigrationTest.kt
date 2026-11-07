@@ -4,6 +4,7 @@ import app.fieldwatch.domain.DefaultCatalog
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MatchRule
 import app.fieldwatch.domain.RuleKind
+import app.fieldwatch.domain.WatchTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -63,5 +64,42 @@ class Catalog99MigrationTest {
         assertEquals(stock.notes, catalog99Dji(saved, stock).notes)
         assertEquals(saved.notes, catalog99Dji(custom, stock).notes)
         assertEquals("My note", catalog99Dji(edited, stock).notes)
+    }
+}
+
+class Catalog100MigrationTest {
+    @Test
+    fun savedCatalogGainsTheThreeFleetsAndBookmarksExpressLrsOnly() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val (fleets, watch) = catalog100Migrate(emptyList(), emptyList(), stock)
+        assertEquals(
+            setOf("fleet-elrs", "fleet-xiaomi-mihome", "fleet-ezviz"),
+            fleets.map { it.id }.toSet(),
+        )
+        assertEquals(listOf("fleet-elrs"), watch.map { it.fleetId })
+        assertTrue(fleets.single { it.id == "fleet-elrs" }.builtIn)
+        assertTrue(fleets.single { it.id == "fleet-xiaomi-mihome" }.builtIn)
+        assertTrue(fleets.single { it.id == "fleet-ezviz" }.builtIn)
+    }
+
+    @Test
+    fun customCopyWithTheSameIdStaysAndAnExistingBookmarkIsNotDuplicated() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val custom = Fleet(
+            id = "fleet-elrs",
+            name = "Mine",
+            builtIn = false,
+            rules = listOf(MatchRule(RuleKind.NAME_GLOB, text = "Mine*")),
+        )
+        val already = WatchTarget(id = "watch-fleet-elrs", fleetId = "fleet-elrs", label = "ExpressLRS")
+        val (fleets, watch) = catalog100Migrate(listOf(custom), listOf(already), stock)
+        val elrs = fleets.single { it.id == "fleet-elrs" }
+        assertFalse(elrs.builtIn)
+        assertEquals("Mine", elrs.name)
+        assertEquals(listOf("Mine*"), elrs.rules.map { it.text })
+        assertEquals(1, watch.count { it.fleetId == "fleet-elrs" })
+        assertTrue(fleets.any { it.id == "fleet-xiaomi-mihome" && it.builtIn })
+        assertTrue(fleets.any { it.id == "fleet-ezviz" && it.builtIn })
+        assertFalse(watch.any { it.fleetId == "fleet-xiaomi-mihome" || it.fleetId == "fleet-ezviz" })
     }
 }

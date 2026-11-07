@@ -6,6 +6,7 @@ Fieldwatch continues the Spectre 1.2.14 field build under a new name, applicatio
 
 ## Unreleased
 
+- Catalog 100 adds ExpressLRS setup Wi-Fi, Xiaomi Mi Home service FE95, and an EZVIZ setup network. Each names the family, not one model. ExpressLRS beeps like the other drone rows. The other two do not.
 - Catalog 99: DJI also matches the older DroneID Wi-Fi beacon, vendor IE 26:37:12. That labels the aircraft. It does not fill a position. ASTM Remote ID stays on the Remote ID row. Android 11 or newer can see that beacon field.
 
 ## 1.1.42 — 5 November 2026

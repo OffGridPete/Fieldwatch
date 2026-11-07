@@ -1192,6 +1192,12 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V99
         }
+        if (version < CATALOG_V100) {
+            val migrated = catalog100Migrate(fleets, watchlist, catalog)
+            fleets = migrated.first
+            watchlist = migrated.second
+            version = CATALOG_V100
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1238,7 +1244,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 99
+        const val CATALOG_VERSION = 100
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1336,7 +1342,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V96 = 96
         private const val CATALOG_V97 = 97
         private const val CATALOG_V98 = 98
-        private const val CATALOG_V99 = CATALOG_VERSION
+        private const val CATALOG_V99 = 99
+        private const val CATALOG_V100 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1755,6 +1762,33 @@ private const val DJI_NOTES_BEFORE_V99 =
     "DJI aircraft, controller, or setup Wi-Fi. Handheld Osmo cameras are the Osmo row. " +
         "Power stations named Power2000 are the DJI Power row. " +
         "In-flight digital license plate is the Remote ID row."
+
+internal val ADDED_IN_V100 = listOf(
+    "fleet-elrs",
+    "fleet-xiaomi-mihome",
+    "fleet-ezviz",
+)
+
+/**
+ * Catalog 100 adds ExpressLRS, Xiaomi Mi Home, and EZVIZ when those ids are
+ * missing. A custom row with the same id stays. ExpressLRS is a drone, so it
+ * is bookmarked once. Xiaomi and EZVIZ are not.
+ */
+internal fun catalog100Migrate(
+    fleets: List<Fleet>,
+    watchlist: List<WatchTarget>,
+    stock: Map<String, Fleet>,
+): Pair<List<Fleet>, List<WatchTarget>> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V100.mapNotNull { stock[it] }.filter { it.id !in have }
+    val nextFleets = if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+    val watched = watchlist.mapNotNull { it.fleetId }.toSet()
+    val addWatch = DefaultCatalog.defaultWatchlist().filter {
+        it.fleetId in ADDED_IN_V100 && it.fleetId !in watched
+    }
+    val nextWatch = if (addWatch.isEmpty()) watchlist else watchlist + addWatch
+    return nextFleets to nextWatch
+}
 
 /**
  * Catalog 99 copies the DJI note when the built-in row still has the catalog 98
