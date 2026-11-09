@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 100,
+    "catalogVersion": 103,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -8638,6 +8638,87 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-benshi-radio",
+            "name": "Benshi radio",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "UV-PRO",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "UV-50PRO",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GA-5WB",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VR-N75",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VR-N76",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VR-N7500",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VR-N7600",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DB50-B",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Benshi-platform amateur radio sold as BTECH, Radioddity, or Vero. The Bluetooth name is UV-PRO, UV-50PRO, GA-5WB, VR-N75, VR-N76, VR-N7500, VR-N7600, or DB50-B. This phone hears a Low Energy advertisement of that exact name. A renamed radio does not match. This phone does not hear the voice channel.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
             "id": "fleet-bitchat",
             "name": "Bitchat",
             "enabled": true,
@@ -8661,6 +8742,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "MESH"
+        },
+        {
+            "id": "fleet-ble-ptt-button",
+            "name": "BLE PTT button",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PTT-Z",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PTT-AZ",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PTT-Z01",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Wireless push-to-talk button for a phone app such as Zello or WAVE. Pryme, MobilitySound, and similar buttons advertise PTT-Z, PTT-AZ, or PTT-Z01. That Low Energy link is how the button works. A renamed button does not match. A button that is already connected may stay quiet.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
         },
         {
             "id": "fleet-bliptrack",
@@ -26497,14 +26619,6 @@
                     "kind": "MANUFACTURER_ID",
                     "text": "",
                     "companyId": 1076,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "OUI",
-                    "text": "C8:FA:9C",
-                    "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
@@ -44641,6 +44755,56 @@
             "kind": "BEACON"
         },
         {
+            "id": "fleet-icom-id52",
+            "name": "Icom ID-52",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ICOM BT(ID-52)",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Icom ID-52 or ID-52 Plus. The Bluetooth name is ICOM BT(ID-52) while the radio is waiting to pair. This phone does not hear the voice channel. A renamed radio does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-icom-vs3",
+            "name": "Icom VS-3",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ICOM BT-002",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Icom VS-3 wireless microphone. The radio lists it as ICOM BT-002. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
             "id": "fleet-igloohome",
             "name": "igloohome",
             "enabled": true,
@@ -44964,6 +45128,56 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "AUDIO"
+        },
+        {
+            "id": "fleet-kenwood-khs-55bt",
+            "name": "Kenwood KHS-55BT",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "KHS-55BT",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kenwood KHS-55BT wireless microphone. The radio lists it as KHS-55BT. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-kenwood-khs-56bt",
+            "name": "Kenwood KHS-56BT",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "KHS-56BT*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kenwood KHS-56BT wireless microphone. The radio lists it as KHS-56BT followed by a four-digit code. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
         },
         {
             "id": "fleet-kevo",
@@ -46727,6 +46941,55 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "MESH"
+        },
+        {
+            "id": "fleet-meta-quest",
+            "name": "Meta Quest",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Quest",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Quest *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Quest-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Meta Quest*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Meta Quest headset. The Bluetooth name is Quest, or it starts with Quest followed by a space or a hyphen, or it starts with Meta Quest. A Meta radio that does not use that name can still match Ray-Ban / Meta glasses.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE"
         },
         {
             "id": "fleet-microsoft",
@@ -48843,31 +49106,6 @@
             "kind": "ISP"
         },
         {
-            "id": "fleet-novatel",
-            "name": "Novatel Wireless",
-            "enabled": true,
-            "matchAny": true,
-            "colorIndex": 7,
-            "rules": [
-                {
-                    "kind": "OUI",
-                    "text": "28:80:A2",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": "WIFI",
-                    "enabled": true
-                }
-            ],
-            "minPeers": 0,
-            "peerWindowSec": 60,
-            "clusterByOui": false,
-            "sequentialMac": false,
-            "notes": "Novatel Wireless / Inseego vehicle radio. The same prefix is also on some consumer MiFi hotspots.",
-            "attentionNote": "Novatel Wireless / Inseego OUI 28:80:A2. Reported in public-safety vehicle AP work. Same prefix is also on some Inseego consumer MiFi radios. Pattern match, not that agency. Look with your eyes.",
-            "builtIn": true,
-            "kind": "LAW_ENFORCEMENT"
-        },
-        {
             "id": "fleet-nuki",
             "name": "Nuki",
             "enabled": true,
@@ -50674,7 +50912,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses, or a Quest / other Meta wearable.",
+            "notes": "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses. A Quest or Meta Quest name is the Quest row. The same company IDs also show up on other Meta wearables.",
             "attentionNote": "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. A Bluetooth name that starts with Meta RB Display is these glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
@@ -63142,6 +63380,31 @@
             "kind": "SURVEILLANCE"
         },
         {
+            "id": "fleet-vgc-bhm-88",
+            "name": "VGC BHM-88",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "BHM-88",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "VGC BHM-88 wireless microphone for a handheld radio. The published name is BHM-88. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
             "id": "fleet-volkswagen",
             "name": "Volkswagen",
             "enabled": true,
@@ -63663,6 +63926,56 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
+        },
+        {
+            "id": "fleet-yaesu-ssm-bt10",
+            "name": "Yaesu SSM-BT10",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SSM-BT10",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Yaesu SSM-BT10 wireless microphone. The radio lists it as SSM-BT10. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-yaesu-ssm-bt20",
+            "name": "Yaesu SSM-BT20",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SSM-BT20",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Yaesu SSM-BT20 wireless microphone. The radio lists it as SSM-BT20. That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "TWO_WAY"
         },
         {
             "id": "fleet-yuneec",

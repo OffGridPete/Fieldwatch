@@ -590,9 +590,39 @@ object AdvPayloadDecoder {
                 16 -> "Windows tablet"
                 else -> "type $type"
             }
-            return listOf(Field("Microsoft Nearby Sharing / Swift Pair", "A $kind is advertising for quick pairing or sharing."))
+            val sharing = if (bytes.size >= 3) {
+                when (bytes[2].toInt() and 0x1F) {
+                    0 -> " Nearby sharing is set to My devices only."
+                    1 -> " Nearby sharing is set to Everyone nearby."
+                    else -> ""
+                }
+            } else {
+                ""
+            }
+            val named = microsoftComputerName(bytes)?.let { " The name on the beacon is $it." }.orEmpty()
+            return listOf(
+                Field(
+                    "Microsoft Nearby Sharing",
+                    "A $kind is advertising.$sharing$named",
+                ),
+            )
         }
         return listOf(Field("Microsoft manufacturer data", "${bytes.size} bytes"))
+    }
+
+    /**
+     * Everyone nearby replaces the tail of the beacon with the computer name.
+     * The name starts at byte 10. Bytes 8 and 9 stay off this line.
+     * A name is shown only when every byte is printable and the whole name fits
+     * in the 15 characters Windows uses.
+     */
+    private fun microsoftComputerName(bytes: ByteArray): String? {
+        if (bytes.size !in 11..25 || bytes[0] != 0x01.toByte()) return null
+        if ((bytes[2].toInt() and 0x1F) != 1) return null
+        val raw = bytes.copyOfRange(10, bytes.size)
+        if (raw.any { (it.toInt() and 0xFF) !in 0x20..0x7E }) return null
+        val name = String(raw, Charsets.US_ASCII).trim()
+        return name.ifBlank { null }
     }
 
     private fun decodeAltBeacon(bytes: ByteArray): List<Field> {

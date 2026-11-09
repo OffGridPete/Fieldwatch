@@ -301,9 +301,14 @@ object DeviceDetailText {
                 line(
                     LanguageText.text("device.vendor", mapOf("oui" to ie.oui)) + type,
                     buildString {
-                        append(org ?: LanguageText.text("ui.unknown.ieee.oui"))
-                        append(" ")
-                        append(LanguageText.text("ui.extra.ap.information.element"))
+                        append(
+                            VendorIeLabel.lead(
+                                ie,
+                                org,
+                                LanguageText.text("ui.unknown.ieee.oui"),
+                                LanguageText.text("ui.extra.ap.information.element"),
+                            ),
+                        )
                         if (ie.dataHex.isNotBlank()) {
                             append(" ")
                             append(if (demo) maskedRawBytes(ie.dataHex, true) else ie.dataHex.hexSpaced())

@@ -4,14 +4,54 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Serializable
+/**
+ * A signature pack, or a settings pack, named a value this app does not know.
+ * The file is not applied. The screen asks for an app update first.
+ */
+class CatalogNeedsNewerApp(val token: String) : SerializationException(token)
+
+internal fun Throwable.needsNewerApp(): CatalogNeedsNewerApp? {
+    var current: Throwable? = this
+    val seen = HashSet<Throwable>()
+    while (current != null && seen.add(current)) {
+        if (current is CatalogNeedsNewerApp) return current
+        val message = current.message.orEmpty()
+        val marker = "does not contain element with name '"
+        val at = message.indexOf(marker)
+        if (at >= 0) {
+            val start = at + marker.length
+            val end = message.indexOf('\'', start)
+            val token = if (end > start) message.substring(start, end) else message
+            return CatalogNeedsNewerApp(token)
+        }
+        current = current.cause
+    }
+    return null
+}
+
+@Serializable(with = RadioKindSerializer::class)
 enum class RadioKind { WIFI, BLE }
+
+internal object RadioKindSerializer : KSerializer<RadioKind> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("RadioKind", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: RadioKind) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): RadioKind {
+        val raw = decoder.decodeString()
+        return RadioKind.entries.firstOrNull { it.name == raw } ?: throw CatalogNeedsNewerApp(raw)
+    }
+}
 
 @Serializable
 enum class ViewMode {
@@ -43,7 +83,7 @@ enum class LogFormat { CSV, JSON }
 enum class FilterLogic { AND, OR }
 
 /** Live filter / Signatures bulk on-off. Independent of [Fleet.colorIndex]. */
-@Serializable
+@Serializable(with = SignatureClassSerializer::class)
 enum class SignatureClass {
     FINDER,
     BEACON,
@@ -64,6 +104,8 @@ enum class SignatureClass {
     HOME,
     ISP,
     MESH,
+    TWO_WAY,
+    MILITARY,
     PHONE,
     OTHER,
     ;
@@ -88,6 +130,8 @@ enum class SignatureClass {
         HOME -> LanguageText.text("class.home")
         ISP -> LanguageText.text("class.isp")
         MESH -> LanguageText.text("class.mesh")
+        TWO_WAY -> LanguageText.text("class.twoway")
+        MILITARY -> LanguageText.text("class.military")
         PHONE -> LanguageText.text("class.phone")
         OTHER -> LanguageText.text("class.other")
     }
@@ -113,6 +157,8 @@ enum class SignatureClass {
         HOME -> LanguageText.text("speech.home")
         ISP -> LanguageText.text("speech.isp")
         MESH -> LanguageText.text("speech.mesh")
+        TWO_WAY -> LanguageText.text("speech.twoway")
+        MILITARY -> LanguageText.text("speech.military")
         PHONE -> LanguageText.text("speech.phone")
         OTHER -> LanguageText.text("speech.other")
     }
@@ -127,6 +173,20 @@ enum class SignatureClass {
     companion object {
         val visible: List<SignatureClass>
             get() = entries.filter { it != BODYWORN }
+    }
+}
+
+internal object SignatureClassSerializer : KSerializer<SignatureClass> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("SignatureClass", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: SignatureClass) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): SignatureClass {
+        val raw = decoder.decodeString()
+        return SignatureClass.entries.firstOrNull { it.name == raw } ?: throw CatalogNeedsNewerApp(raw)
     }
 }
 
@@ -232,7 +292,7 @@ enum class ListLine {
 
 enum class RssiTrend { UP_FAST, UP, FLAT, DOWN, DOWN_FAST, UNKNOWN }
 
-@Serializable
+@Serializable(with = RuleKindSerializer::class)
 enum class RuleKind {
     OUI,
     MAC_PREFIX,
@@ -245,6 +305,20 @@ enum class RuleKind {
     RADIO_KIND,
     HIDDEN_SSID,
     VENDOR_IE_OUI,
+}
+
+internal object RuleKindSerializer : KSerializer<RuleKind> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("RuleKind", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: RuleKind) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): RuleKind {
+        val raw = decoder.decodeString()
+        return RuleKind.entries.firstOrNull { it.name == raw } ?: throw CatalogNeedsNewerApp(raw)
+    }
 }
 
 @Serializable
@@ -444,11 +518,16 @@ fun List<Fleet>.sortedForCatalog(sort: SignatureListSort): List<Fleet> = when (s
     )
 }
 
-fun List<Fleet>.groupedByClass(): List<Pair<SignatureClass, List<Fleet>>> =
-    groupBy { it.kind }
-        .toList()
-        .sortedBy { it.first.label().lowercase() }
-        .map { (kind, rows) -> kind to rows.sortedBy { it.name.lowercase() } }
+/**
+ * Signatures → Class A–Z. Every visible class is present, including one with
+ * no signatures. Body-worn folds into Wearables.
+ */
+fun List<Fleet>.groupedByClass(): List<Pair<SignatureClass, List<Fleet>>> {
+    val byKind = groupBy { it.kind.folded() }
+    return SignatureClass.visible
+        .sortedBy { it.label().lowercase() }
+        .map { kind -> kind to byKind[kind].orEmpty().sortedBy { it.name.lowercase() } }
+}
 
 /** Signature name + Extra attention text for every matched signature on this radio that has one. */
 fun Sighting.attentionNotes(fleets: List<Fleet>): List<Pair<String, String>> {
@@ -1752,7 +1831,8 @@ data class Sighting(
     }
 
     fun heardRssi(sort: StrengthSort, windowMs: Long, now: Long = System.currentTimeMillis()): Double {
-        return if (sort == StrengthSort.AVERAGE) averageRssi(windowMs, now) else rssi.toDouble()
+        if (sort == StrengthSort.AVERAGE) return averageRssi(windowMs, now)
+        return Rssi.rank(rssi)
     }
 
     fun sortRssi(
@@ -1972,21 +2052,56 @@ fun uuidShortOrFull(raw: String): String {
     }
 }
 
+private const val BT_BASE_TAIL = "00001000800000805F9B34FB"
+
 fun uuidAliases(raw: String): Set<String> {
     val hex = raw.filter { it.isLetterOrDigit() }.uppercase()
     val out = mutableSetOf(raw.uppercase(), hex)
     if (hex.length == 4) {
         out += "0x$hex"
+        out += "0000$hex"
         out += "0000$hex-0000-1000-8000-00805F9B34FB"
-        out += "0000${hex}00001000800000805F9B34FB"
+        out += "0000$hex$BT_BASE_TAIL"
         return out
     }
-    // 16-bit alias only for Bluetooth SIG base UUIDs (0000XXXX-0000-1000-8000-00805F9B34FB).
-    if (hex.length == 32 && hex.startsWith("0000") && hex.endsWith("00001000800000805F9B34FB")) {
-        val short = hex.substring(4, 8)
-        out += short
-        out += "0x$short"
-        out += "0000$short-0000-1000-8000-00805F9B34FB"
+    // 32-bit form is 8 hex. It maps onto the Bluetooth base. The 16-bit short
+    // is only the low half when the high half is 0000.
+    if (hex.length == 8) {
+        out += "$hex-0000-1000-8000-00805F9B34FB"
+        out += "$hex$BT_BASE_TAIL"
+        if (hex.startsWith("0000")) addBluetooth16(out, hex.substring(4, 8))
+        return out
+    }
+    if (hex.length == 32 && hex.endsWith(BT_BASE_TAIL)) {
+        val uuid32 = hex.substring(0, 8)
+        out += uuid32
+        out += "$uuid32-0000-1000-8000-00805F9B34FB"
+        if (hex.startsWith("0000")) addBluetooth16(out, hex.substring(4, 8))
     }
     return out
+}
+
+/**
+ * Text for a service-UUID rule. A Bluetooth 16-bit UUID becomes the 4-hex short.
+ * A 32-bit UUID whose top half is not 0000 stays 8 hex. Any other 128-bit UUID
+ * stays the full 32 hex. A proprietary UUID is not sliced down to four digits.
+ */
+fun serviceUuidRule(raw: String): String? {
+    val hex = raw.filter { it.isLetterOrDigit() }.uppercase()
+    return when {
+        hex.length == 4 -> hex
+        hex.length == 8 && hex.startsWith("0000") -> hex.substring(4, 8)
+        hex.length == 8 -> hex
+        hex.length == 32 && hex.startsWith("0000") && hex.endsWith(BT_BASE_TAIL) -> hex.substring(4, 8)
+        hex.length == 32 && hex.endsWith(BT_BASE_TAIL) -> hex.substring(0, 8)
+        hex.length == 32 -> hex
+        else -> null
+    }
+}
+
+private fun addBluetooth16(out: MutableSet<String>, short: String) {
+    out += short
+    out += "0x$short"
+    out += "0000$short-0000-1000-8000-00805F9B34FB"
+    out += "0000$short$BT_BASE_TAIL"
 }

@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Latviešu",
   "languageTag": "lv",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Tiešraide",
     "tab.pause": "Pauze",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Atjauninājumu neizdevās instalēt",
     "update.failed.body": "Failu no GitHub neizdevās instalēt. Lietotne šajā tālrunī nav mainīta.",
     "update.allow.title": "Atļaut instalācijas no Fieldwatch",
-    "update.allow.body": "Android jautā vienreiz. Pēc tam atgriezies un vēlreiz pieskaries Atjaunināt."
+    "update.allow.body": "Android jautā vienreiz. Pēc tam atgriezies un vēlreiz pieskaries Atjaunināt.",
+    "class.military": "Militārie",
+    "class.twoway": "Rācijas",
+    "speech.military": "militārie",
+    "speech.twoway": "rācijas",
+    "catalog.needs.app.title": "Vispirms atjauniniet Fieldwatch",
+    "catalog.needs.app.body": "Vajadzīgs jaunāks Fieldwatch. Atjauniniet lietotni un mēģiniet vēlreiz.",
+    "ui.catalog.request": "GitHub kataloga pieprasījums"
   }
 }

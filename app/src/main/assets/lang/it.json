@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Italiano",
   "languageTag": "it",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Dal vivo",
     "tab.pause": "Pausa",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Aggiornamento non installato",
     "update.failed.body": "Il file da GitHub non si è installato. L'app su questo telefono è invariata.",
     "update.allow.title": "Consenti installazioni da Fieldwatch",
-    "update.allow.body": "Android chiede una volta. Poi torna e tocca di nuovo Aggiorna ora."
+    "update.allow.body": "Android chiede una volta. Poi torna e tocca di nuovo Aggiorna ora.",
+    "class.military": "Militare",
+    "class.twoway": "Radio portatili",
+    "speech.military": "militare",
+    "speech.twoway": "radio portatili",
+    "catalog.needs.app.title": "Aggiorna prima Fieldwatch",
+    "catalog.needs.app.body": "Serve un Fieldwatch più recente. Aggiorna l'app e riprova.",
+    "ui.catalog.request": "Richiesta catalogo su GitHub"
   }
 }

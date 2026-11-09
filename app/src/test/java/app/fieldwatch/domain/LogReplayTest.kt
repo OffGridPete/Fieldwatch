@@ -159,4 +159,70 @@ class LogReplayTest {
         val log = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:06","mfg":null}"""
         assertNull(LogReplay.parse(log).single().manufacturerId)
     }
+
+    @Test
+    fun advertisementFieldKeepsTheBytesThePhoneStored() {
+        val advertisement = "AB".repeat(200)
+        assertEquals(400, advertisement.length)
+        assertEquals(advertisement, LogReplay.advertisementField(advertisement, "FFEE"))
+        assertEquals("FFEE", LogReplay.advertisementField("", "FFEE"))
+        assertEquals("A".repeat(1024), LogReplay.advertisementField("A".repeat(2000), "FF"))
+        assertEquals("B".repeat(512), LogReplay.manufacturerField("B".repeat(900)))
+    }
+
+    @Test
+    fun newLogKeepsManufacturerPayloadApartFromTheAdvertisement() {
+        val advertisement = "0C".repeat(120)
+        val log = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:07","raw":"$advertisement","mfg_hex":"AB12"}"""
+        assertEquals("AB12", LogReplay.parse(log).single().manufacturerDataHex)
+        val csv = LogReplay.jsonRowToCsv(log)!!
+        val cols = csv.split(',')
+        assertEquals(advertisement, cols[14])
+        assertEquals("AB12", cols.last())
+    }
+
+    @Test
+    fun emptyManufacturerFieldDoesNotTreatTheAdvertisementAsPayload() {
+        val advertisement = "0D".repeat(40)
+        val log = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:08","raw":"$advertisement","mfg_hex":""}"""
+        assertEquals("", LogReplay.parse(log).single().manufacturerDataHex)
+    }
+
+    @Test
+    fun olderLogStillReadsRawAsManufacturerPayload() {
+        val log = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:09","raw":"AB12"}"""
+        assertEquals("AB12", LogReplay.parse(log).single().manufacturerDataHex)
+        val csv = LogReplay.jsonRowToCsv(log)!!
+        assertEquals("AB12", csv.split(',').last())
+    }
+
+    @Test
+    fun shortOlderCsvRowKeepsRawWhenTheNewHeaderHasNoMfgHexCell() {
+        val header = csvHeader.trim() + ",mfg_hex\n"
+        val log = header + "1000,iso,BLE,AA:BB:CC:DD:EE:0A,Tag,-60,0,0,,Acme,,4C,,,AB12,,,\n"
+        assertEquals("AB12", LogReplay.parse(log).single().manufacturerDataHex)
+    }
+
+    @Test
+    fun bluetoothChannelAndFrequencyStayBlank() {
+        assertEquals("", LogReplay.csvChannel(RadioKind.BLE, 0))
+        assertEquals("", LogReplay.csvFreq(RadioKind.BLE, 0))
+        assertEquals("6", LogReplay.csvChannel(RadioKind.WIFI, 6))
+        assertEquals("2437", LogReplay.csvFreq(RadioKind.WIFI, 2437))
+        val blank = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:0B","channel":null,"freq":null,"rssi":-60}"""
+        val radio = LogReplay.parse(blank).single()
+        assertEquals(0, radio.channel)
+        assertEquals(0, radio.frequencyMhz)
+        assertEquals(-60, radio.rssi)
+        val csv = LogReplay.jsonRowToCsv(blank)!!
+        val cols = csv.split(',')
+        assertEquals("", cols[6])
+        assertEquals("", cols[7])
+        val back = LogReplay.csvRowToJson(csv)!!
+        assertTrue(back.contains("\"channel\":null") || back.contains("\"channel\": null"))
+        val old = """{"ts":1,"kind":"BLE","mac":"AA:BB:CC:DD:EE:0C","channel":0,"freq":2402}"""
+        val oldCols = LogReplay.jsonRowToCsv(old)!!.split(',')
+        assertEquals("0", oldCols[6])
+        assertEquals("2402", oldCols[7])
+    }
 }

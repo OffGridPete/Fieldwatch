@@ -23,6 +23,45 @@ class SignatureCandidatesTest {
     }
 
     @Test
+    fun proprietaryUuidIsNotCutIntoASharedShort() {
+        val epson = "802A0000-4EF4-4E59-B573-2BED4A4AC159"
+        val sensor = "EF090000-11D6-42BA-93B8-9DD7EC090AA9"
+        val epsonHex = epson.filter { it.isLetterOrDigit() }.uppercase()
+        assertEquals(epsonHex, SignatureCandidates.usefulServiceShort(epson))
+        assertEquals("FD44", serviceUuidRule("FD44"))
+        assertEquals("FD44", serviceUuidRule("0000FD44"))
+        assertEquals("FD44", serviceUuidRule("0000FD44-0000-1000-8000-00805F9B34FB"))
+        assertNull(SignatureCandidates.usefulServiceShort("FD44"))
+        assertEquals("FE33", SignatureCandidates.usefulServiceShort("0000FE33-0000-1000-8000-00805F9B34FB"))
+        assertEquals("138C35B6", SignatureCandidates.usefulServiceShort("138C35B6"))
+        assertEquals("138C35B6", SignatureCandidates.usefulServiceShort("138C35B6-0000-1000-8000-00805F9B34FB"))
+        assertNull(SignatureCandidates.usefulServiceShort("0000180A-0000-1000-8000-00805F9B34FB"))
+
+        val sliced = SignatureCandidates.analyze(
+            listOf(
+                ble("00:11:22:33:44:55", "One").copy(serviceUuids = listOf(epson)),
+                ble("AA:BB:CC:11:22:33", "Two").copy(serviceUuids = listOf(sensor)),
+            ),
+            emptyList(),
+            engine,
+        )
+        assertTrue(sliced.families.none { fam ->
+            fam.rules.any { it.text == "0000" || it.text == "4EF4" || it.text == "11D6" }
+        })
+
+        val same = SignatureCandidates.analyze(
+            listOf(
+                ble("00:11:22:33:44:01", "P1").copy(serviceUuids = listOf(epson)),
+                ble("AA:BB:CC:11:22:02", "P2").copy(serviceUuids = listOf(epson)),
+            ),
+            emptyList(),
+            engine,
+        )
+        val uuidRule = same.families.flatMap { it.rules }.first { it.kind == RuleKind.SERVICE_UUID }
+        assertEquals(epsonHex, uuidRule.text)
+    }
+
+    @Test
     fun houseLikeNames() {
         assertTrue(SignatureCandidates.isHouseLikeName("IonCannon"))
         assertTrue(SignatureCandidates.isHouseLikeName("Jameson"))

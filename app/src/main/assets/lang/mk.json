@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Македонски",
   "languageTag": "mk",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Во живо",
     "tab.pause": "Пауза",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Ажурирањето не се инсталира",
     "update.failed.body": "Датотеката од GitHub не се инсталира. Апликацијата на овој телефон е непроменета.",
     "update.allow.title": "Дозволи инсталации од Fieldwatch",
-    "update.allow.body": "Android прашува еднаш. Потоа врати се и повторно допри Ажурирај сега."
+    "update.allow.body": "Android прашува еднаш. Потоа врати се и повторно допри Ажурирај сега.",
+    "class.military": "Воени",
+    "class.twoway": "Радиостаници",
+    "speech.military": "воени",
+    "speech.twoway": "радиостаници",
+    "catalog.needs.app.title": "Прво ажурирајте го Fieldwatch",
+    "catalog.needs.app.body": "Потребен е понов Fieldwatch. Ажурирајте ја апликацијата и обидете се повторно.",
+    "ui.catalog.request": "Барање за каталог на GitHub"
   }
 }

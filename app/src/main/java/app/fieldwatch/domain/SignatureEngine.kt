@@ -33,6 +33,7 @@ class SignatureEngine {
             dropProtocolIBeacon(hits, compiled)
             dropDjiWhenSpecificRow(hits)
             dropGoProWhenPolar(hits)
+            dropMetaGlassesWhenQuest(hits)
             dropAirTagsWhenAppleDevice(hits, device)
             dropCiscoWhenMeraki(hits)
             byKey[device.key] = hits
@@ -55,10 +56,8 @@ class SignatureEngine {
             }
         }
         device.serviceUuids.take(3).forEach { uuid ->
-            val short = uuid.filter { it.isLetterOrDigit() }.uppercase().let { hex ->
-                if (hex.length >= 8) hex.substring(4, 8) else hex.take(4)
-            }
-            if (short.isNotBlank()) rules += MatchRule(RuleKind.SERVICE_UUID, text = short)
+            val id = serviceUuidRule(uuid) ?: return@forEach
+            rules += MatchRule(RuleKind.SERVICE_UUID, text = id)
         }
         device.manufacturerId?.let { id ->
             val prefix = device.manufacturerDataHex.take(2)
@@ -300,6 +299,14 @@ class SignatureEngine {
     /** A Polar H10 advertises GoPro's heart-rate service FEA5. The strap stays Polar. */
     private fun dropGoProWhenPolar(hits: MutableSet<String>) {
         if ("fleet-polar" in hits) hits.remove("fleet-gopro")
+    }
+
+    /**
+     * Quest headsets advertise the same Meta company IDs and FEB8 as the glasses.
+     * A Quest name stays on the Quest row and does not take the glasses alert.
+     */
+    private fun dropMetaGlassesWhenQuest(hits: MutableSet<String>) {
+        if ("fleet-meta-quest" in hits) hits.remove("fleet-meta-glasses")
     }
 
     /**

@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Dansk",
   "languageTag": "da",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Direkte",
     "tab.filters": "Filtre",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Kunne ikke installere opdateringen",
     "update.failed.body": "Filen fra GitHub kunne ikke installeres. Appen på denne telefon er uændret.",
     "update.allow.title": "Tillad installationer fra Fieldwatch",
-    "update.allow.body": "Android spørger én gang. Kom så tilbage og tryk Opdater nu igen."
+    "update.allow.body": "Android spørger én gang. Kom så tilbage og tryk Opdater nu igen.",
+    "class.military": "Militær",
+    "class.twoway": "Tovejrsradioer",
+    "speech.military": "militær",
+    "speech.twoway": "tovejrsradioer",
+    "catalog.needs.app.title": "Opdater Fieldwatch først",
+    "catalog.needs.app.body": "Dette kræver en nyere Fieldwatch. Opdater appen, og prøv igen.",
+    "ui.catalog.request": "GitHub-kataloganmodning"
   }
 }

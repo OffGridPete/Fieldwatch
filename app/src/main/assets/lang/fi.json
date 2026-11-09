@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Suomi",
   "languageTag": "fi",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Suora",
     "tab.pause": "Tauko",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Päivitystä ei voitu asentaa",
     "update.failed.body": "GitHubin tiedostoa ei voitu asentaa. Tämän puhelimen sovellus on ennallaan.",
     "update.allow.title": "Salli asennukset Fieldwatchista",
-    "update.allow.body": "Android kysyy kerran. Palaa sitten ja napauta uudelleen Päivitä nyt."
+    "update.allow.body": "Android kysyy kerran. Palaa sitten ja napauta uudelleen Päivitä nyt.",
+    "class.military": "Sotilas",
+    "class.twoway": "Radiopuhelimet",
+    "speech.military": "sotilas",
+    "speech.twoway": "radiopuhelimet",
+    "catalog.needs.app.title": "Päivitä Fieldwatch ensin",
+    "catalog.needs.app.body": "Tämä tarvitsee uudemman Fieldwatchin. Päivitä sovellus ja yritä uudelleen.",
+    "ui.catalog.request": "GitHub-luettelopyyntö"
   }
 }

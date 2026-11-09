@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Hrvatski",
   "languageTag": "hr",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Uživo",
     "tab.pause": "Pauza",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Ažuriranje nije instalirano",
     "update.failed.body": "Datoteka s GitHuba nije se mogla instalirati. Aplikacija na ovom telefonu nije promijenjena.",
     "update.allow.title": "Dopusti instalacije iz Fieldwatcha",
-    "update.allow.body": "Android pita jednom. Zatim se vrati i opet dodirni Ažuriraj sada."
+    "update.allow.body": "Android pita jednom. Zatim se vrati i opet dodirni Ažuriraj sada.",
+    "class.military": "Vojne",
+    "class.twoway": "Dvosmjerne radio",
+    "speech.military": "vojne",
+    "speech.twoway": "dvosmjerne radio",
+    "catalog.needs.app.title": "Prvo ažurirajte Fieldwatch",
+    "catalog.needs.app.body": "Ovo treba noviji Fieldwatch. Ažurirajte aplikaciju, pa pokušajte opet.",
+    "ui.catalog.request": "GitHub zahtjev za katalog"
   }
 }

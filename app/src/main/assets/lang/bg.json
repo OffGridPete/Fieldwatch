@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Български",
   "languageTag": "bg",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "На живо",
     "tab.pause": "Пауза",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Обновлението не се инсталира",
     "update.failed.body": "Файлът от GitHub не можа да се инсталира. Приложението на този телефон е непроменено.",
     "update.allow.title": "Разреши инсталации от Fieldwatch",
-    "update.allow.body": "Android пита веднъж. После се върни и натисни пак Обнови сега."
+    "update.allow.body": "Android пита веднъж. После се върни и натисни пак Обнови сега.",
+    "class.military": "Военни",
+    "class.twoway": "Двупосочни радио",
+    "speech.military": "военни",
+    "speech.twoway": "двупосочни радио",
+    "catalog.needs.app.title": "Първо обновете Fieldwatch",
+    "catalog.needs.app.body": "Това изисква по-нов Fieldwatch. Обновете приложението и опитайте отново.",
+    "ui.catalog.request": "Заявка за каталог в GitHub"
   }
 }

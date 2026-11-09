@@ -760,11 +760,6 @@ internal object ApVendorOuis {
         "00:40:29", "00:80:48", "04:F0:21",
     )
 
-    /** 1 MA-L — Inseego Wireless, Inc (ex-Novatel Wireless) */
-    val NOVATEL = listOf(
-        "28:80:A2",
-    )
-
     /** 2 MA-L — Utility, Inc */
     val UTILITY_INC = listOf(
         "00:09:BC", "00:16:ED",

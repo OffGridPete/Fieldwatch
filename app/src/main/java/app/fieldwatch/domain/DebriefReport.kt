@@ -234,7 +234,7 @@ object DebriefReport {
         val aside = FloodBurst.keysOf(floods, windowStart, windowEnd)
         val inWin = devices
             .filter { (it.lastSeen >= windowStart || it.firstSeen >= windowStart) && it.key !in aside }
-            .sortedByDescending { it.rssi }
+            .sortedByDescending { Rssi.rank(it.rssi) }
         val wifi = inWin.filter { it.kind == RadioKind.WIFI }
         val ble = inWin.filter { it.kind == RadioKind.BLE }
         val named = inWin.filter { it.fleetIds.isNotEmpty() }
@@ -306,7 +306,9 @@ object DebriefReport {
                     ReportBar(
                         label,
                         list.size,
-                        detail = LanguageText.text("report.strongest", mapOf("rssi" to "${list.maxOf { it.rssi }}")),
+                        detail = list.map { it.rssi }.filter { Rssi.measured(it) }.maxOrNull()?.let { loudest ->
+                            LanguageText.text("report.strongest", mapOf("rssi" to "$loudest"))
+                        }.orEmpty(),
                     )
                 },
             )
@@ -347,8 +349,8 @@ object DebriefReport {
         }
         val notable = ble.filter {
             inventoryKeep(it, settings, bookmarkedKeys) &&
-                (it.fleetIds.isNotEmpty() || it.name.isNotBlank() || it.rssi >= -65 || it.manufacturerId != null)
-        }.sortedByDescending { it.rssi }.take(20)
+                (it.fleetIds.isNotEmpty() || it.name.isNotBlank() || (Rssi.measured(it.rssi) && it.rssi >= -65) || it.manufacturerId != null)
+        }.sortedByDescending { Rssi.rank(it.rssi) }.take(20)
         val omittedRand = ble.count { !inventoryKeep(it, settings, bookmarkedKeys) }
         val bleBody = buildString {
             appendLine(
@@ -408,7 +410,7 @@ object DebriefReport {
                     .toList().sortedByDescending { it.second.size }
                     .forEach { (sig, list) ->
                         appendLine(sig)
-                        list.sortedByDescending { it.rssi }.take(8).forEach { d ->
+                        list.sortedByDescending { Rssi.rank(it.rssi) }.take(8).forEach { d ->
                             append("  · ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
                             if (d.key in mineKeys) append(("  " + LanguageText.text("ui.marked.mine.2")))
                             val labels = d.liveDecode.reportLabels()
@@ -422,7 +424,7 @@ object DebriefReport {
             }.trimEnd()
         } else {
             buildString {
-                val marked = named.filter { it.listedWhenShort() }.sortedByDescending { it.rssi }
+                val marked = named.filter { it.listedWhenShort() }.sortedByDescending { Rssi.rank(it.rssi) }
                 if (marked.isNotEmpty()) appendLine(LanguageText.text("ui.named.marked"))
                 marked.forEach { d ->
                     append("  · ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
@@ -449,7 +451,7 @@ object DebriefReport {
                 }
                 if (persistent.isEmpty()) appendLine(("  " + LanguageText.text("ui.none.label")))
                 appendLine(LanguageText.text("ui.loudest.first.seen"))
-                arrived.filter { inventoryKeep(it, settings, bookmarkedKeys) }.sortedByDescending { it.rssi }.take(8).forEach {
+                arrived.filter { inventoryKeep(it, settings, bookmarkedKeys) }.sortedByDescending { Rssi.rank(it.rssi) }.take(8).forEach {
                     appendLine("  · ${it.reportName(customNames)}  ${it.mac}  ${it.rssi} dBm")
                 }
             }.trimEnd()
@@ -1020,10 +1022,12 @@ object DebriefReport {
         device: Sighting,
     ): Pair<Verdict, String> {
         val trailLen = Geo.pathLengthM(trail)
-        val peak = trail.maxOf { it.rssi }
-        val last = trail.last().rssi
+        // A trail sample of 0 is "no reading", and 127 is Bluetooth's not-available.
+        val measured = trail.map { it.rssi }.filter { it != 0 && Rssi.measured(it) }
+        val peak = measured.maxOrNull() ?: 0
+        val last = measured.lastOrNull() ?: 0
         val fade = peak - last
-        val loudN = trail.count { it.rssi >= TRAIL_LOUD_DBM }
+        val loudN = measured.count { it >= TRAIL_LOUD_DBM }
         val loudNeed = (trail.size * 2 + 2) / 3
         val coverNeed = opLen * COVER_FRAC
         val coverPct = if (opLen <= 0.0) 0 else ((trailLen / opLen) * 100.0).toInt()
@@ -1215,7 +1219,7 @@ object DebriefReport {
         return buildString {
             appendLine(LanguageText.text("ui.radios.marked.mine.heard"))
             hits.sortedWith(
-                compareByDescending<Sighting> { it.rssi }.thenBy { it.mac },
+                compareByDescending<Sighting> { Rssi.rank(it.rssi) }.thenBy { it.mac },
             ).forEach { d ->
                 val kind = if (d.kind == RadioKind.WIFI) "WIFI" else "BLE"
                 appendLine("  · $kind  ${d.mac}  ${d.reportName(customNames)}  ${d.rssi} dBm")
@@ -1245,7 +1249,7 @@ object DebriefReport {
         return buildString {
             appendLine(LanguageText.text("ui.captions.radios.heard.window"))
             hits.sortedWith(
-                compareByDescending<Pair<Sighting, String>> { it.first.rssi }.thenBy { it.first.mac },
+                compareByDescending<Pair<Sighting, String>> { Rssi.rank(it.first.rssi) }.thenBy { it.first.mac },
             ).forEach { (d, note) ->
                 val kind = if (d.kind == RadioKind.WIFI) "WIFI" else "BLE"
                 appendLine("  · $kind  ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
@@ -1328,7 +1332,7 @@ object DebriefReport {
                 )
                 if (sigs.isNotEmpty()) append("  ·  ${sigs.take(6).joinToString(", ")}")
                 appendLine()
-                here.filter { inventoryKeep(it, settings, bookmarkedKeys) }.sortedByDescending { it.rssi }.take(4).forEach { d ->
+                here.filter { inventoryKeep(it, settings, bookmarkedKeys) }.sortedByDescending { Rssi.rank(it.rssi) }.take(4).forEach { d ->
                     appendLine("   · ${d.reportName(customNames)}  ${d.mac}  ${d.rssi} dBm")
                 }
                 if (here.isEmpty()) appendLine(("   " + LanguageText.text("ui.no.gps.stamped.radios")))
@@ -1491,7 +1495,7 @@ object DebriefReport {
         if (rows.isEmpty()) return ""
         return buildString {
             appendLine(LanguageText.text("ui.named.marked"))
-            rows.sortedByDescending { it.rssi }.forEach { d ->
+            rows.sortedByDescending { Rssi.rank(it.rssi) }.forEach { d ->
                 appendLine("  · ${wifiLine(d, names, from, now, customNames)}")
                 if (d.key in mineKeys) appendLine(("    " + LanguageText.text("ui.marked.mine")))
                 d.attentionNotes(fleets).forEach { (sig, note) ->
@@ -1512,7 +1516,7 @@ object DebriefReport {
         if (rows.isEmpty()) return ""
         return buildString {
             appendLine(LanguageText.text("ui.named.marked"))
-            rows.sortedByDescending { it.rssi }.forEach { d ->
+            rows.sortedByDescending { Rssi.rank(it.rssi) }.forEach { d ->
                 appendLine("  · ${bleLine(d, names, from, now, customNames)}")
                 if (d.key in mineKeys) appendLine(("    " + LanguageText.text("ui.marked.mine")))
             }
@@ -1573,7 +1577,7 @@ object DebriefReport {
             }
         }
         val loudUnknown = devices.filter {
-            it.rssi >= -50 && it.fleetIds.isEmpty() && it.name.isBlank() &&
+            Rssi.measured(it.rssi) && it.rssi >= -50 && it.fleetIds.isEmpty() && it.name.isBlank() &&
                 inventoryKeep(it, settings, bookmarkedKeys)
         }
         if (loudUnknown.isNotEmpty()) {

@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Ελληνικά",
   "languageTag": "el",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Ζωντανά",
     "tab.pause": "Παύση",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Η ενημέρωση δεν εγκαταστάθηκε",
     "update.failed.body": "Το αρχείο από το GitHub δεν εγκαταστάθηκε. Η εφαρμογή σε αυτό το τηλέφωνο είναι ίδια.",
     "update.allow.title": "Να επιτρέπονται εγκαταστάσεις από το Fieldwatch",
-    "update.allow.body": "Το Android ρωτά μία φορά. Μετά γύρνα πίσω και πάτα ξανά Ενημέρωση τώρα."
+    "update.allow.body": "Το Android ρωτά μία φορά. Μετά γύρνα πίσω και πάτα ξανά Ενημέρωση τώρα.",
+    "class.military": "Στρατιωτικά",
+    "class.twoway": "Πομποδέκτες",
+    "speech.military": "στρατιωτικά",
+    "speech.twoway": "πομποδέκτες",
+    "catalog.needs.app.title": "Πρώτα ενημερώστε το Fieldwatch",
+    "catalog.needs.app.body": "Χρειάζεται νεότερο Fieldwatch. Ενημερώστε την εφαρμογή και δοκιμάστε ξανά.",
+    "ui.catalog.request": "Αίτημα καταλόγου στο GitHub"
   }
 }

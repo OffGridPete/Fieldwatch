@@ -30,6 +30,53 @@ data class LogRadio(
 
 /** Parse rotating / exported Fieldwatch logs into unique radios. */
 object LogReplay {
+    /** Hex characters kept from the advertisement. Matches the copy already on the phone. */
+    internal const val ADVERTISEMENT_HEX_MAX = 1024
+
+    /** Hex characters kept from the manufacturer payload. Matches the copy already on the phone. */
+    internal const val MANUFACTURER_HEX_MAX = 512
+
+    /**
+     * Log field `raw`. The advertisement when the phone has one. Older rows stored the
+     * manufacturer payload here and cut it at 160 hex characters.
+     */
+    fun advertisementField(rawHex: String, manufacturerDataHex: String): String =
+        rawHex.take(ADVERTISEMENT_HEX_MAX).ifBlank { manufacturerDataHex.take(MANUFACTURER_HEX_MAX) }
+
+    /** Log field `mfg_hex`. Empty when the packet had no manufacturer data. */
+    fun manufacturerField(manufacturerDataHex: String): String =
+        manufacturerDataHex.take(MANUFACTURER_HEX_MAX)
+
+    /**
+     * Bluetooth channel and frequency are not measured. Android does not report
+     * the advertising channel. JSON null keeps a blank cell from coming back as 0.
+     */
+    fun channelField(kind: RadioKind, channel: Int): Any =
+        if (kind == RadioKind.BLE) org.json.JSONObject.NULL else channel
+
+    fun freqField(kind: RadioKind, frequencyMhz: Int): Any =
+        if (kind == RadioKind.BLE) org.json.JSONObject.NULL else frequencyMhz
+
+    fun csvChannel(kind: RadioKind, channel: Int): String =
+        if (kind == RadioKind.BLE) "" else channel.toString()
+
+    fun csvFreq(kind: RadioKind, frequencyMhz: Int): String =
+        if (kind == RadioKind.BLE) "" else frequencyMhz.toString()
+
+    private fun loggedIntOrNull(raw: String): Any {
+        val text = raw.trim()
+        if (text.isEmpty()) return org.json.JSONObject.NULL
+        return text.toIntOrNull() ?: 0
+    }
+
+    private fun loggedIntCell(obj: org.json.JSONObject, key: String): String {
+        if (!obj.has(key) || obj.isNull(key)) return ""
+        return obj.optInt(key, 0).toString()
+    }
+
+    private fun manufacturerFromLog(hasMfgHex: Boolean, mfgHex: String, raw: String): String =
+        if (hasMfgHex) mfgHex else raw
+
     fun parse(text: String): List<LogRadio> {
         val acc = LinkedHashMap<String, LogRadio>()
         val trimmed = text.replace("\u0000", "")
@@ -81,6 +128,8 @@ object LogReplay {
         val mfgRaw = col("mfg").trim()
         val mfg = mfgRaw.toIntOrNull(16) ?: mfgRaw.toIntOrNull()
         val ts = col("timestamp").toLongOrNull() ?: 0L
+        val mfgHexIndex = header.indexOf("mfg_hex")
+        val raw = col("raw").trim()
         merge(
             acc,
             LogRadio(
@@ -89,7 +138,11 @@ object LogReplay {
                 name = col("name").trim(),
                 vendor = col("vendor").trim().ifBlank { null },
                 manufacturerId = mfg,
-                manufacturerDataHex = col("raw").trim(),
+                manufacturerDataHex = manufacturerFromLog(
+                    hasMfgHex = mfgHexIndex >= 0 && mfgHexIndex < cols.size,
+                    mfgHex = col("mfg_hex").trim(),
+                    raw = raw,
+                ),
                 serviceUuids = uuids,
                 vendorIeOuis = ies,
                 randomized = flags.contains("RAND") || MacUtil.isRandomized(mac),
@@ -124,6 +177,7 @@ object LogReplay {
         }
         val ts = obj.optLong("ts", 0L)
         val rand = obj.optBoolean("rand", MacUtil.isRandomized(mac))
+        val raw = str("raw")
         merge(
             acc,
             LogRadio(
@@ -132,7 +186,11 @@ object LogReplay {
                 name = str("name"),
                 vendor = str("vendor").ifBlank { null },
                 manufacturerId = mfg,
-                manufacturerDataHex = str("raw"),
+                manufacturerDataHex = manufacturerFromLog(
+                    hasMfgHex = obj.has("mfg_hex") && !obj.isNull("mfg_hex"),
+                    mfgHex = str("mfg_hex"),
+                    raw = raw,
+                ),
                 serviceUuids = uuids,
                 vendorIeOuis = ies,
                 randomized = rand,
@@ -210,8 +268,8 @@ object LogReplay {
             .put("mac", col("mac"))
             .put("name", col("name"))
             .put("rssi", col("rssi").toIntOrNull() ?: -100)
-            .put("channel", col("channel").toIntOrNull() ?: 0)
-            .put("freq", col("freq").toIntOrNull() ?: 0)
+            .put("channel", loggedIntOrNull(col("channel")))
+            .put("freq", loggedIntOrNull(col("freq")))
             .put("oui", col("oui"))
             .put("vendor", col("vendor").ifBlank { org.json.JSONObject.NULL })
             .put("fleets", col("fleets"))
@@ -223,6 +281,8 @@ object LogReplay {
             .put("vendor_ie", col("vendor_ie"))
             .put("rand", flags.contains("RAND"))
             .put("hidden", flags.contains("HIDDEN"))
+        val mfgHexIndex = header.indexOf("mfg_hex")
+        if (mfgHexIndex >= 0 && mfgHexIndex < cols.size) obj.put("mfg_hex", col("mfg_hex"))
         val lat = col("lat").trim()
         val lon = col("lon").trim()
         if (lat.isNotEmpty()) obj.put("lat", lat.toDoubleOrNull() ?: lat) else obj.put("lat", org.json.JSONObject.NULL)
@@ -253,6 +313,8 @@ object LogReplay {
             return if (d.isNaN()) str(key) else String.format(java.util.Locale.US, "%.6f", d)
         }
         val uuids = str("uuids").replace(',', '|')
+        val raw = str("raw")
+        val mfgHex = if (obj.has("mfg_hex") && !obj.isNull("mfg_hex")) str("mfg_hex") else raw
         return listOf(
             obj.optLong("ts", 0L).toString(),
             str("iso"),
@@ -260,18 +322,19 @@ object LogReplay {
             str("mac"),
             CsvCells.plain(str("name")),
             obj.optInt("rssi", -100).toString(),
-            obj.optInt("channel", 0).toString(),
-            obj.optInt("freq", 0).toString(),
+            loggedIntCell(obj, "channel"),
+            loggedIntCell(obj, "freq"),
             str("oui"),
             CsvCells.plain(str("vendor")),
             CsvCells.plain(str("fleets")),
             mfg,
             uuids,
             flags,
-            str("raw"),
+            raw,
             coord("lat"),
             coord("lon"),
             str("vendor_ie"),
+            mfgHex,
         ).joinToString(",")
     }
 }

@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.Rssi
 import java.util.ArrayDeque
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -222,7 +223,7 @@ class WifiRadio(
             kind = RadioKind.WIFI,
             mac = result.BSSID.orEmpty(),
             name = ssid,
-            rssi = result.level,
+            rssi = Rssi.wifiLevel(result.level),
             channel = channel,
             frequencyMhz = freq,
             hiddenSsid = hidden,

@@ -19,6 +19,8 @@ class DeviceDetailPrivacyTest {
         val vendor = line(text, "Vendor OUI")
         assertTrue(vendor, vendor.contains("00:50:F2"))
         assertTrue(vendor, vendor.contains("type 4"))
+        assertTrue(vendor, vendor.contains("WPS (Wi-Fi Protected Setup)."))
+        assertFalse(vendor, vendor.contains("MICROSOFT"))
         assertTrue(vendor, vendor.contains("27 bytes, masked"))
         assertFalse(vendor, vendor.contains("AA BB"))
         assertFalse(vendor, vendor.contains("31 32 33"))

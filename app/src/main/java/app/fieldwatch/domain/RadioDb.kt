@@ -93,7 +93,7 @@ object RadioDb {
         val hex = uuid.filter { it.isLetterOrDigit() }.uppercase()
         val short = when {
             hex.length == 4 -> hex.toInt(16)
-            hex.length == 8 -> hex.takeLast(4).toInt(16)
+            hex.length == 8 && hex.startsWith("0000") -> hex.substring(4, 8).toInt(16)
             hex.length == 32 && hex.startsWith("0000") && hex.endsWith("00001000800000805F9B34FB") ->
                 hex.substring(4, 8).toInt(16)
             else -> return null

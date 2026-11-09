@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Slovenščina",
   "languageTag": "sl",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "V živo",
     "tab.pause": "Premor",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Posodobitve ni bilo mogoče namestiti",
     "update.failed.body": "Datoteke z GitHuba ni bilo mogoče namestiti. Aplikacija na tem telefonu je nespremenjena.",
     "update.allow.title": "Dovoli namestitve iz Fieldwatch",
-    "update.allow.body": "Android vpraša enkrat. Nato se vrni in znova tapni Posodobi."
+    "update.allow.body": "Android vpraša enkrat. Nato se vrni in znova tapni Posodobi.",
+    "class.military": "Vojaške",
+    "class.twoway": "Ročne postaje",
+    "speech.military": "vojaške",
+    "speech.twoway": "ročne postaje",
+    "catalog.needs.app.title": "Najprej posodobite Fieldwatch",
+    "catalog.needs.app.body": "To potrebuje novejši Fieldwatch. Posodobite aplikacijo in poskusite znova.",
+    "ui.catalog.request": "GitHub-zahteva za katalog"
   }
 }

@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Slovenčina",
   "languageTag": "sk",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Naživo",
     "tab.pause": "Pauza",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Aktualizáciu nešlo nainštalovať",
     "update.failed.body": "Súbor z GitHubu nešlo nainštalovať. Aplikácia v tomto telefóne je bez zmeny.",
     "update.allow.title": "Povoliť inštalácie z Fieldwatch",
-    "update.allow.body": "Android sa spýta raz. Potom sa vráť a znova klepni na Aktualizovať."
+    "update.allow.body": "Android sa spýta raz. Potom sa vráť a znova klepni na Aktualizovať.",
+    "class.military": "Vojenské",
+    "class.twoway": "Vysielačky",
+    "speech.military": "vojenské",
+    "speech.twoway": "vysielačky",
+    "catalog.needs.app.title": "Najprv aktualizujte Fieldwatch",
+    "catalog.needs.app.body": "Toto potrebuje novší Fieldwatch. Aktualizujte aplikáciu a skúste znova.",
+    "ui.catalog.request": "Žiadosť o katalóg na GitHub"
   }
 }

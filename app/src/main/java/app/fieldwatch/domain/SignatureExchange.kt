@@ -95,10 +95,14 @@ object SignatureExchange {
         val pack = try {
             json.decodeFromString(SignaturePack.serializer(), trimmed)
         } catch (e: Exception) {
+            e.needsNewerApp()?.let { throw it }
             throw IllegalArgumentException(
                 "Not a Fieldwatch signature pack. Export from Settings → Export signatures.",
                 e,
             )
+        }
+        if (pack.formatVersion > SignaturePack.FORMAT_VERSION) {
+            throw CatalogNeedsNewerApp("formatVersion ${pack.formatVersion}")
         }
         if (pack.format != SignaturePack.FORMAT && pack.format != SignaturePack.LEGACY_FORMAT) {
             throw IllegalArgumentException(

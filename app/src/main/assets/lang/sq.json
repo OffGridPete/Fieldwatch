@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Shqip",
   "languageTag": "sq",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Drejtpërdrejt",
     "tab.pause": "Pauzë",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Nuk u instalua dot",
     "update.failed.body": "Skedari nga GitHub nuk u instalua. Aplikacioni në këtë telefon është i njëjtë.",
     "update.allow.title": "Lejo instalimet nga Fieldwatch",
-    "update.allow.body": "Android pyet një herë. Pastaj kthehu dhe prek përsëri Përditëso tani."
+    "update.allow.body": "Android pyet një herë. Pastaj kthehu dhe prek përsëri Përditëso tani.",
+    "class.military": "Ushtarake",
+    "class.twoway": "Radio dypalëshe",
+    "speech.military": "ushtarake",
+    "speech.twoway": "radio dypalëshe",
+    "catalog.needs.app.title": "Përditëso Fieldwatch së pari",
+    "catalog.needs.app.body": "Kjo kërkon një Fieldwatch më të ri. Përditësoni aplikacionin, pastaj provoni përsëri.",
+    "ui.catalog.request": "Kërkesë katalogu në GitHub"
   }
 }

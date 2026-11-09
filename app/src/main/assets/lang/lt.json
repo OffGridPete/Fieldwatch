@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Lietuvių",
   "languageTag": "lt",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Gyvai",
     "tab.pause": "Pauzė",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Naujinio įdiegti nepavyko",
     "update.failed.body": "Failo iš GitHub įdiegti nepavyko. Programa šiame telefone nepasikeitė.",
     "update.allow.title": "Leisti diegimus iš Fieldwatch",
-    "update.allow.body": "Android paklausia vieną kartą. Tada grįžk ir vėl paliesk Atnaujinti."
+    "update.allow.body": "Android paklausia vieną kartą. Tada grįžk ir vėl paliesk Atnaujinti.",
+    "class.military": "Kariniai",
+    "class.twoway": "Racijos",
+    "speech.military": "kariniai",
+    "speech.twoway": "racijos",
+    "catalog.needs.app.title": "Pirmiausia atnaujinkite Fieldwatch",
+    "catalog.needs.app.body": "Reikia naujesnio Fieldwatch. Atnaujinkite programą ir bandykite dar kartą.",
+    "ui.catalog.request": "GitHub katalogo užklausa"
   }
 }

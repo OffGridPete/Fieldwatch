@@ -58,6 +58,30 @@ class DeviceExplainTest {
     }
 
     @Test
+    fun wifiZeroIsNotAReadingAndDoesNotOutrankARealSignal() {
+        assertEquals(127, Rssi.wifiLevel(0))
+        assertEquals(-42, Rssi.wifiLevel(-42))
+        assertFalse(Rssi.measured(Rssi.wifiLevel(0)))
+        val quiet = wifi("02:11:22:33:44:01", "Unset").copy(rssi = Rssi.wifiLevel(0))
+        val real = wifi("02:11:22:33:44:02", "Real").copy(rssi = -90)
+        val now = 1_000_000L
+        assertTrue(real.sortRssi(StrengthSort.INSTANT, 30_000L, now) > quiet.sortRssi(StrengthSort.INSTANT, 30_000L, now))
+        val text = DeviceDetailText.build(
+            quiet.copy(kind = RadioKind.BLE, channel = 0, frequencyMhz = 0),
+            emptyList(),
+            now = 1L,
+        )
+        assertFalse(text.contains("2402"))
+        assertFalse(text.contains("Channel / frequency"))
+        val wifiText = DeviceDetailText.build(
+            real.copy(channel = 6, frequencyMhz = 2437),
+            emptyList(),
+            now = 1L,
+        )
+        assertTrue(wifiText.contains("2437 MHz"))
+    }
+
+    @Test
     fun rssi127IsNotAvailableNotVeryStrong() {
         assertEquals("Not available", DeviceExplain.rssiExplain(127))
         assertEquals("not available", DeviceExplain.rssiBand(127))

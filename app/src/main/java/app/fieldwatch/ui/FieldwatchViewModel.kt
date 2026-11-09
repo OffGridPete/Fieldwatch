@@ -68,6 +68,7 @@ import app.fieldwatch.domain.ScanStatus
 import app.fieldwatch.domain.GnssMark
 import app.fieldwatch.domain.SitExport
 import app.fieldwatch.domain.SitTakPackage
+import app.fieldwatch.domain.CatalogRequest
 import app.fieldwatch.domain.ClassOutline
 import app.fieldwatch.domain.CoTravel
 import app.fieldwatch.domain.FilterPreset
@@ -90,6 +91,7 @@ import app.fieldwatch.domain.SignatureCandidates
 import app.fieldwatch.domain.SignatureFamilyHint
 import app.fieldwatch.domain.CandidateReport
 
+import app.fieldwatch.domain.CatalogNeedsNewerApp
 import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.SignatureEngine
 import app.fieldwatch.domain.SignatureListSort
@@ -188,6 +190,8 @@ data class ExportUi(
     /** Shown after the user dismisses [noticeTitle]. Catalog import skip-decode only. */
     val followUpTitle: String? = null,
     val followUpMessage: String? = null,
+    /** This file needs a newer Fieldwatch. The dialog offers the app-update check. */
+    val updateApp: Boolean = false,
 )
 
 data class FlockLayerUi(
@@ -2924,6 +2928,9 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     SignatureExchange.parsePack((fetched as CatalogRemote.Fetch.Ok).text)
                 } catch (e: CancellationException) {
                     throw e
+                } catch (_: CatalogNeedsNewerApp) {
+                    showCatalogNeedsApp()
+                    return@launch
                 } catch (_: Exception) {
                     showImportProblem(
                         "ui.could.not.import.catalog",
@@ -3137,6 +3144,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 )
             } catch (e: CancellationException) {
                 throw e
+            } catch (_: CatalogNeedsNewerApp) {
+                showCatalogNeedsApp()
             } catch (e: ImportFileException) {
                 showImportProblem("ui.could.not.import.signatures", LanguageText.text(e.key), kept = true)
             } catch (e: IllegalArgumentException) {
@@ -3244,6 +3253,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 }
             } catch (e: CancellationException) {
                 throw e
+            } catch (_: CatalogNeedsNewerApp) {
+                showCatalogNeedsApp()
             } catch (e: ImportFileException) {
                 showImportProblem("ui.could.not.import.settings", LanguageText.text(e.key), kept = true)
             } catch (e: IllegalArgumentException) {
@@ -3458,6 +3469,22 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun readImportText(uri: Uri, maxBytes: Int): String =
         readImportBytes(uri, maxBytes).toString(Charsets.UTF_8)
+
+    /** The pack named a class, a rule, or a radio this app does not know. Nothing was saved. */
+    private fun showCatalogNeedsApp() {
+        _export.value = ExportUi(
+            errorTitle = LanguageText.text("catalog.needs.app.title"),
+            error = LanguageText.text("catalog.needs.app.body").trim() +
+                " " + LanguageText.text("import.failed.kept"),
+            updateApp = true,
+        )
+    }
+
+    /** Closes the catalog notice and opens the app-update check. */
+    fun updateAppFromCatalogNotice() {
+        consumeExportNotice()
+        checkForAppUpdate()
+    }
 
     /** A failed import names the reason. [kept] adds that this phone was not changed. */
     private fun showImportProblem(titleKey: String, body: String, kept: Boolean) {
@@ -4153,6 +4180,18 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 _export.value = ExportUi(error = err.message ?: LanguageText.text("ui.could.not.build.ai"))
             }
         }
+    }
+
+    /** Local check only. Reads radios already in memory and the network flag. */
+    fun catalogRequestVisible(device: Sighting): Boolean {
+        if (!CatalogRequest.eligible(device, app.devices.devices.value)) return false
+        return PlaceLookup.online(getApplication())
+    }
+
+    fun openCatalogRequest(device: Sighting) {
+        val url = CatalogRequest.issueUrl(device, app.devices.devices.value) ?: return
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { getApplication<Application>().startActivity(intent) }
     }
 
     fun startDeviceDetailShare(device: Sighting) {

@@ -386,6 +386,24 @@ object DeviceExplain {
                     Hint("drone", "a HOVERAir flying camera", matched(raw), 7)
                 n == "expresslrs" ->
                     Hint("drone", "an ExpressLRS radio in Wi-Fi setup", matched(raw), 7)
+                n == "icom id-52" ->
+                    Hint("radio", "an Icom ID-52 handheld", matched(raw), 7)
+                n == "icom vs-3" ->
+                    Hint("radio", "an Icom VS-3 headset", matched(raw), 7)
+                n == "yaesu ssm-bt10" ->
+                    Hint("radio", "a Yaesu SSM-BT10 headset", matched(raw), 7)
+                n == "yaesu ssm-bt20" ->
+                    Hint("radio", "a Yaesu SSM-BT20 headset", matched(raw), 7)
+                n == "kenwood khs-55bt" ->
+                    Hint("radio", "a Kenwood KHS-55BT headset", matched(raw), 7)
+                n == "kenwood khs-56bt" ->
+                    Hint("radio", "a Kenwood KHS-56BT headset", matched(raw), 7)
+                n == "vgc bhm-88" ->
+                    Hint("radio", "a VGC BHM-88 headset", matched(raw), 7)
+                n == "benshi radio" ->
+                    Hint("radio", "a Benshi handheld or mobile radio", matched(raw), 7)
+                n == "ble ptt button" ->
+                    Hint("radio", "a Bluetooth push-to-talk button", matched(raw), 7)
                 n == "netgear" || n == "orbi" ->
                     Hint("ap", "a NETGEAR or Orbi access point", matched(raw), 6)
                 n == "tp-link" ->
@@ -630,8 +648,6 @@ object DeviceExplain {
                     Hint("hotspot", "a Sierra Wireless AirLink vehicle gateway", matched(raw), 7)
                 n == "compex" ->
                     Hint("hotspot", "a Compex access point (sometimes public-safety / fleet)", matched(raw), 6)
-                n == "novatel wireless" ->
-                    Hint("hotspot", "a Novatel Wireless / Inseego vehicle radio", matched(raw), 6)
                 n == "utility inc" ->
                     Hint("hotspot", "a Utility, Inc vehicle or public-safety radio", matched(raw), 6)
                 "gl.inet" in n || n == "glinet" ->
@@ -691,6 +707,8 @@ object DeviceExplain {
                     Hint("glasses", "Brilliant Labs Frame AR glasses", matched(raw), 8)
                 n == "even g1" ->
                     Hint("glasses", "Even Realities G1 glasses", matched(raw), 8)
+                n == "meta quest" ->
+                    Hint("wearable", "a Meta Quest headset", matched(raw), 8)
                 "hayden" in n ->
                     Hint("camera", "a Hayden AI bus- or vehicle-mounted camera", matched(raw), 8)
                 "miovision" in n ->

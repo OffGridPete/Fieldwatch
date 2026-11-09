@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Nederlands",
   "languageTag": "nl",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Rechtstreeks",
     "tab.pause": "Pauze",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Update niet geïnstalleerd",
     "update.failed.body": "Het bestand van GitHub kon niet worden geïnstalleerd. De app op deze telefoon is ongewijzigd.",
     "update.allow.title": "Installaties van Fieldwatch toestaan",
-    "update.allow.body": "Android vraagt het één keer. Kom daarna terug en tik opnieuw op Nu bijwerken."
+    "update.allow.body": "Android vraagt het één keer. Kom daarna terug en tik opnieuw op Nu bijwerken.",
+    "class.military": "Militair",
+    "class.twoway": "Portofoons",
+    "speech.military": "militair",
+    "speech.twoway": "portofoons",
+    "catalog.needs.app.title": "Werk Fieldwatch eerst bij",
+    "catalog.needs.app.body": "Dit heeft een nieuwere Fieldwatch nodig. Werk de app bij en probeer het opnieuw.",
+    "ui.catalog.request": "GitHub-catalogusverzoek"
   }
 }

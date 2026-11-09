@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Íslenska",
   "languageTag": "is",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Beint",
     "tab.pause": "Hlé",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Gat ekki sett upp uppfærslu",
     "update.failed.body": "Skráin frá GitHub settist ekki upp. Forritið í þessum síma er óbreytt.",
     "update.allow.title": "Leyfa uppsetningar frá Fieldwatch",
-    "update.allow.body": "Android spyr einu sinni. Komdu svo til baka og ýttu aftur á Uppfæra nú."
+    "update.allow.body": "Android spyr einu sinni. Komdu svo til baka og ýttu aftur á Uppfæra nú.",
+    "class.military": "Hernaðar",
+    "class.twoway": "Talstöðvar",
+    "speech.military": "hernaðar",
+    "speech.twoway": "talstöðvar",
+    "catalog.needs.app.title": "Uppfærið Fieldwatch fyrst",
+    "catalog.needs.app.body": "Þetta þarf nýrra Fieldwatch. Uppfærið forritið og reynið aftur.",
+    "ui.catalog.request": "GitHub-skráningarbeiðni"
   }
 }

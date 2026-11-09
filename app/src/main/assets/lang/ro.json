@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Română",
   "languageTag": "ro",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "În direct",
     "tab.pause": "Pauză",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Actualizarea nu s-a instalat",
     "update.failed.body": "Fișierul de pe GitHub nu a putut fi instalat. Aplicația de pe acest telefon este neschimbată.",
     "update.allow.title": "Permite instalări din Fieldwatch",
-    "update.allow.body": "Android întreabă o dată. Apoi revino și atinge din nou Actualizează."
+    "update.allow.body": "Android întreabă o dată. Apoi revino și atinge din nou Actualizează.",
+    "class.military": "Militare",
+    "class.twoway": "Stații radio",
+    "speech.military": "militare",
+    "speech.twoway": "stații radio",
+    "catalog.needs.app.title": "Actualizați întâi Fieldwatch",
+    "catalog.needs.app.body": "Este nevoie de un Fieldwatch mai nou. Actualizați aplicația, apoi încercați din nou.",
+    "ui.catalog.request": "Cerere de catalog pe GitHub"
   }
 }

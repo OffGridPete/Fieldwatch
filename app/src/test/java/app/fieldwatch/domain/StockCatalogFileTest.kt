@@ -91,6 +91,47 @@ class StockCatalogFileTest {
         assertEquals(RadioKind.WIFI, ezviz.rules.single().radio)
         assertEquals("EZVIZ_*", ezviz.rules.single().text)
         assertFalse(ezviz.rules.any { it.kind == RuleKind.OUI })
+        assertFalse(pack.fleets.any { it.id == "fleet-novatel" })
+        val inseego = pack.fleets.single { it.id == "fleet-inseego" }
+        assertTrue(inseego.rules.any { it.kind == RuleKind.OUI && it.text.equals("28:80:A2", true) })
+        assertTrue(inseego.attentionNote.isBlank())
+        val hatch = pack.fleets.single { it.id == "fleet-hatch" }
+        assertFalse(hatch.rules.any { it.kind == RuleKind.OUI && it.text.equals("C8:FA:9C", true) })
+        assertTrue(hatch.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x0434 })
+        val icom = pack.fleets.single { it.id == "fleet-icom-id52" }
+        assertEquals(SignatureClass.TWO_WAY, icom.kind)
+        assertEquals(RadioKind.BLE, icom.rules.single().radio)
+        assertEquals("ICOM BT(ID-52)", icom.rules.single().text)
+        assertTrue(icom.attentionNote.isBlank())
+        val mics = mapOf(
+            "fleet-icom-vs3" to "ICOM BT-002",
+            "fleet-yaesu-ssm-bt10" to "SSM-BT10",
+            "fleet-yaesu-ssm-bt20" to "SSM-BT20",
+            "fleet-kenwood-khs-55bt" to "KHS-55BT",
+            "fleet-kenwood-khs-56bt" to "KHS-56BT*",
+            "fleet-vgc-bhm-88" to "BHM-88",
+        )
+        mics.forEach { (id, pattern) ->
+            val row = pack.fleets.single { it.id == id }
+            assertEquals(SignatureClass.TWO_WAY, row.kind)
+            assertEquals(RadioKind.BLE, row.rules.single().radio)
+            assertEquals(pattern, row.rules.single().text)
+            assertTrue(row.attentionNote.isBlank())
+        }
+        val benshi = pack.fleets.single { it.id == "fleet-benshi-radio" }
+        assertEquals(SignatureClass.TWO_WAY, benshi.kind)
+        assertEquals(
+            listOf("UV-PRO", "UV-50PRO", "GA-5WB", "VR-N75", "VR-N76", "VR-N7500", "VR-N7600", "DB50-B"),
+            benshi.rules.map { it.text },
+        )
+        assertTrue(benshi.rules.all { it.radio == RadioKind.BLE })
+        assertTrue(benshi.attentionNote.isBlank())
+        val ptt = pack.fleets.single { it.id == "fleet-ble-ptt-button" }
+        assertEquals(SignatureClass.TWO_WAY, ptt.kind)
+        assertEquals(listOf("PTT-Z", "PTT-AZ", "PTT-Z01"), ptt.rules.map { it.text })
+        assertTrue(ptt.rules.all { it.radio == RadioKind.BLE })
+        assertTrue(ptt.attentionNote.isBlank())
+        assertTrue(pack.fleets.none { it.kind == SignatureClass.MILITARY })
     }
 
     private fun distPackFile(): File {

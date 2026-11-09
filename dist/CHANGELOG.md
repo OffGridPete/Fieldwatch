@@ -4,8 +4,21 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
-## Unreleased
+## 1.1.43 — 9 November 2026
 
+- A Bluetooth name of Quest, or one that starts with Quest followed by a space or a hyphen, or one that starts with Meta Quest, is Meta Quest. Quest 3S is that row. It is not labeled Ray-Ban / Meta glasses and it does not beep. A Meta company ID or service FEB8 without that name still matches the glasses row.
+- Bluetooth channel and frequency are left blank. Android does not report the advertising channel, so the radio page and the log no longer show 2402 MHz as if it were measured. Wi-Fi channel and frequency stay. An older log row that already says 2402 stays as it was.
+- Signature candidates keep a full custom service UUID. They no longer cut it down to four hex digits that can match a different Bluetooth service. A standard 16-bit service still meets its short form and its full Bluetooth UUID.
+- A Wi-Fi signal of 0 is treated as no reading. It no longer sorts as the strongest radio or paints as a loud signal. A real reading still does.
+- The log keeps the Bluetooth advertisement the phone already stored, up to 512 bytes. The raw field is that advertisement. Manufacturer data is its own field. A log row already saved stays as it was.
+- Named radios is its own row on the Settings list, after Alerts. Signature and network stays on Alerts.
+- Radio detail can show GitHub catalog request. It appears on an unmatched Bluetooth radio when the phone has a network that claims internet, the name looks like a factory model, and that name has been heard on two addresses this session. The tap opens a GitHub issue draft in the browser. Nothing is sent before that tap. The draft leaves out the address suffix, this phone's location, and the raw advertisement.
+- Signatures → Class A–Z lists every class, including one with no signatures. The count is 0 until a signature is in that class. Body-worn stays under Wearables.
+- Microsoft Nearby Sharing names the device type and whether sharing is set to My devices only or Everyone nearby. When it is Everyone nearby, the line includes the computer name from that advertisement. That background beacon is no longer called Swift Pair.
+- Catalog 101 removes the Novatel Wireless row. Address 28:80:A2 stays on Inseego and does not beep as public safety. Hatch drops address C8:FA:9C. The Hatch names and company ID stay. Opening this app drops that row and that address from the built-in signatures, including when Update stock catalog already saved catalog 101 and left them in place. A rule you added stays. A custom copy of Novatel that is not built-in stays.
+- Filters add Two-way radios and Military. Two-way radios has Icom ID-52, from the Bluetooth name ICOM BT(ID-52) while the radio is waiting to pair, plus wireless microphones Icom VS-3, Yaesu SSM-BT10, Yaesu SSM-BT20, Kenwood KHS-55BT, Kenwood KHS-56BT, and VGC BHM-88. On those microphones, Bluetooth is how the microphone works. Each row matches the published name on a Low Energy advertisement. A name that only appears on the Classic link stays quiet. Military has no signatures yet. Catalog 102 also matches Benshi-platform radios by the exact Bluetooth name UV-PRO, UV-50PRO, GA-5WB, VR-N75, VR-N76, VR-N7500, VR-N7600, or DB50-B, and BLE push-to-talk buttons named PTT-Z, PTT-AZ, or PTT-Z01. None of them beep.
+- A signature file that uses a class, a rule, or a radio this app does not know asks you to update Fieldwatch first. Update now on that message checks for an app update. The catalog on the phone stays as it is. The same message is used for Update stock catalog, Import signatures, and Import settings.
+- Wi-Fi vendor tags name WPA, WMM, WPS, Wi-Fi Direct, Miracast, Hotspot 2.0, MBO-OCE, EasyMesh, and OWE transition. A WMM tag no longer reads as Microsoft. Other vendor tags still show the company that owns the OUI.
 - Catalog 100 adds ExpressLRS setup Wi-Fi, Xiaomi Mi Home service FE95, and an EZVIZ setup network. Each names the family, not one model. ExpressLRS beeps like the other drone rows. The other two do not.
 - Catalog 99: DJI also matches the older DroneID Wi-Fi beacon, vendor IE 26:37:12. That labels the aircraft. It does not fill a position. ASTM Remote ID stays on the Remote ID row. Android 11 or newer can see that beacon field.
 

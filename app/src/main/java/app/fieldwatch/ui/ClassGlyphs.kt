@@ -22,6 +22,8 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.QuestionMark
 import androidx.compose.material.icons.outlined.Router
 import androidx.compose.material.icons.outlined.Sell
+import androidx.compose.material.icons.outlined.SettingsInputAntenna
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.Videocam
@@ -66,6 +68,8 @@ object ClassGlyphs {
         SignatureClass.HOME -> Icons.Outlined.Home
         SignatureClass.ISP -> Icons.Outlined.Router
         SignatureClass.MESH -> Icons.Outlined.Hub
+        SignatureClass.TWO_WAY -> Icons.Outlined.SettingsInputAntenna
+        SignatureClass.MILITARY -> Icons.Outlined.Shield
         SignatureClass.PHONE -> Icons.Outlined.Smartphone
         SignatureClass.OTHER -> Icons.Outlined.Category
     }

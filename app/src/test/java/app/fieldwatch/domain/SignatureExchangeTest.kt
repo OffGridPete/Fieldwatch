@@ -345,7 +345,18 @@ class SignatureExchangeTest {
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-cradlepoint").kind)
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-airlink").kind)
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-compex").kind)
-        assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-novatel").kind)
+        assertFalse(ids.containsKey("fleet-novatel"))
+        assertEquals(SignatureClass.ISP, ids.getValue("fleet-inseego").kind)
+        assertTrue(
+            ids.getValue("fleet-inseego").rules.any {
+                it.kind == RuleKind.OUI && it.text.equals("28:80:A2", true)
+            },
+        )
+        assertFalse(
+            ids.getValue("fleet-hatch").rules.any {
+                it.kind == RuleKind.OUI && it.text.equals("C8:FA:9C", true)
+            },
+        )
         assertEquals(SignatureClass.LAW_ENFORCEMENT, ids.getValue("fleet-utility-inc").kind)
         assertEquals(SignatureClass.VEHICLE, ids.getValue("fleet-tesla").kind)
         assertEquals(SignatureClass.ISP, ids.getValue("fleet-ruijie").kind)
@@ -591,6 +602,43 @@ class SignatureExchangeTest {
         val added = next.first { it.id == "fleet-new-stock" }
         assertEquals("Look with your eyes.", added.attentionNote)
         assertTrue(added.builtIn)
+    }
+
+    @Test
+    fun unknownClassRuleOrRadioAsksForANewerApp() {
+        val base = """
+            {"format":"fieldwatch-signatures","formatVersion":1,"catalogVersion":103,"fleets":[
+              {"id":"fleet-x","name":"X","kind":"MESH","rules":[{"kind":"NAME_CONTAINS","text":"X","radio":"BLE"}]}
+            ]}
+        """.trimIndent()
+        val back = SignatureExchange.parse(base)
+        assertEquals(SignatureClass.MESH, back.fleets.single().kind)
+        assertEquals(RadioKind.BLE, back.fleets.single().rules.single().radio)
+        assertNeedsNewer(base.replace("\"kind\":\"MESH\"", "\"kind\":\"NOT_A_CLASS\""), "NOT_A_CLASS")
+        assertNeedsNewer(base.replace("NAME_CONTAINS", "NOT_A_RULE"), "NOT_A_RULE")
+        assertNeedsNewer(base.replace("\"radio\":\"BLE\"", "\"radio\":\"ZIGBEE\""), "ZIGBEE")
+        assertNeedsNewer(base.replace("\"formatVersion\":1", "\"formatVersion\":2"), "formatVersion 2")
+        val decode = base.replace(
+            "\"rules\":[{\"kind\":\"NAME_CONTAINS\",\"text\":\"X\",\"radio\":\"BLE\"}]",
+            "\"rules\":[{\"kind\":\"NAME_CONTAINS\",\"text\":\"X\",\"radio\":\"BLE\"}]," +
+                "\"decode\":{\"source\":\"manufacturerData\",\"fields\":[{\"id\":\"a\",\"label\":\"A\",\"offset\":0,\"type\":\"q99\"}]}",
+        )
+        assertNeedsNewer(decode, "q99")
+        try {
+            SignatureExchange.parse("not json")
+            throw AssertionError("a broken file is not an app update")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("Not a Fieldwatch signature pack"))
+        }
+    }
+
+    private fun assertNeedsNewer(json: String, token: String) {
+        try {
+            SignatureExchange.parse(json)
+            throw AssertionError("expected a newer-app refusal for $token")
+        } catch (e: CatalogNeedsNewerApp) {
+            assertEquals(token, e.token)
+        }
     }
 
     @Test
@@ -1182,7 +1230,20 @@ class SignatureExchangeTest {
         assertTrue("0000" !in uuidAliases(epson))
         assertTrue("0000" !in uuidAliases(sensorPush))
         assertTrue("FD44" in uuidAliases("FD44"))
+        assertTrue("FD44" in uuidAliases("0000FD44"))
         assertTrue("FD44" in uuidAliases("0000FD44-0000-1000-8000-00805F9B34FB"))
+        assertTrue("0000FD44" in uuidAliases("FD44"))
+        val benshi = "138C35B6-0000-1000-8000-00805F9B34FB"
+        assertTrue("138C35B6" in uuidAliases(benshi))
+        assertTrue("35B6" !in uuidAliases(benshi))
+        assertTrue("35B6" !in uuidAliases("138C35B6"))
+        val vendor = "23BA7924-0000-1000-7450-346EAC492E92"
+        assertTrue("7924" !in uuidAliases(vendor))
+        assertEquals("138C35B6", serviceUuidRule(benshi))
+        assertEquals(
+            "23BA7924000010007450346EAC492E92",
+            serviceUuidRule(vendor),
+        )
     }
 
     @Test

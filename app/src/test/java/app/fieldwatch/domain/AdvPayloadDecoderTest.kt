@@ -1,6 +1,7 @@
 package app.fieldwatch.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -111,7 +112,57 @@ class AdvPayloadDecoderTest {
     @Test
     fun microsoftCdpNamesDeviceType() {
         val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, "0109"))
-        assertTrue(fields.single().value.contains("Windows desktop"))
+        val field = fields.single()
+        assertEquals("Microsoft Nearby Sharing", field.label)
+        assertEquals("A Windows desktop is advertising.", field.value)
+        assertFalse(field.label.contains("Swift Pair"))
+        assertFalse(field.value.contains("Swift Pair"))
+    }
+
+    @Test
+    fun microsoftCdpNamesNearbySharingMode() {
+        val everyone = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, "0109210A"))
+        assertEquals(
+            "A Windows desktop is advertising. Nearby sharing is set to Everyone nearby.",
+            everyone.single().value,
+        )
+        val mine = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, "01092002"))
+        assertEquals(
+            "A Windows desktop is advertising. Nearby sharing is set to My devices only.",
+            mine.single().value,
+        )
+        val other = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, "01092202"))
+        assertEquals("A Windows desktop is advertising.", other.single().value)
+    }
+
+    @Test
+    fun microsoftCdpShowsTheComputerNameWhenSharingIsEveryoneNearby() {
+        val payload = "0109210A5CB21871EB504445534B544F502D494E5349434F46"
+        val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, payload))
+        assertEquals(
+            "A Windows desktop is advertising. Nearby sharing is set to Everyone nearby. " +
+                "The name on the beacon is DESKTOP-INSICOF.",
+            fields.single().value,
+        )
+        assertFalse(fields.single().value.contains("EB 50"))
+        assertFalse(fields.single().value.contains("5C B2"))
+    }
+
+    @Test
+    fun microsoftCdpHidesANameWhenSharingIsMyDevicesOnly() {
+        val payload = "01092022DB200ED2461E4F868631CE27BCA3F88EE67F2250912FD9"
+        val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, payload))
+        assertEquals(
+            "A Windows desktop is advertising. Nearby sharing is set to My devices only.",
+            fields.single().value,
+        )
+    }
+
+    @Test
+    fun microsoftSwiftPairStaysAByteCount() {
+        val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x0006, "0300804C6170746F70"))
+        assertEquals("Microsoft manufacturer data", fields.single().label)
+        assertFalse(fields.single().value.contains("Laptop"))
     }
 
     @Test

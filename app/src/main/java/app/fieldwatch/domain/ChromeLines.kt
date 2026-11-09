@@ -112,6 +112,7 @@ internal object ChromeLines {
         en("ui.hunt.ble.only.wi", "Hunt is BLE only. Wi-Fi access points update too slowly on stock Android to walk toward.", LanguageSlot.BODY),
         en("ui.create.signature.device", "Create signature from device", LanguageSlot.CONTROL),
         en("ui.share.text", "Share as text", LanguageSlot.CONTROL),
+        en("ui.catalog.request", "GitHub catalog request", LanguageSlot.CONTROL),
         en("ui.ai.export", "AI Export", LanguageSlot.CONTROL),
         en("ui.opens.paste.ready.prompt", "Opens a paste-ready prompt for a chat: decode this radio, look up OUI/company/UUIDs, and say what it most likely is. Same experimental disclaimer as Settings → AI Export. One device only. Not an identity.", LanguageSlot.BODY),
         en("ui.signature.family", "Signature family", LanguageSlot.CONTROL),

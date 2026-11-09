@@ -460,7 +460,18 @@ private fun FieldwatchShell(state: FieldwatchUi, vm: FieldwatchViewModel) {
             title = { Text(export.errorTitle ?: LanguageText.text("ui.could.not.export")) },
             text = { Text(export.error ?: "") },
             confirmButton = {
-                TextButton(onClick = vm::consumeExportNotice) { Text(LanguageText.text("ui.ok.label")) }
+                if (export.updateApp) {
+                    TextButton(onClick = vm::updateAppFromCatalogNotice) {
+                        Text(LanguageText.text("update.now"))
+                    }
+                } else {
+                    TextButton(onClick = vm::consumeExportNotice) { Text(LanguageText.text("ui.ok.label")) }
+                }
+            },
+            dismissButton = if (export.updateApp) {
+                { TextButton(onClick = vm::consumeExportNotice) { Text(LanguageText.text("ui.ok.label")) } }
+            } else {
+                null
             },
         )
     }

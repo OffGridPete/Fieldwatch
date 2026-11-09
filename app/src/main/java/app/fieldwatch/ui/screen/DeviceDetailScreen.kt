@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GroupAdd
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.NearMe
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,6 +77,7 @@ import app.fieldwatch.domain.SmartTag
 import app.fieldwatch.domain.hexSpaced
 import app.fieldwatch.domain.maskedRawBytes
 import app.fieldwatch.domain.LanguageText
+import app.fieldwatch.domain.VendorIeLabel
 import app.fieldwatch.domain.label
 import app.fieldwatch.radio.BleAdParser
 import app.fieldwatch.ui.RadioKindMark
@@ -116,6 +118,10 @@ fun DeviceDetailScreen(
     val placeStreets by vm.placeStreetNames.collectAsStateWithLifecycle()
     LaunchedEffect(device.key) { vm.refreshPlaceStreets(device) }
     val familyHint by vm.familyHint.collectAsStateWithLifecycle()
+    var catalogRequest by remember(device.key) { mutableStateOf(false) }
+    LaunchedEffect(device.key, device.name, device.kind, device.fleetIds) {
+        catalogRequest = vm.catalogRequestVisible(device)
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     Scaffold(
@@ -699,8 +705,14 @@ fun DeviceDetailScreen(
                         Meta(
                             LanguageText.text("device.vendor", mapOf("oui" to ie.oui)) + type,
                             buildString {
-                                append(org ?: LanguageText.text("ui.unknown.ieee.oui"))
-                                append((" " + LanguageText.text("ui.extra.ap.information.element")))
+                                append(
+                                    VendorIeLabel.lead(
+                                        ie,
+                                        org,
+                                        LanguageText.text("ui.unknown.ieee.oui"),
+                                        LanguageText.text("ui.extra.ap.information.element"),
+                                    ),
+                                )
                                 if (ie.dataHex.isNotBlank()) {
                                     append("\n")
                                     append(if (demoMode) maskedRawBytes(ie.dataHex, true) else ie.dataHex.hexSpaced())
@@ -776,6 +788,16 @@ fun DeviceDetailScreen(
                 Icon(Icons.Outlined.Share, null)
                 Spacer(Modifier.padding(4.dp))
                 Text(LanguageText.text("ui.share.text"))
+            }
+            if (catalogRequest) {
+                FieldwatchActionButton(
+                    onClick = { vm.openCatalogRequest(device) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Outlined.Public, null)
+                    Spacer(Modifier.padding(4.dp))
+                    Text(LanguageText.text("ui.catalog.request"))
+                }
             }
             FieldwatchActionButton(
                 onClick = { vm.startDeviceDetailAiExport(device) },

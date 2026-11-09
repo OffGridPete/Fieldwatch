@@ -265,7 +265,6 @@ object DefaultCatalog {
         cradlepoint(),
         airlink(),
         compex(),
-        novatelWireless(),
         utilityInc(),
         tapo(),
         reolink(),
@@ -279,6 +278,15 @@ object DefaultCatalog {
         goTenna(),
         senseCap(),
         rakWisGate(),
+        icomId52(),
+        icomVs3(),
+        yaesuSsmBt10(),
+        yaesuSsmBt20(),
+        kenwoodKhs55Bt(),
+        kenwoodKhs56Bt(),
+        vgcBhm88(),
+        benshiRadio(),
+        blePttButton(),
         genetec(),
         blueToadSpectra(),
         blipTrack(),
@@ -303,6 +311,7 @@ object DefaultCatalog {
         unifiProtect(),
         hobbyBleSerial(),
         metaGlasses(),
+        metaQuest(),
         snapSpectacles(),
         vuzix(),
         brilliantFrame(),
@@ -2605,6 +2614,118 @@ object DefaultCatalog {
         ),
     )
 
+    private fun icomId52() = Fleet(
+        id = "fleet-icom-id52",
+        name = "Icom ID-52",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.TWO_WAY,
+        matchAny = true,
+        notes = "Icom ID-52 or ID-52 Plus. The Bluetooth name is ICOM BT(ID-52) while the radio is waiting to pair. This phone does not hear the voice channel. A renamed radio does not match.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("ICOM BT(ID-52)"),
+        ),
+    )
+
+    /**
+     * Bluetooth on these microphones is the audio link, not a setup step.
+     * This phone still only hears a Low Energy advertisement of the name.
+     */
+    private const val RADIO_MIC_HEARD =
+        "That Bluetooth link is how the microphone works. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. A renamed microphone does not match."
+
+    private fun radioMic(id: String, name: String, opener: String, pattern: String) = Fleet(
+        id = id,
+        name = name,
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.TWO_WAY,
+        matchAny = true,
+        notes = "$opener $RADIO_MIC_HEARD",
+        builtIn = true,
+        rules = listOf(bleGlob(pattern)),
+    )
+
+    private fun icomVs3() = radioMic(
+        "fleet-icom-vs3",
+        "Icom VS-3",
+        "Icom VS-3 wireless microphone. The radio lists it as ICOM BT-002.",
+        "ICOM BT-002",
+    )
+
+    private fun yaesuSsmBt10() = radioMic(
+        "fleet-yaesu-ssm-bt10",
+        "Yaesu SSM-BT10",
+        "Yaesu SSM-BT10 wireless microphone. The radio lists it as SSM-BT10.",
+        "SSM-BT10",
+    )
+
+    private fun yaesuSsmBt20() = radioMic(
+        "fleet-yaesu-ssm-bt20",
+        "Yaesu SSM-BT20",
+        "Yaesu SSM-BT20 wireless microphone. The radio lists it as SSM-BT20.",
+        "SSM-BT20",
+    )
+
+    private fun kenwoodKhs55Bt() = radioMic(
+        "fleet-kenwood-khs-55bt",
+        "Kenwood KHS-55BT",
+        "Kenwood KHS-55BT wireless microphone. The radio lists it as KHS-55BT.",
+        "KHS-55BT",
+    )
+
+    private fun kenwoodKhs56Bt() = radioMic(
+        "fleet-kenwood-khs-56bt",
+        "Kenwood KHS-56BT",
+        "Kenwood KHS-56BT wireless microphone. The radio lists it as KHS-56BT followed by a four-digit code.",
+        "KHS-56BT*",
+    )
+
+    private fun vgcBhm88() = radioMic(
+        "fleet-vgc-bhm-88",
+        "VGC BHM-88",
+        "VGC BHM-88 wireless microphone for a handheld radio. The published name is BHM-88.",
+        "BHM-88",
+    )
+
+    private fun benshiRadio() = Fleet(
+        id = "fleet-benshi-radio",
+        name = "Benshi radio",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.TWO_WAY,
+        matchAny = true,
+        notes = "Benshi-platform amateur radio sold as BTECH, Radioddity, or Vero. The Bluetooth name is UV-PRO, UV-50PRO, GA-5WB, VR-N75, VR-N76, VR-N7500, VR-N7600, or DB50-B. This phone hears a Low Energy advertisement of that exact name. A renamed radio does not match. This phone does not hear the voice channel.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("UV-PRO"),
+            bleGlob("UV-50PRO"),
+            bleGlob("GA-5WB"),
+            bleGlob("VR-N75"),
+            bleGlob("VR-N76"),
+            bleGlob("VR-N7500"),
+            bleGlob("VR-N7600"),
+            bleGlob("DB50-B"),
+        ),
+    )
+
+    private fun blePttButton() = Fleet(
+        id = "fleet-ble-ptt-button",
+        name = "BLE PTT button",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.TWO_WAY,
+        matchAny = true,
+        notes = "Wireless push-to-talk button for a phone app such as Zello or WAVE. Pryme, MobilitySound, and similar buttons advertise PTT-Z, PTT-AZ, or PTT-Z01. That Low Energy link is how the button works. A renamed button does not match. A button that is already connected may stay quiet.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("PTT-Z"),
+            bleGlob("PTT-AZ"),
+            bleGlob("PTT-Z01"),
+        ),
+    )
+
     private fun genetec() = Fleet(
         id = "fleet-genetec",
         name = "Genetec AutoVu",
@@ -3054,7 +3175,7 @@ object DefaultCatalog {
         colorIndex = Hue.GLASSES,
         kind = SignatureClass.GLASSES,
         matchAny = true,
-        notes = "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses, or a Quest / other Meta wearable.",
+        notes = "Ray-Ban Meta, Oakley Meta, or Meta Display smart glasses. A Quest or Meta Quest name is the Quest row. The same company IDs also show up on other Meta wearables.",
         attentionNote = "Meta / Luxottica BLE — often Ray-Ban Meta smart glasses. A Bluetooth name that starts with Meta RB Display is these glasses. The same company IDs show up on Quest headsets and other Meta wearables. Not proof someone is recording. A miss is not a clean bill (paired and quiet, asleep, or a different brand). Look with your eyes.",
         builtIn = true,
         rules = listOf(
@@ -3070,6 +3191,23 @@ object DefaultCatalog {
             bleGlob("Meta RB Display*"),
             uuid("FEB7"),
             uuid("FEB8"),
+        ),
+    )
+
+    private fun metaQuest() = Fleet(
+        id = "fleet-meta-quest",
+        name = "Meta Quest",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Meta Quest headset. The Bluetooth name is Quest, or it starts with Quest followed by a space or a hyphen, or it starts with Meta Quest. A Meta radio that does not use that name can still match Ray-Ban / Meta glasses.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("Quest"),
+            bleGlob("Quest *"),
+            bleGlob("Quest-*"),
+            bleGlob("Meta Quest*"),
         ),
     )
 
@@ -3316,7 +3454,6 @@ object DefaultCatalog {
         builtIn = true,
         rules = listOf(
             mfg(0x0434),
-            oui("C8:FA:9C"),
             bleName("Hatch Rest"),
             bleGlob("Hatch Rest*"),
             bleGlob("Hatch Restore*"),
@@ -3913,19 +4050,6 @@ object DefaultCatalog {
             ),
             ApVendorOuis.COMPEX,
         ),
-    )
-
-    private fun novatelWireless() = Fleet(
-        id = "fleet-novatel",
-        name = "Novatel Wireless",
-        enabled = true,
-        colorIndex = Hue.LAW,
-        kind = SignatureClass.LAW_ENFORCEMENT,
-        matchAny = true,
-        notes = "Novatel Wireless / Inseego vehicle radio. The same prefix is also on some consumer MiFi hotspots.",
-        attentionNote = "Novatel Wireless / Inseego OUI 28:80:A2. Reported in public-safety vehicle AP work. Same prefix is also on some Inseego consumer MiFi radios. Pattern match, not that agency. Look with your eyes.",
-        builtIn = true,
-        rules = withWifiOuis(emptyList(), ApVendorOuis.NOVATEL),
     )
 
     private fun utilityInc() = Fleet(

@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Türkçe",
   "languageTag": "tr",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Canlı",
     "tab.pause": "Duraklat",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Güncelleme kurulamadı",
     "update.failed.body": "GitHub'daki dosya kurulamadı. Bu telefondaki uygulama aynı kaldı.",
     "update.allow.title": "Fieldwatch kurulumlarına izin ver",
-    "update.allow.body": "Android bir kez sorar. Sonra geri dön ve yeniden Şimdi güncelle'ye dokun."
+    "update.allow.body": "Android bir kez sorar. Sonra geri dön ve yeniden Şimdi güncelle'ye dokun.",
+    "class.military": "Askeri",
+    "class.twoway": "Telsizler",
+    "speech.military": "askeri",
+    "speech.twoway": "telsizler",
+    "catalog.needs.app.title": "Önce Fieldwatch'u güncelleyin",
+    "catalog.needs.app.body": "Bunun için daha yeni bir Fieldwatch gerekir. Uygulamayı güncelleyin, sonra yeniden deneyin.",
+    "ui.catalog.request": "GitHub katalog isteği"
   }
 }

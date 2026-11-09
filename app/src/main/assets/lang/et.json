@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Eesti",
   "languageTag": "et",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Otse",
     "tab.pause": "Paus",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "Uuendust ei saanud paigaldada",
     "update.failed.body": "GitHubi faili ei saanud paigaldada. Rakendus selles telefonis on muutmata.",
     "update.allow.title": "Luba Fieldwatchi paigaldused",
-    "update.allow.body": "Android küsib ühe korra. Siis tule tagasi ja puuduta uuesti Uuenda kohe."
+    "update.allow.body": "Android küsib ühe korra. Siis tule tagasi ja puuduta uuesti Uuenda kohe.",
+    "class.military": "Sõjavägi",
+    "class.twoway": "Raadiosaatjad",
+    "speech.military": "sõjavägi",
+    "speech.twoway": "raadiosaatjad",
+    "catalog.needs.app.title": "Uuenda esmalt Fieldwatch",
+    "catalog.needs.app.body": "See vajab uuemat Fieldwatchi. Uuendage rakendus ja proovige uuesti.",
+    "ui.catalog.request": "GitHubi kataloogipäring"
   }
 }

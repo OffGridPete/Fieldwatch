@@ -74,10 +74,14 @@ object SettingsExchange {
         val pack = try {
             json.decodeFromString(SettingsPack.serializer(), trimmed)
         } catch (e: Exception) {
+            e.needsNewerApp()?.let { throw it }
             throw IllegalArgumentException(
                 "Not a Fieldwatch settings pack. Export from Settings → Export settings.",
                 e,
             )
+        }
+        if (pack.formatVersion > SettingsPack.FORMAT_VERSION) {
+            throw CatalogNeedsNewerApp("formatVersion ${pack.formatVersion}")
         }
         if (pack.format == SignaturePack.FORMAT || pack.format == SignaturePack.LEGACY_FORMAT) {
             throw IllegalArgumentException(

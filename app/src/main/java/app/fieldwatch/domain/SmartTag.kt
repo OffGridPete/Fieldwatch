@@ -107,8 +107,8 @@ object SmartTag {
 
     private fun pooled(group: List<Sighting>): Sighting {
         val base = group.minBy { it.firstSeen }
-        val rssiMax = group.maxOf { it.rssiMax }
-        val rssiMin = group.minOf { it.rssiMin }
+        val rssiMax = group.map { it.rssiMax }.filter { Rssi.measured(it) }.maxOrNull() ?: base.rssiMax
+        val rssiMin = group.map { it.rssiMin }.filter { Rssi.measured(it) }.minOrNull() ?: base.rssiMin
         val trail = group
             .flatMap { it.gpsTrail }
             .distinctBy { Triple(it.at, it.lat, it.lon) }

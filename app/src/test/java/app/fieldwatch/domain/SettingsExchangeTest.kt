@@ -7,6 +7,34 @@ import org.junit.Test
 
 class SettingsExchangeTest {
     @Test
+    fun unknownClassAsksForANewerApp() {
+        val pack = SettingsExchange.pack(
+            settings = AppSettings(),
+            filter = FilterState(),
+            presets = emptyList(),
+            watchlist = emptyList(),
+            hiddenPresetIds = emptySet(),
+            appVersion = "1.1.42",
+            exportedAt = "2026-11-08T00:00:00Z",
+        )
+        val encoded = SettingsExchange.encode(pack)
+        val json = encoded.replace("\"classes\": []", "\"classes\": [\"NOT_A_CLASS\"]")
+        try {
+            SettingsExchange.parse(json)
+            throw AssertionError("expected a newer-app refusal")
+        } catch (e: CatalogNeedsNewerApp) {
+            assertEquals("NOT_A_CLASS", e.token)
+        }
+        val newer = encoded.replace("\"formatVersion\": 1", "\"formatVersion\": 2")
+        try {
+            SettingsExchange.parse(newer)
+            throw AssertionError("expected a newer format to wait for an app update")
+        } catch (e: CatalogNeedsNewerApp) {
+            assertEquals("formatVersion 2", e.token)
+        }
+    }
+
+    @Test
     fun upgradeShowsTheLiveTourOnce() {
         val saved = AppSettings(liveTourDone = true)
         val offered = saved.offerLiveTourOnce()

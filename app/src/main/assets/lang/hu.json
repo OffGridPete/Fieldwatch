@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Magyar",
   "languageTag": "hu",
-  "writtenFor": "1.1.42",
+  "writtenFor": "1.1.43",
   "strings": {
     "tab.live": "Élő",
     "tab.pause": "Szünet",
@@ -1772,6 +1772,13 @@
     "update.failed.title": "A frissítést nem sikerült telepíteni",
     "update.failed.body": "A GitHubról jövő fájlt nem sikerült telepíteni. Az alkalmazás ezen a telefonon változatlan.",
     "update.allow.title": "Telepítés engedélyezése a Fieldwatchból",
-    "update.allow.body": "Az Android egyszer kérdez. Utána gyere vissza, és koppints újra a Frissítés most gombra."
+    "update.allow.body": "Az Android egyszer kérdez. Utána gyere vissza, és koppints újra a Frissítés most gombra.",
+    "class.military": "Katonai",
+    "class.twoway": "Kézi rádiók",
+    "speech.military": "katonai",
+    "speech.twoway": "kézi rádiók",
+    "catalog.needs.app.title": "Előbb frissítse a Fieldwatchet",
+    "catalog.needs.app.body": "Ehhez újabb Fieldwatch kell. Frissítse az alkalmazást, majd próbálja újra.",
+    "ui.catalog.request": "GitHub-katalóguskérés"
   }
 }
