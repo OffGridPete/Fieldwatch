@@ -11,10 +11,10 @@ class NoticeTextTest {
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
         val note = AppUpdate.parse(file.readText())!!
         val parts = NoticeText.paragraphs(note.notes)
-        assertEquals(5, parts.size)
+        assertEquals(6, parts.size)
         assertEquals(note.notes, parts.joinToString("\n\n"))
-        assertTrue(parts[0].startsWith("Map performance"))
-        assertTrue(parts[4].startsWith("Bundled language files"))
+        assertTrue(parts[0].startsWith("A Bluetooth name of Quest"))
+        assertTrue(parts[5].startsWith("Bundled language files"))
     }
 
     @Test

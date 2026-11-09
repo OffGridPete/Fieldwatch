@@ -26,15 +26,26 @@ class AppUpdateTest {
     @Test
     fun thePublishedNotesFileIsThisVersion() {
         val published =
-            "Map performance, especially during a long sit, has been enhanced in both the Live list map, " +
-                "and the Reports path map.\n\n" +
-                "Hunt on a radio's detail page starts a new hunt. Leaving Hunt clears the walk.\n\n" +
-                "When the signal is lost, the large number reads - - and the line under it reads -- dBm · Signal Lost.\n\n" +
-                "Filters can hide randomized Bluetooth. Wi-Fi stays. The sit still keeps those radios.\n\n" +
+            "A Bluetooth name of Quest, such as Quest 3S, is Meta Quest. " +
+                "It is not labeled Ray-Ban / Meta glasses and it does not beep. " +
+                "A Meta company ID or service FEB8 without that name can still match the glasses row.\n\n" +
+                "Bluetooth channel and frequency are left blank. Android does not report the advertising channel. " +
+                "Wi-Fi channel and frequency stay. A Wi-Fi signal of 0 is treated as no reading. " +
+                "The log keeps the Bluetooth advertisement, up to 512 bytes, and manufacturer data is its own field. " +
+                "Signature candidates keep a full custom service UUID.\n\n" +
+                "Named radios is its own row on the Settings list, after Alerts. " +
+                "Signatures lists every class, including an empty one. Filters add Two-way radios and Military. " +
+                "The two-way rows match published Bluetooth names and do not beep. Military has no signatures yet. " +
+                "Catalog 101 removes the Novatel row. Address 28:80:A2 stays on Inseego.\n\n" +
+                "Microsoft Nearby Sharing names the device type and, when sharing is set to Everyone nearby, the computer name. " +
+                "Wi-Fi vendor tags name WPA, WMM, WPS, and the other standard tags. A WMM tag no longer reads as Microsoft.\n\n" +
+                "Radio detail can show GitHub catalog request on an unmatched Bluetooth radio when the phone has a network that claims internet, " +
+                "the name looks like a factory model, and that name was heard on two addresses. " +
+                "The tap opens a GitHub draft in the browser. Nothing is sent before that tap.\n\n" +
                 "Bundled language files are written for this version. " +
-                "Signal Lost and Hide randomized Bluetooth are the lines added since 1.1.41."
+                "Two-way radios, Military, and GitHub catalog request are among the lines added since 1.1.42."
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
-        assertEquals(AppUpdateNote(52, "1.1.42", published), AppUpdate.parse(file.readText()))
+        assertEquals(AppUpdateNote(53, "1.1.43", published), AppUpdate.parse(file.readText()))
     }
 
     @Test
