@@ -25,6 +25,7 @@ Fieldwatch is not on the Play Store. You install the APK yourself (sideload).
 When the phone is online, Fieldwatch can check for a newer build. Android still asks you to confirm the install. Keep this APK if you want the same build later.
 
 Copyright (c) 2026 Off Grid Pete LLC. All rights reserved.
+Fieldwatch™ is a trademark of Off Grid Pete LLC.
 
 License: MIT License. AndroidX/Kotlin remain Apache-2.0; IEEE and
 Bluetooth SIG lookup tables have their own terms (NOTICE). Full text:
@@ -442,3 +443,4 @@ RAM window and trip strategy §11.4.1).
 
 Off Grid Pete LLC    Instagram @OffGridPete    X @OGridPete
 Copyright (c) 2026 Off Grid Pete LLC. All rights reserved.
+Fieldwatch™ is a trademark of Off Grid Pete LLC.

@@ -163,4 +163,6 @@ It was Spectre through 1.2.14. I later learned that name was already in use by a
 
 Copyright (c) 2026 Off Grid Pete LLC.
 
+Fieldwatch™ is a trademark of Off Grid Pete LLC.
+
 Fieldwatch source is licensed under the [MIT License](LICENSE). AndroidX, Kotlin, and related libraries remain Apache-2.0. IEEE and Bluetooth SIG assigned-number tables in `radiodb.bin` are subject to those organizations’ terms. See [NOTICE](NOTICE).
