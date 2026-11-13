@@ -86,7 +86,7 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
     <td align="center" valign="top">
       <img src="docs/readme/tracker.png" width="200" alt="Separated tag with you warning">
       <br><strong>Tracker monitoring</strong>
-      <br>A tag that says it is away from its owner, heard for 30 minutes, with this phone's GPS at three spots at least 100 m apart. Off until you turn it on. A warning is a guide, not proof.
+      <br>Warns when a tag says it's away from its owner, your phone has heard it for 30 minutes with no gap over 20 minutes, and hears it at three places at least 100m apart.
     </td>
   </tr>
 </table>
