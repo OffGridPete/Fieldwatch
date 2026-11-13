@@ -13,7 +13,7 @@ class NoticeTextTest {
         val parts = NoticeText.paragraphs(note.notes)
         assertEquals(6, parts.size)
         assertEquals(note.notes, parts.joinToString("\n\n"))
-        assertTrue(parts[0].startsWith("A Bluetooth name of Quest"))
+        assertTrue(parts[0].startsWith("A popup lets you know"))
         assertTrue(parts[5].startsWith("Bundled language files"))
     }
 
