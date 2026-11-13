@@ -26,7 +26,7 @@ class AppUpdateTest {
     @Test
     fun thePublishedNotesFileIsThisVersion() {
         val published =
-            "A popup lets you know when a tracker is following you. " +
+            "A popup lets you know when a tracker seems to be following you. " +
                 "Tracker monitoring is in Settings, and both warnings stay off until you turn one on. " +
                 "Separated tag with you warns when a tag says it is away from its owner, " +
                 "this phone has heard it for 30 minutes with no gap over 20 minutes, " +
@@ -35,6 +35,9 @@ class AppUpdateTest {
                 "There is no beep. Open radio opens that radio. " +
                 "Dismiss keeps that warning down while the same condition continues. " +
                 "A quiet notification shows the same lines when Fieldwatch is not on screen.\n\n" +
+                "These warnings are a guide, not proof. Fieldwatch will not catch every tracker, " +
+                "and a warning does not mean someone is tracking you. " +
+                "If you think you are in danger, contact local law enforcement.\n\n" +
                 "Pebblebee also matches Bluetooth service FA25. A tag that leaves its name off still matches. " +
                 "Google Find Hub shows a 20-byte or 32-byte ephemeral id. Frame 0x40 is labeled not separated. " +
                 "A Find My advertisement of 25 bytes says it is broadcasting a public key. " +
