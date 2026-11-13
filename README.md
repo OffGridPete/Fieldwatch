@@ -89,6 +89,13 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
       <br>Cells this phone has already used there. A quiet watch is an empty report.
     </td>
   </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/readme/tracker.png" width="200" alt="Separated tag with you warning">
+      <br><strong>Tracker monitoring</strong>
+      <br>A tag that says it is away from its owner, heard for 30 minutes, with this phone's GPS at three spots at least 100 m apart. Off until you turn it on. A warning is a guide, not proof.
+    </td>
+  </tr>
 </table>
 
 One phone. Wi-Fi, Bluetooth LE, this phone's GPS, and this phone's cell connection. The map and the sit stay on the device.
