@@ -2,7 +2,7 @@ package app.fieldwatch.domain
 
 /**
  * ASTM F3411 / OpenDroneID packed messages from BLE FFFA or Wi-Fi vendor IE
- * FA:0B:BC type 0x0D. Location, Basic ID, System, Self ID. Heading follows
+ * FA:0B:BC type 0x0D. Location, Basic ID, Auth, System, Self ID. Heading follows
  * opendroneid.c (direction byte + EW flag), not the catalog *2 scale.
  */
 object OpenDroneId {
@@ -25,7 +25,7 @@ object OpenDroneId {
             if (!ie.oui.equals(WIFI_OUI, ignoreCase = true) || ie.type != WIFI_TYPE) continue
             acc = parseMessages(messagesWifi(ie.dataHex)).mergeSticky(acc)
         }
-        return acc
+        return FrenchRid.fromFacts(facts).location.mergeSticky(acc)
     }
 
     /**
@@ -116,6 +116,7 @@ object OpenDroneId {
         return when (type) {
             0 -> basicId(m)
             1 -> location(m)
+            2 -> auth(m)
             3 -> selfId(m)
             4 -> systemMsg(m)
             else -> PayloadLocation()
@@ -172,6 +173,24 @@ object OpenDroneId {
         return PayloadLocation(selfId = text.takeIf { it.isNotEmpty() })
     }
 
+    private fun auth(m: ByteArray): PayloadLocation {
+        val flags = m[1].toInt() and 0xFF
+        val type = flags shr 4
+        val page = flags and 0x0F
+        val parsed = if (page == 0) {
+            RemoteIdAuth(
+                type = type,
+                page = page,
+                lastPage = m[2].toInt() and 0xFF,
+                length = m[3].toInt() and 0xFF,
+                timestamp = u32le(m, 4),
+            )
+        } else {
+            RemoteIdAuth(type = type, page = page)
+        }
+        return PayloadLocation(auth = parsed)
+    }
+
     private fun systemMsg(m: ByteArray): PayloadLocation {
         val kind = (m[1].toInt() and 0xFF) and 0x3
         val lat = i32le(m, 2) * 1e-7
@@ -191,6 +210,14 @@ object OpenDroneId {
 
     private fun u16le(m: ByteArray, at: Int): Int =
         (m[at].toInt() and 0xFF) or ((m[at + 1].toInt() and 0xFF) shl 8)
+
+    private fun u32le(m: ByteArray, at: Int): Long {
+        val b0 = m[at].toLong() and 0xFF
+        val b1 = m[at + 1].toLong() and 0xFF
+        val b2 = m[at + 2].toLong() and 0xFF
+        val b3 = m[at + 3].toLong() and 0xFF
+        return b0 or (b1 shl 8) or (b2 shl 16) or (b3 shl 24)
+    }
 
     private fun uuid16(uuid: String): Int? {
         val hex = uuid.filter { it.isLetterOrDigit() }

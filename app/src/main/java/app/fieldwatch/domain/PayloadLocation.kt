@@ -37,6 +37,8 @@ data class PayloadLocation(
     val aircraft: String? = null,
     /** This message is a Basic ID, including one that clears [aircraft]. */
     val basicId: Boolean = false,
+    /** ASTM Auth. Null when this packet is not an Auth message. */
+    val auth: RemoteIdAuth? = null,
 ) {
     fun pin(): Pair<Double, Double>? =
         if (validCoord(lat, lon)) lat!! to lon!! else null
@@ -74,6 +76,7 @@ data class PayloadLocation(
             vspeedMps = vspeedMps?.takeIf { it.isFinite() } ?: p.vspeedMps,
             aircraft = nextAircraft,
             basicId = basicId || p.basicId,
+            auth = auth?.onto(p.auth) ?: p.auth,
         )
     }
 
@@ -128,6 +131,7 @@ data class PayloadLocation(
             speedMps = device.payloadSpeed,
             vspeedMps = device.payloadVspeed,
             aircraft = device.payloadAircraft,
+            auth = device.payloadAuth,
         )
 
         fun applySticky(device: Sighting, fleets: List<Fleet>, heard: HeardFix? = null): Sighting {
@@ -142,13 +146,19 @@ data class PayloadLocation(
                 fromBytes.opLat == null &&
                 fromBytes.opKind == null &&
                 fromBytes.opAlt == null &&
+                fromBytes.alt == null &&
+                fromBytes.headingDeg == null &&
+                fromBytes.speedMps == null &&
+                fromBytes.vspeedMps == null &&
                 fromBytes.uasId == null &&
                 !fromBytes.basicId &&
+                fromBytes.auth == null &&
                 device.payloadLat == null &&
                 device.payloadOpLat == null &&
                 device.payloadOpKind == null &&
                 device.payloadOpAlt == null &&
-                device.payloadUasId == null
+                device.payloadUasId == null &&
+                device.payloadAuth == null
             ) {
                 return withReadStamp(device, fleets, heard)
             }
@@ -165,7 +175,8 @@ data class PayloadLocation(
                 next.headingDeg == device.payloadHeading &&
                 next.speedMps == device.payloadSpeed &&
                 next.vspeedMps == device.payloadVspeed &&
-                next.aircraft == device.payloadAircraft
+                next.aircraft == device.payloadAircraft &&
+                next.auth == device.payloadAuth
             ) {
                 device
             } else {
@@ -183,6 +194,7 @@ data class PayloadLocation(
                     payloadSpeed = next.speedMps,
                     payloadVspeed = next.vspeedMps,
                     payloadAircraft = next.aircraft,
+                    payloadAuth = next.auth,
                 )
             }
             return withReadStamp(merged, fleets, heard)

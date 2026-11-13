@@ -130,6 +130,10 @@ data class SitRadio(
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val payloadOpAlt: Double? = null,
+    /** ASTM Auth kept for a saved radio page. Null on a sit saved before this field. */
+    @OptIn(ExperimentalSerializationApi::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val payloadAuth: RemoteIdAuth? = null,
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val payloadTrail: List<PayloadFix> = emptyList(),
@@ -196,6 +200,7 @@ data class SitRadio(
         payloadOpLon = payloadOpLon,
         payloadOpKind = payloadOpKind,
         payloadOpAlt = payloadOpAlt,
+        payloadAuth = payloadAuth,
         payloadTrail = payloadTrail,
         liveDecode = liveDecode,
         smartTagId = smartTagId,
@@ -237,6 +242,7 @@ data class SitRadio(
             payloadOpLon = device.payloadOpLon,
             payloadOpKind = device.payloadOpKind,
             payloadOpAlt = device.payloadOpAlt,
+            payloadAuth = device.payloadAuth,
             payloadTrail = AircraftTrail.append(emptyList(), device),
             gpsTrail = trailSample(device),
             liveDecode = device.liveDecode,
@@ -781,6 +787,7 @@ class SitSession(
             payloadOpLon = next.payloadOpLon ?: old.payloadOpLon,
             payloadOpKind = next.payloadOpKind ?: old.payloadOpKind,
             payloadOpAlt = next.payloadOpAlt ?: old.payloadOpAlt,
+            payloadAuth = next.payloadAuth ?: old.payloadAuth,
             payloadTrail = AircraftTrail.append(old.payloadTrail, next),
             gpsTrail = trail,
             liveDecode = next.liveDecode.ifEmpty { old.liveDecode },

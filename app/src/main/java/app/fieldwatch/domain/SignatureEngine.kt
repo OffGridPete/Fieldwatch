@@ -36,6 +36,7 @@ class SignatureEngine {
             dropMetaGlassesWhenQuest(hits)
             dropAirTagsWhenAppleDevice(hits, device)
             dropCiscoWhenMeraki(hits)
+            dropAmazonWhenSidewalk(hits)
             byKey[device.key] = hits
         }
         applyClusters(devices, compiled, byKey, now)
@@ -294,6 +295,11 @@ class SignatureEngine {
     /** Osmo cameras and DJI Power stations share company 0x08AA. Prefer those rows over DJI. */
     private fun dropDjiWhenSpecificRow(hits: MutableSet<String>) {
         if ("fleet-osmo" in hits || "fleet-dji-power" in hits) hits.remove("fleet-dji")
+    }
+
+    /** Sidewalk uses Amazon's company ID plus the AMA UUID. Prefer that row over Amazon. */
+    private fun dropAmazonWhenSidewalk(hits: MutableSet<String>) {
+        if ("fleet-sidewalk" in hits) hits.remove("fleet-amazon")
     }
 
     /** A Polar H10 advertises GoPro's heart-rate service FEA5. The strap stays Polar. */

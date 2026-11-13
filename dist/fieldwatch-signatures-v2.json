@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 103,
+    "catalogVersion": 111,
     "fleets": [
         {
             "id": "fleet-actiontec",
@@ -851,7 +851,40 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Amazon Echo, Fire, or Kindle when it advertises. Not every AmazonBasics gadget.",
+            "notes": "Amazon Echo, Fire, or Kindle when it advertises. Not every AmazonBasics gadget. Amazon Sidewalk (UUID 03FE plus this company ID) is the Sidewalk row, not this one.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-sidewalk",
+            "name": "Amazon Sidewalk",
+            "enabled": true,
+            "matchAny": false,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "03FE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 369,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Amazon Sidewalk endpoint or accessory using the AMA UUID and Amazon's company ID. It can take part in Amazon's crowdsourced network. Not a proof of which Amazon product, and not by itself an Echo.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -9274,6 +9307,31 @@
             "attentionNote": "Bruce ESP32 pentest firmware default AP (BruceNet). Same boards are DIY. Evil-portal SSIDs look like ordinary Wi-Fi and will not hit this row. Not proof of an attack. Look with your eyes.",
             "builtIn": true,
             "kind": "HACKING"
+        },
+        {
+            "id": "fleet-bthome",
+            "name": "BTHome",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FCD2",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "BTHome v2 sensor or binary sensor (Shelly and many ESPHome devices). Measurements are whatever the device puts in the advertisement. Encrypted packets only show that they are encrypted.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-buffalo",
@@ -23653,6 +23711,31 @@
             "kind": "GLASSES"
         },
         {
+            "id": "fleet-exposure-notification",
+            "name": "Exposure Notification",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 4,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FD6F",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Apple/Google Exposure Notification (COVID-era contact tracing). The identifier rotates and the metadata is encrypted. This is not a finder tag and not a name for the phone.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "PHONE"
+        },
+        {
             "id": "fleet-elrs",
             "name": "ExpressLRS",
             "enabled": true,
@@ -25525,7 +25608,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). Nearby vs separated frames. Separated mode can hold a MAC about a day. Addresses otherwise rotate. Pattern match, not that bag.",
+            "notes": "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). Normal mode versus separated frames. Separated mode can hold a MAC about a day. Normal mode does not say the tag is with its owner. Addresses otherwise rotate. Pattern match, not that bag.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "FINDER",
@@ -25548,7 +25631,7 @@
                         "modulo": null,
                         "unit": null,
                         "enum": {
-                            "64": "nearby",
+                            "64": "not separated",
                             "65": "separated"
                         },
                         "live": true,
@@ -25557,7 +25640,7 @@
                         ],
                         "enumNotes": {
                             "65": "Separated from its owner. The address can hold still for about a day.",
-                            "64": "Nearby its owner. With you the whole sit, this is often your own tag. First heard after the sit started, it is more often someone who joined with their own keys."
+                            "64": "Normal mode, not flagged separated. The address keeps rotating. This frame does not say the tag is with its owner."
                         },
                         "when": null
                     },
@@ -25575,7 +25658,187 @@
                         "modulo": null,
                         "unit": null,
                         "enum": null,
-                        "when": null
+                        "when": {
+                            "offset": 0,
+                            "length": 21,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "eid",
+                        "label": "Ephemeral ID",
+                        "offset": 1,
+                        "length": 20,
+                        "type": "hex",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 22,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "eid",
+                        "label": "Ephemeral ID",
+                        "offset": 1,
+                        "length": 32,
+                        "type": "hex",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 33,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "eid",
+                        "label": "Ephemeral ID",
+                        "offset": 1,
+                        "length": 32,
+                        "type": "hex",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": null,
+                        "when": {
+                            "offset": 0,
+                            "length": 34,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "hashed_flags",
+                        "label": "Hashed flags",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "64": "not present",
+                            "65": "not present"
+                        },
+                        "enumNotes": {
+                            "64": "The tag left this byte out.",
+                            "65": "The tag left this byte out."
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 21,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "hashed_flags",
+                        "label": "Hashed flags",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "64": "present",
+                            "65": "present"
+                        },
+                        "enumNotes": {
+                            "64": "Encrypted. This line only says the byte is in the advertisement.",
+                            "65": "Encrypted. This line only says the byte is in the advertisement."
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 22,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "hashed_flags",
+                        "label": "Hashed flags",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "64": "not present",
+                            "65": "not present"
+                        },
+                        "enumNotes": {
+                            "64": "The tag left this byte out.",
+                            "65": "The tag left this byte out."
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 33,
+                            "op": "len",
+                            "valueHex": ""
+                        }
+                    },
+                    {
+                        "id": "hashed_flags",
+                        "label": "Hashed flags",
+                        "offset": 0,
+                        "length": null,
+                        "type": "u8",
+                        "endian": "le",
+                        "bitOffset": null,
+                        "bitWidth": null,
+                        "scale": null,
+                        "offsetAdd": null,
+                        "modulo": null,
+                        "unit": null,
+                        "enum": {
+                            "64": "present",
+                            "65": "present"
+                        },
+                        "enumNotes": {
+                            "64": "Encrypted. This line only says the byte is in the advertisement.",
+                            "65": "Encrypted. This line only says the byte is in the advertisement."
+                        },
+                        "when": {
+                            "offset": 0,
+                            "length": 34,
+                            "op": "len",
+                            "valueHex": ""
+                        }
                     }
                 ]
             }
@@ -27246,6 +27509,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
+        },
+        {
+            "id": "fleet-homekit",
+            "name": "HomeKit",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 76,
+                    "dataPrefixHex": "06",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "HomeKit accessory advertising over Bluetooth. The category and the paired line are what the accessory broadcasts. Not an iPhone and not an AirTag.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-honda",
@@ -46323,6 +46611,31 @@
             "kind": "LOCK"
         },
         {
+            "id": "fleet-matter",
+            "name": "Matter",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FFF6",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Matter device advertising over Bluetooth, usually while it is in setup. Vendor and product IDs are what the device sends. They are not a proof of the retail name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-meraki",
             "name": "Meraki",
             "enabled": true,
@@ -49920,13 +50233,21 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FA25",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Pebblebee or Motorola moto tag item finder. A tag you clip to keys or a bag.",
+            "notes": "Pebblebee or Motorola moto tag item finder. A tag you clip to keys or a bag. A tag that leaves its name off still matches Bluetooth service FA25. That service does not say whether the tag is away from its owner. Find Hub and DULT stay on their own rows.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "FINDER"
@@ -51019,7 +51340,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the plate says EU. The French Direct Remote ID vendor IE labels this row too. That plate does not fill position or the operator pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+            "notes": "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the plate says EU. The French Direct Remote ID plate can fill aircraft position, altitude, speed, course, and the takeoff pin. Height above takeoff is not the aircraft pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE",

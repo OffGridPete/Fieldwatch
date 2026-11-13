@@ -42,6 +42,23 @@ class MainActivity : ComponentActivity() {
         showApp()
     }
 
+    override fun onStart() {
+        super.onStart()
+        val app = application as FieldwatchApp
+        app.uiStarted()
+        if (app.pendingCrash == null) app.alerter.clearTrackerNote()
+    }
+
+    override fun onStop() {
+        val app = application as FieldwatchApp
+        val changing = isChangingConfigurations
+        app.uiStopped()
+        if (!changing && app.pendingCrash == null) {
+            app.syncTrackerShade(app.tracker.notice.value)
+        }
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         val app = application as FieldwatchApp
@@ -56,7 +73,10 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         if ((application as FieldwatchApp).pendingCrash != null) return
-        intent.getStringExtra(Alerter.EXTRA_DEVICE_KEY)?.let { vm.select(it) }
+        intent.getStringExtra(Alerter.EXTRA_DEVICE_KEY)?.let {
+            vm.select(it)
+            vm.seenTracker(it)
+        }
     }
 
     private fun showCrashNote(app: FieldwatchApp) {
@@ -88,7 +108,10 @@ class MainActivity : ComponentActivity() {
         if (RadioPermissions.granted(this)) {
             lifecycleScope.launch { vm.startScan() }
         }
-        intent?.getStringExtra(Alerter.EXTRA_DEVICE_KEY)?.let { vm.select(it) }
+        intent?.getStringExtra(Alerter.EXTRA_DEVICE_KEY)?.let {
+            vm.select(it)
+            vm.seenTracker(it)
+        }
     }
 
     private fun copyNote(text: String) {

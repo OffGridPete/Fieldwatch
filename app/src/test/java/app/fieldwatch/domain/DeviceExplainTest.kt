@@ -93,6 +93,38 @@ class DeviceExplainTest {
     }
 
     @Test
+    fun vehicleVenueStaysUnderAStrongerSignature() {
+        val device = wifi("00:00:00:11:22:33", "PS-CRADLEPOINT").copy(
+            facts = RadioFacts(
+                interworking = Interworking(
+                    accessType = 3,
+                    internet = true,
+                    emergencyReachable = false,
+                    venueGroup = 10,
+                    venueType = 1,
+                    hessid = "02:00:00:00:00:01",
+                ),
+            ),
+        )
+        val guess = DeviceExplain.guess(device, listOf("Cradlepoint"))
+        assertTrue(guess.headline, guess.headline.contains("Cradlepoint"))
+        assertFalse(guess.headline, guess.headline.contains("It says it is in a vehicle"))
+        assertTrue(
+            guess.because,
+            guess.because.contains("It says it is in a vehicle (Automobile or Truck)."),
+        )
+        val text = DeviceDetailText.build(device, listOf("Cradlepoint"), now = 1L, demo = true)
+        assertTrue(text, text.contains("What the access point says about itself"))
+        assertTrue(text, text.contains("The access point sets these. They are not checked."))
+        assertTrue(text, text.contains("Network type: Free public network"))
+        assertTrue(text, text.contains("Internet: Yes"))
+        assertTrue(text, text.contains("Venue: Vehicular · Automobile or Truck"))
+        assertTrue(text, text.contains("Hotspot ID: 02:00:00:**:**:**"))
+        assertFalse(text, text.contains("02:00:00:00:00:01"))
+        assertFalse(text, text.contains("Can reach emergency services"))
+    }
+
+    @Test
     fun unknownSignatureNameIsNotAProductGuess() {
         val device = wifi("02:11:22:33:44:56", "DIRECT-ab-TV")
         val guess = DeviceExplain.guess(device, listOf("Unknown Signature"))

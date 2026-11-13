@@ -114,9 +114,11 @@ object DebriefPdf {
         onProgress: (Float) -> Unit = {},
     ) {
         file.parentFile?.mkdirs()
-        onProgress(0.08f)
-        val blocks = layoutBlocks(doc, tiles, extraTiles)
-        onProgress(0.18f)
+        onProgress(0.02f)
+        val blocks = layoutBlocks(doc, tiles, extraTiles) { fraction ->
+            onProgress(0.02f + 0.66f * fraction)
+        }
+        onProgress(0.70f)
         val pages = paginate(blocks)
         val pdf = PdfDocument()
         val n = pages.size.coerceAtLeast(1)
@@ -132,9 +134,9 @@ object DebriefPdf {
             }
             stampChrome(canvas, i + 1, pages.size, doc)
             pdf.finishPage(page)
-            onProgress(0.18f + 0.72f * (i + 1).toFloat() / n)
+            onProgress(0.70f + 0.26f * (i + 1).toFloat() / n)
         }
-        onProgress(0.94f)
+        onProgress(0.97f)
         file.outputStream().use { pdf.writeTo(it) }
         pdf.close()
         onProgress(1f)
@@ -150,6 +152,7 @@ object DebriefPdf {
         doc: DebriefDoc,
         tiles: List<PathTiles.Tile>,
         extraTiles: List<List<PathTiles.Tile>>,
+        onProgress: (Float) -> Unit = {},
     ): List<Block> {
         val out = ArrayList<Block>()
         out += titleBlock(doc.pdfTitle)
@@ -178,6 +181,22 @@ object DebriefPdf {
             out += pathFigureBlock(extra, extraTiles.getOrElse(index) { emptyList() })
             out += spacer(10f)
         }
+        var expected = 0
+        for (section in doc.sections) {
+            if (section.body.isNotBlank()) expected += textLines(section.body)
+            if (section.after.isNotBlank()) expected += textLines(section.after)
+        }
+        var done = 0
+        var lastReported = 0f
+        fun advance(n: Int) {
+            if (n <= 0) return
+            done += n
+            val fraction = if (expected <= 0) 1f else done.toFloat() / expected.toFloat()
+            if (fraction >= lastReported + 0.01f || done >= expected) {
+                lastReported = fraction
+                onProgress(fraction.coerceIn(0f, 1f))
+            }
+        }
         for (section in doc.sections) {
             if (section.title == LanguageText.text("chrome.extra.attention") && doc.extraAttention.isNotEmpty()) {
                 out += sectionHead(section.number, section.title, alert = true)
@@ -186,6 +205,9 @@ object DebriefPdf {
                     out += attentionNoteBlock(hit)
                     out += spacer(8f)
                 }
+                val skip = (if (section.body.isNotBlank()) textLines(section.body) else 0) +
+                    (if (section.after.isNotBlank()) textLines(section.after) else 0)
+                advance(skip)
                 continue
             }
             out += sectionHead(section.number, section.title, section.alert)
@@ -194,16 +216,25 @@ object DebriefPdf {
                 section.body,
                 section.alert,
                 cameraRows = section.title == LanguageText.text("ui.cameras.on.path"),
+                onLine = { advance(1) },
             )
             section.chart?.takeIf { it.rows.isNotEmpty() }?.let { chart ->
                 chartBlocks(chart).forEach { out += it }
                 out += spacer(6f)
             }
-            appendProse(out, section.after, section.alert)
+            appendProse(out, section.after, section.alert, onLine = { advance(1) })
             out += spacer(8f)
         }
         out += takeawayBlock(doc.takeaway)
+        onProgress(1f)
         return out
+    }
+
+    private fun textLines(text: String): Int {
+        if (text.isEmpty()) return 0
+        var n = 1
+        for (c in text) if (c == '\n') n++
+        return n
     }
 
     private fun appendProse(
@@ -211,6 +242,7 @@ object DebriefPdf {
         text: String,
         alert: Boolean,
         cameraRows: Boolean = false,
+        onLine: () -> Unit = {},
     ) {
         if (text.isBlank()) return
         val paras = text.split('\n')
@@ -251,6 +283,7 @@ object DebriefPdf {
                     out += bodyBlock(sl, alert)
                 }
             }
+            onLine()
         }
     }
 

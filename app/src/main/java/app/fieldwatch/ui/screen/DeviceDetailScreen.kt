@@ -56,11 +56,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.CodDecoder
 import app.fieldwatch.domain.FamilyVerdict
+import app.fieldwatch.domain.FrenchRid
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.MacUtil
-import app.fieldwatch.domain.OperatorLoc
 import app.fieldwatch.domain.PayloadLocation
 import app.fieldwatch.domain.DeviceExplain
+import app.fieldwatch.domain.ExposureNotification
 import app.fieldwatch.domain.Palette
 import app.fieldwatch.domain.RadioDb
 import app.fieldwatch.domain.RadioBookmarks
@@ -534,6 +535,20 @@ fun DeviceDetailScreen(
                         Meta(LanguageText.text("ui.capability.string"), it, mono = true)
                     }
                 }
+                facts.interworking?.lines(demoMode)?.takeIf { it.isNotEmpty() }?.let { rows ->
+                    StickyHeight(device.key to "ap-says") {
+                        Section(LanguageText.text("ui.ap.says"))
+                        Text(
+                            LanguageText.text("ui.ap.says.note"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        val hotspot = LanguageText.text("ui.ap.hessid")
+                        rows.forEach { (label, value) ->
+                            Meta(label, value, mono = label == hotspot)
+                        }
+                    }
+                }
             }
 
             if (device.serviceUuids.isNotEmpty() || facts.serviceData.isNotEmpty()) {
@@ -549,8 +564,11 @@ fun DeviceDetailScreen(
                         )
                     }
                     facts.serviceData.forEach { sd ->
-                        val decoded = app.fieldwatch.domain.AdvPayloadDecoder.decodeService(sd)
-                        decoded.forEach { field -> Meta(field.label, field.value) }
+                        if (!ExposureNotification.matches(sd.uuid)) {
+                            app.fieldwatch.domain.AdvPayloadDecoder.decodeService(sd).forEach { field ->
+                                Meta(field.label, field.value)
+                            }
+                        }
                         if (SmartTag.isService(sd.uuid)) {
                             SmartTag.parse(sd.dataHex)?.let { tag ->
                                 tag.state?.let { Meta(LanguageText.text("device.state"), it) }
@@ -578,6 +596,118 @@ fun DeviceDetailScreen(
             if (device.kind == RadioKind.BLE || device.kind == RadioKind.WIFI) {
                 val aircraft = device.payloadAircraft?.trim().orEmpty()
                 if (aircraft.isNotEmpty()) Meta(LanguageText.text("ui.aircraft.label"), aircraft)
+                device.payloadAuth?.let { auth ->
+                    Section(LanguageText.text("rid.auth.type"))
+                    Text(auth.typeName(), style = MaterialTheme.typography.bodyMedium)
+                    Meta(LanguageText.text("rid.auth.page"), auth.pageValue())
+                    auth.timeText()?.let { Meta(LanguageText.text("rid.auth.time"), it) }
+                    auth.dataLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    auth.pastLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    auth.note()?.let { note ->
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                val french = FrenchRid.fromFacts(device.facts)
+                if (french.present) {
+                    Section(LanguageText.text("rid.french.plate"))
+                    french.lines(demoMode).forEach { (label, value) -> Meta(label, value) }
+                    french.note()?.let { note ->
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                facts.homekit?.let { hk ->
+                    Section("HomeKit")
+                    hk.rows(demoMode).forEach { (label, value) -> Meta(label, value) }
+                    hk.setupLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(
+                        hk.note(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                facts.matter?.let { matter ->
+                    Section(LanguageText.text("matter.mode"))
+                    Text(matter.headline(), style = MaterialTheme.typography.bodyMedium)
+                    matter.rows(demoMode).forEach { (label, value) -> Meta(label, value, mono = true) }
+                    matter.flagLines().forEach { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    matter.note()?.let { note ->
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                facts.sidewalk?.let { sidewalk ->
+                    Section(LanguageText.text("sw.beacon"))
+                    Text(sidewalk.headline(), style = MaterialTheme.typography.bodyMedium)
+                    Text(sidewalk.modeLine(), style = MaterialTheme.typography.bodyMedium)
+                    sidewalk.batteryRow().let { (label, value) -> Meta(label, value) }
+                    sidewalk.protocolLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(
+                        sidewalk.note(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    sidewalk.registrationNote()?.let { note ->
+                        Text(
+                            note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                facts.bthome?.let { bthome ->
+                    Section("BTHome")
+                    bthome.versionRow().let { (label, value) -> Meta(label, value) }
+                    bthome.triggerLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    bthome.encryptedLine()?.let { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    bthome.objectRows(demoMode).forEach { (label, value) -> Meta(label, value) }
+                    bthome.commandLines().forEach { line ->
+                        Text(line, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(
+                        bthome.note(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                facts.serviceData.forEach { sd ->
+                    ExposureNotification.label(sd)?.let { label ->
+                        Section(LanguageText.text("en.label"))
+                        label.rows.forEach { (name, value) -> Meta(name, value) }
+                        label.fallback?.let { line ->
+                            Text(line, style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Text(
+                            LanguageText.text("en.note"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 val phoneLat = vm.ui.value.phoneLat
                 val phoneLon = vm.ui.value.phoneLon
                 if (PayloadLocation.validCoord(device.payloadLat, device.payloadLon)) {
@@ -593,7 +723,7 @@ fun DeviceDetailScreen(
                 }
                 if (PayloadLocation.validCoord(device.payloadOpLat, device.payloadOpLon)) {
                     Geo.screenCoord(device.payloadOpLat, device.payloadOpLon, demoMode)?.let {
-                        Meta(OperatorLoc.label(device.payloadOpKind), it)
+                        Meta(french.operatorLabel(device.payloadOpKind), it)
                     }
                     Geo.screenGrid(device.payloadOpLat, device.payloadOpLon, demoMode)?.let {
                         Meta(LanguageText.text("ui.grid"), it)

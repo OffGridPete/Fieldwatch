@@ -6,9 +6,13 @@ import android.bluetooth.le.ScanRecord
 import android.bluetooth.le.ScanResult
 import android.os.Build
 import android.util.SparseArray
+import app.fieldwatch.domain.AdvPayloadDecoder
+import app.fieldwatch.domain.Bthome
+import app.fieldwatch.domain.Matter
 import app.fieldwatch.domain.MfgRecord
 import app.fieldwatch.domain.RadioFacts
 import app.fieldwatch.domain.ServiceDataRecord
+import app.fieldwatch.domain.Sidewalk
 import app.fieldwatch.domain.toHexUpper
 import java.util.UUID
 
@@ -42,6 +46,10 @@ object BleAdParser {
             deviceClass = deviceClass,
             mfgRecords = mfg,
             serviceData = serviceData,
+            homekit = AdvPayloadDecoder.homekitFacts(mfg),
+            matter = Matter.read(serviceData),
+            sidewalk = Sidewalk.read(mfg, parsed.uuids),
+            bthome = Bthome.read(serviceData),
         )
     }
 

@@ -219,6 +219,49 @@ class PlaceMemoryTest {
     }
 
     @Test
+    fun trackerLatchSeedsAnOldFileAndAKnownEmptySetCanWarnAgain() {
+        val file = File.createTempFile("places-tracker", ".json")
+        try {
+            val now = System.currentTimeMillis()
+            val mac = "AA:BB:CC:DD:EE:01"
+            val record = placeRecord(mac, now)
+            file.writeText("""{"format":"fieldwatch-places","records":[$record,${placeRecord("rid:plane", now, id = "rid:plane")}]}""")
+            val seeded = PlaceStore(file)
+            seeded.load()
+            val device = tile().copy(key = "BLE:$mac", mac = mac, rssi = -40)
+            assertTrue(seeded.trackerPlaces(armed = true, now, listOf(device)).isEmpty())
+            seeded.flush()
+            val saved = file.readText()
+            assertTrue(saved.contains("\"trackerSeenKnown\":true"))
+            assertTrue(saved.contains("\"trackerSeen\":[\"ble:$mac\"]"))
+            assertFalse(saved.contains("\"trackerSeen\":[\"rid:"))
+            val again = PlaceStore(file)
+            again.load()
+            assertTrue(again.trackerPlaces(armed = true, now, listOf(device)).isEmpty())
+
+            file.writeText("""{"format":"fieldwatch-places","trackerSeenKnown":true,"records":[$record]}""")
+            val open = PlaceStore(file)
+            open.load()
+            val fresh = open.trackerPlaces(armed = true, now, listOf(device))
+            assertEquals(1, fresh.size)
+            assertEquals("places:ble:$mac", fresh[0].id)
+            open.flush()
+            val quiet = file.readText()
+            assertTrue(quiet.contains("\"trackerSeenKnown\":true"))
+            val held = PlaceStore(file)
+            held.load()
+            assertTrue(held.trackerPlaces(armed = true, now, listOf(device)).isEmpty())
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun placeRecord(mac: String, now: Long, id: String = "ble:$mac"): String {
+        val early = now - 3_600_000L
+        return """{"id":"$id","deviceKey":"BLE:$mac","label":"Tile","lastHeardAt":$now,"places":[{"lat":38.0,"lon":-77.0,"firstAt":$early,"lastAt":$early,"count":2},{"lat":38.02,"lon":-77.0,"firstAt":$now,"lastAt":$now,"count":2}]}"""
+    }
+
+    @Test
     fun placeLinesStayAfterTheAdvertisementIsGone() {
         val file = File.createTempFile("places", ".json")
         try {

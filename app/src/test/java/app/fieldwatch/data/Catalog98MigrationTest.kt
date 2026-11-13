@@ -3,11 +3,13 @@ package app.fieldwatch.data
 import app.fieldwatch.domain.DefaultCatalog
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MatchRule
+import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.RuleKind
 import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.WatchTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -275,5 +277,243 @@ class Catalog103MigrationTest {
         assertEquals(listOf("Mine"), quest.rules.map { it.text })
         assertEquals("Edited", fleets.single { it.id == "fleet-meta-glasses" }.notes)
         assertEquals(2, fleets.size)
+    }
+}
+
+class Catalog104MigrationTest {
+    @Test
+    fun builtInFindHubGainsTheNormalModeWording() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val old = stock.getValue("fleet-find-hub").copy(
+            notes = "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, " +
+                "and other partners). Nearby vs separated frames. Separated mode can hold a MAC " +
+                "about a day. Addresses otherwise rotate. Pattern match, not that bag.",
+            decode = stock.getValue("fleet-find-hub").decode?.let { decode ->
+                decode.copy(
+                    fields = decode.fields.map { field ->
+                        if (field.id != "mode") field
+                        else field.copy(
+                            enumLabels = field.enumLabels?.plus("64" to "nearby"),
+                            enumNotes = field.enumNotes?.plus("64" to "Nearby its owner."),
+                        )
+                    },
+                )
+            },
+        )
+        val fleets = catalog104Migrate(listOf(old), stock)
+        val hub = fleets.single()
+        val mode = hub.decode?.fields?.single { it.id == "mode" }
+        assertEquals("not separated", mode?.enumLabels?.get("64"))
+        assertEquals("separated", mode?.enumLabels?.get("65"))
+        assertTrue(mode?.enumNotes?.get("64")?.contains("not flagged separated") == true)
+        assertEquals(stock.getValue("fleet-find-hub").notes, hub.notes)
+    }
+
+    @Test
+    fun editedFindHubNoteStaysAndTheChipStillUpdates() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val edited = stock.getValue("fleet-find-hub").copy(notes = "Edited")
+        val custom = stock.getValue("fleet-find-hub").copy(builtIn = false, notes = "Mine", decode = null)
+        val fleets = catalog104Migrate(listOf(edited, custom), stock)
+        assertEquals("Edited", fleets.single { it.builtIn }.notes)
+        assertEquals("not separated", fleets.single { it.builtIn }.decode?.fields?.single { it.id == "mode" }?.enumLabels?.get("64"))
+        assertEquals("Mine", fleets.single { !it.builtIn }.notes)
+        assertNull(fleets.single { !it.builtIn }.decode)
+    }
+}
+
+class Catalog105MigrationTest {
+    @Test
+    fun builtInFindHubGainsBothKeyLengths() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val old = stock.getValue("fleet-find-hub").let { fleet ->
+            val decode = fleet.decode ?: error("find hub decode")
+            fleet.copy(decode = decode.copy(fields = decode.fields.filter { it.id == "mode" }))
+        }
+        val hub = catalog105Migrate(listOf(old), stock).single()
+        val lengths = hub.decode?.fields?.filter { it.id == "eid" }?.map { it.length }?.toSet()
+        assertEquals(setOf(20, 32), lengths)
+        assertTrue(hub.decode?.fields?.any { it.id == "hashed_flags" } == true)
+        assertEquals(old.notes, hub.notes)
+    }
+
+    @Test
+    fun customFindHubDecodeStays() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val custom = stock.getValue("fleet-find-hub").copy(
+            builtIn = false,
+            decode = stock.getValue("fleet-find-hub").decode?.copy(fields = emptyList()),
+        )
+        val kept = catalog105Migrate(listOf(custom), stock).single()
+        assertTrue(kept.decode?.fields?.isEmpty() == true)
+    }
+}
+
+class Catalog106MigrationTest {
+    @Test
+    fun builtInRemoteIdNoteSaysTheFrenchPlateCanFillPosition() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 106)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val old = stock.getValue("fleet-remote-id").copy(notes = OLD)
+        val other = stock.getValue("fleet-dji")
+        val fleets = catalog106Migrate(listOf(old, other), stock)
+        val remote = fleets.single { it.id == "fleet-remote-id" }
+        assertEquals(stock.getValue("fleet-remote-id").notes, remote.notes)
+        assertFalse(remote.notes.contains("does not fill position"))
+        assertTrue(remote.notes.contains("takeoff pin"))
+        assertEquals(old.rules, remote.rules)
+        assertEquals(other.notes, fleets.single { it.id == "fleet-dji" }.notes)
+    }
+
+    @Test
+    fun editedRemoteIdNoteAndACustomCopyStay() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val edited = stock.getValue("fleet-remote-id").copy(notes = "Edited")
+        val custom = stock.getValue("fleet-remote-id").copy(builtIn = false, notes = OLD)
+        val fleets = catalog106Migrate(listOf(edited, custom), stock)
+        assertEquals("Edited", fleets.single { it.builtIn }.notes)
+        assertEquals(OLD, fleets.single { !it.builtIn }.notes)
+    }
+
+    private companion object {
+        const val OLD =
+            "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, " +
+                "heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the " +
+                "plate says EU. The French Direct Remote ID vendor IE labels this row too. That plate does not fill " +
+                "position or the operator pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android."
+    }
+}
+
+class Catalog107MigrationTest {
+    @Test
+    fun addsHomeKitWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 107)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog107Migrate(listOf(other), stock)
+        val home = added.single { it.id == "fleet-homekit" }
+        assertTrue(home.builtIn)
+        assertEquals("HomeKit", home.name)
+        assertTrue(home.attentionNote.isBlank())
+        assertEquals(listOf("fleet-dji", "fleet-homekit"), added.map { it.id })
+
+        val custom = home.copy(builtIn = false, name = "Mine")
+        val kept = catalog107Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-homekit" }.name)
+        assertFalse(kept.single { it.id == "fleet-homekit" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-homekit" })
+    }
+}
+
+class Catalog108MigrationTest {
+    @Test
+    fun addsMatterWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 108)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog108Migrate(listOf(other), stock)
+        val matter = added.single { it.id == "fleet-matter" }
+        assertTrue(matter.builtIn)
+        assertEquals("Matter", matter.name)
+        assertTrue(matter.attentionNote.isBlank())
+        assertNull(matter.decode)
+        assertEquals(listOf("fleet-dji", "fleet-matter"), added.map { it.id })
+
+        val custom = matter.copy(builtIn = false, name = "Mine")
+        val kept = catalog108Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-matter" }.name)
+        assertFalse(kept.single { it.id == "fleet-matter" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-matter" })
+    }
+}
+
+class Catalog109MigrationTest {
+    @Test
+    fun addsSidewalkWhenMissingAndKeepsAnEditedAmazonNote() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 109)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog109Migrate(listOf(other), stock)
+        val sidewalk = added.single { it.id == "fleet-sidewalk" }
+        assertTrue(sidewalk.builtIn)
+        assertEquals("Amazon Sidewalk", sidewalk.name)
+        assertEquals(SignatureClass.HOME, sidewalk.kind)
+        assertFalse(sidewalk.matchAny)
+        assertTrue(sidewalk.attentionNote.isBlank())
+        assertNull(sidewalk.decode)
+        assertEquals(2, sidewalk.rules.size)
+        assertEquals(listOf("fleet-sidewalk", "fleet-dji"), added.map { it.id })
+
+        val custom = sidewalk.copy(builtIn = false, name = "Mine")
+        val kept = catalog109Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-sidewalk" }.name)
+        assertFalse(kept.single { it.id == "fleet-sidewalk" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-sidewalk" })
+
+        val amazon = stock.getValue("fleet-amazon").copy(notes = AMAZON_NOTES_BEFORE_V109)
+        val noted = catalog109Migrate(listOf(amazon), stock).single { it.id == "fleet-amazon" }
+        assertTrue(noted.notes.endsWith("is the Sidewalk row, not this one."))
+        assertTrue(noted.notes.startsWith(AMAZON_NOTES_BEFORE_V109))
+
+        val edited = amazon.copy(notes = "Mine")
+        val left = catalog109Migrate(listOf(edited), stock).single { it.id == "fleet-amazon" }
+        assertEquals("Mine", left.notes)
+
+        val customAmazon = amazon.copy(builtIn = false)
+        val customLeft = catalog109Migrate(listOf(customAmazon), stock).single { it.id == "fleet-amazon" }
+        assertEquals(AMAZON_NOTES_BEFORE_V109, customLeft.notes)
+        assertFalse(customLeft.builtIn)
+    }
+}
+
+class Catalog110MigrationTest {
+    @Test
+    fun addsBthomeWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 110)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog110Migrate(listOf(other), stock)
+        val row = added.single { it.id == "fleet-bthome" }
+        assertTrue(row.builtIn)
+        assertEquals("BTHome", row.name)
+        assertEquals(SignatureClass.HOME, row.kind)
+        assertTrue(row.matchAny)
+        assertTrue(row.attentionNote.isBlank())
+        assertNull(row.decode)
+        assertEquals(RadioKind.BLE, row.rules.single().radio)
+        assertEquals("FCD2", row.rules.single().text)
+        assertEquals(listOf("fleet-bthome", "fleet-dji"), added.map { it.id })
+
+        val custom = row.copy(builtIn = false, name = "Mine")
+        val kept = catalog110Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-bthome" }.name)
+        assertFalse(kept.single { it.id == "fleet-bthome" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-bthome" })
+    }
+}
+
+class Catalog111MigrationTest {
+    @Test
+    fun addsExposureNotificationWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 111)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog111Migrate(listOf(other), stock)
+        val row = added.single { it.id == "fleet-exposure-notification" }
+        assertTrue(row.builtIn)
+        assertEquals("Exposure Notification", row.name)
+        assertEquals(SignatureClass.PHONE, row.kind)
+        assertTrue(row.matchAny)
+        assertTrue(row.attentionNote.isBlank())
+        assertNull(row.decode)
+        assertEquals(RadioKind.BLE, row.rules.single().radio)
+        assertEquals("FD6F", row.rules.single().text)
+        assertEquals(listOf("fleet-dji", "fleet-exposure-notification"), added.map { it.id })
+
+        val custom = row.copy(builtIn = false, name = "Mine")
+        val kept = catalog111Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-exposure-notification" }.name)
+        assertFalse(kept.single { it.id == "fleet-exposure-notification" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-exposure-notification" })
     }
 }

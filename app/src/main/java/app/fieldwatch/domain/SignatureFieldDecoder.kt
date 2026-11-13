@@ -403,6 +403,21 @@ fun Sighting.withLiveDecode(fleets: List<Fleet>): Sighting {
     chips += SignatureFieldDecoder.liveChips(this, fleets)
     val state = tag?.state
     if (state != null) chips += LiveDecodeChip(state, emphasis = tag.separated)
+    val hk = facts.homekit
+    if (hk != null && !hk.paired) {
+        chips += LiveDecodeChip(
+            LanguageText.text("hk.chip", mapOf("category" to hk.categoryName)),
+            emphasis = true,
+        )
+    }
+    if (facts.matter?.commissionable == true) {
+        chips += LiveDecodeChip(LanguageText.text("matter.chip"), emphasis = true)
+    }
+    if (facts.sidewalk?.mode == SidewalkMode.REGISTRATION) {
+        chips += LiveDecodeChip(LanguageText.text("sw.chip"), emphasis = true)
+    }
+    facts.bthome?.chip()?.let { chips += it }
+    payloadAuth?.chipLabel()?.let { chips += LiveDecodeChip(it, emphasis = false) }
     val id = SmartTag.separatedId(this)
     return if (chips == liveDecode && id == smartTagId) this else copy(liveDecode = chips, smartTagId = id)
 }

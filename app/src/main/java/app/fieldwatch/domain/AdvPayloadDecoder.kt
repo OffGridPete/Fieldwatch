@@ -32,6 +32,7 @@ object AdvPayloadDecoder {
         return when (short) {
             0xFE2C -> decodeFastPair(bytes)
             0xFEAA -> decodeEddystone(bytes)
+            0xFD6F -> ExposureNotification.decodedFields(bytes)
             else -> emptyList()
         }
     }
@@ -40,6 +41,27 @@ object AdvPayloadDecoder {
         val out = ArrayList<RoleHint>(4)
         val mfg = device.facts.mfgRecords.ifEmpty {
             device.manufacturerId?.let { listOf(MfgRecord(it, device.manufacturerDataHex)) } ?: emptyList()
+        }
+        val matter = device.facts.matter ?: Matter.read(device.facts.serviceData)
+        if (matter != null && matter.commissionable) {
+            // Under a named Fast Pair model (8) and under the signature name (7).
+            out += RoleHint("home", tx("matter.mode"), tx("explain.matter.setup"), 4)
+        }
+        val sidewalk = device.facts.sidewalk ?: Sidewalk.read(mfg, device.serviceUuids)
+        if (sidewalk?.mode == SidewalkMode.REGISTRATION) {
+            // Under the signature name (7). The sentence stays in the because line.
+            out += RoleHint("home", tx("sw.chip"), tx("explain.sw.reg"), 4)
+        }
+        val bthome = device.facts.bthome ?: Bthome.read(device.facts.serviceData)
+        when (bthome?.chip()?.text) {
+            "Open" -> out += RoleHint("home", "BTHome", tx("explain.bth.door"), 4)
+            "Motion" -> out += RoleHint("home", "BTHome", tx("explain.bth.motion"), 4)
+        }
+        val hk = device.facts.homekit ?: homekitFacts(mfg)
+        if (hk != null && !hk.paired) {
+            val name = hk.categoryName
+            // Under Nearby (weight 5) so a HomeKit TLV inside a phone ad does not rename the phone.
+            out += RoleHint("home", name, tx("explain.hk.unpaired", mapOf("category" to name)), 4)
         }
         for (rec in mfg) {
             if (rec.companyId != 0x004C) continue
@@ -132,7 +154,11 @@ object AdvPayloadDecoder {
             out += when (tlv.type) {
                 0x02 -> decodeIBeacon(tlv.data)
                 0x05 -> decodeAirDrop(tlv.data)
-                0x06 -> listOf(Field("HomeKit", "${tlv.data.size} bytes of HomeKit setup data"))
+                0x06 -> if (Homekit.readValue(tlv.data) != null) {
+                    emptyList()
+                } else {
+                    listOf(Field("HomeKit", "${tlv.data.size} bytes of HomeKit setup data"))
+                }
                 0x07 -> decodeAirPods(tlv.data)
                 0x08 -> decodeHeySiri(tlv.data)
                 0x09 -> listOf(Field("AirPlay", "This device is advertising as an AirPlay source or target."))
@@ -149,17 +175,52 @@ object AdvPayloadDecoder {
         return out
     }
 
+    /**
+     * Later successful type 0x06 in these records replaces an earlier one.
+     * A value shorter than 9 bytes does not clear a previous good decode.
+     */
+    fun homekitFacts(records: List<MfgRecord>): HomekitFacts? {
+        var found: HomekitFacts? = null
+        for (rec in records) {
+            if (rec.companyId != 0x004C) continue
+            val bytes = hexToBytes(rec.dataHex) ?: continue
+            for (tlv in appleTlvs(bytes)) {
+                if (tlv.type != 0x06) continue
+                Homekit.readValue(tlv.data)?.let { found = it }
+            }
+        }
+        return found
+    }
+
     private fun appleTlvs(bytes: ByteArray): List<Tlv> {
         val out = ArrayList<Tlv>(3)
         var i = 0
         while (i + 2 <= bytes.size) {
             val type = bytes[i].toInt() and 0xFF
             val len = bytes[i + 1].toInt() and 0xFF
+            if (type == 0x06) {
+                val value = homekitValue(bytes, i, len) ?: break
+                out += Tlv(type, value)
+                i += 2 + value.size
+                continue
+            }
             if (len <= 0 || i + 2 + len > bytes.size) break
             out += Tlv(type, bytes.copyOfRange(i + 2, i + 2 + len))
             i += 2 + len
         }
         return out
+    }
+
+    /**
+     * HAP-ADK writes the second byte as 0x2D or 0x31, which is longer than the
+     * element. A length that fits (0x0D, 0x11) is that many value bytes.
+     * A length that does not fit takes the rest of this element.
+     */
+    private fun homekitValue(bytes: ByteArray, i: Int, len: Int): ByteArray? {
+        val rest = bytes.size - (i + 2)
+        if (rest <= 0) return null
+        val take = if (len in 1..rest) len else rest
+        return bytes.copyOfRange(i + 2, i + 2 + take)
     }
 
     private fun appleTypeName(type: Int): String = when (type) {
@@ -466,27 +527,38 @@ object AdvPayloadDecoder {
         if (data.isEmpty()) return listOf(Field("Find My", "Offline Finding advertisement."))
         val status = data[0].toInt() and 0xFF
         val maintained = status and 0x04 != 0
-        val batt = (status shr 6) and 0x3
-        val battName = when (batt) {
+        val battery = when ((status shr 6) and 0x3) {
             0 -> "full"
             1 -> "medium"
             2 -> "low"
             else -> "critical"
         }
-        val keyLen = (data.size - 1).coerceAtLeast(0)
-        return listOf(
-            Field(
-                "Find My / Offline Finding",
-                buildString {
-                    append("Broadcasting a public key so the Find My network can report a location. ")
-                    append("Used by AirTags, Find My accessories, and Apple devices locating themselves. ")
-                    if (maintained) append("Owner seen recently. ")
-                    else append("Owner not seen in the current key window. ")
-                    if (maintained || batt in 0..3) append("Battery $battName. ")
-                    append("($keyLen-byte key fragment — not a serial number.)")
-                },
-            ),
-        )
+        val text = when (data.size) {
+            0x19 -> buildString {
+                append("Broadcasting a public key so the Find My network can report a location. ")
+                append("Used by AirTags, Find My accessories, and Apple devices locating themselves. ")
+                if (maintained) {
+                    append("Owner seen recently. ")
+                    append("Battery $battery. ")
+                } else {
+                    append("Owner not seen in the current key window. ")
+                }
+                append("(${data.size - 1}-byte key fragment. Not a serial number.)")
+            }
+            0x02 ->
+                "Short advertisement. Often a tag near its owner. This is not certain. " +
+                    "Used by AirTags, Find My accessories, and Apple devices locating themselves."
+            else -> buildString {
+                append("Find My advertisement, ${data.size} bytes. ")
+                append("Used by AirTags, Find My accessories, and Apple devices locating themselves. ")
+                if (maintained) {
+                    append("Owner seen recently. Battery $battery.")
+                } else {
+                    append("Owner not seen in the current key window.")
+                }
+            }
+        }
+        return listOf(Field("Find My / Offline Finding", text))
     }
 
     private fun decodeFastPair(bytes: ByteArray): List<Field> {
@@ -535,17 +607,30 @@ object AdvPayloadDecoder {
             0x20 -> listOf(Field("Eddystone-TLM", "telemetry (battery / temperature / advert count)"))
             0x30 -> listOf(Field("Eddystone-EID", "ephemeral ID (rotating)"))
             0x40, 0x41 -> {
-                val mode = if (bytes[0].toInt() and 0xFF == 0x41) "separated (unwanted-tracking mode)" else "nearby / with owner"
-                val eidLen = when {
-                    bytes.size >= 33 -> 32
-                    bytes.size >= 21 -> 20
-                    else -> (bytes.size - 1).coerceAtLeast(0)
+                val mode = if (bytes[0].toInt() and 0xFF == 0x41) {
+                    "separated (unwanted-tracking mode)"
+                } else {
+                    "normal mode, not flagged separated"
                 }
-                val eid = if (eidLen > 0) bytes.copyOfRange(1, 1 + eidLen).toHexUpper() else ""
-                listOf(
-                    Field("Find Hub", mode),
-                    Field("Find Hub EID", eid.ifBlank { "${bytes.size} bytes" }),
-                )
+                val eidLen = when (bytes.size) {
+                    21, 22 -> 20
+                    33, 34 -> 32
+                    else -> 0
+                }
+                if (eidLen == 0) {
+                    listOf(Field("Find Hub", mode))
+                } else {
+                    val flags = if (bytes.size == 22 || bytes.size == 34) {
+                        "present. The byte is encrypted."
+                    } else {
+                        "not present"
+                    }
+                    listOf(
+                        Field("Find Hub", mode),
+                        Field("Find Hub EID", bytes.copyOfRange(1, 1 + eidLen).toHexUpper()),
+                        Field("Hashed flags", flags),
+                    )
+                }
             }
             else -> listOf(Field("Eddystone", "frame 0x%02X".format(bytes[0])))
         }
@@ -652,6 +737,8 @@ object AdvPayloadDecoder {
         val hex = uuid.filter { it.isLetterOrDigit() }.uppercase()
         return when {
             hex.length == 4 -> hex.toIntOrNull(16)
+            // 32-bit form of a 16-bit UUID, as stored from AD type 0x20.
+            hex.length == 8 && hex.startsWith("0000") -> hex.substring(4, 8).toIntOrNull(16)
             hex.length == 32 && hex.startsWith("0000") && hex.endsWith("00001000800000805F9B34FB") ->
                 hex.substring(4, 8).toIntOrNull(16)
             else -> null

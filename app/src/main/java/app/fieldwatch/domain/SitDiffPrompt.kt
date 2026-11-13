@@ -12,13 +12,18 @@ object SitDiffPrompt {
         thisSit: SitDiff.Side,
         second: SitDiff.Side,
         demoMode: Boolean,
+        onProgress: (Float) -> Unit = {},
     ): String {
         val thisSit = thisSit.withoutFloodRadios()
         val second = second.withoutFloodRadios()
         val radios = thisSit.radios + second.radios
         val macs = radios.map { it.mac }
         val uasIds = radios.map { it.payloadUasId }
-        val onboard = SitDiff.document(thisSit, second).withDemoMacs(macs, demoMode, uasIds)
+        val onboard = SitDiff.document(
+            thisSit,
+            second,
+            onProgress = { onProgress(it.coerceIn(0f, 1f) * 0.72f) },
+        ).withDemoMacs(macs, demoMode, uasIds)
         val thisKeys = thisSit.keys
         val secondKeys = second.keys
         val byKey = (thisSit.radios + second.radios).associateBy { it.key }
@@ -95,7 +100,9 @@ object SitDiffPrompt {
             appendLine()
             appendLine("## Onboard Compare (verbatim — already shown to the operator; do not rewrite)")
             appendLine()
-            appendLine(onboard.toPlainText().trimEnd())
+            val plain = StringBuilder()
+            onboard.appendPlainText(plain) { onProgress(0.72f + 0.22f * it.coerceIn(0f, 1f)) }
+            appendLine(plain.toString().trimEnd())
             appendLine()
             appendLine("## Working data (for the addendum — do not copy rosters into the answer)")
             appendLine()
@@ -138,12 +145,14 @@ object SitDiffPrompt {
             appendLine("## End of working data")
             appendLine("Write the addendum now, following **Your output** at the top. Do not rewrite the onboard Compare.")
         }
+        onProgress(0.96f)
         val masked = MacUtil.redactPrivateText(body, macs, uasIds, demoMode)
         val withPrivacy = if (demoMode) {
             "Privacy mode: MAC tails are **:**:**. UAS ids and GPS coordinates are masked. Logs on the phone are unchanged.\n\n$masked"
         } else {
             masked
         }
+        onProgress(1f)
         return if (withPrivacy.length <= MAX_CHARS) withPrivacy
         else withPrivacy.take(MAX_CHARS) + "\n\n[truncated for share-sheet size]\n"
     }

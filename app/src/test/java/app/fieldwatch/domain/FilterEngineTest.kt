@@ -150,6 +150,37 @@ class FilterEngineTest {
     }
 
     @Test
+    fun hideRandomizedBleDropsAnExposureNotificationAddress() {
+        val hide = FilterState(hideRandomizedBle = true)
+        val payload = "00".repeat(20)
+        val local = labeled.copy(
+            serviceUuids = listOf("FD6F"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FD6F", payload))),
+        )
+        val random = local.copy(
+            key = "BLE:C5:5F:72:12:DF:24",
+            mac = "C5:5F:72:12:DF:24",
+            randomized = false,
+            facts = RadioFacts(
+                addressType = "Random",
+                serviceData = listOf(ServiceDataRecord("FD6F", payload)),
+            ),
+        )
+        val stock = DefaultCatalog.fleets()
+        val matcher = SignatureEngine()
+        assertTrue(
+            "fleet-exposure-notification" in matcher.match(listOf(local), stock).getValue(local.key),
+        )
+        assertTrue(
+            "fleet-exposure-notification" in matcher.match(listOf(random), stock).getValue(random.key),
+        )
+        assertFalse(engine.pass(local, hide))
+        assertFalse(engine.pass(random, hide))
+        assertTrue(engine.pass(local, FilterState()))
+        assertTrue(engine.pass(random, FilterState()))
+    }
+
+    @Test
     fun hideRandomizedBleStaysAndInOrLogic() {
         val filter = FilterState(
             hideRandomizedBle = true,

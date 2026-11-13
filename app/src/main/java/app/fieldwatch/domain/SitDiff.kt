@@ -182,6 +182,7 @@ object SitDiff {
         second: Side,
         watchedFleetIds: Set<String> = emptySet(),
         showAllRadios: Boolean = false,
+        onProgress: (Float) -> Unit = {},
     ): DebriefDoc {
         val thisSit = thisSit.withoutFloodRadios()
         val second = second.withoutFloodRadios()
@@ -241,9 +242,18 @@ object SitDiff {
         gnssSection(thisSit, second)?.let { body ->
             sections += DebriefSection(next(), "GNSS", body, alert = true)
         }
-        sections += rosterSection(next(), "Only in this sit (${onlyThis.size})", onlyThis, byKey, showAllRadios)
-        sections += rosterSection(next(), "Only in second sit (${onlySecond.size})", onlySecond, byKey, showAllRadios)
-        sections += bothSection(next(), "In both (${both.size})", both, thisSit, second, byKey, showAllRadios)
+        fun span(start: Float, end: Float): (Float) -> Unit = { fraction ->
+            onProgress(start + (end - start) * fraction.coerceIn(0f, 1f))
+        }
+        sections += rosterSection(
+            next(), "Only in this sit (${onlyThis.size})", onlyThis, byKey, showAllRadios, span(0.08f, 0.40f),
+        )
+        sections += rosterSection(
+            next(), "Only in second sit (${onlySecond.size})", onlySecond, byKey, showAllRadios, span(0.40f, 0.68f),
+        )
+        sections += bothSection(
+            next(), "In both (${both.size})", both, thisSit, second, byKey, showAllRadios, span(0.68f, 0.98f),
+        )
         val meta = buildList {
             add("This sit" to thisSit.name)
             add("Second sit" to second.name)
@@ -251,6 +261,17 @@ object SitDiff {
             add("Second radios" to second.radios.size.toString())
             if (ramNote != null) add("Caps" to "RAM ~400 vs sit ${Sit.RADIO_CAP}")
         }
+        val figure = AircraftTrail.applyWalk(
+            AircraftTrail.applyWalk(
+                pathFigure(thisSit, second, watchedFleetIds),
+                thisCraft,
+                secondary = false,
+            ),
+            secondCraft,
+            secondary = true,
+        )
+        val extraFigures = AircraftTrail.compareOwnFigures(thisCraft, secondCraft)
+        onProgress(1f)
         return DebriefDoc(
             generatedUtc = "",
             windowLine = "${thisSit.name} vs ${second.name}",
@@ -263,16 +284,8 @@ object SitDiff {
             heading = "FIELDWATCH SIT COMPARE",
             pdfKicker = "SIT COMPARE",
             pdfTitle = "Sit compare",
-            pathFigure = AircraftTrail.applyWalk(
-                AircraftTrail.applyWalk(
-                    pathFigure(thisSit, second, watchedFleetIds),
-                    thisCraft,
-                    secondary = false,
-                ),
-                secondCraft,
-                secondary = true,
-            ),
-            extraFigures = AircraftTrail.compareOwnFigures(thisCraft, secondCraft),
+            pathFigure = figure,
+            extraFigures = extraFigures,
         )
     }
 
@@ -478,8 +491,12 @@ object SitDiff {
         keys: Set<String>,
         byKey: Map<String, Radio>,
         showAll: Boolean,
+        onProgress: (Float) -> Unit,
     ): DebriefSection {
-        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        if (keys.isEmpty()) {
+            onProgress(1f)
+            return DebriefSection(number, title, "(none)")
+        }
         val radios = keys.mapNotNull { byKey[it] }
         val shown = if (showAll) keys else keys.filter { byKey[it]?.keepShort() == true }.toSet()
         return DebriefSection(
@@ -487,7 +504,12 @@ object SitDiff {
             title,
             body = "",
             chart = radioSignatureChart(radios),
-            after = if (shown.isEmpty()) "" else listBody(shown, byKey),
+            after = if (shown.isEmpty()) {
+                onProgress(1f)
+                ""
+            } else {
+                listBody(shown, byKey, onProgress)
+            },
         )
     }
 
@@ -499,8 +521,12 @@ object SitDiff {
         second: Side,
         byKey: Map<String, Radio>,
         showAll: Boolean,
+        onProgress: (Float) -> Unit,
     ): DebriefSection {
-        if (keys.isEmpty()) return DebriefSection(number, title, "(none)")
+        if (keys.isEmpty()) {
+            onProgress(1f)
+            return DebriefSection(number, title, "(none)")
+        }
         val earlier = thisSit.radios.associateBy { it.key }
         val later = second.radios.associateBy { it.key }
         val shown = if (showAll) {
@@ -517,7 +543,12 @@ object SitDiff {
             title,
             body = "",
             chart = radioSignatureChart(keys.mapNotNull { byKey[it] }),
-            after = if (shown.isEmpty()) "" else bothBody(shown, thisSit, second),
+            after = if (shown.isEmpty()) {
+                onProgress(1f)
+                ""
+            } else {
+                bothBody(shown, thisSit, second, onProgress)
+            },
         )
     }
 
@@ -544,24 +575,51 @@ object SitDiff {
         return left.isNotEmpty() && right.isNotEmpty() && left != right
     }
 
-    private fun listBody(keys: Set<String>, byKey: Map<String, Radio>): String {
-        if (keys.isEmpty()) return "(none)"
-        return keys.mapNotNull { byKey[it] }
+    private fun listBody(
+        keys: Set<String>,
+        byKey: Map<String, Radio>,
+        onProgress: (Float) -> Unit = {},
+    ): String {
+        if (keys.isEmpty()) {
+            onProgress(1f)
+            return "(none)"
+        }
+        val radios = keys.mapNotNull { byKey[it] }
             .sortedWith(
                 compareByDescending<Radio> { it.extraAttention }
                     .thenByDescending { it.named }
                     .thenBy { it.kind.name }
                     .thenBy { it.mac },
             )
-            .joinToString("\n") { line(it) }
+        if (radios.isEmpty()) {
+            onProgress(1f)
+            return "(none)"
+        }
+        val sb = StringBuilder()
+        val n = radios.size
+        val stride = (n / 24).coerceAtLeast(1)
+        for (i in radios.indices) {
+            if (i > 0) sb.append('\n')
+            sb.append(line(radios[i]))
+            if (i == n - 1 || (i + 1) % stride == 0) onProgress((i + 1f) / n)
+        }
+        return sb.toString()
     }
 
     /** Kind + MAC is the same radio. A live label can still change between windows. */
-    private fun bothBody(keys: Set<String>, thisSit: Side, second: Side): String {
-        if (keys.isEmpty()) return "(none)"
+    private fun bothBody(
+        keys: Set<String>,
+        thisSit: Side,
+        second: Side,
+        onProgress: (Float) -> Unit = {},
+    ): String {
+        if (keys.isEmpty()) {
+            onProgress(1f)
+            return "(none)"
+        }
         val earlier = thisSit.radios.associateBy { it.key }
         val later = second.radios.associateBy { it.key }
-        return keys.mapNotNull { key ->
+        val rows = keys.mapNotNull { key ->
             val a = earlier[key] ?: return@mapNotNull null
             val b = later[key] ?: return@mapNotNull null
             a to b
@@ -570,7 +628,21 @@ object SitDiff {
                 .thenByDescending { it.second.named }
                 .thenBy { it.second.kind.name }
                 .thenBy { it.second.mac },
-        ).joinToString("\n") { (a, b) -> bothLine(a, b) }
+        )
+        if (rows.isEmpty()) {
+            onProgress(1f)
+            return "(none)"
+        }
+        val sb = StringBuilder()
+        val n = rows.size
+        val stride = (n / 24).coerceAtLeast(1)
+        for (i in rows.indices) {
+            if (i > 0) sb.append('\n')
+            val (a, b) = rows[i]
+            sb.append(bothLine(a, b))
+            if (i == n - 1 || (i + 1) % stride == 0) onProgress((i + 1f) / n)
+        }
+        return sb.toString()
     }
 
     private fun bothLine(earlier: Radio, later: Radio): String = buildString {

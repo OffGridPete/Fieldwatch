@@ -227,22 +227,24 @@ class LanguagePackTest {
         assertTrue(current.newKeys.contains("cell.master"))
         assertFalse(current.newKeys.contains("tab.pause"))
         val since138 = ok(pack("tab.live" to "Direct", writtenFor = "1.1.38"))
-        assertEquals(25, since138.newSince)
+        assertEquals(133, since138.newSince)
         assertTrue(since138.newKeys.contains("update.now"))
         val since140 = ok(pack("tab.live" to "Direct", writtenFor = "1.1.40"))
-        assertEquals(11, since140.newSince)
+        assertEquals(119, since140.newSince)
         assertTrue(since140.newKeys.contains("update.notes"))
         val since141 = ok(pack("tab.live" to "Direct", writtenFor = "1.1.41"))
-        assertEquals(10, since141.newSince)
+        assertEquals(118, since141.newSince)
         assertTrue(since141.newKeys.contains("ui.signal.lost"))
         val since142 = ok(pack("tab.live" to "Direct", writtenFor = "1.1.42"))
-        assertEquals(7, since142.newSince)
+        assertEquals(115, since142.newSince)
         assertTrue(since142.newKeys.contains("class.twoway"))
         assertTrue(since142.newKeys.contains("class.military"))
         assertTrue(since142.newKeys.contains("catalog.needs.app.title"))
         assertTrue(since142.newKeys.contains("ui.catalog.request"))
         val caughtUp = ok(pack("tab.live" to "Direct", writtenFor = "1.1.43"))
-        assertEquals(0, caughtUp.newSince)
+        assertEquals(108, caughtUp.newSince)
+        val shipped = ok(pack("tab.live" to "Direct", writtenFor = "1.1.44"))
+        assertEquals(0, shipped.newSince)
         val missing = ok(pack("tab.live" to "Direct"))
         assertNull(missing.newSince)
         val odd = ok(pack("tab.live" to "Direct", writtenFor = "v1.1.21"))
@@ -338,7 +340,7 @@ class LanguagePackTest {
                 assertEquals(EnglishCopy.cap(line), LanguageText.text(line.key).length)
             }
         } else {
-            // Every line at its slot cap, written with a two-byte letter, is over 264 KiB.
+            // Every line at its slot cap, written with a two-byte letter, is over 352 KiB.
             // The file cap stays. That whole file is refused. The packs in the app are smaller.
             // Download-reason lines sat past 16 KiB. The TAK setting notes sit past 20 KiB.
             // The trusted-network setting notes sit past 28 KiB.
@@ -595,7 +597,7 @@ class LanguagePackTest {
             val parsed = LanguagePack.parse(File(dir, "${bundled.tag}.json").readBytes())
             val preview = (parsed as LanguageParse.Ok).preview
             assertEquals(bundled.name, preview.language)
-            assertEquals("${bundled.tag} writtenFor", "1.1.43", preview.writtenFor)
+            assertEquals("${bundled.tag} writtenFor", "1.1.44", preview.writtenFor)
             assertTrue("${bundled.tag} display.live.path", preview.accepted.containsKey("display.live.path"))
             assertTrue("${bundled.tag} display.recenter", preview.accepted.containsKey("display.recenter"))
             assertTrue("${bundled.tag} map.north.up", preview.accepted.containsKey("map.north.up"))
@@ -762,7 +764,7 @@ class LanguagePackTest {
         assertTrue(text.contains("count: {n}"))
         assertTrue(text.contains("not reviewed or certified"))
         assertTrue(text.contains("Wi-Fi"))
-        assertTrue(text.contains("264 KiB"))
+        assertTrue(text.contains("352 KiB"))
         assertTrue(text.contains("Save report"))
         assertTrue(text.contains("`max`"))
     }

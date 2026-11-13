@@ -1,6 +1,7 @@
 package app.fieldwatch.radio
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -113,6 +114,22 @@ class WifiIeParserTest {
     }
 
     @Test
+    fun frenchPlateKeepsTheLaterElementInOneBeacon() {
+        val first = ie(221, 0x6A, 0x5C, 0x35, 0x01, 0x04, 0x04, 0x00, 0x01, 0x00, 0x00)
+        val second = ie(221, 0x6A, 0x5C, 0x35, 0x01, 0x04, 0x04, 0x00, 0x02, 0x00, 0x00)
+        val wpa = ie(221, 0x00, 0x50, 0xF2, 0x01, 0x11)
+        val wpaLater = ie(221, 0x00, 0x50, 0xF2, 0x01, 0x22)
+        val p = WifiIeParser.parseIes(listOf(first, wpa, second, wpaLater), "")
+        val french = p.vendorIes.filter { it.oui == "6A:5C:35" }
+        assertEquals(1, french.size)
+        assertEquals("040400020000", french.single().dataHex)
+        val wpas = p.vendorIes.filter { it.oui == "00:50:F2" }
+        assertEquals(1, wpas.size)
+        assertEquals("11", wpas.single().dataHex)
+        assertEquals(0, p.vendorIes.indexOf(french.single()))
+    }
+
+    @Test
     fun vendorIeKeepsOpenDroneIdSizedPayload() {
         val body = IntArray(30) { it }
         val ie = ie(221, 0xFA, 0x0B, 0xBC, 0x0D, *body)
@@ -126,5 +143,34 @@ class WifiIeParserTest {
     fun noIesNoCapabilitiesGivesNullSecurity() {
         assertNull(WifiIeParser.parseIes(emptyList(), null).security)
         assertNull(WifiIeParser.parseIes(emptyList(), "").security)
+    }
+
+    @Test
+    fun interworkingAcceptsTheFourBodyLengths() {
+        val police = WifiIeParser.parseIes(listOf(ie(107, 0x02, 0x02, 0x04)), "").interworking!!
+        assertEquals("Business · Police Station", police.lines(false).first { it.first == "Venue" }.second)
+        val vehicle = WifiIeParser.parseIes(
+            listOf(ie(107, 0x13, 0x0A, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x01)),
+            "",
+        ).interworking!!
+        assertEquals("02:00:00:00:00:01", vehicle.hessid)
+        assertEquals("Free public network", WifiIeParser.parseIes(listOf(ie(107, 0x03)), "").interworking!!.lines(false)[0].second)
+        val emergency = WifiIeParser.parseIes(listOf(ie(107, 0x45)), "").interworking!!
+        assertEquals("Yes", emergency.lines(false).first { it.first == "Can reach emergency services" }.second)
+    }
+
+    @Test
+    fun shortInterworkingBodyDoesNotThrowOrWipeARicherOne() {
+        assertNull(WifiIeParser.parseIes(listOf(ie(107, 0x02, 0x04)), "").interworking)
+        val both = WifiIeParser.parseIes(
+            listOf(
+                ie(107, 0x13, 0x0A, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x01),
+                ie(107, 0x03),
+            ),
+            "",
+        ).interworking!!
+        assertEquals(10, both.venueGroup)
+        assertEquals("02:00:00:00:00:01", both.hessid)
+        assertFalse(both.internet)
     }
 }

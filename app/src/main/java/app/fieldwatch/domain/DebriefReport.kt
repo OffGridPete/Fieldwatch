@@ -72,6 +72,8 @@ data class ExtraAttentionHit(
     val note: String,
 )
 
+private const val PLAIN_CHUNK = 24_000
+
 data class DebriefDoc(
     val generatedUtc: String,
     val windowLine: String,
@@ -87,25 +89,77 @@ data class DebriefDoc(
     val pathFigure: SitPathPlot.Figure? = null,
     val extraFigures: List<SitPathPlot.Figure> = emptyList(),
 ) {
-    fun toPlainText(): String = buildString {
-        appendLine(heading)
-        appendLine()
-        appendLine(LanguageText.text("report.disclaimer"))
-        appendLine(disclaimer)
-        appendLine()
-        meta.forEach { (k, v) -> appendLine("${k.padEnd(14)}$v") }
-        appendLine()
-        sections.forEach { sec ->
-            appendLine("${sec.number}. ${sec.title.uppercase()}")
-            val body = sec.body.trimEnd()
-            if (body.isNotEmpty()) appendLine(body)
-            sec.chart?.asText()?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
-            val after = sec.after.trimEnd()
-            if (after.isNotEmpty()) appendLine(after)
-            appendLine()
+    fun toPlainText(): String = buildString { appendPlainText(this) }
+
+    /**
+     * Writes the same text as [toPlainText] without building a second full copy.
+     * [onProgress] is the share of characters already handed to [out], from 0 to 1.
+     * A large show-all compare is mostly this write. Reporting it in slices is what
+     * lets the export percent keep moving until the file is done.
+     */
+    fun appendPlainText(out: Appendable, onProgress: (Float) -> Unit = {}) {
+        val parts = plainParts()
+        var total = 0
+        for (part in parts) total += part.length
+        if (total <= 0) {
+            onProgress(1f)
+            return
         }
-        appendLine("—")
-        appendLine(LanguageText.text("report.takeaway", mapOf("text" to takeaway)))
+        val step = (total / 100).coerceAtLeast(PLAIN_CHUNK)
+        var written = 0
+        var nextAt = step
+        for (part in parts) {
+            var i = 0
+            val n = part.length
+            while (i < n) {
+                val end = minOf(i + PLAIN_CHUNK, n)
+                out.append(part, i, end)
+                written += end - i
+                i = end
+                if (written >= nextAt || written >= total) {
+                    nextAt = written + step
+                    onProgress((written.toFloat() / total.toFloat()).coerceIn(0f, 1f))
+                }
+            }
+        }
+        onProgress(1f)
+    }
+
+    fun writePlainText(file: java.io.File, onProgress: (Float) -> Unit = {}) {
+        file.parentFile?.mkdirs()
+        file.outputStream().buffered(PLAIN_CHUNK).writer(Charsets.UTF_8).use { writer ->
+            appendPlainText(writer) { frac ->
+                writer.flush()
+                onProgress(frac)
+            }
+        }
+    }
+
+    private fun plainParts(): List<String> {
+        val out = ArrayList<String>(sections.size * 4 + meta.size + 8)
+        fun line(text: String) {
+            out += text
+            out += "\n"
+        }
+        line(heading)
+        line("")
+        line(LanguageText.text("report.disclaimer"))
+        line(disclaimer)
+        line("")
+        meta.forEach { (k, v) -> line("${k.padEnd(14)}$v") }
+        line("")
+        sections.forEach { sec ->
+            line("${sec.number}. ${sec.title.uppercase()}")
+            val body = sec.body.trimEnd()
+            if (body.isNotEmpty()) line(body)
+            sec.chart?.asText()?.takeIf { it.isNotBlank() }?.let { line(it) }
+            val after = sec.after.trimEnd()
+            if (after.isNotEmpty()) line(after)
+            line("")
+        }
+        line("—")
+        line(LanguageText.text("report.takeaway", mapOf("text" to takeaway)))
+        return out
     }
 
     fun withDemoMacs(

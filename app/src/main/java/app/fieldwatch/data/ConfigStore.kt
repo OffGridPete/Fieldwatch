@@ -177,6 +177,11 @@ class ConfigStore(context: Context) {
                 fleet.notes == "Target shopping-basket tag. Dual-labels with generic iBeacon; this row is the store basket."
             ) {
                 stock.notes
+            } else if (
+                fleet.id == "fleet-pebblebee" &&
+                fleet.notes == "Pebblebee or Motorola moto tag item finder. A tag you clip to keys or a bag."
+            ) {
+                stock.notes
             } else {
                 fleet.notes
             }
@@ -1212,6 +1217,38 @@ class ConfigStore(context: Context) {
             fleets = catalog103Migrate(fleets, catalog)
             version = CATALOG_V103
         }
+        if (version < CATALOG_V104) {
+            fleets = catalog104Migrate(fleets, catalog)
+            version = CATALOG_V104
+        }
+        if (version < CATALOG_V105) {
+            fleets = catalog105Migrate(fleets, catalog)
+            version = CATALOG_V105
+        }
+        if (version < CATALOG_V106) {
+            fleets = catalog106Migrate(fleets, catalog)
+            version = CATALOG_V106
+        }
+        if (version < CATALOG_V107) {
+            fleets = catalog107Migrate(fleets, catalog)
+            version = CATALOG_V107
+        }
+        if (version < CATALOG_V108) {
+            fleets = catalog108Migrate(fleets, catalog)
+            version = CATALOG_V108
+        }
+        if (version < CATALOG_V109) {
+            fleets = catalog109Migrate(fleets, catalog)
+            version = CATALOG_V109
+        }
+        if (version < CATALOG_V110) {
+            fleets = catalog110Migrate(fleets, catalog)
+            version = CATALOG_V110
+        }
+        if (version < CATALOG_V111) {
+            fleets = catalog111Migrate(fleets, catalog)
+            version = CATALOG_V111
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1258,7 +1295,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 103
+        const val CATALOG_VERSION = 111
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1360,7 +1397,15 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V100 = 100
         private const val CATALOG_V101 = 101
         private const val CATALOG_V102 = 102
-        private const val CATALOG_V103 = CATALOG_VERSION
+        private const val CATALOG_V103 = 103
+        private const val CATALOG_V104 = 104
+        private const val CATALOG_V105 = 105
+        private const val CATALOG_V106 = 106
+        private const val CATALOG_V107 = 107
+        private const val CATALOG_V108 = 108
+        private const val CATALOG_V109 = 109
+        private const val CATALOG_V110 = 110
+        private const val CATALOG_V111 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1897,6 +1942,154 @@ private const val META_GLASSES_NOTES_BEFORE_V103 =
 internal val ADDED_IN_V103 = listOf(
     "fleet-meta-quest",
 )
+
+private const val FIND_HUB_NOTES_BEFORE_V104 =
+    "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). " +
+        "Nearby vs separated frames. Separated mode can hold a MAC about a day. " +
+        "Addresses otherwise rotate. Pattern match, not that bag."
+
+private const val REMOTE_ID_NOTES_BEFORE_V106 =
+    "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, " +
+        "heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the " +
+        "plate says EU. The French Direct Remote ID vendor IE labels this row too. That plate does not fill " +
+        "position or the operator pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android."
+
+internal val ADDED_IN_V107 = listOf(
+    "fleet-homekit",
+)
+
+internal val ADDED_IN_V108 = listOf(
+    "fleet-matter",
+)
+
+internal const val AMAZON_NOTES_BEFORE_V109 =
+    "Amazon Echo, Fire, or Kindle when it advertises. Not every AmazonBasics gadget."
+
+internal val ADDED_IN_V109 = listOf(
+    "fleet-sidewalk",
+)
+
+internal val ADDED_IN_V110 = listOf(
+    "fleet-bthome",
+)
+
+internal val ADDED_IN_V111 = listOf(
+    "fleet-exposure-notification",
+)
+
+/**
+ * Catalog 111 adds Exposure Notification when that id is missing. A custom
+ * row with the same id stays. The row is not bookmarked.
+ */
+internal fun catalog111Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V111.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+/**
+ * Catalog 110 adds BTHome when that id is missing. A custom row with the
+ * same id stays. The row is not bookmarked.
+ */
+internal fun catalog110Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V110.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+/**
+ * Catalog 109 adds Sidewalk when that id is missing. A custom row with the
+ * same id stays. The row is not bookmarked. The Amazon note gains one sentence
+ * when the built-in row still has the catalog 108 sentence. An edited note stays.
+ */
+internal fun catalog109Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V109.mapNotNull { stock[it] }.filter { it.id !in have }
+    val next = if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+    return next.map { fleet ->
+        if (!fleet.builtIn || fleet.id != "fleet-amazon") return@map fleet
+        val fresh = stock[fleet.id] ?: return@map fleet
+        if (fleet.notes != AMAZON_NOTES_BEFORE_V109) fleet else fleet.copy(notes = fresh.notes)
+    }
+}
+
+/**
+ * Catalog 108 adds Matter when that id is missing. A custom row with the
+ * same id stays. The row is not bookmarked.
+ */
+internal fun catalog108Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V108.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+/**
+ * Catalog 107 adds HomeKit when that id is missing. A custom row with the
+ * same id stays. The row is not bookmarked.
+ */
+internal fun catalog107Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V107.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+/**
+ * Catalog 106 copies the Remote ID note when the built-in row still says the
+ * French plate does not fill a position. An edited note stays. A custom copy
+ * that is not built-in is left alone.
+ */
+internal fun catalog106Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> = fleets.map { fleet ->
+    if (!fleet.builtIn || fleet.id != "fleet-remote-id") return@map fleet
+    val fresh = stock[fleet.id] ?: return@map fleet
+    if (fleet.notes != REMOTE_ID_NOTES_BEFORE_V106) fleet else fleet.copy(notes = fresh.notes)
+}
+
+/**
+ * Catalog 105 copies the Find Hub decode onto the built-in row. The ephemeral
+ * id is 20 or 32 bytes, from the payload length. The hashed flags line says
+ * whether that byte is present. A custom copy that is not built-in is left alone.
+ */
+internal fun catalog105Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> = fleets.map { fleet ->
+    if (!fleet.builtIn || fleet.id != "fleet-find-hub") return@map fleet
+    val fresh = stock[fleet.id] ?: return@map fleet
+    fleet.copy(decode = fresh.decode)
+}
+
+/**
+ * Catalog 104 copies the Find Hub decode onto the built-in row. Frame 0x40 is
+ * normal mode. The stock note is copied only when the row still has the catalog
+ * 103 sentence. An edited note stays. A custom copy that is not built-in is left alone.
+ */
+internal fun catalog104Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> = fleets.map { fleet ->
+    if (!fleet.builtIn || fleet.id != "fleet-find-hub") return@map fleet
+    val fresh = stock[fleet.id] ?: return@map fleet
+    val notes = if (fleet.notes == FIND_HUB_NOTES_BEFORE_V104) fresh.notes else fleet.notes
+    fleet.copy(decode = fresh.decode, notes = notes)
+}
 
 /**
  * Catalog 103 adds Meta Quest when that id is missing. A custom row with the

@@ -41,7 +41,7 @@ Stay inside the slot for each key.
 - A tab or a class chip is at most 18 characters.
 - A chip, button, row, or spoken phrase is at most twice the English length, and never more than 48 characters.
 - A dialog or other long sentence is at most three times the English length, and never more than 700 characters.
-- The file is at most 264 KiB.
+- The file is at most 352 KiB.
 
 Count characters after the phone trims the line. A line that is too long is left in English. A newline is kept only when the English line has one.
 

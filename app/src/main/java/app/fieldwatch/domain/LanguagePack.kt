@@ -68,7 +68,11 @@ private data class LanguageTemplateFile(
 )
 
 object LanguagePack {
-    const val MAX_BYTES = 264 * 1024
+    /**
+     * Fits the English template and a same-length two-byte translation of it.
+     * A file with every line at its slot cap stays over this and is refused.
+     */
+    const val MAX_BYTES = 352 * 1024
     const val MAX_KEYS = 2000
     const val MAX_NAME = 40
     const val MAX_WRITTEN_FOR = 32

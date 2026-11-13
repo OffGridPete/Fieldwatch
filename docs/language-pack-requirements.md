@@ -36,7 +36,7 @@ These paths stay closed to pack text:
 
 The app stores only the cleaned string map it wrote itself. On the next start it parses that file with the same rules. If that parse fails, the phone returns to English. The original import file is not kept and not parsed again.
 
-Reject the whole file when the JSON is nested deeper than one object of strings, when a value is not a string, or when the file is larger than 264 KiB. Drop a line that is longer than its screen slot allows, as specified under Screen fit. Strip control and bidirectional characters at import, as specified below. Do not run those checks by executing the string.
+Reject the whole file when the JSON is nested deeper than one object of strings, when a value is not a string, or when the file is larger than 352 KiB. Drop a line that is longer than its screen slot allows, as specified under Screen fit. Strip control and bidirectional characters at import, as specified below. Do not run those checks by executing the string.
 
 ## Where packs live
 
@@ -175,7 +175,7 @@ Keys in the file use the same ids as the English map. A key is ASCII lowercase l
 
 Reject the whole file, and leave any pack already on the phone in place, when:
 
-- The file is empty, is not UTF-8, or is larger than 264 KiB.
+- The file is empty, is not UTF-8, or is larger than 352 KiB.
 - The root is not one JSON object.
 - `format` is missing or wrong. A settings pack gets "That is a settings pack. Use Import settings." A signature pack gets "That is a signature pack. Use Import signatures." Anything else gets "Not a Fieldwatch language pack."
 - `formatVersion` is missing or not a positive integer.
@@ -292,7 +292,7 @@ Eighteen characters fits most tab words and the class chips. The longest English
 
 On-screen text uses the phone's font. That font covers Cyrillic, so Bulgarian and Macedonian do not need a font in the APK. The Debrief and Compare PDFs must draw those letters too. A test renders a Cyrillic line in a Debrief PDF and fails if those characters are missing.
 
-The file cap of 264 KiB, the language name cap of 40 characters, and the cap of 2000 keys stay. Those protect the phone from a huge file. They are not the visual rule.
+The file cap of 352 KiB, the language name cap of 40 characters, and the cap of 2000 keys stay. Those protect the phone from a huge file. They are not the visual rule.
 
 The English template may include a `slots` object so an author can see the slot for each key. Import ignores that object. If it disagrees with the app, the compiled slot wins.
 
@@ -302,7 +302,7 @@ A test pack, used in tests and not shipped, fills every key to its cap so the lo
 
 Follow "No code, no injection" above. That section wins if another line in this document is looser.
 
-- Cap the file at 264 KiB, each line at its screen-fit slot, the language name at 40 characters, and the map at 2000 entries.
+- Cap the file at 352 KiB, each line at its screen-fit slot, the language name at 40 characters, and the map at 2000 entries.
 - Strip the control and bidirectional characters listed above at import.
 - The name shown on the confirm dialog is the cleaned name.
 
@@ -324,7 +324,7 @@ The implementation is done when these are true:
 - Language is its own Settings page. Settings backup does not contain the language actions.
 - Applying a pack does not change the Android locale, the watchlist, settings, the catalog, or which voice phrase is chosen.
 - An unknown key is ignored. An unknown top-level field is ignored.
-- Empty file, garbage, a settings pack, a signature pack, a file over 264 KiB, and a pack with no usable known lines are rejected. A pack already on the phone stays in place.
+- Empty file, garbage, a settings pack, a signature pack, a file over 352 KiB, and a pack with no usable known lines are rejected. A pack already on the phone stays in place.
 - Newlines are kept only when the English line has a newline. Bidirectional marks are removed.
 - Confirm is required before apply. Cancel does not change the language.
 - A second pack replaces the first. Keys only in the first pack return to English.
@@ -358,7 +358,7 @@ The guide needs to say:
 - Keep every `{token}` exactly as exported, including the braces and the token name. Do not add tokens. Do not use `%s`. A line that breaks this rule is shown in English.
 - There are no plural forms. One sentence has to read right for every count. In Polish, Czech, Latvian, and other Slavic or Baltic languages, that gets awkward. Use a form such as `count: {n}` rather than forcing the noun to agree with the number.
 - The text is display text. HTML, scripts, links, and format strings are shown as characters or dropped. They do not run.
-- Stay inside the slot for each key. A tab or a class chip is at most 18 characters. A chip, button, row, or spoken phrase is at most twice the English length and never more than 48 characters. A dialog or other long sentence is at most three times the English length and never more than 700 characters. The language name is at most 40 characters. The file is at most 264 KiB. A line that is too long is left in English. A newline is kept only when the English line has one.
+- Stay inside the slot for each key. A tab or a class chip is at most 18 characters. A chip, button, row, or spoken phrase is at most twice the English length and never more than 48 characters. A dialog or other long sentence is at most three times the English length and never more than 700 characters. The language name is at most 40 characters. The file is at most 352 KiB. A line that is too long is left in English. A newline is kept only when the English line has one.
 - For a tab or a class chip, pick a shorter word when the full word would pass 18 characters. A German compound is the usual case. A line over the cap stays English. The confirm dialog counts it. Save report on that dialog writes a text file that names the key, the length, and the limit, plus missing keys, placeholder mismatches, blank lines, extra line breaks, and unknown keys. The headings stay English.
 - Leave these words as written: Wi-Fi, Bluetooth, GPS, GNSS, USB, PDF, CSV, ATAK, SSID, MAC, RSSI, and OUI. Translate ordinary words. Translate Fieldwatch terms such as sit, signature, and Extra attention into plain words.
 - After a Fieldwatch update, export a fresh English template and translate the lines the file does not have. Import the pack and use Save report. Missing names every key the file lacks. The dialog line "{n} keys are new since your pack." only counts keys added after `writtenFor`. Leave `writtenFor` as the version of that template.

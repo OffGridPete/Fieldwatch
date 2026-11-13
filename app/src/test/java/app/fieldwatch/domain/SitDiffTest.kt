@@ -358,6 +358,63 @@ class SitDiffTest {
         assertEquals(1, heldLine.split("about a day").size - 1)
     }
 
+    @Test
+    fun showAllRosterProgressClimbsAndFinishes() {
+        val thisSit = SitDiff.Side(
+            name = "today",
+            ram = false,
+            radios = (1..40).map { n ->
+                radio("WIFI:AA:AA:AA:AA:%02X:%02X".format(n, n), "n$n")
+            },
+        )
+        val second = SitDiff.Side(
+            name = "week",
+            ram = false,
+            radios = (21..60).map { n ->
+                radio("WIFI:AA:AA:AA:AA:%02X:%02X".format(n, n), "n$n")
+            },
+        )
+        val seen = ArrayList<Float>()
+        val doc = SitDiff.document(thisSit, second, showAllRadios = true) { seen += it }
+        assertTrue(seen.size > 4)
+        assertEquals(1f, seen.last())
+        for (i in 1 until seen.size) {
+            assertTrue("progress stepped backward at $i", seen[i] >= seen[i - 1])
+        }
+        assertTrue(doc.toPlainText().contains("AA:AA:AA:AA:01:01"))
+        assertTrue(doc.toPlainText().contains("AA:AA:AA:AA:3C:3C"))
+    }
+
+    @Test
+    fun plainTextWriteMatchesAndClimbs() {
+        val line = "WIFI  AA:AA:AA:AA:01:01  radio\n"
+        val doc = DebriefDoc(
+            generatedUtc = "t",
+            windowLine = "today vs week",
+            meta = listOf("This sit" to "today"),
+            disclaimer = "Hear only.",
+            trackingAlert = false,
+            takeaway = "20 only in this sit.",
+            sections = listOf(
+                DebriefSection("1", "Only in this sit", body = "", after = line.repeat(8_000)),
+            ),
+            heading = "FIELDWATCH SIT COMPARE",
+        )
+        val file = java.io.File.createTempFile("sit-compare", ".txt")
+        val seen = ArrayList<Float>()
+        try {
+            doc.writePlainText(file) { seen += it }
+            assertEquals(doc.toPlainText(), file.readText())
+            assertTrue(seen.size > 4)
+            assertEquals(1f, seen.last())
+            for (i in 1 until seen.size) {
+                assertTrue("plain text progress stepped backward at $i", seen[i] >= seen[i - 1])
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
     private fun radio(
         key: String,
         name: String,

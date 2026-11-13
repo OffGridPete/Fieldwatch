@@ -5,6 +5,7 @@ import app.fieldwatch.domain.PlaceMemory
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.TrackerWatch
 import app.fieldwatch.domain.WatchTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -26,6 +27,8 @@ class PlaceStore(private val file: File) {
     }
     private val lock = Any()
     private val records = HashMap<String, PlaceMemory.Record>()
+    private var trackerSeen = emptySet<String>()
+    private var trackerSeenKnown = false
     private var dirty = false
     private var generation = 0
     private var cacheMinute = Long.MIN_VALUE
@@ -44,6 +47,18 @@ class PlaceStore(private val file: File) {
                 records[kept.id] = kept
             }
             trimLocked(now)
+            if (parsed.trackerSeenKnown) {
+                trackerSeen = parsed.trackerSeen
+                trackerSeenKnown = true
+            } else {
+                trackerSeen = records.values.mapNotNull { record ->
+                    if (!record.id.startsWith("ble:")) return@mapNotNull null
+                    if (PlaceMemory.placeCount(record, now) < PlaceMemory.MIN_PLACES) return@mapNotNull null
+                    record.id
+                }.toSet()
+                trackerSeenKnown = true
+                dirty = true
+            }
             generation++
         }
     }
@@ -176,14 +191,54 @@ class PlaceStore(private val file: File) {
 
     fun snapshot(): List<PlaceMemory.Record> = synchronized(lock) { records.values.toList() }
 
+    /**
+     * Finders newly at two stops. While [armed] is false, radios already at two
+     * stops are remembered and do not warn later just because the switch was turned on.
+     */
+    fun trackerPlaces(armed: Boolean, now: Long, devices: List<Sighting>): List<TrackerWatch.Notice> {
+        synchronized(lock) {
+            val byKey = HashMap<String, Sighting>(devices.size)
+            for (device in devices) byKey[device.key] = device
+            val rows = ArrayList<TrackerWatch.PlaceRow>(records.size)
+            for (record in records.values) {
+                if (!record.id.startsWith("ble:")) continue
+                val device = byKey[record.deviceKey]
+                rows += TrackerWatch.PlaceRow(
+                    id = record.id,
+                    deviceKey = record.deviceKey,
+                    name = record.label,
+                    mac = record.id.removePrefix("ble:"),
+                    rssi = device?.rssi ?: Int.MIN_VALUE,
+                    count = PlaceMemory.placeCount(record, now),
+                    stops = PlaceMemory.placesInWindow(record, now).map {
+                        TrackerWatch.Spot(it.lat, it.lon)
+                    },
+                )
+            }
+            val result = TrackerWatch.places(trackerSeen, rows, armed)
+            if (!trackerSeenKnown || result.seen != trackerSeen) {
+                trackerSeen = result.seen
+                trackerSeenKnown = true
+                dirty = true
+            }
+            return result.fresh
+        }
+    }
+
     fun flush() {
         val copy = synchronized(lock) {
             if (!dirty) return
             dirty = false
-            records.values.toList()
+            Triple(records.values.toList(), trackerSeen, trackerSeenKnown)
         }
         try {
-            val text = json.encodeToString(PlaceFile(records = copy))
+            val text = json.encodeToString(
+                PlaceFile(
+                    records = copy.first,
+                    trackerSeen = copy.second,
+                    trackerSeenKnown = copy.third,
+                ),
+            )
             val dir = file.parentFile
             if (dir != null && !dir.isDirectory) dir.mkdirs()
             val tmp = File(file.parentFile, file.name + ".tmp")
@@ -211,5 +266,7 @@ class PlaceStore(private val file: File) {
     private data class PlaceFile(
         val format: String = PlaceMemory.FORMAT,
         val records: List<PlaceMemory.Record> = emptyList(),
+        val trackerSeen: Set<String> = emptySet(),
+        val trackerSeenKnown: Boolean = false,
     )
 }

@@ -376,6 +376,8 @@ class SettingsExchangeTest {
         assertFalse(missing.gnssShade)
         assertFalse(missing.gnssRawLog)
         assertFalse(missing.trustedWatch)
+        assertFalse(missing.trackerFollow)
+        assertFalse(missing.trackerPlaces)
         assertTrue(missing.trustedDowngrade)
         assertTrue(missing.trustedVendor)
         assertTrue(missing.trustedAway)

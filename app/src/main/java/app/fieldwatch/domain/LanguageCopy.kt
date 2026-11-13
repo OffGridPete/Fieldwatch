@@ -100,7 +100,7 @@ object EnglishCopy {
     const val FORMAT = "fieldwatch-language"
     const val FORMAT_VERSION = 1
 
-    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all + AppUpdateLines.all
+    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all + AppUpdateLines.all + TrackerLines.all + FrenchRidLines.all + RidAuthLines.all + HomekitLines.all + MatterLines.all + SidewalkLines.all + BthomeLines.all + ExposureLines.all
     val byKey: Map<String, EnglishLine> = lines.associateBy { it.key }
     val placeholders: Map<String, Set<String>> = lines.associate { it.key to placeholderNames(it.text) }
 

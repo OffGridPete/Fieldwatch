@@ -784,6 +784,10 @@ object DeviceExplain {
                     out += Hint("ap", tx("explain.ap"), tx("explain.ap.why"), 3, generic = true)
                 }
         }
+        // Weight 4 stays under a named signature and still prints in the because line.
+        device.facts.interworking?.vehicleSentence()?.let { sentence ->
+            out += Hint("venue", tx("explain.ap"), sentence, 4, generic = true)
+        }
         return out
     }
 

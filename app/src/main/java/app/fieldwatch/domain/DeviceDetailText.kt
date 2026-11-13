@@ -208,12 +208,71 @@ object DeviceDetailText {
             facts.capabilities?.takeIf { it.isNotBlank() && it != facts.security }?.let {
                 line(LanguageText.text("ui.capability.string"), it)
             }
+            facts.interworking?.lines(demo)?.takeIf { it.isNotEmpty() }?.let { rows ->
+                section(LanguageText.text("ui.ap.says"))
+                out.append(LanguageText.text("ui.ap.says.note")).append('\n')
+                rows.forEach { (label, value) -> line(label, value) }
+            }
         }
 
         device.payloadAircraft?.trim()?.takeIf { it.isNotEmpty() }?.let {
             line(LanguageText.text("ui.aircraft.label"), it)
         }
-        appendAdvertised(device, demo, phoneLat, phoneLon, ::line)
+        device.payloadAuth?.let { auth ->
+            section(LanguageText.text("rid.auth.type"))
+            out.append(auth.typeName()).append('\n')
+            line(LanguageText.text("rid.auth.page"), auth.pageValue())
+            auth.timeText()?.let { line(LanguageText.text("rid.auth.time"), it) }
+            auth.dataLine()?.let { out.append(it).append('\n') }
+            auth.pastLine()?.let { out.append(it).append('\n') }
+            auth.note()?.let { out.append(it).append('\n') }
+        }
+        val french = FrenchRid.fromFacts(facts)
+        if (french.present) {
+            section(LanguageText.text("rid.french.plate"))
+            french.lines(demo).forEach { (label, value) -> line(label, value) }
+            french.note()?.let { out.append(it).append('\n') }
+        }
+        facts.homekit?.let { hk ->
+            section("HomeKit")
+            hk.rows(demo).forEach { (label, value) -> line(label, value) }
+            hk.setupLine()?.let { out.append(it).append('\n') }
+            out.append(hk.note()).append('\n')
+        }
+        facts.matter?.let { matter ->
+            section(LanguageText.text("matter.mode"))
+            out.append(matter.headline()).append('\n')
+            matter.rows(demo).forEach { (label, value) -> line(label, value) }
+            matter.flagLines().forEach { out.append(it).append('\n') }
+            matter.note()?.let { out.append(it).append('\n') }
+        }
+        facts.sidewalk?.let { sidewalk ->
+            section(LanguageText.text("sw.beacon"))
+            out.append(sidewalk.headline()).append('\n')
+            out.append(sidewalk.modeLine()).append('\n')
+            sidewalk.batteryRow().let { (label, value) -> line(label, value) }
+            sidewalk.protocolLine()?.let { out.append(it).append('\n') }
+            out.append(sidewalk.note()).append('\n')
+            sidewalk.registrationNote()?.let { out.append(it).append('\n') }
+        }
+        facts.bthome?.let { bthome ->
+            section("BTHome")
+            bthome.versionRow().let { (label, value) -> line(label, value) }
+            bthome.triggerLine()?.let { out.append(it).append('\n') }
+            bthome.encryptedLine()?.let { out.append(it).append('\n') }
+            bthome.objectRows(demo).forEach { (label, value) -> line(label, value) }
+            bthome.commandLines().forEach { out.append(it).append('\n') }
+            out.append(bthome.note()).append('\n')
+        }
+        facts.serviceData.forEach { sd ->
+            ExposureNotification.label(sd)?.let { label ->
+                section(LanguageText.text("en.label"))
+                label.rows.forEach { (name, value) -> line(name, value) }
+                label.fallback?.let { out.append(it).append('\n') }
+                out.append(LanguageText.text("en.note")).append('\n')
+            }
+        }
+        appendAdvertised(device, demo, phoneLat, phoneLon, french, ::line)
 
         if (fleets.isNotEmpty() && (device.kind == RadioKind.BLE || device.kind == RadioKind.WIFI)) {
             val decoded = SignatureFieldDecoder.decodeSighting(device, fleets)
@@ -238,7 +297,9 @@ object DeviceDetailText {
         if (facts.serviceData.isNotEmpty()) {
             facts.serviceData.forEach { sd ->
                 val named = RadioDb.serviceUuid(sd.uuid)?.let { " ($it)" } ?: ""
-                AdvPayloadDecoder.decodeService(sd).forEach { field -> line(field.label, field.value) }
+                if (!ExposureNotification.matches(sd.uuid)) {
+                    AdvPayloadDecoder.decodeService(sd).forEach { field -> line(field.label, field.value) }
+                }
                 if (SmartTag.isService(sd.uuid)) {
                     SmartTag.parse(sd.dataHex)?.let { tag ->
                         tag.state?.let { line(LanguageText.text("device.state"), it) }
@@ -348,6 +409,7 @@ object DeviceDetailText {
         demo: Boolean,
         phoneLat: Double?,
         phoneLon: Double?,
+        french: FrenchRid.Plate,
         line: (String, String) -> Unit,
     ) {
         if (PayloadLocation.validCoord(device.payloadLat, device.payloadLon)) {
@@ -358,7 +420,7 @@ object DeviceDetailText {
             }
         }
         if (PayloadLocation.validCoord(device.payloadOpLat, device.payloadOpLon)) {
-            val label = OperatorLoc.label(device.payloadOpKind)
+            val label = french.operatorLabel(device.payloadOpKind)
             line(label, Geo.screenCoord(device.payloadOpLat, device.payloadOpLon, demo)!!)
             Geo.screenGrid(device.payloadOpLat, device.payloadOpLon, demo)?.let { line(LanguageText.text("ui.grid"), it) }
             Geo.liveRange(phoneLat, phoneLon, device.payloadOpLat, device.payloadOpLon, demo)?.let {

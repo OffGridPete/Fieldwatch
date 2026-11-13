@@ -28,7 +28,10 @@ import app.fieldwatch.domain.TakFlood
 import app.fieldwatch.domain.TakGnss
 import app.fieldwatch.domain.TrustedNets
 import app.fieldwatch.domain.TwinHear
+import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.Sighting
+import app.fieldwatch.domain.TrackerWatch
 import app.fieldwatch.domain.trustedOpt
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.detectionPolicy
@@ -174,6 +177,7 @@ class ScanService : LifecycleService() {
                     app.sits.noteGnss(app.gnss.marks())
                 }
                 app.tickCell(locationHeld)
+                ageTrackers(app)
                 publishNow()
                 delay(2_000L)
             }
@@ -310,6 +314,7 @@ class ScanService : LifecycleService() {
                         app.sits.clusterLabel(),
                     )
                 }
+                considerTrackers(app, seen, tagged)
                 if (settings.loggingEnabled) {
                     val toLog = seen.filter { it.hitCount <= 1 || it.hitCount % 25 == 0 }.take(16)
                     for (row in toLog) {
@@ -330,6 +335,71 @@ class ScanService : LifecycleService() {
         }
         } catch (_: kotlinx.coroutines.channels.ClosedReceiveChannelException) {
             return
+        }
+    }
+
+    /**
+     * Separated-tag clock and the two-stop popup. The current advertisement decides
+     * separated or near. Mine stays quiet. A switch that is off does not keep a clock.
+     */
+    private fun considerTrackers(app: FieldwatchApp, seen: List<Sighting>, tagged: List<Observation>) {
+        val settings = app.config.settings
+        val now = System.currentTimeMillis()
+        val followOn = settings.trackerFollow && settings.tagLocation
+        val placesOn = settings.trackerPlaces && settings.placeWatch && settings.tagLocation
+        val placeFresh = app.places.trackerPlaces(placesOn, now, seen)
+        val names = app.config.fleets.associate { it.id to it.name }
+        val labels = RadioBookmarks.labels(app.config.watchlist)
+        val hears = ArrayList<TrackerWatch.Hear>(seen.size)
+        for (i in seen.indices) {
+            val row = seen[i]
+            if (row.kind != RadioKind.BLE) continue
+            hears += TrackerWatch.Hear(
+                device = row,
+                packet = tagged.getOrNull(i)?.facts ?: row.facts,
+                fleetNames = row.fleetIds.mapNotNull { id -> names[id] },
+                custom = labels[row.key],
+            )
+        }
+        val fix = if (settings.tagLocation) app.lastFix else null
+        val before = app.tracker.notice.value?.id
+        val raised = app.tracker.hear(
+            hears = hears,
+            mine = RadioBookmarks.mineKeys(app.config.watchlist),
+            lat = fix?.first,
+            lon = fix?.second,
+            now = now,
+            followOn = followOn,
+            placesOn = placesOn,
+            placeFresh = placeFresh,
+        )
+        val after = app.tracker.notice.value
+        if (raised != null || (before != null && after?.id != before)) {
+            app.syncTrackerShade(after)
+        }
+    }
+
+    /** Lets a separated clock finish, or drop, between advertisements. */
+    private fun ageTrackers(app: FieldwatchApp) {
+        val settings = app.config.settings
+        val followOn = settings.trackerFollow && settings.tagLocation
+        val showing = app.tracker.notice.value
+        if (!followOn && showing == null) return
+        val before = showing?.id
+        val placesOn = settings.trackerPlaces && settings.placeWatch && settings.tagLocation
+        val raised = app.tracker.hear(
+            hears = emptyList(),
+            mine = RadioBookmarks.mineKeys(app.config.watchlist),
+            lat = null,
+            lon = null,
+            now = System.currentTimeMillis(),
+            followOn = followOn,
+            placesOn = placesOn,
+            placeFresh = emptyList(),
+        )
+        val after = app.tracker.notice.value
+        if (raised != null || (before != null && after?.id != before)) {
+            app.syncTrackerShade(after)
         }
     }
 

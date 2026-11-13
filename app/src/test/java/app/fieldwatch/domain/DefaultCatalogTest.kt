@@ -217,7 +217,7 @@ class DefaultCatalogTest {
         val flock = stock.single { it.id == "fleet-flock-cameras" }
 
         assertFalse(ray.matchAny)
-        assertEquals(listOf("fleet-rayneo"), stock.filter { !it.matchAny }.map { it.id })
+        assertEquals(listOf("fleet-sidewalk", "fleet-rayneo"), stock.filter { !it.matchAny }.map { it.id })
         assertEquals(SignatureClass.GLASSES, ray.kind)
         assertTrue(ray.attentionNote.isNotBlank())
         assertEquals(0x0BC6, ray.rules.single { it.kind == RuleKind.MANUFACTURER_ID }.companyId)
@@ -666,7 +666,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(267, stock.size)
+        assertEquals(272, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -697,6 +697,45 @@ class DefaultCatalogTest {
         assertFalse("FE65", "fleet-chipolo" in ids(fe65))
         assertFalse("FE34", "fleet-chipolo" in ids(fe34))
         assertFalse("FEAA is Find Hub, not Chipolo", "fleet-chipolo" in ids(feaa))
+    }
+
+    @Test
+    fun pebblebeeMatchesServiceFa25AndKeepsTheName() {
+        val stock = DefaultCatalog.fleets()
+        val pebble = stock.single { it.id == "fleet-pebblebee" }
+        assertTrue(pebble.attentionNote.isBlank())
+        assertFalse("fleet-pebblebee" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        assertTrue(pebble.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FA25", true) })
+        assertTrue(pebble.notes.contains("FA25"))
+
+        val unnamed = ble(name = "", serviceUuids = listOf("FA25"))
+            .copy(key = "BLE:p1", mac = "AA:BB:CC:DD:EE:61")
+        val longForm = ble(name = "", serviceUuids = listOf("0000FA25-0000-1000-8000-00805F9B34FB"))
+            .copy(key = "BLE:p2", mac = "AA:BB:CC:DD:EE:62")
+        val serviceData = ble(name = "").copy(
+            key = "BLE:p3",
+            mac = "AA:BB:CC:DD:EE:63",
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FA25", "01"))),
+        )
+        val named = ble(name = "Pebblebee")
+            .copy(key = "BLE:p4", mac = "AA:BB:CC:DD:EE:64")
+        val moto = ble(name = "moto tag")
+            .copy(key = "BLE:p5", mac = "AA:BB:CC:DD:EE:65")
+        val neighbor = ble(name = "", serviceUuids = listOf("FA26"))
+            .copy(key = "BLE:p6", mac = "AA:BB:CC:DD:EE:66")
+        val hits = SignatureEngine().match(
+            listOf(unnamed, longForm, serviceData, named, moto, neighbor),
+            stock,
+        )
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("unnamed FA25", "fleet-pebblebee" in ids(unnamed))
+        assertTrue("long-form FA25", "fleet-pebblebee" in ids(longForm))
+        assertTrue("service data FA25", "fleet-pebblebee" in ids(serviceData))
+        assertTrue("Pebblebee name", "fleet-pebblebee" in ids(named))
+        assertTrue("moto tag name", "fleet-pebblebee" in ids(moto))
+        assertFalse("FA26", "fleet-pebblebee" in ids(neighbor))
+        assertFalse("FA25 is not Find Hub", "fleet-find-hub" in ids(unnamed))
+        assertFalse("FA25 is not DULT", "fleet-dult" in ids(unnamed))
     }
 
     @Test

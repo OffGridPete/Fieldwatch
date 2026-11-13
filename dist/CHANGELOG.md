@@ -4,6 +4,27 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.1.44 — 13 November 2026
+
+- Exposure Notification names a Bluetooth advertisement on service FD6F. The radio page says the identifier is there and that the metadata is encrypted. It does not show those bytes. It does not beep. Catalog 111 adds the signature.
+- BTHome names a Bluetooth sensor that uses service FCD2. The radio page shows the measurements the device advertises, including temperature, humidity, battery, door, and motion. An open door or window shows on the live row. Encrypted packets only say they are encrypted. Catalog 110 adds the signature. It does not beep.
+- Remote ID authentication shows the type, page, and time the plate sends. The signature bytes stay off the page. It does not check the signature. A location message in the same session keeps that block. It does not beep.
+- Amazon Sidewalk names a Bluetooth device that sends the AMA service and Amazon's company ID. Registration mode shows on the live row. The radio page shows the beacon type and the battery band. It does not show the hidden id. An Echo without that service stays Amazon. Catalog 109 adds the signature. It does not beep.
+- Matter setup names a Bluetooth device that is offering Matter commissioning. The radio page shows the vendor ID, the product ID, and the discriminator the device sends. A live row says Matter setup. Proximity ranging is named and does not show the hidden id. Catalog 108 adds the signature. It does not beep.
+- HomeKit names the category and the paired line the accessory broadcasts. An unpaired accessory shows that category on the live row. Paired does not. Catalog 107 adds the signature. It does not beep.
+- French Direct Remote ID can fill the aircraft position, altitude, speed, course, and the takeoff pin when that Wi-Fi beacon is present. Height above takeoff shows on the radio page and is not the aircraft pin. A CTA-2063 serial on that plate can name the maker. The three-letter code does not. A later French plate in the same session replaces the stored one. Android 11 or newer. Catalog 106 updates the Remote ID note when it still says the French plate does not fill a position.
+- Compare and Debrief keep the percent moving on a large sit. Writing the text file is most of that bar, in pieces, so it climbs until the file is done. A step with no count still creeps the percent, so the wait does not look stuck.
+- A Wi-Fi access point can say what kind of network it is, whether it has internet, a venue, and a hotspot id. Detail shows that when the beacon includes it. Android 11 or newer. The access point sets these. They are not checked.
+- Compare (text) and Debrief (text) share a text file. A large report no longer puts the whole text in the share handoff.
+- If a share cannot open, Fieldwatch says why. That includes the phone being out of storage, out of memory, or the share being too large to open.
+- Google Find Hub shows a 20-byte or 32-byte ephemeral id, chosen from the payload length. When the hashed flags byte is in the advertisement, the line says it is present. That byte is encrypted, so the value is not shown. Catalog 105 copies this onto a phone that already saved the row.
+- Google Find Hub frame 0x40 is labeled not separated. That frame means unwanted-tracking protection is off. It does not say the tag is near its owner. Frame 0x41 stays separated. Catalog 104 copies that wording onto a phone that already saved the row.
+- Settings → Tracker monitoring has two warnings, both off until you turn one on. Separated tag with you warns when a tag says it is away from its owner, this phone has heard it for 30 minutes with no gap over 20 minutes, and this phone's GPS has three spots at least 100 m apart. Heard at two places warns when a finder with a stable address reaches two stops. The places list stays either way. Open radio opens that radio. Dismiss keeps that warning down while the same condition continues. There is no beep. A quiet notification shows the same lines when Fieldwatch is not on screen.
+- Pebblebee matches Bluetooth service FA25 as well as the Pebblebee and moto tag names. A tag that leaves its name off still matches. That service does not say whether the tag is away from its owner. Find Hub and DULT stay on their own rows. The row does not beep.
+- A Find My advertisement of 25 bytes says it is broadcasting a public key. A 2-byte advertisement says it is the short form, often a tag near its owner, and that this is not certain. The battery level is shown only when the recent-owner bit is set. The AirTag signature is unchanged.
+- Bundled language files are written for this version.
+- A language file can be up to 352 KiB. The English template fits in that limit.
+
 ## 1.1.43 — 9 November 2026
 
 - A Bluetooth name of Quest, or one that starts with Quest followed by a space or a hyphen, or one that starts with Meta Quest, is Meta Quest. Quest 3S is that row. It is not labeled Ray-Ban / Meta glasses and it does not beep. A Meta company ID or service FEB8 without that name still matches the glasses row.

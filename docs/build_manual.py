@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.1.43")
-    c.drawString(48, 94, "9 November 2026")
+    c.drawString(48, 108, "Version 1.1.44")
+    c.drawString(48, 94, "13 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -521,7 +521,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    label = "v1.1.43  ·  Off Grid Pete LLC"
+    label = "v1.1.44  ·  Off Grid Pete LLC"
     c.drawString(48, 28, label)
     # Fixed x values ran the Instagram mark into "LLC".
     ig_s, x_s = 5.2, 5.0
@@ -834,7 +834,7 @@ def story():
                 ["IEEE MA-L registry", "B4:1E:52 is registered to Flock Safety (9 May 2024). This is the only high-confidence Flock-assigned OUI in the default set."],
                 ["Independent ALPR / DeFlock research", "LiteOn camera-radio prefixes commonly seen on camera boards; names that start with Flock- or Penguin-; FS Ext Battery; Pigvision. Silicon Labs prefixes are not a battery rule."],
                 ["GainSec / firmware write-ups", "Raven BLE service UUID range 0x3100–0x3500. XUNTONG manufacturer ID 0x09C8 is the Penguin / Flock external battery, not the Raven acoustic radio."],
-                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag service FD5A; Tile 0x00C7 and FEED/FEEC/FEDD. Chipolo matches BLE service FE33 as well as the Chipolo name. Pebblebee/moto tag is a name-only Find Hub locator (stock rows, on). IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit). Company ID 0x0075 is Samsung generally and is not the SmartTag row."],
+                ["BLE tracker conventions", "Apple 0x004C Offline Finding 0x12; Samsung SmartTag service FD5A; Tile 0x00C7 and FEED/FEEC/FEDD. Chipolo matches BLE service FE33 as well as the Chipolo name. Pebblebee/moto tag matches BLE service FA25 as well as the name (stock rows, on). FA25 does not say whether the tag is away from its owner. IETF DULT location-enabled ads use service data FCB2 (Network ID plus a near-owner bit). Company ID 0x0075 is Samsung generally and is not the SmartTag row."],
                 ["Android platform docs", "WifiManager scan throttling, BLE ScanSettings, permission model (location, NEARBY_WIFI_DEVICES, BLUETOOTH_SCAN), foreground-service types."],
                 ["Android GNSS interference note", "Google's public guide “Detect GNSS jamming and spoofing.” A drop in receiver gain together with a drop in signal strength can mean interference. The guide's figure is from Spens, Lee, Nedelkov, and Akos, NAVIGATION, 2022. The full credit is in §5.9. Fieldwatch uses that idea on this phone. The warning does not name a cause."],
             ],
@@ -1748,7 +1748,9 @@ def story():
         P(
             "<b>Tags that speak the protocol.</b> DULT (service data FCB2) and Google Find Hub "
             "(FEAA frames 40 and 41) put the mode on the row. <b>Separated</b> is the heavier chip. "
-            "<b>Near owner</b> and <b>Nearby</b> stay quieter. "
+            "<b>Near owner</b> and <b>Not separated</b> stay quieter. "
+            "Not separated means unwanted-tracking protection is off. "
+            "It does not say the tag is with its owner. "
             "AirTag and Tile do not carry this bit, so those rows stay a name only. "
             "A Samsung SmartTag that sends its own service data can say <b>Separated from owner</b>, "
             "<b>Separated from owner, away more than 24 h</b>, or <b>With owner</b>. "
@@ -1782,6 +1784,20 @@ def story():
             "Detail still has latitude, the grid, heading, speed, and UAS id when those messages are current. "
             "Distance and bearing on that page use this phone's current GPS fix. "
             "The TAK pin does not depend on this chip."
+        ),
+        P(
+            "<b>Home, phones, and authentication.</b> These words are on the list and they do not beep. "
+            "An unpaired HomeKit accessory shows its category on the heavier chip. "
+            "A Matter device that is offering setup shows <b>Matter setup</b>. "
+            "Amazon Sidewalk in registration mode shows <b>Sidewalk registration</b>. "
+            "A BTHome door or window that says open shows <b>Open</b> on the heavier chip. Motion is quieter. "
+            "Remote ID authentication shows <b>UAS ID signature</b>, <b>Operator ID signature</b>, "
+            "<b>Message set signature</b>, or <b>Network Remote ID</b>. Those four are quiet. "
+            "Emergency stays the only heavier Remote ID chip. "
+            "Exposure Notification has no word on the list. "
+            "Detail has the rest: HomeKit category and paired line, Matter vendor and product, "
+            "Sidewalk beacon type and battery band, BTHome measurements, and the Exposure Notification lines. "
+            "None of these is a Decode fields map, so there is no hexagon for that reason."
         ),
         P(
             "<b>How to use it.</b> Strength list, Hybrid, Timeline, or By class. "
@@ -1904,8 +1920,8 @@ def story():
             "<b>Signal</b> — RSSI plus min/max this session, claimed TX power, channel / MHz, Wi-Fi standard and channel width when Android reports them.",
             "<b>BLE</b> — PHY (1M / 2M / Coded), connectable, advertising interval, decoded Flags, GAP Appearance, Class of Device (major / minor / service classes), named 16-bit service UUIDs, service data, manufacturer payload. Connectable stays Yes once any advertisement from this radio was connectable — scan responses from the same MAC are not connectable and no longer flip the line.",
             "<b>Known payloads</b> — iBeacon (UUID / major / minor / calibrated TX); Google Fast Pair (pairing-mode 24-bit model ID with a local name list, or account-key broadcast); Apple Continuity (AirPods/Beats model, battery, in-ear/in-case; Find My / Offline Finding; Nearby Info activity; Nearby Action; AirDrop; Handoff; Hey Siri; AirPlay; Instant Hotspot). Eddystone UID / URL / TLM / EID (service 0xFEAA) <b>accumulate</b> on this page: each frame type stays once heard, labeled on the raw line (UID, URL, TLM, EID). Frames do not replace each other. Microsoft Swift Pair / Nearby Sharing when present. Unknown 0xFF blobs stay company + hex — there is no official database of proprietary payloads.",
-            "<b>Decoded fields</b> — Catalog maps read BLE manufacturer or service data (§9.6): labels and values from the <i>current</i> advertisement (temperature, model, Remote ID location, …). Remote ID is the same map on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC (framed as FFFA): UAS ID, Location lat/lon/heading/speed, operator. The heading carries the same hexagon as the Live display chip. Encrypted or short payloads stay hex; a note appears if a map exists but did not apply to this packet (Govee lights often only send a name). Matched signatures lists a hexagon next to names that have a map. A Live row word is already on the list. Its catalog note prints here under that value (§5.4.1). Apple / Fast Pair / Eddystone / Microsoft stay in Known payloads and Maker data. Share as text, AI Export, and Debrief notable BLE print the same lines.",
-            "<b>Wi-Fi AP</b> — SSID (or Hidden), RSN/WPA/AKM/cipher from information elements in plain language, supported rates, capability string, vendor-specific IEs (OUI + type + payload) looked up in IEEE OUI/CID.",
+            "<b>Decoded fields</b> — Catalog maps read BLE manufacturer or service data (§9.6): labels and values from the <i>current</i> advertisement (temperature, model, Remote ID location, …). Remote ID is the same map on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC (framed as FFFA): UAS ID, Location lat/lon/heading/speed, operator. The heading carries the same hexagon as the Live display chip. Encrypted or short payloads stay hex; a note appears if a map exists but did not apply to this packet (Govee lights often only send a name). Matched signatures lists a hexagon next to names that have a map. A Live row word is already on the list. Its catalog note prints here under that value (§5.4.1). Apple / Fast Pair / Eddystone / Microsoft stay in Known payloads and Maker data. Share as text, AI Export, and Debrief notable BLE print the same lines. HomeKit, Matter, Amazon Sidewalk, BTHome, and Exposure Notification are their own sections on this page, not a Decode fields map. §5.4.1 and Appendix B.",
+            "<b>Wi-Fi AP</b> — SSID (or Hidden), RSN/WPA/AKM/cipher from information elements in plain language, supported rates, capability string, vendor-specific IEs (OUI + type + payload) looked up in IEEE OUI/CID. On Android 11 or newer, a beacon can also say the network type, whether it has internet, a venue, and a hotspot id. Those lines sit under What the access point says about itself. The access point sets them. They are not checked. A vehicle venue adds one sentence. Android 10 leaves the section off.",
             "<b>Session</b> — first/last seen, hit count, optional GPS (operator phone at hear-time), <b>every</b> matched signature (not capped at three), raw advertisement bytes, RSSI sparkline, 15-minute presence. Bookmark (top bar) watches this radio — see below. BLE: Hunt. Signature family card. Then Create signature from device.",
         ]),
         P(
@@ -2673,6 +2689,15 @@ def story():
             "§5.4.1."
         ),
         P(
+            "<b>Authentication.</b> Message type 2. The radio page shows the type, the page, and the time. "
+            "Auth data present says how many bytes the plate declared. The signature bytes stay off the page. "
+            "Fieldwatch does not check them. "
+            "UAS ID signature, Operator ID signature, Message set signature, and Network Remote ID also show on the live row, quietly. "
+            "None, specific authentication, reserved, and private stay on the page. "
+            "A later Location or Basic ID message leaves this block in place. "
+            "The location status chip still follows the Location message only."
+        ),
+        P(
             "BLE UUID FFFA and Wi-Fi vendor IE FA:0B:BC are both identity for the stock Remote ID "
             "signature. The same Decode fields map reads Basic ID, Location, System, and Self ID "
             "(protocol 0–2). Wi-Fi message packs are framed as FFFA so detail and TAK match BLE. "
@@ -2682,8 +2707,9 @@ def story():
         bullets([
             "<b>BLE.</b> UUID FFFA in service data. One 25-byte message per advertisement. Types rotate: Basic ID, Location, System, Self ID, Operator ID. Protocol versions 0, 1, and 2 decode. The BLE address often rotates; Basic ID <font face='Courier'>uas_id</font> is the sticky identity.",
             "<b>Wi-Fi.</b> A normal AP beacon with vendor IE FA:0B:BC type 0x0D. Android 11+ exposes that IE; Android 10 does not, so a Wi-Fi-only drone will not label on Android 10. A Wi-Fi beacon can send one 25-byte message or an ASTM message pack (type 0xF, several messages). Identity is the vendor IE. The parser frames each 25-byte message as BLE FFFA (app code 0x0D, counter, message) so the stock Remote ID Decode fields map, detail, and TAK run the same as BLE.",
-            "<b>French plate.</b> Vendor IE 6A:5C:35 labels the same Remote ID row. It does not fill position, heading, or the operator pin. Those still come from the ASTM advertisement.",
-            "<b>Serial.</b> When Basic ID says the ID type is a serial, a known manufacturer prefix adds a line on that same Remote ID row. Freefly, BRINC, Teal, Autel, and Skydio. The Autel stem is 1748C and the Skydio stem is 1668B. A shorter prefix does not. A session ID does not. The French plate does not.",
+            "<b>French plate.</b> Vendor IE 6A:5C:35 on the same Remote ID row. When Android passes that element, it can fill aircraft position, altitude, speed, course, and the takeoff pin. Height above takeoff shows on the radio page and is not the aircraft pin. Android 11 or newer.",
+            "<b>Authentication.</b> Message type 2 on the same Remote ID row. The page shows the type, the page, and the time. The signature bytes stay off the page and are not checked. A later location message keeps that block.",
+            "<b>Serial.</b> When Basic ID says the ID type is a serial, a known manufacturer prefix adds a line on that same Remote ID row. Freefly, BRINC, Teal, Autel, and Skydio. The Autel stem is 1748C and the Skydio stem is 1668B. A shorter prefix does not. A session ID does not. The three-letter code on the French plate does not. A CTA-2063 serial on that plate uses the same prefixes.",
         ]),
         P("<b>What still misses.</b>", "body_left"),
         bullets([
@@ -3450,6 +3476,21 @@ def story():
             "Places does not read old sits or the log. It records only while Places and Tag detections with GPS are both on, and only while a live fix is coming in. A last-known fix older than about 30 seconds is ignored. "
             "Turning Places off hides the lines and stops new recording. The file stays.",
             "body_left",
+        ),
+        P(
+            "<b>Tracker monitoring.</b> Settings has a page named Tracker monitoring, after Trusted networks. "
+            "Both warnings stay off until you turn one on. "
+            "Separated tag with you shows a popup when a tag's own advertisement says it is away from its owner, "
+            "this phone has heard it for 30 minutes with no gap longer than 20 minutes, "
+            "and this phone's GPS has three spots at least 100 m apart during that time. "
+            "It needs Tag detections with GPS. A tag that says it is near its owner stays quiet. "
+            "Heard at two places shows a popup when a finder with a stable address reaches two stops. "
+            "The places list stays either way. It needs Places and Tag detections with GPS. "
+            "Remote ID stays on the places report and does not use this popup. "
+            "The popup names the radio, the signal, and the address. Open radio opens that radio. "
+            "Dismiss, or opening that radio, keeps this warning down while the same condition continues. "
+            "A different radio can still warn. There is no beep. "
+            "When Fieldwatch is not on screen, the same lines sit in a quiet notification.",
         ),
         P("<b>Limits.</b>", "body_left"),
         bullets([
@@ -5043,12 +5084,12 @@ def story():
                 ["Thermostats", "Nest Thermostat, ecobee, Sensi, Honeywell Home"],
                 ["Access control", "August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton"],
                 ["Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
-                ["Home IoT", "Nest Weave, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, Samsung appliance, EcoWater, Amazon, DJI Power, Logitech, HP, Epson, LG webOS TV, Roku, Nespresso, RadiaCode, Ruuvi, Blue Maestro, SensorPush, SnapAV"],
+                ["Home IoT", "Nest Weave, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, Samsung appliance, EcoWater, Amazon, Amazon Sidewalk, HomeKit, Matter, BTHome, DJI Power, Logitech, HP, Epson, LG webOS TV, Roku, Nespresso, RadiaCode, Ruuvi, Blue Maestro, SensorPush, SnapAV"],
                 ["ISP / routers", "UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Ruijie, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR, TP-Link, ASUS, Linksys, Eero, Google Wifi, Huawei, Plume, D-Link, DWnet, Belkin, Xfinity, Spectrum, AT&amp;T, Verizon, Starlink, GL.iNet, MikroTik, EnGenius, Zyxel, Peplink, OpenWrt, Arris, T-Mobile, HUMAX, Sagemcom, Arcadyan, Askey, Calix, Nokia, AirTies, Tenda, WAVLINK, Sercomm, Luxul, CenturyLink, Adtran, Cambium, TRENDnet, Cudy, Vantiva, Hitron, Actiontec, Buffalo, Grandstream, Inseego, Franklin, Synology"],
                 ["Mesh", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate"],
                 ["Two-way radios", "Icom ID-52. The Bluetooth name is ICOM BT(ID-52) while the radio is waiting to pair. This phone does not hear the voice channel. A renamed radio does not match. Wireless microphones, where Bluetooth is how the microphone works: Icom VS-3 (ICOM BT-002), Yaesu SSM-BT10, Yaesu SSM-BT20, Kenwood KHS-55BT, Kenwood KHS-56BT (the name plus a four-digit code), and VGC BHM-88. This phone hears a Low Energy advertisement of that name. A name that only appears on the Classic link stays quiet. Benshi radio is the amateur platform sold as BTECH, Radioddity, or Vero. The exact Bluetooth name is UV-PRO, UV-50PRO, GA-5WB, VR-N75, VR-N76, VR-N7500, VR-N7600, or DB50-B. BLE PTT button is a wireless button for a phone app. The exact name is PTT-Z, PTT-AZ, or PTT-Z01. A longer or shorter name does not match."],
                 ["Military", "None yet. Reserved for a military-specific set. Military use of a commercial product does not move that product here."],
-                ["Phones / PCs", "Apple Device, Fast Pair, Google, Microsoft Device, Phone hotspot"],
+                ["Phones / PCs", "Apple Device, Exposure Notification, Fast Pair, Google, Microsoft Device, Phone hotspot"],
                 ["Other", "—"],
             ],
             [1.7 * inch, 4.8 * inch],
@@ -5059,13 +5100,13 @@ def story():
             [
                 ["Red", "Pentest / cheap serial", "Hak5 Pineapple, Flipper Zero, Pwnagotchi, Marauder / Deauther, GhostESP, Bruce, Porkchop, Hobby BLE serial"],
                 ["Amber", "Surveillance and drones (same chip color; class splits them)", "Flock, Raven, Penguin, Pigvision, FS Ext Battery, Genetec, Rekor, Vigilant, Verkada, Avigilon, Axis, Hikvision, Dahua, Hanwha Wisenet, Uniview, Rhombus, UniFi Protect, BlueTOAD Spectra, BlipTrack, Remote ID, DJI, Skydio, Autel, Parrot, HOVERAir, Tello, Potensic, Holy Stone, Hubsan, Yuneec, SwellPro, Crazyflie"],
-                ["Purple", "Phones / Find My tags", "Apple Device, Apple AirTags, Chipolo, Google Find Hub, DULT tracker, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
+                ["Purple", "Phones / Find My tags", "Apple Device, Exposure Notification, Apple AirTags, Chipolo, Google Find Hub, DULT tracker, Fast Pair, Google (Pixel / 0x00E0), Phone hotspot"],
                 ["Cyan", "Wearable trackers", "Samsung SmartTags, Tile, Pebblebee / moto tag, Garmin, Fitbit, Oura, Polar, Pokemon GO Plus, Fieldy, Plaud Note, iBeacon, Atrius cart tag, Minew, Estimote, Kontakt.io"],
                 ["Green", "Mesh / LoRa, and Two-way radios (same chip color; class splits them)", "Meshtastic, MeshCore, Helium, goTenna, SenseCAP, RAK WisGate, Icom ID-52, Icom VS-3, Yaesu SSM-BT10, Yaesu SSM-BT20, Kenwood KHS-55BT, Kenwood KHS-56BT, VGC BHM-88, Benshi radio, BLE PTT button"],
                 ["Orange", "Glasses and audio (same chip color; class splits them)", "Ray-Ban / Meta glasses, Snap Spectacles, Apple audio, Sony, Bose, JBL / Harman, Sonos, Shokz"],
                 ["Teal", "Public safety and vehicle (same chip color; class splits them)", "Axon, WatchGuard Video, Cradlepoint, AirLink, Compex, Utility Inc, Tesla, Tesla tsTPMS, Rivian, Ford, Honda, Hyundai, Toyota, Nissan, Subaru, BMW, Volkswagen, Porsche, Jaguar Land Rover, BYD, Chevrolet hotspot, Mercedes MBUX, Uconnect, CarPlay, CARLINK, Motive, Samsara, Winegard, Goodyear / Schrader / Pacific / Huf / FOBO / Aftermarket / SYTPMS / TireCheck / TPMS service"],
                 ["Blue", "Health", "Honeywell Xenon HC, Omron, Withings, Dexcom"],
-                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, DJI Power, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris"],
+                ["Silver", "Cameras / PCs / home IoT / home Wi-Fi / retail signage / access control", "GoPro, Osmo, Insta360, eufy, Wyze, Ring, Arlo, Nest, Tapo, Reolink, Microsoft Device, Amazon, Amazon Sidewalk, HomeKit, Matter, BTHome, DJI Power, Starlink, Logitech, HP, Epson, LG webOS TV, Nespresso, RadiaCode, Nest Thermostat, Nest Weave, ecobee, Sensi, Honeywell Home, Tuya, Govee, Haiku Fan, myQ, Hatch, Orbit B-hyve, August, Schlage, Nuki, Lockly, Kevo, Master Lock, igloohome, Tedee, Kwikset, ASSA ABLOY, SALTO, dormakaba, Paxton, Ruuvi, Blue Maestro, SensorPush, SnapAV, Retail LED sign, Electronic shelf label, UniFi, UniFi AP, Meraki, Cisco, Aruba, Ruckus, Fortinet, Mist, Sophos, Extreme, Edgecore, WatchGuard AP, Mojo, NETGEAR/TP-Link/ASUS/Linksys/Eero/Google Wifi/D-Link/Belkin/Xfinity/Spectrum/AT&amp;T/Verizon/GL.iNet/MikroTik/EnGenius/Zyxel/Peplink/OpenWrt/Arris"],
             ],
             [0.95 * inch, 1.7 * inch, 3.85 * inch],
         ),
@@ -5160,7 +5201,10 @@ def story():
             "Insta360 is Arashi Vision 0x10D7 plus X3 / Ace Pro / GO 3 names. "
             "In-flight drones also hit <b>Remote ID</b> (BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC, and the French plate vendor IE 6A:5C:35). "
             "Skydio / Autel / Parrot ANAFI-Bebop-Skycontroller / HOVERAir / Tello / Potensic / Holy Stone / Hubsan / Yuneec / SwellPro / Crazyflie "
-            "are name rows. Autel default-ssid, a bare ATOM or EXO name, and Parrot company 0x0043 are not used."
+            "are name rows. Autel default-ssid, a bare ATOM or EXO name, and Parrot company 0x0043 are not used. "
+            "Amazon Sidewalk needs the AMA UUID and company 0x0171 together. HomeKit is Apple prefix 06. "
+            "Matter is UUID FFF6. BTHome is UUID FCD2. Exposure Notification is UUID FD6F, on Phones / PCs. "
+            "It does not name the phone."
         ),
         P(
             "<b>Fast Pair is not “Android.”</b> It is Google's tap-to-pair UUID (FE2C), a Phones / PCs "
@@ -5420,7 +5464,7 @@ def story():
             ["Signature", "Source", "What detail can show"],
             [
                 ["Ruuvi", "Mfr 0x0499", "Format 5: temp / humidity / pressure / accel / battery / TX / movement / sequence / MAC in payload. Format 3: humidity / pressure / accel / battery (Format 3 temperature is sign-magnitude, not a plain int)."],
-                ["Remote ID", "BLE FFFA and Wi-Fi FA:0B:BC", "Same Decode fields map on both. Open Drone ID app code, counter, message type. Protocol 0–2: Basic ID, location (latitude / longitude / alt_geo / heading / hspeed). Heading is direction 0–179 plus 180 when flags bit 1 (east/west) is set — not ×2. hspeed is ×0.25, or ×0.75 + 63.75 when flags bit 0 (SpeedMult) is set. Self ID, System (op_lat / op_lon is the operator: takeoff, live GPS, or fixed). EU class and category show only when the plate says EU. Operator altitude is blank when unknown. Height can say takeoff or over ground. Wi-Fi packs are framed as FFFA. Location status is a Live row chip while that message is stored: Undeclared, Ground, Airborne, Emergency, RID failure. Emergency is strong. TAK Payload location uses the lat/lon ids plus track course/speed. Not a tail number. §5.4.1."],
+                ["Remote ID", "BLE FFFA and Wi-Fi FA:0B:BC", "Same Decode fields map on both. Open Drone ID app code, counter, message type. Protocol 0–2: Basic ID, location (latitude / longitude / alt_geo / heading / hspeed). Heading is direction 0–179 plus 180 when flags bit 1 (east/west) is set — not ×2. hspeed is ×0.25, or ×0.75 + 63.75 when flags bit 0 (SpeedMult) is set. Self ID, System (op_lat / op_lon is the operator: takeoff, live GPS, or fixed). EU class and category show only when the plate says EU. Operator altitude is blank when unknown. Height can say takeoff or over ground. Wi-Fi packs are framed as FFFA. Location status is a Live row chip while that message is stored: Undeclared, Ground, Airborne, Emergency, RID failure. Emergency is strong. Authentication is a separate section, not a field in this map. The signature bytes stay off the page and are not checked. TAK Payload location uses the lat/lon ids plus track course/speed. Not a tail number. §5.4.1."],
                 ["Blue Maestro", "Mfr 0x0133", "Tempo Disc battery, log interval, stored logs, temperature, humidity."],
                 ["GoPro", "Mfr 0xF202", "Schema, processor awake/asleep, Wi-Fi AP, pairing, model name, media offload."],
                 ["Osmo / DJI / DJI Power", "Mfr 0x08AA", "Model id (Osmo Action / Pocket / 360, some aircraft, and Power 2000). Those rows share the map; identity rules still split cameras, the power station, and drones."],
@@ -5431,7 +5475,7 @@ def story():
                 ["Tuya", "Mfr 0x07D0", "Bound flag and protocol version. UUID bytes stay encrypted."],
                 ["Tile", "Service FEED", "Rotating private id (8 bytes of hex). Not a serial and not a stable identity."],
                 ["DULT tracker", "Service FCB2", "IETF DULT location-enabled advertisement: Network ID, then near owner vs separated (least-significant bit of the next byte). Mode is a Live row chip. Separated is strong. Near owner is quiet. Partner tags (Chipolo, Pebblebee, moto) may dual-label. A UUID list without service data does not match. §5.4.1."],
-                ["Google Find Hub", "Service FEAA", "Frames 40 (nearby) and 41 (separated). Mode is a Live row chip. Separated is strong and can hold a MAC about a day. Nearby is quiet. Not Eddystone UID/URL/TLM. §5.4.1."],
+                ["Google Find Hub", "Service FEAA", "Frames 40 (not separated) and 41 (separated). Mode is a Live row chip. Separated is strong and can hold a MAC about a day. Not separated is quiet and does not say the tag is with its owner. The ephemeral id is 20 or 32 bytes, from the payload length. A following byte, when present, is hashed flags. That byte is encrypted, so the line only says whether it is there. Not Eddystone UID/URL/TLM. §5.4.1."],
                 ["Penguin", "Mfr 0x09C8", "XUNTONG manufacturer data: MAC in payload, ASCII serial starting TN (e.g. TN72023022000771). Newer packs often advertise a 10-digit name instead of Penguin-."],
                 ["Aftermarket TPMS", "Mfr 0x0001", "Valve-cap kits after the TPMS* / FBB0 / data 80–83 match: wheel, pressure kPa, temperature, battery, alarm. A bare Nokia 0x0001 radio does not hit this row."],
                 ["SYTPMS", "Mfr (7-byte BR blob)", "Bicycle / scooter BR sensors: gauge psi, temperature, battery volts, alarm / rotating / standing still."],
@@ -6111,7 +6155,7 @@ def story():
         ),
         P("12.6 Is this my own tag?", "h2"),
         P(
-            "Bag-check, not accusation. Turn on Moving with you after ~50 m. If the only tracker-like row is the one you put in the bag or the car, the filter is doing its job. Bookmark that MAC or hide the family so it stops competing with a real candidate. On a DULT or Find Hub row, read the mode chip first. Separated is heavier and can hold one MAC about a day. Near owner or Nearby with you the whole sit is often your own tag. §5.4.1.",
+            "Bag-check, not accusation. Turn on Moving with you after ~50 m. If the only tracker-like row is the one you put in the bag or the car, the filter is doing its job. Bookmark that MAC or hide the family so it stops competing with a real candidate. On a DULT or Find Hub row, read the mode chip first. Separated is heavier and can hold one MAC about a day. A DULT near-owner tag with you the whole sit is often your own. Find Hub not-separated does not say the tag is with its owner. §5.4.1.",
             "body_left",
         ),
         P(
@@ -6786,7 +6830,7 @@ def story():
             ["Signature", "A named bundle of match rules plus optional cluster flags."],
             ["Decode fields", "Optional cleartext map on a signature (Signatures → row → Decode fields). After the rules hit, device detail / Share / AI Export / Debrief parse manufacturer or service-data bytes into labels (temp, model, Remote ID, …). A field with Live row on also prints that one word on the list (§5.4.1). Strong marks the heavier chip. Note is the sentence on detail and in Debrief. TAK / CoT also reads numeric ids latitude / longitude for advertised-position pins. Remote ID uses this map on BLE FFFA and on Wi-Fi FA:0B:BC (framed as FFFA). Not a matcher. Not pairing or GATT. Encrypted ads stay hex. A hexagon on that signature's chip means a map exists (§5.4). Byte 0 is after the company ID (manufacturer) or the first service-data byte. How to build a map: §9.6.1–§9.6.5. Stock maps: §9.6.6. TAK ids: §5.8.4. Remote ID: §5.8.3."],
             ["Decode hexagon", "Small hexagon inside a signature name chip (same color as the name) when that signature has a Decode fields map. Dual-chip radios mark only the mapped name(s). Catalog check, not a parse of this packet. Hidden when Display → Signature names is off. Extra attention “!”, the cyan Observer notes chip, the phosphor alerted bell, and a live value chip are separate. Same mark on the Signatures list, By class signature rows, and detail Decoded fields. §5.4, §9.6."],
-            ["Live value", "One decoded word on a Live list row, in the signature color. Live row must be on for that Decode fields entry, and this advertisement must have produced the word. Strong values use a heavier chip. Stock: DULT and Find Hub Separated; Remote ID Emergency, plus Ground, Airborne, Undeclared, and RID failure. A System message shows Takeoff, Live GPS, or Fixed. Strength list, Hybrid, Timeline, By class. Not radar. Signature names off still shows the word. §5.4.1."],
+            ["Live value", "One decoded word on a Live list row, in the signature color. Live row must be on for that Decode fields entry, and this advertisement must have produced the word. Strong values use a heavier chip. Stock: DULT and Find Hub Separated; Remote ID Emergency, plus Ground, Airborne, Undeclared, and RID failure. A System message shows Takeoff, Live GPS, or Fixed. HomeKit, Matter, Sidewalk, BTHome, and Remote ID authentication can also put one word on the list without a Decode fields map. Exposure Notification does not. Strength list, Hybrid, Timeline, By class. Not radar. Signature names off still shows the word. §5.4.1."],
             ["Signature family (detail)", "Card on device detail, above Create signature from device. Same on-air ID rules as Signature candidates, for this radio: Strong family, Possible family, This radio only, or Already tagged. Counts distinct MACs in the log and on the air now. Verdict only — Create from device still pins this MAC. Already tagged is not a veto: a second UUID/OUI signature can dual-label (iBeacon + store). Candidates skip tagged radios. §5.5, §9.2, §9.2.1."],
             ["Named radios", "Settings → Named radios, its own row after Alerts. One-MAC custom names, optional Observer notes (up to 280 characters), Mine, and optional alerts (detail Save name / Save notes, or the bookmark icon). Rename, notes, Mine on/off, Alert on/off, remove one, or Clear all. A name on one radio is the whole announcement. Does not include signature bookmarks or Signature and network. Privacy mode masks MAC tails. Orphans (gone or rotated) stay until you delete them. Filters → Keep named only (any custom name). Keep watched only needs Alert on. Path plots a Named radio only when Alert is on (bookmarked). Debrief, Compare, and AI Export list heard radios with notes. §5.5, §5.7, §8.1, §10.1."],
             ["Mine", "Switch on a radio you can already name. Live shows a Mine chip. No beep, voice, flash, or card for that radio while it is on. Other radios of a bookmarked signature still alert. Debrief and Compare list it under Marked mine and leave it out of the tracking callouts. A blank name is filled. Filters → Hide Mine takes those rows off Live. Settings backup includes the mark. §5.5, §5.6, §8.1."],
@@ -6801,7 +6845,7 @@ def story():
             ["GNSS mark (TAK)", "A Magenta map mark for a GNSS hit, separate from the Cyan Fieldwatch marker. Settings → TAK / CoT feed → GNSS warnings: Off, While alerting, Red line, or Any hit. Off sends nothing. A stretch under about 100 m is a pin at the start fix. A longer hit is one ellipse from that start to the latest fix, half as wide as it is long. The ellipse stops growing when the hit ends. The 10-minute ended line does not stretch it. Callsign Possible GNSS interference. The card says where this phone was, and that this is not the source. How long the mark stays: 1 hour (the start), 6 hours, 24 hours, or Until deleted. The time starts at the last update. Until deleted stays until GNSS warnings is set to Off. Needs the feed on, Privacy mode off, the check armed, and a GPS fix. A pause is not a hit. §5.8.13."],
             ["Heard here (TAK)", "CoT pin at this phone's GPS at the loudest hear so far. The other radio is in earshot, not on that point. Walking away does not drag it. Callsign ends in (here); Extra attention is Maroon. Needs GPS tagging and a live fix. Extra attention uses this unless a payload lat/lon exists. Not a bearing."],
             ["Advertised position (TAK)", "CoT pin from decode field ids latitude / longitude (optional alt_geo). Stock Remote ID fills them from the same Decode fields map on BLE FFFA and Wi-Fi FA:0B:BC. Sticky across ASTM message types. UAS ID is the TAK uid so one aircraft moves instead of leaving MAC dots. op_lat / op_lon are a second operator pin. The callsign says Takeoff, Pilot, or Fixed. Heading/speed go in track. GPS tagging can be off. §5.8.3."],
-            ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
+            ["Remote ID", "ASTM F3411 / OpenDroneID digital license plate. Stock Drones-class row. Works on BLE UUID FFFA and on Wi-Fi vendor IE FA:0B:BC type 0x0D (same Decode fields map). Protocol 0–2 Location / Basic ID / System / Self ID. A Location message puts Undeclared, Ground, Airborne, Emergency, or RID failure on the list. Emergency is the heavier chip. Authentication shows the type, page, and time. The signature bytes stay off the page and are not checked. TAK Payload location pins advertised aircraft; track course/speed when present. A sit can keep a short advertised track. Reports → Path and the sit report both draw it (§5.4.1, §5.6.1). Android 11+ for Wi-Fi IEs. NAN still misses. Not a tail number, not DF. §5.8.3, §9.6.6, §12.16."],
             ["Payload location", "TAK What-to-send chip, on by default when you turn the feed on. Selects radios with sticky advertised lat/lon. Required for stock Remote ID (no Extra attention mark). BLE FFFA and Wi-Fi FA:0B:BC both qualify."],
             ["Reports", "Bottom tab. Sits stay on this page. Using… names the sit for Path, Debrief, Sit export, and Compare. Those four open their own pages, marked by a green bar. Seen at more than one place, Log Export, and Signature candidates are under them. Clear log is on Log Export. AI Export is on Debrief, and again on Compare. GPS, place names, and logging on/off stay on Settings. §5.6."],
             ["Sit (named)", "Optional window of watching, started from Reports → Start sit. Path, Debrief, Compare this-sit, Sit export, and AI Export use that start/end instead of the last 15 minutes in RAM. Cap 6000 unique radios. Extra attention / payload / bookmarks / watched signatures stay when full; unnamed BLE drops first. Checkpoints to app storage about every 10 s. One at a time; keep 10 closed. Live list stays ~400. Not a bearing. §5.6."],
@@ -6918,6 +6962,7 @@ def story():
             ["Raven / ShotSpotter", "Names RAVEN, ShotSpotter, SoundThinking; UUIDs 3100–3500; OUI D4:11:D6", "UUID range is the stronger digital fingerprint. 0x09C8 is Penguin."],
             ["Apple AirTags", "Name AirTag / Find My; mfg data 0x004C / 12; UUID FD44", "Offline Finding. iPhones also send 0x12 — dropped when Continuity (Apple Device) is on the same radio unless the name is AirTag or UUID FD44. Not Continuity 0x10 and not AirPods (0x07)."],
             ["Apple Device", "Apple 0x004C types 0x10 / 0x0F / 0x0B / 0x05 / 0x0C–0x0E / 0x08 / 0x0A; names iPhone, iPad, MacBook", "Phone / tablet / Mac Continuity. OF 0x12 on the same radio is not a second AirTag chip. A street of iPhones will light this up."],
+            ["Exposure Notification", "BLE UUID FD6F", "Phones / PCs. The radio page says the identifier is there and that the metadata is encrypted. Those bytes stay off the page. It is not a finder tag and it does not name the phone. A rotating address can still be hidden by Hide randomized Bluetooth. It does not beep."],
             ["Apple audio", "0x004C / 07 Proximity Pairing; 0x004C / 09 AirPlay; names AirPods, Beats", "AirPods / Beats / AirPlay. Not tags, not Nearby Info phones."],
             ["Microsoft Device", "Company ID 0x0006; names Surface, Xbox", "Swift Pair / Nearby Sharing on Windows PCs."],
             ["Tesla", "Company 0x022B; UUIDs FE96/FE97; names Tesla / Cybertruck; BLE glob S????????????????C (VIN SHA1 phone-key); Apple iBeacon UUID 74278BDA-…; Wi-Fi TeslaGW* / tesla-vehicle / TeslaWallConnector* / Cybertruck*", "Phone-key ads are S + 16 hex + C. Tesla also uses iBeacon layout so iOS can find the car — Fieldwatch labels Tesla, not iBeacon. Vehicle class."],
@@ -6941,7 +6986,11 @@ def story():
             ["Pokemon GO Plus", "Names Pokemon GO Plus*; UUIDs 138C35B6 (Plus +) and 21c50462-… (original)", "Nintendo clip-on. Not company 0x0553 or OUI 60:1A:C7 (Joy-Con / Switch). Wearable class."],
             ["Fieldy", "BLE names Fieldy*. Extra attention filled. Stock bookmark.", "Field Labs AI note-taker pendant. Not Arduino/ESP32 example UUID 4FAFC201-…, not company 0xFEFE. Not proof of recording. Beeps on a new match."],
             ["Plaud Note", "BLE names Plaud Note*. Extra attention filled. Stock bookmark.", "Plaud Note / NotePin AI recorder. Not proof of recording. Beeps on a new match."],
-            ["Amazon", "Company 0x0171; names Echo / Amazon / Fire TV", "Echo / Fire."],
+            ["Amazon", "Company 0x0171; names Echo / Amazon / Fire TV", "Echo / Fire. Amazon Sidewalk is a separate row when UUID 03FE is also present."],
+            ["Amazon Sidewalk", "BLE UUID 03FE and company 0x0171, both required", "Home IoT. Beacon type and battery band. Registration mode shows Sidewalk registration on the live row. The hidden id stays off the page. An Echo with the company ID and no AMA UUID stays Amazon. It does not beep."],
+            ["HomeKit", "Apple 0x004C prefix 06", "Home IoT. Category and paired line. An unpaired accessory shows that category on the live row. Paired does not. Not an iPhone and not an AirTag. Prefix 06 is not the Apple Device row. It does not beep."],
+            ["Matter", "BLE UUID FFF6", "Home IoT. Vendor and product IDs as hex. Discriminator while the device is offering setup. The live row says Matter setup. Proximity ranging is named and the hidden id stays off the page. Not Nest Weave. It does not beep."],
+            ["BTHome", "BLE UUID FCD2", "Home IoT. v2 measurements the device advertises, including temperature, humidity, battery, door, and motion. An open door or window shows on the live row. Motion is quieter. An encrypted packet only says it is encrypted. It does not beep."],
             ["Fitbit", "Company 0x018E; UUIDs FD62/FD63; name Fitbit", "Wearable. Identity only — advertisements do not carry steps; modern dumps are GATT/encrypted. No Decode fields map."],
             ["Polar", "Company 0x006B; UUID FEEE; BLE name Polar*", "Heart-rate strap or watch. Wearables class. A strap that also sends GoPro UUID FEA5 stays on Polar, not GoPro. Heart Rate 180D is not a rule."],
             ["Oura", "Company 0x02B2; name Oura", "Ring."],
@@ -6953,7 +7002,7 @@ def story():
             ["Insta360", "Company 0x10D7; Insta360* / X3 * / X4 * / X5 * / Ace Pro* / GO 3* / ONE X* / ONE RS*", "Arashi Vision action / 360 cameras. Cameras class, not Surveillance."],
             ["DJI", "Company 0x08AA; DJI* on BLE and Wi-Fi; Wi-Fi vendor IE 26:37:12", "Drones / RC / setup AP. Osmo cameras are the Osmo row. A Bluetooth name that starts with Power2000 is the DJI Power row. OcuSync is not an AP. The older DroneID beacon is vendor IE 26:37:12. It labels this row and does not fill a position. Android 11 or newer can see that field. §4.1.1. In-flight ASTM Remote ID is the Remote ID row. Drones class. Decode fields: 0x08AA model id (§9.6). Stock bookmark."],
             ["DJI Power", "BLE name Power2000*", "DJI Power 2000 portable power station. Home IoT, not Drones. A radio that also carries company 0x08AA keeps this row and drops DJI. Other DJI radios stay on DJI. Not bookmarked. Decode fields: model id 4500 reads Power 2000 (§9.6)."],
-            ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and the operator. The French plate labels the row and does not fill position or the operator pin. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. §4.1.1. Not a tail number. Drones class. Stock bookmark."],
+            ["Remote ID", "BLE UUID FFFA, Wi-Fi vendor IE FA:0B:BC (ASTM), and French vendor IE 6A:5C:35", "In-flight digital license plate. ASTM on BLE FFFA and Wi-Fi FA:0B:BC decodes ID, location, heading, speed, and the operator. The French plate can fill aircraft position, altitude, speed, course, and the takeoff pin. Height above takeoff is not the aircraft pin. Authentication shows the type, page, and time. The signature bytes stay off the page and are not checked. DJI, Skydio, Autel, Parrot, HOVERAir, Dronetag / Aerobits / BlueMark modules. NAN still misses. Android 11+ for Wi-Fi IEs. §4.1.1. Not a tail number. Drones class. Stock bookmark."],
             ["Skydio", "Names Skydio*", "US public-safety / enterprise drones. In-flight RID is the Remote ID row (BLE FFFA or Wi-Fi FA:0B:BC). NAN still misses. Drones class. Stock bookmark."],
             ["Autel", "Names Autel*", "Autel Robotics drones. Not EVO* and not SSID default-ssid. Drones class. Stock bookmark."],
             ["Parrot", "Names ANAFI* / Bebop* / Skycontroller*", "Parrot drones and the Skycontroller. Not company 0x0043 (automotive). Not IEEE 90:3A:E6. Disco* not used. Drones class. Stock bookmark."],
@@ -7033,7 +7082,7 @@ def story():
             ["WAVLINK", "Wi-Fi WAVLINK* plus Winstars IEEE OUI 80:3F:5D", "Consumer APs. ISP / routers class."],
             ["Samsung SmartTags", "Names SmartTag / Smart Tag / Galaxy SmartTag; UUID FD5A", "FD5A is the SmartTag service. Company ID 0x0075 is Samsung generally and is not this row."],
             ["Tile Trackers", "Name Tile; UUIDs FEED, FEEC, FEDD; mfg 0x00C7", "FEEC is a Tile that is not activated yet. Older Tiles are noisier on name than on UUID. Decode fields: FEED 8-byte rotating private id (not a serial). §9.6."],
-            ["Google Find Hub", "BLE service FEAA, data prefix 40 (nearby) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. The list shows Nearby or Separated. Separated is the heavier chip and can hold a MAC about a day. Finder tags class. Decode: mode plus 20-byte EID. Chipolo / Pebblebee / moto tag name rows may dual-label. §5.4.1."],
+            ["Google Find Hub", "BLE service FEAA, data prefix 40 (not separated) or 41 (separated)", "Google Find Hub tags. Not generic Eddystone UID/URL/TLM. The list shows Not separated or Separated. Separated is the heavier chip and can hold a MAC about a day. Not separated is quiet and does not say the tag is with its owner. Finder tags class. Decode: mode, a 20-byte or 32-byte ephemeral id, and whether the hashed flags byte is present. That byte is encrypted. Chipolo / Pebblebee / moto tag name rows may dual-label. §5.4.1."],
             ["DULT tracker", "BLE service data FCB2 (any payload). Finder tags class. No Extra attention.", "IETF Detecting Unwanted Location Trackers location-enabled advertisement. The list shows Near owner or Separated. Separated is the heavier chip and can hold a MAC about a day. Decode: Network ID plus that bit. A bare FCB2 UUID list does not match. Chipolo / Pebblebee / moto tag names may dual-label. §5.4.1."],
             ["iBeacon", "Apple 0x004C type 0x02 length 0x15; names *iBeacon*", "Protocol, not a vendor. Dropped when a product signature already labeled the radio (Sony TV, Tesla phone-key). Minew / Estimote / Kontakt / Atrius cart tag still dual-label. Not Nearby Info 0x10 / AirTags 0x12 / AirPods 0x07. Not Eddystone FEAA."],
             ["Atrius cart tag", "Apple iBeacon UUID 5993A94C-7D97-4DF7-9ABF-E493BFD5D000; service 0xB1BB", "Atrius cart tag. The advertisement does not name the store. Hundreds of unnamed radios, unique major/minor, TX 0xC3. Not Acuity company 0x0346 on those radios. Dual-labels with iBeacon. Retail beacons class."],
@@ -7050,7 +7099,7 @@ def story():
             ["Omi", "Name Omi / OpenGlass; BLE 23ba7924. Not Arduino 19B10000.", "Pendant or OpenGlass camera glasses. Extra attention."],
             ["Friend Pendant", "BLE service 1a3fd0e7-b1f3-ac9e-2e49-b647b2c4f8da; Friend Pendant", "Wearable necklace that listens. Extra attention."],
             ["Chipolo", "Name / glob Chipolo*; BLE service FE33", "Find Hub / Find My / DULT tags. A renamed tag still matches the Chipolo service."],
-            ["Pebblebee / moto tag", "Pebblebee*, moto tag / Moto Tag", "Find Hub / DULT locators. Name-only."],
+            ["Pebblebee / moto tag", "Pebblebee*, moto tag / Moto Tag; BLE service FA25", "Find Hub / DULT locators. A tag that leaves its name off still matches FA25. That service does not say whether the tag is away from its owner."],
             ["Verkada", "Name / glob Verkada*. Extra attention filled. Stock bookmark.", "Cloud cameras / LPR on buildings and some public sites. Name-only. Beeps on a new match."],
             ["Motorola Vigilant", "Vigilant, Vigilant Solutions, Motorola Vigilant. Extra attention filled. Stock bookmark.", "LPR used by agencies and parking. Name-only when advertised. Beeps on a new match."],
             ["eufy Security", "eufy / EufyCam / eufy*", "Anker cameras and tags."],
@@ -7324,9 +7373,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.1.43 (versionCode 53), field build of 9 November 2026"],
-                ["Document version", "1.1.43"],
-                ["Document date", "9 November 2026"],
+                ["Software version", "1.1.44 (versionCode 54), field build of 13 November 2026"],
+                ["Document version", "1.1.44"],
+                ["Document date", "13 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "A copy filled with a sit log is sensitive."],

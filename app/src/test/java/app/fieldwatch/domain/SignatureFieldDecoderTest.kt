@@ -494,6 +494,8 @@ class SignatureFieldDecoderTest {
         )
         assertEquals("separated", rows.display("mode"))
         assertEquals("11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11", rows.display("eid"))
+        assertEquals("present", rows.display("hashed_flags"))
+        assertTrue(rows.first { it.id == "hashed_flags" }.note.contains("Encrypted"))
         val strong = SignatureFieldDecoder.liveChips(
             bleService("FEAA", "41$eid" + "00", fleet.id),
             listOf(fleet),
@@ -505,10 +507,37 @@ class SignatureFieldDecoderTest {
             bleService("FEAA", "40$eid" + "00", fleet.id),
             listOf(fleet),
         )
-        assertEquals("nearby", quiet.single().text)
+        assertEquals("not separated", quiet.single().text)
         assertFalse(quiet.single().emphasis)
-        assertTrue(quiet.single().note.contains("own tag"))
-        assertTrue(quiet.single().note.contains("joined"))
+        assertTrue(quiet.single().note.contains("not flagged separated"))
+        assertFalse(quiet.single().note.contains("own tag"))
+    }
+
+    @Test
+    fun catalogFindHubKeyLengthFollowsThePayload() {
+        val fleet = DefaultCatalog.fleets().single { it.id == "fleet-find-hub" }
+        val shortKey = "22".repeat(20)
+        val longKey = "33".repeat(32)
+        val short = SignatureFieldDecoder.decodeSighting(
+            bleService("FEAA", "40$shortKey", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals("22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22", short.display("eid"))
+        assertEquals("not present", short.display("hashed_flags"))
+        assertTrue(short.first { it.id == "hashed_flags" }.note.contains("left this byte out"))
+        val long = SignatureFieldDecoder.decodeSighting(
+            bleService("FEAA", "41$longKey", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals(List(32) { "33" }.joinToString(" "), long.display("eid"))
+        assertEquals("not present", long.display("hashed_flags"))
+        val longFlags = SignatureFieldDecoder.decodeSighting(
+            bleService("FEAA", "41$longKey" + "AB", fleet.id),
+            listOf(fleet),
+        )
+        assertEquals(List(32) { "33" }.joinToString(" "), longFlags.display("eid"))
+        assertEquals("present", longFlags.display("hashed_flags"))
+        assertFalse(longFlags.display("eid").contains("AB"))
     }
 
     @Test

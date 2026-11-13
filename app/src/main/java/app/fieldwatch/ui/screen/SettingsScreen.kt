@@ -964,6 +964,27 @@ fun SettingsScreen(
                 TrustedNetworksPage(vm, settings)
             }
 
+            if (topic == SettingsTopic.TRACKER) {
+                SectionCard(LanguageText.text("settings.topic.tracker"), showTitle = false) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(LanguageText.text("tracker.follow"), Modifier.weight(1f))
+                        FieldwatchSwitch(
+                            settings.trackerFollow,
+                            { on -> vm.updateSettings { it.copy(trackerFollow = on) } },
+                        )
+                    }
+                    Note(LanguageText.text("tracker.follow.note"))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(LanguageText.text("tracker.places"), Modifier.weight(1f))
+                        FieldwatchSwitch(
+                            settings.trackerPlaces,
+                            { on -> vm.updateSettings { it.copy(trackerPlaces = on) } },
+                        )
+                    }
+                    Note(LanguageText.text("tracker.places.note"))
+                }
+            }
+
             if (topic == SettingsTopic.TAK) {
             SectionCard(LanguageText.text("settings.topic.tak"), showTitle = false) {
             Note(
@@ -1409,6 +1430,7 @@ private enum class SettingsTopic(val titleKey: String) {
     GNSS("settings.topic.gnss"),
     CELL("settings.topic.cell"),
     TRUSTED("settings.topic.trusted"),
+    TRACKER("settings.topic.tracker"),
     TAK("settings.topic.tak"),
     LOGGING("settings.topic.logging"),
     SIGNATURES("settings.topic.signatures"),
@@ -1453,6 +1475,11 @@ private fun SettingsTopicList(
             LanguageText.text("ui.off.label")
         },
         SettingsTopic.TRUSTED to if (settings.trustedWatch) {
+            LanguageText.text("ui.on.label")
+        } else {
+            LanguageText.text("ui.off.label")
+        },
+        SettingsTopic.TRACKER to if (settings.trackerFollow || settings.trackerPlaces) {
             LanguageText.text("ui.on.label")
         } else {
             LanguageText.text("ui.off.label")

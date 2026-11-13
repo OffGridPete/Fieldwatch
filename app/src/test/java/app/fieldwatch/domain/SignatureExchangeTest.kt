@@ -1269,6 +1269,271 @@ class SignatureExchangeTest {
         assertFalse(fleet.rules.any { it.kind == RuleKind.NAME_CONTAINS })
     }
 
+    @Test
+    fun homeKitPrefixIsHomeKitNotAppleDevice() {
+        val stockFleets = DefaultCatalog.fleets()
+        val home = stockFleets.single { it.id == "fleet-homekit" }
+        assertEquals(SignatureClass.HOME, home.kind)
+        assertEquals(6, home.colorIndex)
+        assertTrue(home.attentionNote.isBlank())
+        assertTrue(home.matchAny)
+        assertFalse("fleet-homekit" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        val rule = home.rules.single()
+        assertEquals(RuleKind.MANUFACTURER_DATA, rule.kind)
+        assertEquals(0x004C, rule.companyId)
+        assertEquals("06", rule.dataPrefixHex)
+        assertEquals(RadioKind.BLE, rule.radio)
+        val apple = stockFleets.single { it.id == "fleet-apple-device" }
+        assertFalse(apple.rules.any { it.dataPrefixHex.equals("06", true) })
+
+        val cam = "060D" + "01222022F38F011100FA920202"
+        val hits = SignatureEngine().match(listOf(ble(name = "", manufacturerId = 0x004C, manufacturerDataHex = cam)), stock)
+            .values.single()
+        assertTrue("HomeKit", "fleet-homekit" in hits)
+        assertFalse("not Apple Device", "fleet-apple-device" in hits)
+        assertFalse("not an AirTag", "fleet-airtag" in hits)
+
+        val wifi = sighting(RadioKind.WIFI, "AA:BB:CC:DD:EE:02").copy(
+            manufacturerId = 0x004C,
+            manufacturerDataHex = cam,
+            facts = RadioFacts(mfgRecords = listOf(MfgRecord(0x004C, cam))),
+        )
+        assertFalse(
+            "Wi-Fi does not take the BLE rule",
+            "fleet-homekit" in SignatureEngine().match(listOf(wifi), stock).getValue(wifi.key),
+        )
+    }
+
+    @Test
+    fun nearbyPrefixStaysAppleDeviceWhenHomeKitIsLaterInTheSameRecord() {
+        val buried = "1005AABBCCDDEE" + "060D" + "01222022F38F011100FA920202"
+        val phone = ble(name = "", manufacturerId = 0x004C, manufacturerDataHex = buried)
+        val hits = SignatureEngine().match(listOf(phone), stock).getValue(phone.key)
+        assertTrue("Apple Device", "fleet-apple-device" in hits)
+        assertFalse("prefix is Nearby, not HomeKit", "fleet-homekit" in hits)
+        assertEquals(17, AdvPayloadDecoder.homekitFacts(phone.facts.mfgRecords)!!.category)
+    }
+
+    @Test
+    fun separateHomeKitAndNearbyAdvertisementsBothMatch() {
+        val phone = ble(name = "", manufacturerId = 0x004C, manufacturerDataHex = "10AABBCCDDEE").copy(
+            facts = RadioFacts(
+                mfgRecords = listOf(
+                    MfgRecord(0x004C, "10AABBCCDDEE"),
+                    MfgRecord(0x004C, "060D01222022F38F011100FA920202"),
+                ),
+            ),
+        )
+        val hits = SignatureEngine().match(listOf(phone), stock).getValue(phone.key)
+        assertTrue("Apple Device", "fleet-apple-device" in hits)
+        assertTrue("HomeKit", "fleet-homekit" in hits)
+    }
+
+    @Test
+    fun matterUuidIsMatterOnBleOnly() {
+        val stockFleets = DefaultCatalog.fleets()
+        val matter = stockFleets.single { it.id == "fleet-matter" }
+        assertEquals(SignatureClass.HOME, matter.kind)
+        assertEquals(6, matter.colorIndex)
+        assertTrue(matter.attentionNote.isBlank())
+        assertTrue(matter.matchAny)
+        assertNull(matter.decode)
+        assertFalse("fleet-matter" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        val rule = matter.rules.single()
+        assertEquals(RuleKind.SERVICE_UUID, rule.kind)
+        assertEquals("FFF6", rule.text)
+        assertEquals(RadioKind.BLE, rule.radio)
+
+        val payload = "00AB03F1FF008001"
+        val radio = ble(name = "").copy(
+            serviceUuids = listOf("0000FFF6-0000-1000-8000-00805F9B34FB"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFF6", payload))),
+        )
+        val hits = SignatureEngine().match(listOf(radio), stock).getValue(radio.key)
+        assertTrue("Matter", "fleet-matter" in hits)
+
+        val both = radio.copy(
+            facts = RadioFacts(
+                serviceData = listOf(
+                    ServiceDataRecord("FE2C", "AABBCC"),
+                    ServiceDataRecord("FFF6", payload),
+                ),
+            ),
+        )
+        val bothHits = SignatureEngine().match(listOf(both), stock).getValue(both.key)
+        assertTrue("Matter", "fleet-matter" in bothHits)
+        assertTrue("Fast Pair", "fleet-fast-pair" in bothHits)
+
+        val wifi = sighting(RadioKind.WIFI, "AA:BB:CC:DD:EE:02").copy(
+            serviceUuids = listOf("FFF6"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFF6", payload))),
+        )
+        assertFalse(
+            "Wi-Fi does not take the BLE rule",
+            "fleet-matter" in SignatureEngine().match(listOf(wifi), stock).getValue(wifi.key),
+        )
+    }
+
+    @Test
+    fun bthomeUuidIsBthomeOnBleOnly() {
+        val stockFleets = DefaultCatalog.fleets()
+        val row = stockFleets.single { it.id == "fleet-bthome" }
+        assertEquals(SignatureClass.HOME, row.kind)
+        assertEquals(6, row.colorIndex)
+        assertTrue(row.attentionNote.isBlank())
+        assertTrue(row.matchAny)
+        assertNull(row.decode)
+        assertFalse("fleet-bthome" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        val rule = row.rules.single()
+        assertEquals(RuleKind.SERVICE_UUID, rule.kind)
+        assertEquals("FCD2", rule.text)
+        assertEquals(RadioKind.BLE, rule.radio)
+
+        val radio = ble(name = "").copy(
+            serviceUuids = listOf("0000FCD2-0000-1000-8000-00805F9B34FB"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FCD2", "400161"))),
+        )
+        val hits = SignatureEngine().match(listOf(radio), stock).getValue(radio.key)
+        assertTrue("BTHome", "fleet-bthome" in hits)
+
+        val empty = ble(name = "").copy(
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FCD2", ""))),
+        )
+        assertTrue(
+            "empty payload still matches",
+            "fleet-bthome" in SignatureEngine().match(listOf(empty), stock).getValue(empty.key),
+        )
+        assertNull(empty.facts.bthome)
+
+        val wifi = sighting(RadioKind.WIFI, "AA:BB:CC:DD:EE:03").copy(
+            serviceUuids = listOf("FCD2"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FCD2", "400161"))),
+        )
+        assertFalse(
+            "Wi-Fi does not take the BLE rule",
+            "fleet-bthome" in SignatureEngine().match(listOf(wifi), stock).getValue(wifi.key),
+        )
+    }
+
+    @Test
+    fun exposureNotificationUuidIsPhoneOnBleOnly() {
+        val row = stock.single { it.id == "fleet-exposure-notification" }
+        assertEquals(SignatureClass.PHONE, row.kind)
+        assertEquals("Phones / PCs", row.kind.label())
+        assertEquals(4, row.colorIndex)
+        assertTrue(row.attentionNote.isBlank())
+        assertTrue(row.matchAny)
+        assertNull(row.decode)
+        assertFalse(row.kind == SignatureClass.FINDER)
+        assertFalse(
+            "fleet-exposure-notification" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId },
+        )
+        val rule = row.rules.single()
+        assertEquals(RuleKind.SERVICE_UUID, rule.kind)
+        assertEquals("FD6F", rule.text)
+        assertEquals(RadioKind.BLE, rule.radio)
+        assertEquals(
+            "Apple/Google Exposure Notification (COVID-era contact tracing). The identifier rotates and the metadata is encrypted. This is not a finder tag and not a name for the phone.",
+            row.notes,
+        )
+
+        val radio = ble(name = "").copy(
+            serviceUuids = listOf("0000FD6F-0000-1000-8000-00805F9B34FB"),
+        )
+        val hits = SignatureEngine().match(listOf(radio), stock).getValue(radio.key)
+        assertTrue("Exposure Notification", "fleet-exposure-notification" in hits)
+
+        val empty = ble(name = "").copy(
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FD6F", ""))),
+        )
+        assertTrue(
+            "empty payload still matches",
+            "fleet-exposure-notification" in SignatureEngine().match(listOf(empty), stock).getValue(empty.key),
+        )
+
+        val wifi = sighting(RadioKind.WIFI, "AA:BB:CC:DD:EE:03").copy(
+            serviceUuids = listOf("FD6F"),
+            facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FD6F", "00".repeat(20)))),
+        )
+        assertFalse(
+            "Wi-Fi does not take the BLE rule",
+            "fleet-exposure-notification" in SignatureEngine().match(listOf(wifi), stock).getValue(wifi.key),
+        )
+    }
+
+    @Test
+    fun sidewalkNeedsTheAmaUuidAndDropsAmazon() {
+        val row = stock.single { it.id == "fleet-sidewalk" }
+        assertEquals(SignatureClass.HOME, row.kind)
+        assertEquals(6, row.colorIndex)
+        assertFalse(row.matchAny)
+        assertTrue(row.attentionNote.isBlank())
+        assertNull(row.decode)
+        assertFalse("fleet-sidewalk" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        assertEquals(RuleKind.SERVICE_UUID, row.rules[0].kind)
+        assertEquals("03FE", row.rules[0].text)
+        assertEquals(RadioKind.BLE, row.rules[0].radio)
+        assertEquals(RuleKind.MANUFACTURER_ID, row.rules[1].kind)
+        assertEquals(0x0171, row.rules[1].companyId)
+        assertEquals(RadioKind.BLE, row.rules[1].radio)
+        val amazon = stock.single { it.id == "fleet-amazon" }
+        assertTrue(amazon.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x0171 })
+        assertTrue(amazon.notes.endsWith("is the Sidewalk row, not this one."))
+
+        val reg = sidewalkSighting("0433DEAD")
+        val hits = SignatureEngine().match(listOf(reg), stock).getValue(reg.key)
+        assertTrue("Sidewalk", "fleet-sidewalk" in hits)
+        assertFalse("not Amazon", "fleet-amazon" in hits)
+
+        val longUuid = reg.copy(serviceUuids = listOf("000003FE-0000-1000-8000-00805F9B34FB"))
+        assertTrue(
+            "long-form 03FE",
+            "fleet-sidewalk" in SignatureEngine().match(listOf(longUuid), stock).getValue(longUuid.key),
+        )
+
+        val echo = ble(name = "Echo", manufacturerId = 0x0171, manufacturerDataHex = "0433")
+        val echoHits = SignatureEngine().match(listOf(echo), stock).getValue(echo.key)
+        assertTrue("Echo stays Amazon", "fleet-amazon" in echoHits)
+        assertFalse("no AMA UUID", "fleet-sidewalk" in echoHits)
+
+        val uuidOnly = ble(name = "").copy(serviceUuids = listOf("03FE"))
+        assertFalse(
+            "UUID alone",
+            "fleet-sidewalk" in SignatureEngine().match(listOf(uuidOnly), stock).getValue(uuidOnly.key),
+        )
+
+        val short = sidewalkSighting("04")
+        val shortHits = SignatureEngine().match(listOf(short), stock).getValue(short.key)
+        assertTrue("one byte still matches", "fleet-sidewalk" in shortHits)
+        assertNull(short.facts.sidewalk)
+
+        val ring = sidewalkSighting("2121").copy(name = "Ring Doorbell")
+        val ringHits = SignatureEngine().match(listOf(ring), stock).getValue(ring.key)
+        assertTrue("Sidewalk", "fleet-sidewalk" in ringHits)
+        assertTrue("Ring", "fleet-ring" in ringHits)
+        assertFalse("not Amazon", "fleet-amazon" in ringHits)
+
+        val wifi = sighting(RadioKind.WIFI, "AA:BB:CC:DD:EE:02").copy(
+            serviceUuids = listOf("03FE"),
+            manufacturerId = 0x0171,
+            manufacturerDataHex = "0433",
+            facts = RadioFacts(mfgRecords = listOf(MfgRecord(0x0171, "0433"))),
+        )
+        assertFalse(
+            "Wi-Fi does not take the BLE rules",
+            "fleet-sidewalk" in SignatureEngine().match(listOf(wifi), stock).getValue(wifi.key),
+        )
+    }
+
+    private fun sidewalkSighting(payload: String): Sighting {
+        val records = listOf(MfgRecord(0x0171, payload))
+        val uuids = listOf("03FE")
+        return ble(name = "", manufacturerId = 0x0171, manufacturerDataHex = payload).copy(
+            serviceUuids = uuids,
+            facts = RadioFacts(mfgRecords = records, sidewalk = Sidewalk.read(records, uuids)),
+        )
+    }
+
     private fun ble(
         name: String,
         manufacturerId: Int? = null,

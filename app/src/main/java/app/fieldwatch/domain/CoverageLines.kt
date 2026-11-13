@@ -254,6 +254,7 @@ internal object CoverageLines {
         en("explain.hidden.why", "SSID is hidden; the radio is still beaconing.", LanguageSlot.BODY),
         en("explain.ap", "a Wi-Fi access point", LanguageSlot.CONTROL),
         en("explain.ap.why", "Stock Android only reports beaconing APs.", LanguageSlot.BODY),
+        en("explain.ap.vehicle", "It says it is in a vehicle ({type}).", LanguageSlot.BODY),
         en("explain.uuid.1800", "connection basics", LanguageSlot.CONTROL),
         en("explain.uuid.1801", "attribute protocol", LanguageSlot.CONTROL),
         en("explain.uuid.180a", "model / serial / firmware", LanguageSlot.CONTROL),

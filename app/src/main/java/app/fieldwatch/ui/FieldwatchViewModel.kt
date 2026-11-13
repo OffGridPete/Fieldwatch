@@ -48,6 +48,7 @@ import app.fieldwatch.domain.DeviceDetailPrompt
 import app.fieldwatch.domain.DeviceDetailText
 import app.fieldwatch.domain.DebriefDoc
 import app.fieldwatch.domain.DebriefPlaces
+import app.fieldwatch.domain.TrackerWatch
 import app.fieldwatch.domain.DebriefPrompt
 import app.fieldwatch.domain.DebriefReport
 import app.fieldwatch.domain.DefaultCatalog
@@ -119,6 +120,7 @@ import app.fieldwatch.domain.StrengthSort
 import app.fieldwatch.domain.ViewMode
 import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.DebriefWindow
+import app.fieldwatch.domain.ShareFailure
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitDiffPrompt
@@ -176,7 +178,10 @@ data class LanguageUiState(
 data class ExportUi(
     val active: Boolean = false,
     val progress: Float = 0f,
-    /** True: spinning wait (Debrief / AI Export). False: determinate bar (log). */
+    /**
+     * True: a moving wait and no percent. Catalog update only.
+     * Compare and Debrief keep the percent on screen. A quiet step creeps it.
+     */
     val spinner: Boolean = false,
     val message: String = "",
     val share: Intent? = null,
@@ -271,6 +276,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private val draft = MutableStateFlow<Fleet?>(null)
     private var draftFromCandidates = false
     private val _export = MutableStateFlow(ExportUi())
+    /** Latest counted fraction. The pump may show a little ahead while a step is quiet. */
+    @Volatile private var exportReal = 0f
+    @Volatile private var exportShown = 0f
+    @Volatile private var exportNote = ""
+    @Volatile private var exportPaintNs = 0L
+    private var exportPump: Job? = null
     private val _placeStreets = MutableStateFlow<Map<String, String>>(emptyMap())
     val placeStreetNames: StateFlow<Map<String, String>> = _placeStreets
     val export: StateFlow<ExportUi> = _export
@@ -443,6 +454,56 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun dismissCell(episodeId: Long) {
         app.cells.dismiss(episodeId, System.currentTimeMillis())
         app.announceCell()
+    }
+
+    val trackerNotice = app.tracker.notice
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Set when Open radio or that warning's shade tap should show the radio page. */
+    private val _radioPage = MutableStateFlow<String?>(null)
+    val radioPage: StateFlow<String?> = _radioPage.asStateFlow()
+
+    fun consumeRadioPage() {
+        _radioPage.value = null
+    }
+
+    fun dismissTracker() {
+        app.syncTrackerShade(app.tracker.dismissCurrent())
+    }
+
+    /**
+     * Opens that radio and keeps this warning down while the same condition continues.
+     * The shell reads [radioPage] and shows the radio page.
+     */
+    fun openTracker(notice: TrackerWatch.Notice) {
+        showRadio(notice.deviceKey)
+        app.syncTrackerShade(app.tracker.seenDevice(notice.deviceKey))
+    }
+
+    /**
+     * A tracker notification tap. A different radio, including a watchlist tap on
+     * the same extra, leaves the warning up and stays on the current page.
+     */
+    fun seenTracker(deviceKey: String) {
+        val before = app.tracker.notice.value
+        val next = app.tracker.seenDevice(deviceKey)
+        if (before?.deviceKey != deviceKey) return
+        app.syncTrackerShade(next)
+        showRadio(deviceKey)
+    }
+
+    /** Selects the live radio, or the sit copy if it has already left the list. */
+    private fun showRadio(deviceKey: String) {
+        val live = app.devices.devices.value.firstOrNull { it.key == deviceKey }
+        when {
+            live != null -> select(live)
+            else -> {
+                val held = app.sits.sighting(deviceKey)
+                if (held != null) select(if (held.gone) held else held.copy(gone = true))
+                else select(deviceKey)
+            }
+        }
+        _radioPage.value = deviceKey
     }
 
     fun removeCell(placeId: String, key: String) = app.cells.removeCell(placeId, key)
@@ -2037,14 +2098,29 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitCompare() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.08f, LanguageText.text("ui.writing.sit.compare"))
+            val writing = LanguageText.text("ui.writing.sit.compare")
             runCatching {
-                val doc = sitCompareDoc()
-                publishExport(0.85f, LanguageText.text("ui.writing.sit.compare"))
+                val doc = sitCompareDoc(0.30f, writing)
+                val dir = File(app.cacheDir, "debrief")
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                    .format(java.util.Date())
+                val file = File(dir, "fieldwatch-sit-compare-$stamp.txt")
+                withContext(Dispatchers.IO) {
+                    dir.mkdirs()
+                    doc.writePlainText(file) { frac ->
+                        if (!isActive) throw CancellationException()
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(0.32f + 0.66f * frac, writing)
+                        }
+                    }
+                }
+                val uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
+                    clipData = ClipData.newRawUri("sit-compare", uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
                     putExtra(Intent.EXTRA_SUBJECT, compareSubject(doc))
-                    putExtra(Intent.EXTRA_TEXT, doc.toPlainText())
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }.onSuccess { intent ->
                 _export.value = ExportUi(
@@ -2054,7 +2130,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     shareTitle = LanguageText.text("ui.sit.compare.2"),
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: LanguageText.text("ui.could.not.write.sit"))
+                _export.value = ExportUi(error = exportError(err, "ui.could.not.write.sit"))
             }
         }
     }
@@ -2062,23 +2138,20 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitComparePdf() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.06f, LanguageText.text("ui.writing.sit.compare.pdf"))
+            val writing = LanguageText.text("ui.writing.sit.compare.pdf")
+            val laying = LanguageText.text("ui.laying.out.sit.compare")
             runCatching {
-                val doc = sitCompareDoc()
-                publishExport(0.35f, LanguageText.text("ui.laying.out.sit.compare"))
+                val doc = sitCompareDoc(0.28f, writing)
+                publishExport(0.30f, LanguageText.text("ui.loading.map.tiles"))
                 val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
                     .format(java.util.Date())
                 val file = File(dir, "fieldwatch-sit-compare-$stamp.pdf")
-                publishExport(0.32f, LanguageText.text("ui.loading.map.tiles"))
                 val tiles = pathTilesForFigure(doc.pathFigure)
                 val extraTiles = doc.extraFigures.map { pathTilesForFigure(it) }
+                publishExport(0.38f, laying)
                 withContext(Dispatchers.Default) {
-                    DebriefPdf.write(doc, file, tiles, extraTiles) { p ->
-                        kotlinx.coroutines.runBlocking {
-                            publishExport(0.38f + 0.55f * p, LanguageText.text("ui.writing.sit.compare.pdf"))
-                        }
-                    }
+                    DebriefPdf.write(doc, file, tiles, extraTiles, reportPdf(0.38f, 0.60f, laying, writing))
                 }
                 val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
@@ -2096,7 +2169,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     shareTitle = LanguageText.text("ui.sit.compare.pdf"),
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: LanguageText.text("ui.could.not.write.sit.2"))
+                _export.value = ExportUi(error = exportError(err, "ui.could.not.write.sit.2"))
             }
         }
     }
@@ -2108,12 +2181,17 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startSitCompareAiExport() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.08f, LanguageText.text("ui.building.compare.ai.export"))
+            val building = LanguageText.text("ui.building.compare.ai.export")
             runCatching {
-                val (thisSide, second) = compareSides()
-                publishExport(0.45f, LanguageText.text("ui.building.compare.ai.export"))
+                val (thisSide, second) = compareSides(0.34f, building)
+                val demo = app.config.settings.demoMode
                 val text = withContext(Dispatchers.Default) {
-                    SitDiffPrompt.build(thisSide, second, app.config.settings.demoMode)
+                    SitDiffPrompt.build(thisSide, second, demo) { frac ->
+                        if (!isActive) throw CancellationException()
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(0.36f + 0.60f * frac, building)
+                        }
+                    }
                 }
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
@@ -2136,21 +2214,41 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private suspend fun sitCompareDoc(): DebriefDoc {
-        val (thisSide, second) = compareSides()
-        val radios = thisSide.radios + second.radios
-        return SitDiff.document(
-            thisSide,
-            second,
-            RadioBookmarks.watchedFleetIds(app.config.watchlist),
-            showAllRadios = app.config.settings.debriefShowAllRadios,
-        )
-            .withDemoMacs(radios.map { it.mac }, app.config.settings.demoMode, radios.map { it.payloadUasId })
+    /**
+     * [roof] is how far reading the sits and building the compare may move the bar.
+     * The text file or the PDF after this owns the rest, because that is the long part.
+     */
+    private suspend fun sitCompareDoc(roof: Float, work: String): DebriefDoc {
+        val (thisSide, second) = compareSides(roof * 0.62f, work)
+        val watched = RadioBookmarks.watchedFleetIds(app.config.watchlist)
+        val showAll = app.config.settings.debriefShowAllRadios
+        val demo = app.config.settings.demoMode
+        val from = roof * 0.64f
+        publishExport(from, work)
+        return withContext(Dispatchers.Default) {
+            var last = from
+            val doc = SitDiff.document(
+                thisSide,
+                second,
+                watched,
+                showAllRadios = showAll,
+                onProgress = tick@{ fraction ->
+                    if (!isActive) throw CancellationException()
+                    val p = from + (roof - from) * fraction.coerceIn(0f, 1f)
+                    if (p < last + 0.01f && fraction < 0.999f) return@tick
+                    last = p
+                    kotlinx.coroutines.runBlocking { publishExport(p, work) }
+                },
+            )
+            val radios = thisSide.radios + second.radios
+            doc.withDemoMacs(radios.map { it.mac }, demo, radios.map { it.payloadUasId })
+        }
     }
 
-    private suspend fun compareSides(): Pair<SitDiff.Side, SitDiff.Side> {
+    private suspend fun compareSides(roof: Float, work: String): Pair<SitDiff.Side, SitDiff.Side> {
         val sit = app.sits.ui.value
         val otherId = sit.compareId ?: error(LanguageText.text("ui.pick.second.sit"))
+        publishExport(0.04f, work)
         val otherFile = withContext(Dispatchers.IO) { app.sits.sitFile(otherId) }
             ?: error(LanguageText.text("ui.could.not.read.sit"))
         val fleets = app.config.fleets
@@ -2158,16 +2256,22 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val observerNotes = RadioBookmarks.notes(app.config.watchlist)
         val bookmarkedKeys = RadioBookmarks.alertDeviceKeys(app.config.watchlist)
         val mineKeys = RadioBookmarks.mineKeys(app.config.watchlist)
-        val thisSide = compareThisSide(sit, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
+        val start = 0.06f.coerceAtMost(roof)
+        val mid = start + (roof - start) * 0.5f
+        val secondRadios = mapRadios(otherFile.radios, start, mid, work) {
+            SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
+        }
         val second = SitDiff.Side(
             name = otherFile.summary.name,
             ram = false,
-            radios = otherFile.radios.map {
-                SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
-            },
+            radios = secondRadios,
             path = otherFile.operatorPath,
             floods = otherFile.floods,
             gnss = otherFile.gnss,
+        )
+        val thisSide = compareThisSide(
+            sit, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys,
+            from = mid, to = roof, work = work,
         )
         return thisSide to second
     }
@@ -2179,16 +2283,20 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         observerNotes: Map<String, String>,
         bookmarkedKeys: Set<String>,
         mineKeys: Set<String>,
+        from: Float,
+        to: Float,
+        work: String,
     ): SitDiff.Side {
         val open = sit.open
         if (open != null) {
             val source = app.sits.debriefSource()
+            val radios = mapRadios(source?.devices.orEmpty(), from, to, work) {
+                SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
+            }
             return SitDiff.Side(
                 name = open.name,
                 ram = false,
-                radios = source?.devices.orEmpty().map {
-                    SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
-                },
+                radios = radios,
                 path = source?.operatorPath.orEmpty(),
                 floods = source?.floods.orEmpty(),
                 gnss = source?.gnss.orEmpty(),
@@ -2196,14 +2304,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
         val selected = sit.closed.firstOrNull { it.id == sit.selectedId }
         if (selected != null) {
+            publishExport(from, work)
             val file = withContext(Dispatchers.IO) { app.sits.sitFile(selected.id) }
                 ?: error(LanguageText.text("ui.could.not.read.this.sit"))
+            val radios = mapRadios(file.radios, from, to, work) {
+                SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
+            }
             return SitDiff.Side(
                 name = selected.name,
                 ram = false,
-                radios = file.radios.map {
-                    SitDiff.fromSitRadio(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
-                },
+                radios = radios,
                 path = file.operatorPath,
                 floods = file.floods,
                 gnss = file.gnss,
@@ -2211,12 +2321,13 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
         val now = System.currentTimeMillis()
         val since = now - DebriefPrompt.WINDOW_MS
+        val radios = mapRadios(app.devices.devices.value, from, to, work) {
+            SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
+        }
         return SitDiff.Side(
             name = LanguageText.text("ui.last.15.minutes"),
             ram = true,
-            radios = app.devices.devices.value.map {
-                SitDiff.fromSighting(it, fleets, customNames, observerNotes, bookmarkedKeys, mineKeys)
-            },
+            radios = radios,
             path = app.operatorPathCopy().filter { it.at >= since },
             floods = app.floodBursts().filter { it.at >= since },
             gnss = app.gnss.marks().filter { it.at >= since || it.endedAt >= since },
@@ -3856,23 +3967,20 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startFieldDebriefPdf() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.05f, LanguageText.text("ui.writing.debrief.pdf"))
+            val writing = LanguageText.text("ui.writing.debrief.pdf")
+            val laying = LanguageText.text("ui.laying.out.debrief.pdf")
             runCatching {
-                val doc = fieldDebriefDoc()
-                publishExport(0.4f, LanguageText.text("ui.laying.out.debrief.pdf"))
+                val doc = fieldDebriefDoc(0.28f)
+                publishExport(0.30f, LanguageText.text("ui.loading.map.tiles"))
                 val dir = File(app.cacheDir, "debrief").apply { mkdirs() }
                 val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
                     .format(java.util.Date())
                 val file = File(dir, "fieldwatch-debrief-$stamp.pdf")
-                publishExport(0.32f, LanguageText.text("ui.loading.map.tiles"))
                 val tiles = pathTilesForFigure(doc.pathFigure)
                 val extraTiles = doc.extraFigures.map { pathTilesForFigure(it) }
+                publishExport(0.38f, laying)
                 withContext(Dispatchers.Default) {
-                    DebriefPdf.write(doc, file, tiles, extraTiles) { p ->
-                        kotlinx.coroutines.runBlocking {
-                            publishExport(0.4f + 0.55f * p, LanguageText.text("ui.writing.debrief.pdf"))
-                        }
-                    }
+                    DebriefPdf.write(doc, file, tiles, extraTiles, reportPdf(0.38f, 0.60f, laying, writing))
                 }
                 val uri: Uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
@@ -3890,7 +3998,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     shareTitle = LanguageText.text("ui.debrief.pdf"),
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: LanguageText.text("ui.could.not.write.debrief"))
+                _export.value = ExportUi(error = exportError(err, "ui.could.not.write.debrief"))
             }
         }
     }
@@ -3898,14 +4006,29 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun startFieldDebrief() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.08f, LanguageText.text("ui.writing.debrief"))
+            val writing = LanguageText.text("ui.writing.debrief")
             runCatching {
-                val doc = fieldDebriefDoc()
-                publishExport(0.9f, LanguageText.text("ui.writing.debrief"))
+                val doc = fieldDebriefDoc(0.46f)
+                val dir = File(app.cacheDir, "debrief")
+                val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US)
+                    .format(java.util.Date())
+                val file = File(dir, "fieldwatch-debrief-$stamp.txt")
+                withContext(Dispatchers.IO) {
+                    dir.mkdirs()
+                    doc.writePlainText(file) { frac ->
+                        if (!isActive) throw CancellationException()
+                        kotlinx.coroutines.runBlocking {
+                            publishExport(0.48f + 0.50f * frac, writing)
+                        }
+                    }
+                }
+                val uri = FileProvider.getUriForFile(app, "${app.packageName}.files", file)
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
+                    clipData = ClipData.newRawUri("debrief", uri)
+                    putExtra(Intent.EXTRA_STREAM, uri)
                     putExtra(Intent.EXTRA_SUBJECT, debriefSubject(doc))
-                    putExtra(Intent.EXTRA_TEXT, doc.toPlainText())
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             }.onSuccess { intent ->
                 _export.value = ExportUi(
@@ -3915,7 +4038,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     shareTitle = "Debrief",
                 )
             }.onFailure { err ->
-                _export.value = ExportUi(error = err.message ?: LanguageText.text("ui.could.not.write.debrief.2"))
+                _export.value = ExportUi(error = exportError(err, "ui.could.not.write.debrief.2"))
             }
         }
     }
@@ -3947,8 +4070,10 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private fun debriefSubject(doc: DebriefDoc): String =
         if (doc.heading.startsWith("FIELDWATCH SIT")) doc.heading else LanguageText.text("ui.fieldwatch.field.debrief.last")
 
-    private suspend fun fieldDebriefDoc(): DebriefDoc {
-        publishExport(0.08f, LanguageText.text("ui.gathering.sit"))
+    /** [roof] leaves room for the text file or the PDF that follows this build. */
+    private suspend fun fieldDebriefDoc(roof: Float): DebriefDoc {
+        val building = LanguageText.text("ui.building.debrief")
+        publishExport(0.04f.coerceAtMost(roof), LanguageText.text("ui.gathering.sit"))
         val settings = app.config.settings
         val fleets = app.config.fleets
         val now = System.currentTimeMillis()
@@ -3959,7 +4084,8 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         val places = if (settings.demoMode) {
             DebriefPlaces.Off
         } else if (settings.onlineLookup) {
-            publishExport(0.14f, LanguageText.text("ui.looking.up.place.names"))
+            val lookupAt = 0.10f.coerceAtMost(roof)
+            publishExport(lookupAt, LanguageText.text("ui.looking.up.place.names"))
             val found = PlaceLookup.lookup(
                 app, path, devices, now,
                 extra = placeLookupFixes(
@@ -3967,21 +4093,22 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     window?.endAt ?: now,
                 ),
                 onProgress = { msg ->
-                    kotlinx.coroutines.runBlocking { publishExport(0.18f, msg) }
+                    kotlinx.coroutines.runBlocking { publishExport(lookupAt, msg) }
                 },
             )
             found
         } else {
             DebriefPlaces.Off
         }
-        publishExport(0.32f, LanguageText.text("ui.building.debrief"))
+        val buildAt = (roof * 0.45f).coerceAtLeast(0.12f).coerceAtMost(roof)
+        publishExport(buildAt, building)
         val savedCameras = source?.pathCameras
         val cameras = withContext(Dispatchers.IO) { debriefCameras(savedCameras) }
         val trustedLines = app.trusted.linesIn(
             window?.startAt ?: (now - 15 * 60_000L),
             window?.endAt ?: now,
         )
-        return withContext(Dispatchers.Default) {
+        val doc = withContext(Dispatchers.Default) {
             DebriefReport.document(
                 devices = devices,
                 fleets = fleets,
@@ -4008,12 +4135,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 devices.mapNotNull { it.payloadUasId },
             )
         }
+        publishExport(roof, building)
+        return doc
     }
 
     fun startAiExport() {
         if (_export.value.active) return
         viewModelScope.launch {
-            publishExport(0.06f, LanguageText.text("ui.building.ai.export.prompt"))
+            val building = LanguageText.text("ui.building.ai.export.prompt")
+            publishExport(0.04f, building)
             runCatching {
                 val settings = app.config.settings
                 val fleets = app.config.fleets
@@ -4025,7 +4155,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 val places = if (settings.demoMode) {
                     DebriefPlaces.Off
                 } else if (settings.onlineLookup) {
-                    publishExport(0.12f, LanguageText.text("ui.looking.up.place.names"))
+                    publishExport(0.10f, LanguageText.text("ui.looking.up.place.names"))
                     val found = PlaceLookup.lookup(
                         app, path, devices, now,
                         extra = placeLookupFixes(
@@ -4033,14 +4163,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                             window?.endAt ?: now,
                         ),
                     ) { msg ->
-                        kotlinx.coroutines.runBlocking { publishExport(0.16f, msg) }
+                        kotlinx.coroutines.runBlocking { publishExport(0.10f, msg) }
                     }
-                    publishExport(0.35f, LanguageText.text("ui.building.ai.export.prompt"))
+                    publishExport(0.22f, building)
                     found
                 } else {
                     DebriefPlaces.Off
                 }
-                publishExport(0.4f, LanguageText.text("ui.building.ai.export.prompt"))
+                publishExport(0.30f, building)
                 val savedCameras = source?.pathCameras
                 val cameras = withContext(Dispatchers.IO) { debriefCameras(savedCameras) }
                 val trustedLines = app.trusted.linesIn(
@@ -4148,7 +4278,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     )
                     val masked = MacUtil.redactPrivateText(
                         raw,
-                        listOf(device.mac),
+                        listOfNotNull(device.mac, device.facts.interworking?.hessid),
                         listOfNotNull(device.payloadUasId),
                         settings.demoMode,
                     )
@@ -4216,7 +4346,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                     )
                     val masked = MacUtil.redactPrivateText(
                         raw,
-                        listOf(device.mac),
+                        listOfNotNull(device.mac, device.facts.interworking?.hessid),
                         listOfNotNull(device.payloadUasId),
                         settings.demoMode,
                     )
@@ -4594,6 +4724,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         _export.value = _export.value.copy(share = null)
     }
 
+    fun failShare(error: Throwable) {
+        _export.value = ExportUi(
+            error = ShareFailure.explain(error) ?: LanguageText.text("ui.could.not.open.share"),
+        )
+    }
+
+    private fun exportError(error: Throwable, fallbackKey: String): String =
+        ShareFailure.explain(error) ?: (error.message ?: LanguageText.text(fallbackKey))
+
     fun consumeExportNotice() {
         val cur = _export.value
         _export.value = if (cur.followUpTitle != null) {
@@ -4620,15 +4759,120 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         )
     }
 
-    private suspend fun publishExport(progress: Float, message: String) {
+    /**
+     * Keeps the percent moving about twice a second while an export is active.
+     * Counted work updates [exportReal]. If the integer on screen did not change,
+     * the pump adds one point, at most 12 ahead of the real fraction and never
+     * past 96. The file write is what carries the bar. The creep only covers a
+     * short gap so that gap does not look frozen.
+     */
+    private fun ensureExportPump() {
+        if (exportPump?.isActive == true) return
+        exportPump = viewModelScope.launch {
+            while (isActive) {
+                delay(400)
+                val cur = _export.value
+                if (!cur.active || cur.spinner) continue
+                val real = exportReal
+                var shown = maxOf(exportShown, real, cur.progress)
+                val cap = minOf(0.96f, real + 0.12f)
+                val curPct = (cur.progress * 100f).toInt()
+                if ((shown * 100f).toInt() <= curPct && curPct < (cap * 100f).toInt()) {
+                    shown = (curPct + 1) / 100f
+                }
+                exportShown = shown
+                val note = exportNote.ifBlank { cur.message }
+                if ((shown * 100f).toInt() == curPct && note == cur.message) continue
+                _export.value = cur.copy(progress = shown, spinner = false, message = note)
+            }
+        }
+    }
+
+    private suspend fun publishExport(
+        progress: Float,
+        message: String,
+        spinner: Boolean = false,
+    ) {
+        val next = progress.coerceIn(0f, 1f)
+        val fresh = !_export.value.active || next + 0.05f < exportReal
+        if (fresh) {
+            exportReal = 0f
+            exportShown = 0f
+            exportPaintNs = 0L
+        }
+        val noteChanged = message != exportNote
+        exportNote = message
+        if (next > exportReal) exportReal = next
+        ensureExportPump()
+        if (spinner) {
+            paintExport(maxOf(exportReal, next), message, spinner = true)
+            return
+        }
+        val now = System.nanoTime()
+        val due = fresh ||
+            next >= 0.999f ||
+            (next >= exportShown + 0.01f && now - exportPaintNs >= 80_000_000L) ||
+            (noteChanged && now - exportPaintNs >= 80_000_000L)
+        if (!due) return
+        exportPaintNs = now
+        paintExport(maxOf(exportReal, next), message, spinner = false)
+    }
+
+    private suspend fun paintExport(progress: Float, message: String, spinner: Boolean) {
         withContext(Dispatchers.Main.immediate) {
+            val cur = _export.value
+            val shown = if (cur.active) maxOf(cur.progress, progress) else progress
+            exportShown = maxOf(exportShown, shown)
             _export.value = ExportUi(
                 active = true,
-                progress = progress.coerceIn(0f, 1f),
+                progress = shown,
+                spinner = spinner,
                 message = message,
             )
         }
-        yield()
+    }
+
+    /** Map a counted list off the main thread and move the bar with it. */
+    private suspend fun <T, R> mapRadios(
+        items: List<T>,
+        from: Float,
+        to: Float,
+        message: String,
+        transform: (T) -> R,
+    ): List<R> {
+        val n = items.size
+        val end = to.coerceIn(0f, 1f)
+        val start = from.coerceIn(0f, end)
+        if (n == 0) {
+            publishExport(end, message)
+            return emptyList()
+        }
+        return withContext(Dispatchers.Default) {
+            val out = ArrayList<R>(n)
+            val stride = (n / 32).coerceAtLeast(1)
+            for (i in items.indices) {
+                out += transform(items[i])
+                val done = i + 1
+                if (done == n || done % stride == 0) {
+                    if (!isActive) throw CancellationException()
+                    publishExport(start + (end - start) * done / n, message)
+                }
+            }
+            out
+        }
+    }
+
+    /** PDF layout and pages already report 0..1. Keep that moving, and never backwards. */
+    private fun reportPdf(start: Float, span: Float, laying: String, writing: String): (Float) -> Unit {
+        var last = start
+        return report@{ fraction ->
+            val p = fraction.coerceIn(0f, 1f)
+            val shown = start + span * p
+            if (shown < last + 0.004f && p < 0.999f) return@report
+            last = shown
+            val msg = if (p < 0.70f) laying else writing
+            kotlinx.coroutines.runBlocking { publishExport(shown, msg) }
+        }
     }
 
     private suspend fun <T> runExport(startMessage: String, block: suspend () -> T): Result<T> {

@@ -90,6 +90,10 @@ object DefaultCatalog {
         pigvision(),
         fsExtBattery(),
         appleDevice(),
+        homekit(),
+        matter(),
+        bthome(),
+        exposureNotification(),
         appleAudio(),
         microsoftDevice(),
         tesla(),
@@ -111,6 +115,7 @@ object DefaultCatalog {
         bose(),
         garmin(),
         amazon(),
+        sidewalk(),
         fitbit(),
         polar(),
         oura(),
@@ -606,6 +611,79 @@ object DefaultCatalog {
         ),
     )
 
+    private fun homekit() = Fleet(
+        id = "fleet-homekit",
+        name = "HomeKit",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "HomeKit accessory advertising over Bluetooth. The category and the paired line are what the accessory broadcasts. Not an iPhone and not an AirTag.",
+        builtIn = true,
+        rules = listOf(
+            MatchRule(
+                RuleKind.MANUFACTURER_DATA,
+                companyId = 0x004C,
+                dataPrefixHex = "06",
+                radio = RadioKind.BLE,
+            ),
+        ),
+    )
+
+    private fun matter() = Fleet(
+        id = "fleet-matter",
+        name = "Matter",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Matter device advertising over Bluetooth, usually while it is in setup. Vendor and product IDs are what the device sends. They are not a proof of the retail name.",
+        builtIn = true,
+        rules = listOf(
+            MatchRule(
+                RuleKind.SERVICE_UUID,
+                text = "FFF6",
+                radio = RadioKind.BLE,
+            ),
+        ),
+    )
+
+    private fun bthome() = Fleet(
+        id = "fleet-bthome",
+        name = "BTHome",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "BTHome v2 sensor or binary sensor (Shelly and many ESPHome devices). Measurements are whatever the device puts in the advertisement. Encrypted packets only show that they are encrypted.",
+        builtIn = true,
+        rules = listOf(
+            MatchRule(
+                RuleKind.SERVICE_UUID,
+                text = "FCD2",
+                radio = RadioKind.BLE,
+            ),
+        ),
+    )
+
+    private fun exposureNotification() = Fleet(
+        id = "fleet-exposure-notification",
+        name = "Exposure Notification",
+        enabled = true,
+        colorIndex = Hue.FIND_MY,
+        kind = SignatureClass.PHONE,
+        matchAny = true,
+        notes = "Apple/Google Exposure Notification (COVID-era contact tracing). The identifier rotates and the metadata is encrypted. This is not a finder tag and not a name for the phone.",
+        builtIn = true,
+        rules = listOf(
+            MatchRule(
+                RuleKind.SERVICE_UUID,
+                text = "FD6F",
+                radio = RadioKind.BLE,
+            ),
+        ),
+    )
+
     private fun appleAudio() = Fleet(
         id = "fleet-apple-audio",
         name = "Apple audio",
@@ -896,13 +974,28 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Amazon Echo, Fire, or Kindle when it advertises. Not every AmazonBasics gadget.",
+        notes = "Amazon Echo, Fire, or Kindle when it advertises. Not every AmazonBasics gadget. Amazon Sidewalk (UUID 03FE plus this company ID) is the Sidewalk row, not this one.",
         builtIn = true,
         rules = listOf(
             mfg(0x0171),
             bleName("Echo"),
             bleName("Amazon"),
             bleName("Fire TV"),
+        ),
+    )
+
+    private fun sidewalk() = Fleet(
+        id = "fleet-sidewalk",
+        name = "Amazon Sidewalk",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = false,
+        notes = "Amazon Sidewalk endpoint or accessory using the AMA UUID and Amazon's company ID. It can take part in Amazon's crowdsourced network. Not a proof of which Amazon product, and not by itself an Echo.",
+        builtIn = true,
+        rules = listOf(
+            MatchRule(RuleKind.SERVICE_UUID, text = "03FE", radio = RadioKind.BLE),
+            MatchRule(RuleKind.MANUFACTURER_ID, companyId = 0x0171, radio = RadioKind.BLE),
         ),
     )
 
@@ -1521,13 +1614,14 @@ object DefaultCatalog {
         colorIndex = Hue.TRACKER,
         kind = SignatureClass.FINDER,
         matchAny = true,
-        notes = "Pebblebee or Motorola moto tag item finder. A tag you clip to keys or a bag.",
+        notes = "Pebblebee or Motorola moto tag item finder. A tag you clip to keys or a bag. A tag that leaves its name off still matches Bluetooth service FA25. That service does not say whether the tag is away from its owner. Find Hub and DULT stay on their own rows.",
         builtIn = true,
         rules = listOf(
             name("Pebblebee"),
             glob("Pebblebee*"),
             name("moto tag"),
             name("Moto Tag"),
+            uuid("FA25"),
         ),
     )
 
@@ -1538,7 +1632,7 @@ object DefaultCatalog {
         colorIndex = Hue.FIND_MY,
         kind = SignatureClass.FINDER,
         matchAny = true,
-        notes = "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). Nearby vs separated frames. Separated mode can hold a MAC about a day. Addresses otherwise rotate. Pattern match, not that bag.",
+        notes = "Google Find Hub / Find My Device network tag (Chipolo, Pebblebee, moto tag, and other partners). Normal mode versus separated frames. Separated mode can hold a MAC about a day. Normal mode does not say the tag is with its owner. Addresses otherwise rotate. Pattern match, not that bag.",
         builtIn = true,
         decode = CatalogDecodes.findHub,
         rules = listOf(
@@ -3792,7 +3886,7 @@ object DefaultCatalog {
         colorIndex = Hue.DRONE,
         kind = SignatureClass.DRONE,
         matchAny = true,
-        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the plate says EU. The French Direct Remote ID vendor IE labels this row too. That plate does not fill position or the operator pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
+        notes = "In-flight drone digital license plate (ASTM / FAA Remote ID). Decoded fields can show ID, position, heading, and operator location (takeoff, live GPS, or a fixed point). EU class shows only when the plate says EU. The French Direct Remote ID plate can fill aircraft position, altitude, speed, course, and the takeoff pin. Height above takeoff is not the aircraft pin. Pattern match, not a tail number. Wi-Fi Remote ID often misses on stock Android.",
         builtIn = true,
         decode = CatalogDecodes.remoteId,
         rules = listOf(

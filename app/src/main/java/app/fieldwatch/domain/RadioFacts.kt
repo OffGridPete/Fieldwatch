@@ -37,6 +37,18 @@ data class RadioFacts(
     val mfgRecords: List<MfgRecord> = emptyList(),
     val vendorIes: List<VendorIeRecord> = emptyList(),
     val serviceData: List<ServiceDataRecord> = emptyList(),
+    val interworking: Interworking? = null,
+    /** From the packet just heard. A later successful decode replaces this whole object. */
+    val homekit: HomekitFacts? = null,
+    /** From the packet just heard. A later parsed FFF6 payload replaces this whole object. */
+    val matter: MatterFacts? = null,
+    /** From the packet just heard. A later two-byte Sidewalk beacon replaces this whole object. */
+    val sidewalk: SidewalkFacts? = null,
+    /**
+     * Newest FCD2 header. An object ID stays until a later packet sends that ID.
+     * An encrypted or non-v2 packet keeps the objects and hides them.
+     */
+    val bthome: BthomeFacts? = null,
 ) {
     fun merge(newer: RadioFacts): RadioFacts = copy(
         txPowerDbm = newer.txPowerDbm ?: txPowerDbm,
@@ -63,6 +75,15 @@ data class RadioFacts(
         mfgRecords = mergeMfg(mfgRecords, newer.mfgRecords),
         vendorIes = mergeVendorIes(vendorIes, newer.vendorIes),
         serviceData = mergeServiceData(serviceData, newer.serviceData),
+        interworking = Interworking.merge(interworking, newer.interworking),
+        homekit = newer.homekit ?: homekit,
+        matter = newer.matter ?: matter,
+        sidewalk = newer.sidewalk ?: sidewalk,
+        bthome = when {
+            newer.bthome == null -> bthome
+            bthome == null -> newer.bthome
+            else -> bthome.merge(newer.bthome)
+        },
     )
 
     companion object {
@@ -89,9 +110,30 @@ private fun mergeMfg(old: List<MfgRecord>, extra: List<MfgRecord>): List<MfgReco
     return if (out.size <= 8) out else out.take(8)
 }
 
+/**
+ * Other vendor IEs keep the first copy whose OUI, type, and first 16 hex
+ * characters match. A French plate's position sits past that prefix, so the
+ * newest 6A:5C:35 type 1 replaces the stored one.
+ */
 private fun mergeVendorIes(old: List<VendorIeRecord>, extra: List<VendorIeRecord>): List<VendorIeRecord> {
     if (extra.isEmpty()) return old
-    return (old + extra).distinctBy { it.oui to it.type to it.dataHex.take(16) }.take(12)
+    val out = ArrayList<VendorIeRecord>(12)
+    val seen = HashSet<Triple<String, Int, String>>(12)
+    var frenchAt = -1
+    for (ie in old + extra) {
+        if (FrenchRid.isPlate(ie)) {
+            if (frenchAt >= 0) {
+                out[frenchAt] = ie
+            } else if (out.size < 12) {
+                frenchAt = out.size
+                out += ie
+            }
+            continue
+        }
+        if (!seen.add(Triple(ie.oui, ie.type, ie.dataHex.take(16)))) continue
+        if (out.size < 12) out += ie
+    }
+    return out
 }
 
 private fun mergeServiceData(old: List<ServiceDataRecord>, extra: List<ServiceDataRecord>): List<ServiceDataRecord> {
