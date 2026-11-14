@@ -282,7 +282,7 @@ def story():
         ),
         callout(
             "Status",
-            "This document is a proposal for comment. It is not an adopted standard, and it is not a Bluetooth SIG, IEEE, or IETF publication. Other open-source projects are invited to implement it and to propose a profile for a radio they already receive. Fieldwatch™ is a trademark of Off Grid Pete LLC. The mark is not a registration. Fieldwatch is the first implementation, not the owner of every radio in this file. Releases through 1.1.44 already implement something close to this file. Fieldwatch 1.2.0 will conform to the specification, and it will keep publishing a baseline file that today's phones still load.",
+            "This document is a proposal for comment. It is not an adopted standard, and it is not a Bluetooth SIG, IEEE, or IETF publication. Other open-source projects are invited to implement it and to propose a profile for a radio they already receive. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending. Fieldwatch is the first implementation, not the owner of every radio in this file. Releases through 1.1.44 already implement something close to this file. Fieldwatch 1.2.0 will conform to the specification, and it will keep publishing a baseline file that today's phones still load.",
             wash=AMBER,
             title_color=AMBER_INK,
         ),
@@ -1077,7 +1077,7 @@ def story():
 
     flow.append(Spacer(1, 8))
     flow.append(P(
-        "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This revision is Proposal 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC.",
+        "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This revision is Proposal 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
         "body",
     ))
     return flow

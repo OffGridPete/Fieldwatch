@@ -490,7 +490,7 @@ def draw_cover(c, doc):
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
     c.drawString(48, 50, "Copyright (c) 2026 Off Grid Pete LLC. All rights reserved.")
-    c.drawString(48, 38, "Fieldwatch\u2122 is a trademark of Off Grid Pete LLC.")
+    c.drawString(48, 38, "Fieldwatch\u2122 is a trademark of Off Grid Pete LLC. Registration pending.")
     c.setFillColor(PHOS)
     c.setFont("Helvetica", 8)
     draw_ig_mark(c, 48, 20, 7)
@@ -7368,7 +7368,7 @@ def story():
             [
                 ["Product", "Fieldwatch"],
                 ["Author", "Off Grid Pete LLC"],
-                ["Copyright", "Copyright (c) 2026 Off Grid Pete LLC. All rights reserved. Fieldwatch\u2122 is a trademark of Off Grid Pete LLC."],
+                ["Copyright", "Copyright (c) 2026 Off Grid Pete LLC. All rights reserved. Fieldwatch\u2122 is a trademark of Off Grid Pete LLC. Registration pending."],
                 ["Instagram", "@OffGridPete"],
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
@@ -7392,7 +7392,7 @@ def story():
         P(
             "Fieldwatch is by Off Grid Pete LLC (Instagram @OffGridPete, X @OGridPete). "
             "Copyright (c) 2026 Off Grid Pete LLC. All rights reserved. "
-            "Fieldwatch\u2122 is a trademark of Off Grid Pete LLC. "
+            "Fieldwatch\u2122 is a trademark of Off Grid Pete LLC. Registration pending. "
             "Settings shows the copyright and those accounts. Pattern matches are not identity. "
             "Receive-only observation does not authorize access to systems you did not already have a right to use.",
             "caption",
