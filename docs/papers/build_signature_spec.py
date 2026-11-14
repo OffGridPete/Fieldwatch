@@ -43,6 +43,11 @@ TOP = 0.72 * inch
 BOTTOM = 0.64 * inch
 MEASURE = PAGE_W - LEFT - RIGHT
 DATED = "14 November 2026"
+RELEASE = "1"
+# Newest release last. Add a row for a later release. Do not rewrite an earlier row.
+HISTORY = [
+    ("1", "14 November 2026", "First release of this proposal."),
+]
 OUT = "docs/papers/Radio_Signature_Interchange.pdf"
 
 
@@ -219,14 +224,14 @@ class SpecTemplate(PageTemplate):
         canvas.drawString(LEFT, y_head + 5, "RADIO SIGNATURES")
         canvas.setFillColor(MUTED)
         canvas.setFont("Times-Italic", 8)
-        canvas.drawRightString(PAGE_W - RIGHT, y_head + 5, "RSI-1  ·  Proposal")
+        canvas.drawRightString(PAGE_W - RIGHT, y_head + 5, "RSI-1  ·  Release 1")
         y_foot = 0.34 * inch
         canvas.setStrokeColor(RULE)
         canvas.setLineWidth(0.4)
         canvas.line(LEFT, y_foot + 12, PAGE_W - RIGHT, y_foot + 12)
         canvas.setFillColor(MUTED)
         canvas.setFont("Times-Roman", 8)
-        canvas.drawString(LEFT, y_foot, "Off Grid Pete LLC  ·  14 November 2026  ·  Proposal, not a standard")
+        canvas.drawString(LEFT, y_foot, "Off Grid Pete LLC  ·  Release 1  ·  14 November 2026")
         canvas.drawRightString(PAGE_W - RIGHT, y_foot, str(page))
         canvas.restoreState()
 
@@ -235,7 +240,7 @@ def build(story):
     doc = BaseDocTemplate(
         OUT,
         pagesize=letter,
-        title="Radio Signature Interchange, Proposal RSI-1",
+        title="Radio Signature Interchange, RSI-1 Release 1",
         author="Off Grid Pete LLC",
         subject="Proposed specification for a shared radio signature file",
         creator="Off Grid Pete LLC",
@@ -261,7 +266,7 @@ def story():
         thick_rule(),
         P("Proposed by Off Grid Pete LLC", "meta"),
         P(DATED, "meta"),
-        P("Document RSI-1, Proposal 1. Supersedes nothing.", "meta"),
+        P("Document RSI-1, Release 1. Supersedes nothing.", "meta"),
         Spacer(1, 6),
         P("Introduction", "h1"),
         P(
@@ -331,6 +336,7 @@ def story():
         "26. Taking part",
         "Appendix A. Test vectors",
         "Appendix B. Baseline registry",
+        "Document history",
         "References",
     ]
     left = contents[:16]
@@ -869,7 +875,7 @@ def story():
         ),
     ]
     flow += bullets([
-        "Fieldwatch 1.2.0 adds the conforming parser in section 5.3. Behavior on a baseline file stays the same for every stock signature that exists at Proposal 1.",
+        "Fieldwatch 1.2.0 adds the conforming parser in section 5.3. Behavior on a baseline file stays the same for every stock signature that exists at Release 1.",
         "The stock file those phones download stays <font face='Courier' size='9'>format</font> <font face='Courier' size='9'>fieldwatch-signatures</font> and <font face='Courier' size='9'>formatVersion</font> 1. It uses no radio token other than <font face='Courier' size='9'>BLE</font>, <font face='Courier' size='9'>WIFI</font>, or null. A file written for other readers uses <font face='Courier' size='9'>radio-signatures</font>.",
         "Each stock signature gains <font face='Courier' size='9'>publisher</font> <font face='Courier' size='9'>fieldwatch</font>. Ids are unchanged. The catalog number increases in that same release, so a phone whose parser can store the field will apply it. The field is omitted when empty, so custom signatures without a publisher stay that way.",
         "A phone that updates from an older app version treats a stored row with no publisher and a file row with publisher <font face='Courier' size='9'>fieldwatch</font> as the same signature when the ids are equal. Mute and extra rules remain.",
@@ -1041,7 +1047,7 @@ def story():
     flow += [
         P("Appendix B.  Baseline registry", "h1"),
         P(
-            "These are the names a baseline parser accepts. A file that uses only these names, with formatVersion 1, is a baseline file. The class list is the Fieldwatch set at Proposal 1, including values kept so older files still parse.",
+            "These are the names a baseline parser accepts. A file that uses only these names, with formatVersion 1, is a baseline file. The class list is the Fieldwatch set at Release 1, including values kept so older files still parse.",
             "body",
         ),
         P("Rule kinds. " + ", ".join([
@@ -1062,6 +1068,19 @@ def story():
         P("Decode gate operations. eq, neq, mask, nmask, len.", "body"),
         P("Publisher token reserved by this project. fieldwatch.", "body"),
 
+        P("Document history", "h1"),
+        P(
+            "This copy is Release 1. A later change adds a row to the table and leaves the earlier rows as they were published. The row records what changed. It does not replace the text of an older release.",
+            "body",
+        ),
+    ]
+    flow.append(table(
+        ["Release", "Date", "What changed"],
+        [[a, b, c] for a, b, c in HISTORY],
+        [0.9 * inch, 1.5 * inch, MEASURE - 2.4 * inch],
+    ))
+    flow.append(Spacer(1, 10))
+    flow += [
         P("References", "h1"),
     ]
     refs = [
@@ -1070,14 +1089,14 @@ def story():
         "T. Bray, The JavaScript Object Notation (JSON) Data Interchange Format, RFC 8259.",
         "IEEE, Guidelines for Use of Extended Unique Identifier (EUI), Organizationally Unique Identifier (OUI), and Company ID.",
         "Bluetooth Core Specification, Service UUID and the Bluetooth base UUID. Bluetooth SIG, Assigned Numbers, Company Identifiers.",
-        "Fieldwatch stock file fieldwatch-signatures, formatVersion 1, as published by Off Grid Pete LLC. Catalog 113 is the stock snapshot current with Proposal 1.",
+        "Fieldwatch stock file fieldwatch-signatures, formatVersion 1, as published by Off Grid Pete LLC. Catalog 113 is the stock snapshot current with Release 1.",
     ]
     for i, text in enumerate(refs, start=1):
         flow.append(Paragraph(f"{i}.  {esc(text)}", S["ref"]))
 
     flow.append(Spacer(1, 8))
     flow.append(P(
-        "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This revision is Proposal 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
+        "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This document is RSI-1, Release 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
         "body",
     ))
     return flow
