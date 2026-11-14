@@ -292,7 +292,7 @@ def story():
             "body",
         ),
         P(
-            "The shape of the file is already in use. Fieldwatch writes it as <font face='Courier' size='9'>fieldwatch-signatures</font> with <font face='Courier' size='9'>formatVersion</font> 1, because that is the token phones already accept. A conforming parser also accepts <font face='Courier' size='9'>radio-signatures</font>, the token for a file written for this proposal. Catalog 113, the stock file current with this proposal, remains a <font face='Courier' size='9'>fieldwatch-signatures</font> file. This document does not ask anyone to replace that file with a new major version.",
+            "The format name in this specification is <font face='Courier' size='9'>radio-signatures</font>. A file written for this specification uses that name. <font face='Courier' size='9'>fieldwatch-signatures</font> is the name of the library already on phones through Fieldwatch 1.1.44. Those phones accept that name, with <font face='Courier' size='9'>formatVersion</font> 1, and they reject any other format string. A file those phones must read keeps the older name. Catalog 113, the stock file current with this proposal, stays that way so those phones can still update. A later <font face='Courier' size='9'>formatVersion</font> uses <font face='Courier' size='9'>radio-signatures</font> and does not take a Fieldwatch name.",
             "body",
         ),
         P(
@@ -433,7 +433,7 @@ def story():
         ["If the file will be read by", "The file MUST"],
         [
             ["A baseline parser, including Fieldwatch 1.1.44", "Stay a baseline file: formatVersion 1, and only names from Appendix B. It MAY add object members those parsers will ignore, including publisher."],
-            ["Only conforming parsers", "Use formatVersion 1 for any addition that an older match would still get right by ignoring the new member. Raise formatVersion only for a change described in section 7."],
+            ["Only conforming parsers", "Use format radio-signatures. Use formatVersion 1 for any addition that an older match would still get right by ignoring the new member. Raise formatVersion only for a change described in section 7. A formatVersion greater than 1 uses radio-signatures."],
         ],
         [2.15 * inch, MEASURE - 2.15 * inch],
     ))
@@ -454,7 +454,7 @@ def story():
     flow.append(table(
         ["Member", "Requirement"],
         [
-            ["`format", "String. A file a baseline parser must read MUST be fieldwatch-signatures. A Fieldwatch parser also accepts the historical name spectre-signatures. Other parsers MAY reject that name. A file written only for conforming parsers MAY be radio-signatures. A conforming parser MUST accept both fieldwatch-signatures and radio-signatures."],
+            ["`format", "String. The name of this format is radio-signatures. A file written for this specification MUST use that name. A conforming parser MUST accept radio-signatures and fieldwatch-signatures. A file that a Fieldwatch parser through 1.1.44 must read MUST be fieldwatch-signatures with formatVersion 1. Those parsers reject any other format string. A Fieldwatch parser also accepts the historical name spectre-signatures. Other parsers MAY reject that name. A formatVersion greater than 1 MUST use radio-signatures."],
             ["`formatVersion", "Integer. MUST be 1 or greater. The baseline and this proposal's additions are version 1. Absent means 1."],
             ["`catalogVersion", "Integer. Optional. Identifies one publisher's snapshot of a stock catalog. It is not a schema version. Absent means 0. A consumer MUST NOT interpret it as formatVersion."],
             ["`exportedAt", "String. Optional. When the file was written, for humans. Not used in matching."],
@@ -516,7 +516,7 @@ def story():
         "<b>A change an older matcher would get wrong</b> if it applied the rules it knows and ignored the rest. That change MUST increase formatVersion. An example would be a new rule kind that is defined to exclude observations which the older rules would have accepted. Skipping that rule would label the wrong radios. A baseline parser will reject the file. A conforming parser built before the new version reports that the file is newer and applies only what it understands, and it MUST NOT present that partial result as complete.",
     ])
     flow.append(P(
-        "Writers MUST NOT increase formatVersion for a change in the first class. Doing so turns a compatible file into a file the baseline parser refuses.",
+        "Writers MUST NOT increase formatVersion for a change in the first class. Doing so turns a compatible file into a file the baseline parser refuses. A file whose <font face='Courier' size='9'>formatVersion</font> is greater than 1 MUST set <font face='Courier' size='9'>format</font> to <font face='Courier' size='9'>radio-signatures</font>. The name <font face='Courier' size='9'>fieldwatch-signatures</font> is not used for a later version of this format.",
         "body",
     ))
 
@@ -870,7 +870,7 @@ def story():
     ]
     flow += bullets([
         "Fieldwatch 1.2.0 adds the conforming parser in section 5.3. Behavior on a baseline file stays the same for every stock signature that exists at Proposal 1.",
-        "The stock file stays <font face='Courier' size='9'>format</font> <font face='Courier' size='9'>fieldwatch-signatures</font> and <font face='Courier' size='9'>formatVersion</font> 1. It uses no radio token other than <font face='Courier' size='9'>BLE</font>, <font face='Courier' size='9'>WIFI</font>, or null.",
+        "The stock file those phones download stays <font face='Courier' size='9'>format</font> <font face='Courier' size='9'>fieldwatch-signatures</font> and <font face='Courier' size='9'>formatVersion</font> 1. It uses no radio token other than <font face='Courier' size='9'>BLE</font>, <font face='Courier' size='9'>WIFI</font>, or null. A file written for other readers uses <font face='Courier' size='9'>radio-signatures</font>.",
         "Each stock signature gains <font face='Courier' size='9'>publisher</font> <font face='Courier' size='9'>fieldwatch</font>. Ids are unchanged. The catalog number increases in that same release, so a phone whose parser can store the field will apply it. The field is omitted when empty, so custom signatures without a publisher stay that way.",
         "A phone that updates from an older app version treats a stored row with no publisher and a file row with publisher <font face='Courier' size='9'>fieldwatch</font> as the same signature when the ids are equal. Mute and extra rules remain.",
         "The public file does not contain a rule kind, class, radio, or decode type that 1.1.44 does not know. Those phones still update. The conforming parser implements the unknown-radio rule in section 5.3, so a later file from another project can name a radio this phone does not match without being rejected.",
@@ -898,7 +898,7 @@ def story():
 
         P("25.  Examples", "h1"),
         P(
-            "A baseline file. A Fieldwatch 1.1.44 parser and a conforming parser both match a Bluetooth advertisement named TD-H9-0536, and both refuse a Wi-Fi network of that name because the rule sets the radio.",
+            "A baseline file. The format name here is <font face='Courier' size='9'>fieldwatch-signatures</font> so a Fieldwatch 1.1.44 parser can read it. A file written for this specification uses <font face='Courier' size='9'>radio-signatures</font>. Both parsers match a Bluetooth advertisement named TD-H9-0536, and both refuse a Wi-Fi network of that name because the rule sets the radio.",
             "body",
         ),
     ]
@@ -955,7 +955,7 @@ def story():
         "body",
     ))
     flow.append(P(
-        "A signature for a radio Fieldwatch does not hear. The rule sets <font face='Courier' size='9'>radio</font>, so an omitted-radio name of the same text does not match this observation. A parser with no Classic profile does not match the signature. A file that uses the token MAY set <font face='Courier' size='9'>format</font> to <font face='Courier' size='9'>radio-signatures</font>. It is not a baseline file, and a 1.1.44 parser would reject it. The Classic profile itself is not defined here.",
+        "A signature for a radio Fieldwatch does not hear. The rule sets <font face='Courier' size='9'>radio</font>, so an omitted-radio name of the same text does not match this observation. A parser with no Classic profile does not match the signature. The file uses <font face='Courier' size='9'>format</font> <font face='Courier' size='9'>radio-signatures</font>, which is the name in this specification. It is not a baseline file, and a 1.1.44 parser would reject it. The Classic profile itself is not defined here.",
         "body",
     ))
     flow.append(code_block(
