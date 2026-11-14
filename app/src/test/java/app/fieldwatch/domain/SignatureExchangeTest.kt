@@ -1255,6 +1255,7 @@ class SignatureExchangeTest {
         ).copy(serviceUuids = listOf("802A0000-4EF4-4E59-B573-2BED4A4AC159"))
         val hits = SignatureEngine().match(listOf(radio), stock).getValue(radio.key)
         assertFalse("Epson printer UUID is not SensorPush", "fleet-sensorpush" in hits)
+        assertTrue("ET-4800 Series is Epson", "fleet-epson" in hits)
     }
 
     @Test

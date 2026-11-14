@@ -3,8 +3,33 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 111,
+    "catalogVersion": 112,
     "fleets": [
+        {
+            "id": "fleet-70mai",
+            "name": "70mai",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "70mai*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "70mai dashcam.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
         {
             "id": "fleet-actiontec",
             "name": "Actiontec",
@@ -8777,6 +8802,31 @@
             "kind": "MESH"
         },
         {
+            "id": "fleet-blackvue",
+            "name": "BlackVue",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "BlackVue*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "BlackVue dashcam.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-ble-ptt-button",
             "name": "BLE PTT button",
             "enabled": true,
@@ -10091,6 +10141,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-chb",
+            "name": "CHB",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "CHB2020*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bluetooth name starting with CHB2020. The product is not identified. Service FFA0 is shared by other modules, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "OTHER"
         },
         {
             "id": "fleet-chevrolet",
@@ -23542,6 +23617,22 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ET-* Series",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ET-* Series",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -23552,6 +23643,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
+        },
+        {
+            "id": "fleet-escort",
+            "name": "Escort",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "B5E22DE9-31EE-42AB-BE6A-9BE0837AA344",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Escort radar detector on service B5E22DE9.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-estimote",
@@ -25238,6 +25354,89 @@
             "kind": "SURVEILLANCE"
         },
         {
+            "id": "fleet-galaxy-buds",
+            "name": "Galaxy Buds",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Galaxy Buds*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Buds FE*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Samsung Galaxy Buds. A Buds FE can leave the word Galaxy off the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
+            "id": "fleet-galaxy-watch",
+            "name": "Galaxy Watch",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Galaxy Watch*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Samsung Galaxy Watch. Not a TV and not a SmartTag.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE"
+        },
+        {
+            "id": "fleet-gard-pro",
+            "name": "Gard Pro",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Gard Pro*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Gard Pro camera. The advertisement can spell Ultra as UItra.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
+        },
+        {
             "id": "fleet-garmin",
             "name": "Garmin",
             "enabled": true,
@@ -25579,6 +25778,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "PHONE"
+        },
+        {
+            "id": "fleet-google-cast",
+            "name": "Google Cast",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEA0",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Google Cast display, speaker, or Chromecast on service FEA0. The room name is whatever the owner typed. Nest cameras stay on Nest.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-find-hub",
@@ -26685,6 +26909,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-gt201",
+            "name": "GT201",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GT201*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bluetooth name starting with GT201. The product is not identified.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "OTHER"
+        },
+        {
             "id": "fleet-haiku",
             "name": "Haiku Fan",
             "enabled": true,
@@ -26870,6 +27119,31 @@
             "attentionNote": "Hanwha Vision / Wisenet cameras. Common on commercial CCTV and some public poles. A *_WISENET setup SSID is the stronger hit; IEEE 00:09:18 is Samsung Techwin. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
+        },
+        {
+            "id": "fleet-harpbt",
+            "name": "HarpBT",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HarpBT*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bluetooth name starting with HarpBT. The product is not identified.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "OTHER"
         },
         {
             "id": "fleet-hatch",
@@ -44961,6 +45235,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-hume",
+            "name": "Hume",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Hume*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Hume band. Pattern match, not a person.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE"
+        },
+        {
             "id": "fleet-hyundai",
             "name": "Hyundai",
             "enabled": true,
@@ -45418,6 +45717,31 @@
             "kind": "AUDIO"
         },
         {
+            "id": "fleet-jlab",
+            "name": "JLab",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1494,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "JLab earbuds. The company id is JLab's. A model can leave the JLab name off.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-kenwood-khs-55bt",
             "name": "Kenwood KHS-55BT",
             "enabled": true,
@@ -45735,6 +46059,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "LOCK"
+        },
+        {
+            "id": "fleet-levoit",
+            "name": "Levoit",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LAP-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Core300*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Levoit air purifier. The name starts with LAP- or Core300. Espressif's company id is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-lg-webos",
@@ -46636,6 +46993,31 @@
             "kind": "HOME"
         },
         {
+            "id": "fleet-melk",
+            "name": "MELK",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MELK-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "MELK lamp. The name starts with MELK-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-meraki",
             "name": "Meraki",
             "enabled": true,
@@ -47346,6 +47728,31 @@
             "kind": "PHONE"
         },
         {
+            "id": "fleet-midea",
+            "name": "Midea",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1704,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Midea air conditioner. The company id is Midea's. The advertisement name is often just net, and that word is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-mikrotik",
             "name": "MikroTik",
             "enabled": true,
@@ -47957,6 +48364,31 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "Chamberlain myQ garage-door hub.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-neewer",
+            "name": "NEEWER",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "NEEWER*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "NEEWER light.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -49861,13 +50293,21 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "osmo_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "DJI Osmo handheld / action camera (Action, Pocket, 360, Nano). Not a flying DJI aircraft.",
+            "notes": "DJI Osmo handheld / action camera (Action, Pocket, 360, Nano). A Wi-Fi name that starts with osmo_ is this row. Not a flying DJI aircraft.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA",
@@ -49942,6 +50382,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "WEARABLE"
+        },
+        {
+            "id": "fleet-owlet",
+            "name": "Owlet",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "C5163C4B-9B63-570D-A3A8-407716F04276",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Owlet baby monitor. Pattern match, not a patient.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
         },
         {
             "id": "fleet-pacific-tpms",
@@ -50569,6 +51034,31 @@
             "attentionNote": "Pigvision is a Flock-family / roadside camera name. Name-only. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
+        },
+        {
+            "id": "fleet-platco",
+            "name": "Platco",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Platco*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Platco remote. The name is the rule. A shared remote company id and the generic alert service are not.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-plaud",
@@ -57281,13 +57771,21 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[oven]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Samsung Family Hub fridge, range, or oven setup Wi-Fi. Not a SmartTag.",
+            "notes": "Samsung Family Hub fridge, range, or oven. Wi-Fi setup, or a Bluetooth name that starts with [oven]. Not a SmartTag.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -57340,6 +57838,104 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "FINDER"
+        },
+        {
+            "id": "fleet-samsung-tv",
+            "name": "Samsung TV",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[TV]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[AV]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*QLED*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*The Frame*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*Crystal UHD*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*CU7000*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*CU8000*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, or CU8000. Phones, watches, and buds share Samsung's company id, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-scentair",
+            "name": "ScentAir",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 741,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "ScentAir diffuser. The company id is ScentAir's. The generic alert service is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-schlage",
@@ -57942,6 +58538,31 @@
             "kind": "DRONE"
         },
         {
+            "id": "fleet-sleeptracker",
+            "name": "SleepTracker",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SleepTracker*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Fullpower SleepTracker. Pattern match, not a patient.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
+        },
+        {
             "id": "fleet-snap-spectacles",
             "name": "Snap Spectacles",
             "enabled": true,
@@ -58193,6 +58814,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-soundcore",
+            "name": "soundcore",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "soundcore*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "soundcore headphones.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
         },
         {
             "id": "fleet-spectrum",
@@ -58639,6 +59285,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-tandem",
+            "name": "Tandem",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FDFB",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Tandem t:slim insulin pump. Pattern match, not a patient.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
         },
         {
             "id": "fleet-tapo",
@@ -61882,13 +62553,29 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "U6-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "UXG*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "UniFi / Ubiquiti name on Wi-Fi or BLE. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
+            "notes": "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
@@ -63726,6 +64413,31 @@
             "kind": "TWO_WAY"
         },
         {
+            "id": "fleet-vizio",
+            "name": "Vizio",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 88,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Vizio TV or the Vizio app. The company id is Vizio's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-volkswagen",
             "name": "Volkswagen",
             "enabled": true,
@@ -63969,6 +64681,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-whoop",
+            "name": "WHOOP",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "WHOOP*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "WHOOP band. Pattern match, not a person.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE"
         },
         {
             "id": "fleet-winegard",
@@ -64322,6 +65059,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
+        },
+        {
+            "id": "fleet-zebra",
+            "name": "Zebra",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE79",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Zebra scanner or printer on service FE79.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-zyxel",

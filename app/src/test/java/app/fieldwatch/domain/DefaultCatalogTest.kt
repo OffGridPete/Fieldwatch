@@ -666,7 +666,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(272, stock.size)
+        assertEquals(298, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -755,9 +755,183 @@ class DefaultCatalogTest {
             .copy(key = "BLE:fd", mac = "AA:BB:CC:DD:EE:78")
         val hits = engine.match(listOf(tv, named, spaced, uuid), stock)
         assertFalse("Samsung company ID", "fleet-smarttag" in hits.getValue(tv.key))
+        assertFalse("company id is not a Samsung TV", "fleet-samsung-tv" in hits.getValue(tv.key))
         assertTrue("SmartTag name", "fleet-smarttag" in hits.getValue(named.key))
         assertTrue("Smart Tag name", "fleet-smarttag" in hits.getValue(spaced.key))
         assertTrue("FD5A", "fleet-smarttag" in hits.getValue(uuid.key))
+    }
+
+    @Test
+    fun catalog112LabelsRepeatedSitFamiliesAndSkipsTheBroadKeys() {
+        val stock = DefaultCatalog.fleets()
+        val added = listOf(
+            "fleet-samsung-tv", "fleet-google-cast", "fleet-levoit", "fleet-melk", "fleet-midea",
+            "fleet-zebra", "fleet-jlab", "fleet-scentair", "fleet-escort", "fleet-gard-pro",
+            "fleet-chb", "fleet-vizio", "fleet-owlet", "fleet-tandem", "fleet-sleeptracker",
+            "fleet-whoop", "fleet-soundcore", "fleet-hume", "fleet-platco", "fleet-harpbt",
+            "fleet-gt201", "fleet-neewer", "fleet-70mai", "fleet-blackvue", "fleet-galaxy-watch",
+            "fleet-galaxy-buds",
+        )
+        assertEquals(added.toSet(), stock.map { it.id }.filter { it in added }.toSet())
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        added.forEach { id ->
+            val row = stock.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertTrue(id, row.matchAny)
+            assertFalse(id, id in watched)
+            assertFalse(id, row.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x0075 })
+            assertFalse(id, row.rules.any { it.kind == RuleKind.MANUFACTURER_ID && it.companyId == 0x06D0 })
+        }
+        val tv = stock.single { it.id == "fleet-samsung-tv" }
+        assertEquals(SignatureClass.HOME, tv.kind)
+        assertTrue(tv.rules.none { it.kind == RuleKind.MANUFACTURER_ID })
+        assertEquals(RadioKind.BLE, tv.rules.first().radio)
+
+        val qled = ble(name = "43\" QLED").copy(key = "BLE:qled", mac = "B0:E4:5C:00:00:01")
+        val frame = ble(name = "65\" The Frame").copy(key = "BLE:frame", mac = "28:07:08:00:00:01")
+        val bracket = ble(name = "[TV] Samsung BE 65 TV").copy(key = "BLE:be", mac = "F8:4E:58:00:00:01")
+        val bar = ble(name = "[AV] HW-Q800D").copy(key = "BLE:av", mac = "28:E6:A9:00:00:01")
+        val crystal = ble(name = "55\" Crystal UHD").copy(key = "BLE:uhd", mac = "B8:B4:09:00:00:01")
+        val cu = ble(name = "Samsung CU7000 55").copy(key = "BLE:cu", mac = "E0:03:6B:00:00:01")
+        val watch = ble(name = "Galaxy Watch7 (DFHD)", manufacturerId = 0x0075)
+            .copy(key = "BLE:watch", mac = "4F:71:D9:00:00:01")
+        val buds = ble(name = "Buds FE", manufacturerId = 0x0075)
+            .copy(key = "BLE:buds", mac = "E0:61:7B:00:00:01")
+        val buds2 = ble(name = "Galaxy Buds2 Pro LE").copy(key = "BLE:buds2", mac = "C4:94:1F:00:00:01")
+        val picture = ble(name = "Picture Frame").copy(key = "BLE:pic", mac = "AA:BB:CC:00:00:11")
+        val wifiTv = wifi("AA:BB:CC:00:00:12", "[TV] Samsung BE 65 TV")
+        val oven = ble(name = "[oven]Samsung(152Y)", manufacturerId = 0x0075)
+            .copy(key = "BLE:oven", mac = "50:FD:D5:00:00:01")
+        val cast = ble(name = "Kitchen Display", serviceUuids = listOf("FEA0"))
+            .copy(key = "BLE:cast", mac = "4A:D8:DC:00:00:01")
+        val castLong = ble(
+            name = "",
+            serviceUuids = listOf("0000FEA0-0000-1000-8000-00805F9B34FB"),
+        ).copy(key = "BLE:cast2", mac = "5C:67:91:00:00:01")
+        val roomOnly = ble(name = "Kitchen Display").copy(key = "BLE:room", mac = "AA:BB:CC:00:00:13")
+        val lap = ble(name = "LAP-V102S-WUS", manufacturerId = 0x06D0)
+            .copy(key = "BLE:lap", mac = "24:58:7C:00:00:01")
+        val core = ble(name = "Core300s", manufacturerId = 0x06D0)
+            .copy(key = "BLE:core", mac = "94:3C:C6:00:00:01")
+        val espressif = ble(name = "CTO-R251S-KUS", manufacturerId = 0x06D0)
+            .copy(key = "BLE:cto", mac = "08:D1:F9:00:00:01")
+        val lamp = ble(name = "MELK-OB12").copy(key = "BLE:melk", mac = "BE:FF:A1:00:00:01")
+        val midea = ble(name = "net", manufacturerId = 0x06A8)
+            .copy(key = "BLE:midea", mac = "C4:39:60:00:00:01")
+        val netOnly = ble(name = "net").copy(key = "BLE:net", mac = "AA:BB:CC:00:00:14")
+        val zebra = ble(name = "D8N251305279", serviceUuids = listOf("FE79"))
+            .copy(key = "BLE:zebra", mac = "60:95:32:00:00:01")
+        val jlab = ble(name = "T21", manufacturerId = 0x05D6)
+            .copy(key = "BLE:jlab", mac = "53:A6:6B:00:00:01")
+        val t21 = ble(name = "T21").copy(key = "BLE:t21", mac = "AA:BB:CC:00:00:15")
+        val scent = ble(name = "ScentAir", manufacturerId = 0x02E5, serviceUuids = listOf("1811"))
+            .copy(key = "BLE:scent", mac = "AC:15:18:00:00:01")
+        val alert = ble(name = "", serviceUuids = listOf("1811"))
+            .copy(key = "BLE:alert", mac = "AA:BB:CC:00:00:16")
+        val escort = ble(
+            name = "ESCORT REDLINE 360c",
+            serviceUuids = listOf("B5E22DE9-31EE-42AB-BE6A-9BE0837AA344"),
+        ).copy(key = "BLE:escort", mac = "00:25:CA:00:00:01")
+        val escortName = ble(name = "MAX 360c").copy(key = "BLE:max", mac = "00:25:CA:00:00:02")
+        val gard = ble(name = "Gard Pro UItra 2+").copy(key = "BLE:gard", mac = "78:02:B7:00:00:01")
+        val chb = ble(name = "CHB202044004360", serviceUuids = listOf("FFA0"))
+            .copy(key = "BLE:chb", mac = "2F:27:98:00:00:01")
+        val chbShort = ble(name = "CHB1").copy(key = "BLE:chb1", mac = "AA:BB:CC:00:00:17")
+        val ffa0 = ble(name = "", serviceUuids = listOf("FFA0"))
+            .copy(key = "BLE:ffa0", mac = "AA:BB:CC:00:00:18")
+        val vizio = ble(name = "VIZIO Mobile App", manufacturerId = 0x0058)
+            .copy(key = "BLE:vizio", mac = "F7:2B:6B:00:00:01")
+        val owlet = ble(
+            name = "OB",
+            serviceUuids = listOf("C5163C4B-9B63-570D-A3A8-407716F04276"),
+        ).copy(key = "BLE:owlet", mac = "F0:6E:73:00:00:01")
+        val ob = ble(name = "OB").copy(key = "BLE:ob", mac = "AA:BB:CC:00:00:19")
+        val pump = ble(name = "tslim X2 ***349", serviceUuids = listOf("FDFB"))
+            .copy(key = "BLE:pump", mac = "E7:2D:F9:00:00:01")
+        val sleep = ble(name = "SleepTracker").copy(key = "BLE:sleep", mac = "54:EF:FE:00:00:01")
+        val whoop = ble(name = "WHOOP 5AM0005917").copy(key = "BLE:whoop", mac = "E3:98:8E:00:00:01")
+        val sound = ble(name = "soundcore Sport X20").copy(key = "BLE:sound", mac = "70:2E:9B:00:00:01")
+        val hume = ble(name = "Hume Band V2 B1D2").copy(key = "BLE:hume", mac = "FF:D4:77:00:00:01")
+        val platco = ble(name = "Platco PR1", serviceUuids = listOf("1802"))
+            .copy(key = "BLE:platco", mac = "B8:C0:65:00:00:01")
+        val immediate = ble(name = "", serviceUuids = listOf("1802"))
+            .copy(key = "BLE:1802", mac = "AA:BB:CC:00:00:1A")
+        val harp = ble(name = "HarpBT194601559").copy(key = "BLE:harp", mac = "34:15:13:00:00:01")
+        val gt = ble(name = "GT201_PV").copy(key = "BLE:gt", mac = "E0:46:E5:00:00:01")
+        val light = ble(name = "NEEWER-RGB168").copy(key = "BLE:neewer", mac = "FB:43:CD:00:00:01")
+        val mai = wifi("BC:FD:0C:00:00:01", "70mai_d06_258d")
+        val vue = wifi("00:25:42:00:00:01", "Blackvue750XPlus-E4E73D")
+        val et = ble(name = "ET-2800 Series").copy(key = "BLE:et", mac = "D6:80:8B:00:00:01")
+        val osmo = wifi("54:AE:BC:00:00:01", "osmo_6e3b")
+        val u6 = ble(name = "U6-LR").copy(key = "BLE:u6", mac = "60:22:32:00:00:01")
+        val uxg = ble(name = "UXGLITE").copy(key = "BLE:uxg", mac = "9C:05:D6:00:00:01")
+
+        val hits = SignatureEngine().match(
+            listOf(
+                qled, frame, bracket, bar, crystal, cu, watch, buds, buds2, picture, wifiTv, oven,
+                cast, castLong, roomOnly, lap, core, espressif, lamp, midea, netOnly, zebra, jlab, t21,
+                scent, alert, escort, escortName, gard, chb, chbShort, ffa0, vizio, owlet, ob, pump,
+                sleep, whoop, sound, hume, platco, immediate, harp, gt, light, mai, vue, et, osmo, u6, uxg,
+            ),
+            stock,
+        )
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("QLED", "fleet-samsung-tv" in ids(qled))
+        assertTrue("The Frame", "fleet-samsung-tv" in ids(frame))
+        assertTrue("[TV]", "fleet-samsung-tv" in ids(bracket))
+        assertTrue("[AV]", "fleet-samsung-tv" in ids(bar))
+        assertTrue("Crystal UHD", "fleet-samsung-tv" in ids(crystal))
+        assertTrue("CU7000", "fleet-samsung-tv" in ids(cu))
+        assertFalse("watch name", "fleet-samsung-tv" in ids(watch))
+        assertTrue("watch", "fleet-galaxy-watch" in ids(watch))
+        assertFalse("buds are not a watch", "fleet-galaxy-watch" in ids(buds))
+        assertTrue("Buds FE", "fleet-galaxy-buds" in ids(buds))
+        assertTrue("Galaxy Buds", "fleet-galaxy-buds" in ids(buds2))
+        assertFalse("Picture Frame", "fleet-samsung-tv" in ids(picture))
+        assertTrue("Wi-Fi [TV] name stays off the TV row", ids(wifiTv).isEmpty())
+        assertFalse("oven is not a TV", "fleet-samsung-tv" in ids(oven))
+        assertTrue("Bluetooth oven", "fleet-samsung-appliance" in ids(oven))
+        assertTrue("FEA0 display", "fleet-google-cast" in ids(cast))
+        assertTrue("long FEA0", "fleet-google-cast" in ids(castLong))
+        assertFalse("room name alone", "fleet-google-cast" in ids(roomOnly))
+        assertTrue("LAP-", "fleet-levoit" in ids(lap))
+        assertTrue("Core300", "fleet-levoit" in ids(core))
+        assertFalse("Espressif company id", "fleet-levoit" in ids(espressif))
+        assertTrue("MELK", "fleet-melk" in ids(lamp))
+        assertTrue("Midea company", "fleet-midea" in ids(midea))
+        assertFalse("the word net", "fleet-midea" in ids(netOnly))
+        assertTrue("FE79", "fleet-zebra" in ids(zebra))
+        assertTrue("JLab company on T21", "fleet-jlab" in ids(jlab))
+        assertFalse("T21 name alone", "fleet-jlab" in ids(t21))
+        assertTrue("ScentAir company", "fleet-scentair" in ids(scent))
+        assertFalse("alert service", "fleet-scentair" in ids(alert))
+        assertTrue("Escort UUID", "fleet-escort" in ids(escort))
+        assertFalse("Escort name alone", "fleet-escort" in ids(escortName))
+        assertTrue("Gard Pro", "fleet-gard-pro" in ids(gard))
+        assertTrue("CHB2020", "fleet-chb" in ids(chb))
+        assertFalse("short CHB", "fleet-chb" in ids(chbShort))
+        assertFalse("FFA0", "fleet-chb" in ids(ffa0))
+        assertTrue("Vizio company", "fleet-vizio" in ids(vizio))
+        assertTrue("Owlet UUID", "fleet-owlet" in ids(owlet))
+        assertFalse("name OB", "fleet-owlet" in ids(ob))
+        assertTrue("t:slim", "fleet-tandem" in ids(pump))
+        assertTrue("SleepTracker", "fleet-sleeptracker" in ids(sleep))
+        assertTrue("WHOOP", "fleet-whoop" in ids(whoop))
+        assertTrue("soundcore", "fleet-soundcore" in ids(sound))
+        assertTrue("Hume", "fleet-hume" in ids(hume))
+        assertTrue("Platco", "fleet-platco" in ids(platco))
+        assertFalse("immediate alert", "fleet-platco" in ids(immediate))
+        assertTrue("HarpBT", "fleet-harpbt" in ids(harp))
+        assertTrue("GT201", "fleet-gt201" in ids(gt))
+        assertTrue("NEEWER", "fleet-neewer" in ids(light))
+        assertTrue("70mai", "fleet-70mai" in ids(mai))
+        assertTrue("BlackVue", "fleet-blackvue" in ids(vue))
+        assertTrue("ET- Series", "fleet-epson" in ids(et))
+        assertTrue("osmo_", "fleet-osmo" in ids(osmo))
+        assertFalse("osmo_ is not the aircraft row", "fleet-dji" in ids(osmo))
+        assertTrue("U6-", "fleet-unifi" in ids(u6))
+        assertTrue("UXG", "fleet-unifi" in ids(uxg))
     }
 
     @Test

@@ -4,6 +4,10 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## Unreleased
+
+- Catalog 112 names radios this phone kept seeing. Samsung TVs and soundbars match the setup name. Google Cast matches service FEA0. Levoit, MELK, Midea, Zebra, JLab, ScentAir, Escort, Gard Pro, Vizio, Owlet, Tandem t:slim, SleepTracker, WHOOP, soundcore, Hume, Platco, NEEWER, 70mai, BlackVue, Galaxy Watch, and Galaxy Buds each have a row. CHB, HarpBT, and GT201 match a name prefix. The product behind those three is not identified. Epson also matches an ET- Series name. A Samsung oven on Bluetooth matches the appliance row. Osmo matches a Wi-Fi name that starts with osmo_. UniFi matches a U6- or UXG model name. None of these beep.
+
 ## 1.1.44 — 13 November 2026
 
 - Exposure Notification names a Bluetooth advertisement on service FD6F. The radio page says the identifier is there and that the metadata is encrypted. It does not show those bytes. It does not beep. Catalog 111 adds the signature.

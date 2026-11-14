@@ -517,3 +517,54 @@ class Catalog111MigrationTest {
         assertEquals(1, kept.count { it.id == "fleet-exposure-notification" })
     }
 }
+
+class Catalog112MigrationTest {
+    @Test
+    fun addsSitFamiliesWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 112)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog112Migrate(listOf(other), stock)
+        assertEquals(ADDED_IN_V112.size + 1, added.size)
+        ADDED_IN_V112.forEach { id ->
+            val row = added.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertTrue(id, row.matchAny)
+        }
+        assertEquals(
+            (listOf("DJI") + ADDED_IN_V112.map { stock.getValue(it).name }).sortedBy { it.lowercase() },
+            added.map { it.name },
+        )
+        val tv = added.single { it.id == "fleet-samsung-tv" }
+        assertEquals("Samsung TV", tv.name)
+        assertEquals(SignatureClass.HOME, tv.kind)
+        assertTrue(tv.rules.none { it.kind == RuleKind.MANUFACTURER_ID })
+        assertEquals("FEA0", added.single { it.id == "fleet-google-cast" }.rules.single().text)
+        assertEquals(RadioKind.BLE, added.single { it.id == "fleet-google-cast" }.rules.single().radio)
+        assertEquals(0x06A8, added.single { it.id == "fleet-midea" }.rules.single().companyId)
+        assertEquals(0x05D6, added.single { it.id == "fleet-jlab" }.rules.single().companyId)
+
+        val custom = tv.copy(builtIn = false, name = "Mine")
+        val kept = catalog112Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-samsung-tv" }.name)
+        assertFalse(kept.single { it.id == "fleet-samsung-tv" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-samsung-tv" })
+    }
+
+    @Test
+    fun copiesApplianceOsmoAndUnifiNotesOnlyWhenUnedited() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val appliance = stock.getValue("fleet-samsung-appliance").copy(
+            notes = SAMSUNG_APPLIANCE_NOTES_BEFORE_V112,
+        )
+        val osmo = stock.getValue("fleet-osmo").copy(notes = OSMO_NOTES_BEFORE_V112)
+        val unifi = stock.getValue("fleet-unifi").copy(notes = UNIFI_NOTES_BEFORE_V112)
+        val edited = appliance.copy(notes = "My fridge note")
+        val updated = catalog112Migrate(listOf(appliance, osmo, unifi, edited), stock)
+        assertEquals(stock.getValue("fleet-samsung-appliance").notes, updated.single { it.id == "fleet-samsung-appliance" && it.notes != "My fridge note" }.notes)
+        assertEquals(stock.getValue("fleet-osmo").notes, updated.single { it.id == "fleet-osmo" }.notes)
+        assertEquals(stock.getValue("fleet-unifi").notes, updated.single { it.id == "fleet-unifi" }.notes)
+        assertEquals("My fridge note", updated.single { it.notes == "My fridge note" }.notes)
+    }
+}

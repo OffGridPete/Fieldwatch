@@ -1249,6 +1249,10 @@ class ConfigStore(context: Context) {
             fleets = catalog111Migrate(fleets, catalog)
             version = CATALOG_V111
         }
+        if (version < CATALOG_V112) {
+            fleets = catalog112Migrate(fleets, catalog)
+            version = CATALOG_V112
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
@@ -1295,7 +1299,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 111
+        const val CATALOG_VERSION = 112
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1405,7 +1409,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V108 = 108
         private const val CATALOG_V109 = 109
         private const val CATALOG_V110 = 110
-        private const val CATALOG_V111 = CATALOG_VERSION
+        private const val CATALOG_V111 = 111
+        private const val CATALOG_V112 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -1988,6 +1993,69 @@ internal fun catalog111Migrate(
     val have = fleets.map { it.id }.toSet()
     val extras = ADDED_IN_V111.mapNotNull { stock[it] }.filter { it.id !in have }
     return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+internal val ADDED_IN_V112 = listOf(
+    "fleet-70mai",
+    "fleet-blackvue",
+    "fleet-chb",
+    "fleet-escort",
+    "fleet-galaxy-buds",
+    "fleet-galaxy-watch",
+    "fleet-gard-pro",
+    "fleet-google-cast",
+    "fleet-gt201",
+    "fleet-harpbt",
+    "fleet-hume",
+    "fleet-jlab",
+    "fleet-levoit",
+    "fleet-melk",
+    "fleet-midea",
+    "fleet-neewer",
+    "fleet-owlet",
+    "fleet-platco",
+    "fleet-samsung-tv",
+    "fleet-scentair",
+    "fleet-sleeptracker",
+    "fleet-soundcore",
+    "fleet-tandem",
+    "fleet-vizio",
+    "fleet-whoop",
+    "fleet-zebra",
+)
+
+internal const val SAMSUNG_APPLIANCE_NOTES_BEFORE_V112 =
+    "Samsung Family Hub fridge, range, or oven setup Wi-Fi. Not a SmartTag."
+
+internal const val OSMO_NOTES_BEFORE_V112 =
+    "DJI Osmo handheld / action camera (Action, Pocket, 360, Nano). Not a flying DJI aircraft."
+
+internal const val UNIFI_NOTES_BEFORE_V112 =
+    "UniFi / Ubiquiti name on Wi-Fi or BLE. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect."
+
+/**
+ * Catalog 112 adds the sit families when those ids are missing. A custom row
+ * with the same id stays. The rows are not bookmarked. The Samsung appliance,
+ * Osmo, and UniFi notes update only while they still have the previous sentence.
+ */
+internal fun catalog112Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V112.mapNotNull { stock[it] }.filter { it.id !in have }
+    val next = if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+    return next.map { fleet ->
+        if (!fleet.builtIn) return@map fleet
+        val previous = when (fleet.id) {
+            "fleet-samsung-appliance" -> SAMSUNG_APPLIANCE_NOTES_BEFORE_V112
+            "fleet-osmo" -> OSMO_NOTES_BEFORE_V112
+            "fleet-unifi" -> UNIFI_NOTES_BEFORE_V112
+            else -> return@map fleet
+        }
+        val fresh = stock[fleet.id] ?: return@map fleet
+        if (fleet.notes != previous) fleet else fleet.copy(notes = fresh.notes)
+    }
 }
 
 /**
