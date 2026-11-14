@@ -44,9 +44,9 @@ BOTTOM = 0.64 * inch
 MEASURE = PAGE_W - LEFT - RIGHT
 DATED = "14 November 2026"
 RELEASE = "1"
-# Newest release last. Add a row for a later release. Do not rewrite an earlier row.
+# Newest revision last. Add a row for a later revision. Do not rewrite an earlier row.
 HISTORY = [
-    ("1", "14 November 2026", "First release of this proposal."),
+    ("1", "14 November 2026", "Initial release. The format name is radio-signatures. A file that phones through Fieldwatch 1.1.44 must read keeps the name fieldwatch-signatures."),
 ]
 OUT = "docs/papers/Radio_Signature_Interchange.pdf"
 
@@ -336,8 +336,8 @@ def story():
         "26. Taking part",
         "Appendix A. Test vectors",
         "Appendix B. Baseline registry",
-        "Document history",
         "References",
+        "Revision history",
     ]
     left = contents[:16]
     right = contents[16:]
@@ -1068,19 +1068,6 @@ def story():
         P("Decode gate operations. eq, neq, mask, nmask, len.", "body"),
         P("Publisher token reserved by this project. fieldwatch.", "body"),
 
-        P("Document history", "h1"),
-        P(
-            "This copy is Release 1. A later change adds a row to the table and leaves the earlier rows as they were published. The row records what changed. It does not replace the text of an older release.",
-            "body",
-        ),
-    ]
-    flow.append(table(
-        ["Release", "Date", "What changed"],
-        [[a, b, c] for a, b, c in HISTORY],
-        [0.9 * inch, 1.5 * inch, MEASURE - 2.4 * inch],
-    ))
-    flow.append(Spacer(1, 10))
-    flow += [
         P("References", "h1"),
     ]
     refs = [
@@ -1098,6 +1085,17 @@ def story():
     flow.append(P(
         "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This document is RSI-1, Release 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
         "body",
+    ))
+    flow.append(Spacer(1, 8))
+    flow.append(P("Revision history", "h1"))
+    flow.append(P(
+        "Changes for each revision are recorded here. A later revision adds a row and leaves the earlier rows as they were published.",
+        "body",
+    ))
+    flow.append(table(
+        ["Revision", "Date", "Changes"],
+        [[a, b, c] for a, b, c in HISTORY],
+        [0.9 * inch, 1.5 * inch, MEASURE - 2.4 * inch],
     ))
     return flow
 
