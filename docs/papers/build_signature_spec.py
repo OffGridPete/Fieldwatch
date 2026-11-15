@@ -43,10 +43,12 @@ TOP = 0.72 * inch
 BOTTOM = 0.64 * inch
 MEASURE = PAGE_W - LEFT - RIGHT
 DATED = "14 November 2026"
-RELEASE = "1"
+RELEASE = "3"
 # Newest revision last. Add a row for a later revision. Do not rewrite an earlier row.
 HISTORY = [
     ("1", "14 November 2026", "Initial release. The format name is radio-signatures. A file that phones through Fieldwatch 1.1.44 must read keeps the name fieldwatch-signatures."),
+    ("2", "14 November 2026", "Section 26 names a project that writes and publishes a library, as well as a project that reads one."),
+    ("3", "14 November 2026", "Comments and proposed profiles are invited at github.com/OffGridPete/radio-signature-interchange."),
 ]
 OUT = "docs/papers/Radio_Signature_Interchange.pdf"
 
@@ -224,14 +226,14 @@ class SpecTemplate(PageTemplate):
         canvas.drawString(LEFT, y_head + 5, "RADIO SIGNATURES")
         canvas.setFillColor(MUTED)
         canvas.setFont("Times-Italic", 8)
-        canvas.drawRightString(PAGE_W - RIGHT, y_head + 5, "RSI-1  ·  Release 1")
+        canvas.drawRightString(PAGE_W - RIGHT, y_head + 5, f"RSI-1  ·  Release {RELEASE}")
         y_foot = 0.34 * inch
         canvas.setStrokeColor(RULE)
         canvas.setLineWidth(0.4)
         canvas.line(LEFT, y_foot + 12, PAGE_W - RIGHT, y_foot + 12)
         canvas.setFillColor(MUTED)
         canvas.setFont("Times-Roman", 8)
-        canvas.drawString(LEFT, y_foot, "Off Grid Pete LLC  ·  Release 1  ·  14 November 2026")
+        canvas.drawString(LEFT, y_foot, f"Off Grid Pete LLC  ·  Release {RELEASE}  ·  {DATED}")
         canvas.drawRightString(PAGE_W - RIGHT, y_foot, str(page))
         canvas.restoreState()
 
@@ -240,7 +242,7 @@ def build(story):
     doc = BaseDocTemplate(
         OUT,
         pagesize=letter,
-        title="Radio Signature Interchange, RSI-1 Release 1",
+        title=f"Radio Signature Interchange, RSI-1 Release {RELEASE}",
         author="Off Grid Pete LLC",
         subject="Proposed specification for a shared radio signature file",
         creator="Off Grid Pete LLC",
@@ -266,7 +268,7 @@ def story():
         thick_rule(),
         P("Proposed by Off Grid Pete LLC", "meta"),
         P(DATED, "meta"),
-        P("Document RSI-1, Release 1. Supersedes nothing.", "meta"),
+        P(f"Document RSI-1, Release {RELEASE}. Supersedes Release 2.", "meta"),
         Spacer(1, 6),
         P("Introduction", "h1"),
         P(
@@ -987,11 +989,11 @@ def story():
             "body",
         ),
         P(
-            "A project takes part by implementing the core matcher and stating which profiles it implements, by reviewing this proposal, or by proposing a profile for a radio that project already receives. The proposal includes the observation fields, the rule kinds, and the test vectors. The profile should be written by someone who can hear that radio. An empty profile is not a contribution.",
+            "A project takes part by implementing the core matcher and stating which profiles it implements, by writing and publishing a library other apps can read, by reviewing this proposal, or by proposing a profile for a radio that project already receives. The proposal includes the observation fields, the rule kinds, and the test vectors. The profile should be written by someone who can hear that radio. An empty profile is not a contribution.",
             "body",
         ),
         P(
-            "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. A revision will name projects that contribute a profile. There is no fee and no separate organization in this proposal. If the set of implementers grows, a later revision can describe how changes are agreed. This revision does not create that body in advance.",
+            "Comments and proposed profiles are invited at github.com/OffGridPete/radio-signature-interchange. A revision will name projects that contribute a profile. There is no fee and no separate organization in this proposal. If the set of implementers grows, a later revision can describe how changes are agreed. This revision does not create that body in advance.",
             "body",
         ),
         P(
@@ -1083,7 +1085,7 @@ def story():
 
     flow.append(Spacer(1, 8))
     flow.append(P(
-        "Comments and proposed profiles are invited at github.com/OffGridPete/Fieldwatch. Section 26 is how a project takes part. This document is RSI-1, Release 1, 14 November 2026. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
+        f"Comments and proposed profiles are invited at github.com/OffGridPete/radio-signature-interchange. Section 26 is how a project takes part. This document is RSI-1, Release {RELEASE}, {DATED}. Fieldwatch™ is a trademark of Off Grid Pete LLC. Registration pending.",
         "body",
     ))
     flow.append(Spacer(1, 8))
