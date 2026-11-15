@@ -95,9 +95,9 @@ One phone. Wi-Fi, Bluetooth LE, this phone's GPS, and this phone's cell connecti
 
 ## Technical papers
 
-These are the longer write-ups. The first is a proposal for a shared signature file. The others cover pieces of Fieldwatch, what each one measures, and what a warning is allowed to mean. The user guide stays the how-to. Each paper stands alone.
+These are the longer write-ups of Fieldwatch, what each one measures, and what a warning is allowed to mean. The signature file has its own repository. The user guide stays the how-to. Each paper stands alone.
 
-- [Radio signature interchange](docs/papers/Radio_Signature_Interchange.pdf). A library of known radios, written so another app can read the same file.
+- [Radio signature interchange](https://github.com/OffGridPete/radio-signature-interchange). Fieldwatch uses this proposal so apps can share libraries of known radios.
 - [Scanning Wi-Fi and Bluetooth for known radios](docs/papers/Fieldwatch_Scanning_and_Signatures.pdf). A place full of radios, and a list that still has to be readable.
 - [Flood monitoring](docs/papers/Fieldwatch_Flood_Monitoring.pdf). When the list of radios stops being a list a person can read.
 - [GNSS monitoring on the phone in your hand](docs/papers/Fieldwatch_GNSS_Monitoring.pdf). When the position gets worse, and what a phone is allowed to say about it.
