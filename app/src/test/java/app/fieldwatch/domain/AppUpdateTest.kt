@@ -26,42 +26,36 @@ class AppUpdateTest {
     @Test
     fun thePublishedNotesFileIsThisVersion() {
         val published =
-            "A popup lets you know when a tracker seems to be following you. " +
-                "Tracker monitoring is in Settings, and both warnings stay off until you turn one on. " +
-                "Separated tag with you warns when a tag says it is away from its owner, " +
-                "this phone has heard it for 30 minutes with no gap over 20 minutes, " +
-                "and GPS has three places at least 100 m apart. " +
-                "Heard at two places warns when a finder with a stable address reaches two stops. " +
-                "There is no beep. Open radio opens that radio. " +
-                "Dismiss keeps that warning down while the same condition continues. " +
-                "A quiet notification shows the same lines when Fieldwatch is not on screen.\n\n" +
+            "Drone monitoring is in Settings. " +
+                "Drone swarm detection warns when Remote ID detects new drones in the time window you set. " +
+                "Drone perimeter detection warns when a drone using Remote ID is inside the distance you pick: " +
+                "100 m, 250 m, 500 m, or 1 km. It starts at 250 m and needs a GPS fix of 50 m or better. " +
+                "Beep and voice are on until you turn them off. System notification is off until you turn it on. " +
+                "The warning still opens if those are off. " +
+                "The live row says within that distance while the drone is still inside.\n\n" +
+                "Low battery protection mode is off until you turn it on. " +
+                "A low battery slows the scan to Battery saver, then can stop it. " +
+                "The Wi-Fi and Bluetooth icons turn yellow while Battery saver is on. " +
+                "Plugging in undoes the slow-down. A stop stays stopped until you open Fieldwatch.\n\n" +
+                "Tracker monitoring beeps and speaks when a warning first opens. " +
+                "Both are on until you turn one off. System notification is off until you turn it on. " +
+                "The popup still opens if those are off. " +
+                "Separated tag with you says a tracking tag is away from its owner, " +
+                "how long this phone has heard it, and at how many places. " +
+                "Heard at two places says a tracking tag was heard where this phone was.\n\n" +
                 "These warnings are a guide, not proof. Fieldwatch will not catch every tracker, " +
                 "and a warning does not mean someone is tracking you. " +
                 "If you think you are in danger, contact local law enforcement.\n\n" +
-                "Pebblebee also matches Bluetooth service FA25. A tag that leaves its name off still matches. " +
-                "Google Find Hub shows a 20-byte or 32-byte ephemeral id. Frame 0x40 is labeled not separated. " +
-                "A Find My advertisement of 25 bytes says it is broadcasting a public key. " +
-                "A 2-byte advertisement says it is the short form, often a tag near its owner, and that this is not certain. " +
-                "The battery level shows only when the recent-owner bit is set.\n\n" +
-                "Exposure Notification names a Bluetooth advertisement on service FD6F and leaves the identifier and the metadata off the page. " +
-                "BTHome shows the measurements a sensor advertises, and an open door or window shows on the live row. " +
-                "Amazon Sidewalk shows the beacon type and the battery band, and registration mode shows on the live row. " +
-                "An Echo without that service stays Amazon. " +
-                "Matter setup shows the vendor ID, the product ID, and the discriminator, and proximity ranging leaves the hidden id off the page. " +
-                "HomeKit names the category and the paired line. An unpaired accessory shows that category on the live row. " +
-                "None of these beep.\n\n" +
-                "Remote ID authentication shows the type, page, and time the plate sends. " +
-                "The signature bytes stay off the page and are not checked. " +
-                "A location message in the same session keeps that block. " +
-                "French Direct Remote ID can fill the aircraft position, altitude, speed, course, and the takeoff pin when that Wi-Fi beacon is present. " +
-                "Height above takeoff shows on the radio page and is not the aircraft pin. Android 11 or newer.\n\n" +
-                "A Wi-Fi access point can say what kind of network it is, whether it has internet, a venue, and a hotspot id. " +
-                "Detail shows that when the beacon includes it. The access point sets these. They are not checked. " +
-                "Compare and Debrief keep the percent moving on a large sit. " +
-                "Compare (text) and Debrief (text) share a text file. If a share cannot open, Fieldwatch says why.\n\n" +
-                "Bundled language files are written for this version. A language file can be up to 352 KiB."
+                "The Settings list calls that section Signature watchlist alerts.\n\n" +
+                "The stock catalog names more radios. Two-way radios are in, and none of them beep. " +
+                "Mentra Live glasses, the Steiner M830 LRF binocular, and TBS Crossfire do beep. " +
+                "The other new rows do not. Brilliant Frame is now Brilliant Labs glasses (Frame / Halo). " +
+                "Even G1 is now Even Realities G1 / G2. Apple AirTags is now Find My (AirTag or other Apple). " +
+                "Update stock catalog from GitHub pulls the new signature file. " +
+                "A phone still on 1.1.44 keeps using the older file.\n\n" +
+                "Bundled language files are written for this version."
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
-        assertEquals(AppUpdateNote(54, "1.1.44", published), AppUpdate.parse(file.readText()))
+        assertEquals(AppUpdateNote(55, "1.2.0", published), AppUpdate.parse(file.readText()))
     }
 
     @Test
