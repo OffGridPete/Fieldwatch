@@ -1,5 +1,7 @@
 # Fieldwatch
 
+[![RSI-1 signatures supported](https://raw.githubusercontent.com/OffGridPete/radio-signature-interchange/main/badges/RSI.svg)](https://github.com/OffGridPete/radio-signature-interchange)
+
 I built Fieldwatch as a personal tool to see which Wi-Fi access points and Bluetooth LE devices my phone could detect, so I could better understand what was operating around me. It is entirely passive and only listens. There is no dongle, no account, and no backend server. It works offline in the field.
 
 My goals were a modern, easy-to-use interface; flexible, customizable views; a filtering engine so I only see what matters; an extensible signature library so I can identify as many radio sources as possible and add new ones on the fly; and the ability to generate reports of what was observed.
