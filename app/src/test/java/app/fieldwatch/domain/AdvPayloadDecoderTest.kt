@@ -205,6 +205,53 @@ class AdvPayloadDecoderTest {
     }
 
     @Test
+    fun continuityTypes0aThrough0eNameTheRightMessage() {
+        assertContinuity(
+            "0A0100",
+            "0x0A · AirPlay Source",
+            "AirPlay Source",
+            "an Apple device choosing AirPlay",
+        )
+        assertContinuity(
+            "0B03C4B53F",
+            "0x0B · Magic Switch (Watch)",
+            "Magic Switch",
+            "an Apple Watch that lost its iPhone",
+        )
+        assertContinuity(
+            "0C0E" + "00".repeat(14),
+            "0x0C · Handoff",
+            "Handoff",
+            "an Apple device doing Handoff",
+        )
+        val looking = assertContinuity(
+            "0D0467F36D01",
+            "0x0D · Instant Hotspot (target)",
+            "Instant Hotspot (looking)",
+            "an Apple device looking for Instant Hotspot",
+        )
+        assertFalse(looking.contains("offering"))
+        val offering = assertContinuity(
+            "0E06010057000704",
+            "0x0E · Instant Hotspot (source)",
+            "Instant Hotspot (offering)",
+            "an iPhone/iPad offering Instant Hotspot",
+        )
+        assertTrue(offering.contains("87%"))
+        assertTrue(offering.contains("LTE"))
+    }
+
+    private fun assertContinuity(mfg: String, type: String, label: String, role: String): String {
+        val fields = AdvPayloadDecoder.decodeManufacturer(MfgRecord(0x004C, mfg))
+        val byLabel = fields.associate { it.label to it.value }
+        assertEquals(type, byLabel["Apple Continuity type"])
+        assertTrue(byLabel.containsKey(label))
+        val hints = AdvPayloadDecoder.roleHints(bleSighting(mfg))
+        assertTrue(hints.any { it.label == role })
+        return byLabel.getValue(label)
+    }
+
+    @Test
     fun roleHintsFlagIBeaconAndTeslaKey() {
         val ibeacon = "0215" + "E2C56DB5DFFB48D2B060D0F5A71096E0" + "00010002" + "C5"
         val hints = AdvPayloadDecoder.roleHints(bleSighting(ibeacon))

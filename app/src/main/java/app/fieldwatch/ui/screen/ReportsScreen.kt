@@ -59,6 +59,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
@@ -173,7 +174,7 @@ fun ReportsScreen(
                 .padding(pad)
                 .fillMaxSize()
                 .verticalScroll(scroll)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = if (topic == ReportTopic.PATH) 0.dp else 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (topic == null) {
@@ -332,16 +333,21 @@ fun ReportsScreen(
             }
 
             if (topic == ReportTopic.PATH) {
-            SectionCard(LanguageText.text("reports.path"), showTitle = false) {
                 val model = pathModel
                 val showWalk = model != null && model.emptyHint == null
                 val showAircraft = model != null && model.aircraftCards.isNotEmpty()
                 if (model == null || (!showWalk && !showAircraft)) {
-                    Text(
-                        model?.emptyHint ?: LanguageText.text("ui.turn.tag.detections.gps"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    SectionCard(
+                        LanguageText.text("reports.path"),
+                        showTitle = false,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    ) {
+                        Text(
+                            model?.emptyHint ?: LanguageText.text("ui.turn.tag.detections.gps"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 } else {
                     val pathTiles by vm.pathTiles.collectAsStateWithLifecycle()
                     val pathZoomIn by vm.pathZoomIn.collectAsStateWithLifecycle()
@@ -355,33 +361,94 @@ fun ReportsScreen(
                         state.phoneLon,
                         settings.demoMode,
                     )
-                    if (!showWalk) {
-                        Text(
-                            model.emptyHint ?: LanguageText.text("ui.turn.tag.detections.gps"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    val pathMapHeight = (LocalConfiguration.current.screenHeightDp * 0.46f).dp
+                        .coerceIn(340.dp, 560.dp)
+                    val farCraft: @Composable () -> Unit = {
+                        model.aircraftCards.forEachIndexed { index, card ->
+                            val fixes = card.craft.sumOf { it.samples.size }
+                            Text(
+                                privacyAircraftHeading(card.title, settings.demoMode),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = AircraftAmber,
+                                modifier = Modifier.padding(top = 12.dp),
+                            )
+                            Text(
+                                buildString {
+                                    append(
+                                        if (fixes == 1) LanguageText.text("ui.1.advertised.fix") else "$fixes advertised fixes",
+                                    )
+                                    if (card.lengthM >= 1.0) append(" · ${card.lengthM.toInt()} m")
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (card.dots.isNotEmpty()) {
+                                Text(
+                                    if (card.dots.size == 1) LanguageText.text("ui.1.alert") else "${card.dots.size} alerts",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            SitPathCanvas(
+                                card,
+                                tiles = aircraftTiles.getOrElse(index) { emptyList() },
+                                onOpenRadio = onOpenPathRadio,
+                                position = if (model.live) mapPosition else null,
+                            )
+                            if (card.dots.isNotEmpty()) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    card.dots.forEachIndexed { i, dot ->
+                                        PathRadioRow(
+                                            index = i + 1,
+                                            dot = dot,
+                                            demoMode = settings.demoMode,
+                                            onOpen = { onOpenPathRadio(dot.key) },
+                                        )
+                                    }
+                                }
+                            }
+                            if (card.caption.isNotBlank()) {
+                                Text(
+                                    privacyAircraftCaption(card.caption, card.title, settings.demoMode),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        if (model.looseAdvertised > 0) {
+                            Text(
+                                if (model.looseAdvertised == 1) {
+                                    LanguageText.text("ui.advertised.position.no.uas")
+                                } else {
+                                    LanguageText.text("ui.advertised.positions.no.uas")
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     if (showWalk) {
-                    val pathShown = model.pathCameraTally?.let { tally ->
-                        PathCameras.shownOnPath(tally, settings.flockLayer, settings.sensorLayer)
-                    }
-                    val stopN = model.dots.size
-                    val gnssN = model.gnss.size
-                    Text(
-                        buildString {
-                            append("${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span")
-                            if (stopN > 0) {
-                                append(" · $stopN alert")
-                                if (stopN != 1) append("s")
-                            }
-                            if (gnssN > 0) {
-                                append(" · $gnssN GNSS")
-                            }
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    SitPathCanvas(
+                        val pathShown = model.pathCameraTally?.let { tally ->
+                            PathCameras.shownOnPath(tally, settings.flockLayer, settings.sensorLayer)
+                        }
+                        val stopN = model.dots.size
+                        val gnssN = model.gnss.size
+                        Column(Modifier.fillMaxWidth()) {
+                            Text(
+                                buildString {
+                                    append("${model.title} · ${model.lengthM.toInt()} m path · ${model.spanM.toInt()} m span")
+                                    if (stopN > 0) {
+                                        append(" · $stopN alert")
+                                        if (stopN != 1) append("s")
+                                    }
+                                    if (gnssN > 0) {
+                                        append(" · $gnssN GNSS")
+                                    }
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            SitPathCanvas(
                         model,
                         tiles = pathTiles,
                         onOpenRadio = onOpenPathRadio,
@@ -407,7 +474,14 @@ fun ReportsScreen(
                                 pathTileWindow = next
                             }
                         },
+                        pictureHeight = pathMapHeight,
                     )
+                    Spacer(Modifier.height(8.dp))
+                    SectionCard(
+                        LanguageText.text("reports.path"),
+                        showTitle = false,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    ) {
                     Text(
                         LanguageText.text("ui.tap.number.radios.there"),
                         style = MaterialTheme.typography.bodySmall,
@@ -490,70 +564,24 @@ fun ReportsScreen(
                     pathShown?.let { tally ->
                         PathCameraSection(tally)
                     }
+                    farCraft()
                     }
-                    model.aircraftCards.forEachIndexed { index, card ->
-                        val fixes = card.craft.sumOf { it.samples.size }
-                        Text(
-                            privacyAircraftHeading(card.title, settings.demoMode),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = AircraftAmber,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                        Text(
-                            buildString {
-                                append(
-                                    if (fixes == 1) LanguageText.text("ui.1.advertised.fix") else "$fixes advertised fixes",
-                                )
-                                if (card.lengthM >= 1.0) append(" · ${card.lengthM.toInt()} m")
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        if (card.dots.isNotEmpty()) {
+                        }
+                    } else {
+                        SectionCard(
+                            LanguageText.text("reports.path"),
+                            showTitle = false,
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                        ) {
                             Text(
-                                if (card.dots.size == 1) LanguageText.text("ui.1.alert") else "${card.dots.size} alerts",
+                                model.emptyHint ?: LanguageText.text("ui.turn.tag.detections.gps"),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                            farCraft()
                         }
-                        SitPathCanvas(
-                            card,
-                            tiles = aircraftTiles.getOrElse(index) { emptyList() },
-                            onOpenRadio = onOpenPathRadio,
-                            position = if (model.live) mapPosition else null,
-                        )
-                        if (card.dots.isNotEmpty()) {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                card.dots.forEachIndexed { i, dot ->
-                                    PathRadioRow(
-                                        index = i + 1,
-                                        dot = dot,
-                                        demoMode = settings.demoMode,
-                                        onOpen = { onOpenPathRadio(dot.key) },
-                                    )
-                                }
-                            }
-                        }
-                        if (card.caption.isNotBlank()) {
-                            Text(
-                                privacyAircraftCaption(card.caption, card.title, settings.demoMode),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    if (model.looseAdvertised > 0) {
-                        Text(
-                            if (model.looseAdvertised == 1) {
-                                LanguageText.text("ui.advertised.position.no.uas")
-                            } else {
-                                LanguageText.text("ui.advertised.positions.no.uas")
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
-            }
             }
 
             if (topic == ReportTopic.DEBRIEF) {

@@ -761,6 +761,7 @@ object CotEvent {
         tag: String,
         pilot: Boolean = false,
         viaCallsign: String? = null,
+        swarmNote: String? = null,
     ): TakFace {
         val linkUid = when {
             pilot -> uid(device, tag)
@@ -775,7 +776,7 @@ object CotEvent {
         return TakFace(
             callsign = if (pilot) TakPublish.pilotCallsign(device)
             else TakPublish.callsign(device, fleets, watchlist),
-            remarks = remarks(device, fleets, advertised, pilot, watchlist, viaCallsign),
+            remarks = remarks(device, fleets, advertised, pilot, watchlist, viaCallsign, swarmNote),
             cotType = type(device, fleets, advertised, pilot),
             group = group(device, fleets, advertised, pilot),
             hae = if (pilot) OperatorLoc.hae(device.payloadOpAlt) else device.payloadAlt?.takeIf { it.isFinite() } ?: 9999999.0,
@@ -1035,6 +1036,7 @@ object CotEvent {
         pilot: Boolean = false,
         watchlist: List<WatchTarget> = emptyList(),
         viaCallsign: String? = null,
+        swarmNote: String? = null,
     ): String {
         val callsign = if (pilot) TakPublish.pilotCallsign(device)
             else TakPublish.callsign(device, fleets, watchlist)
@@ -1106,6 +1108,11 @@ object CotEvent {
                 append('\n')
                 append("via ")
                 append(via)
+            }
+            val swarm = swarmNote?.trim()?.takeIf { it.isNotEmpty() }
+            if (swarm != null) {
+                append('\n')
+                append(swarm)
             }
         }.trimEnd().take(TakDefaults.REMARKS_MAX)
     }

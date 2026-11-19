@@ -293,6 +293,12 @@ data class SitFile(
     @OptIn(ExperimentalSerializationApi::class)
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val cameraKept: GpsSample? = null,
+    /** Remote ID swarms that started during this sit. Empty on a file saved before this list. */
+    val swarms: List<SwarmBurst> = emptyList(),
+    /** Low-battery scan steps during this sit. Empty on a file saved before this list. */
+    val battery: List<BatteryMark> = emptyList(),
+    /** Broadcast-within-range lines. Empty on a file saved before this list. */
+    val droneNear: List<DroneNearMark> = emptyList(),
 )
 
 data class SitUi(
@@ -330,6 +336,9 @@ data class SitDebrief(
      * and no listed camera was along it.
      */
     val pathCameras: List<FlockCamera>? = null,
+    val swarms: List<SwarmBurst> = emptyList(),
+    val battery: List<BatteryMark> = emptyList(),
+    val droneNear: List<DroneNearMark> = emptyList(),
 )
 
 /** Path tail still to fold, and the cameras already frozen on that sit. */
@@ -356,6 +365,9 @@ class SitSession(
     cells: List<CellMark> = emptyList(),
     pathCameras: List<FlockCamera> = emptyList(),
     cameraKept: GpsSample? = null,
+    swarms: List<SwarmBurst> = emptyList(),
+    battery: List<BatteryMark> = emptyList(),
+    droneNear: List<DroneNearMark> = emptyList(),
 ) {
     var summary: SitSummary = summary
         private set
@@ -372,8 +384,11 @@ class SitSession(
     private var cameraShow: List<FlockCamera> = emptyList()
     private var cameraKept: GpsSample? = cameraKept
     private val floods = ArrayList<FloodBurst>(floods.size + 4).apply { addAll(floods) }
+    private val swarms = ArrayList<SwarmBurst>(swarms.size + 4).apply { addAll(swarms) }
     private val gnss = ArrayList<GnssMark>(gnss.size + 4).apply { addAll(gnss) }
     private val cells = ArrayList<CellMark>(cells.size + 4).apply { addAll(cells) }
+    private val battery = ArrayList<BatteryMark>(battery.size + 4).apply { addAll(battery) }
+    private val droneNear = ArrayList<DroneNearMark>(droneNear.size + 4).apply { addAll(droneNear) }
     var dirty: Boolean = false
         private set
     private var pathSnap: List<GpsSample> = emptyList()
@@ -502,6 +517,9 @@ class SitSession(
             cells = cells.toList(),
             pathCameras = if (cameraKept != null) cameraShow else emptyList(),
             cameraKept = cameraKept,
+            swarms = swarms.toList(),
+            battery = battery.toList(),
+            droneNear = droneNear.toList(),
         )
     }
 
@@ -600,6 +618,61 @@ class SitSession(
         if (floods.size > 40) {
             val drop = floods.size - 40
             repeat(drop) { floods.removeAt(0) }
+            changed = true
+        }
+        if (changed) dirty = true
+    }
+
+    /** Broadcast-within-range lines. Earlier lines stay. No open sit leaves the file alone. */
+    fun noteNear(incoming: List<DroneNearMark>) {
+        if (!open || incoming.isEmpty()) return
+        val start = summary.startAt
+        var changed = false
+        for (mark in incoming) {
+            if (mark.at < start) continue
+            if (droneNear.any { it == mark }) continue
+            droneNear += mark
+            changed = true
+        }
+        if (droneNear.size > 40) {
+            val drop = droneNear.size - 40
+            repeat(drop) { droneNear.removeAt(0) }
+            changed = true
+        }
+        if (changed) dirty = true
+    }
+
+    /** One low-battery step. No open sit leaves the file alone. */
+    fun noteBattery(mark: BatteryMark) {
+        if (!open) return
+        if (mark.at < summary.startAt) return
+        battery += mark
+        if (battery.size > 40) {
+            val drop = battery.size - 40
+            repeat(drop) { battery.removeAt(0) }
+        }
+        dirty = true
+    }
+
+    /** Copy swarms that started during this sit. The same start time updates in place. */
+    fun noteSwarms(incoming: List<SwarmBurst>) {
+        if (!open || incoming.isEmpty()) return
+        val start = summary.startAt
+        var changed = false
+        for (burst in incoming) {
+            if (burst.at < start) continue
+            val index = swarms.indexOfFirst { it.at == burst.at }
+            if (index < 0) {
+                swarms += burst
+                changed = true
+            } else if (swarms[index] != burst) {
+                swarms[index] = burst
+                changed = true
+            }
+        }
+        if (swarms.size > 40) {
+            val drop = swarms.size - 40
+            repeat(drop) { swarms.removeAt(0) }
             changed = true
         }
         if (changed) dirty = true

@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 val Phosphor = Color(0xFF3DFF9A)
+/** Live Wi-Fi and Bluetooth icons while the scan is on Battery saver. */
+val BatterySaverYellow = Color(0xFFFFC857)
 /** Checked switch / slider fill — same hue as Phosphor, less neon. */
 val PhosphorActive = Color(0xFF35D683)
 val Amber = Color(0xFFFFB020)

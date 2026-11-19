@@ -83,7 +83,11 @@ object SettingsExchange {
         if (pack.formatVersion > SettingsPack.FORMAT_VERSION) {
             throw CatalogNeedsNewerApp("formatVersion ${pack.formatVersion}")
         }
-        if (pack.format == SignaturePack.FORMAT || pack.format == SignaturePack.LEGACY_FORMAT) {
+        if (
+            pack.format == SignaturePack.FORMAT ||
+            pack.format == SignaturePack.LEGACY_FORMAT ||
+            pack.format == SignaturePack.RSI_FORMAT
+        ) {
             throw IllegalArgumentException(
                 "That is a signature pack. Use Import signatures.",
             )
@@ -104,15 +108,17 @@ object SettingsExchange {
      */
     fun apply(local: PersistedConfig, pack: SettingsPack): Pair<PersistedConfig, SettingsImportResult> {
         val next = local.copy(
-            settings = pack.settings.copy(
-                disclaimerAccepted = local.settings.disclaimerAccepted,
-                disclaimerRev = local.settings.disclaimerRev,
-                liveTourDone = local.settings.liveTourDone,
-                liveTourRev = local.settings.liveTourRev,
-                darkTheme = true,
-                scanControlsExpanded = false,
-                takCallsign = TakInstall.storedCallsign(pack.settings.takCallsign),
-            ).withOverlayBasemaps(),
+            settings = DroneNear.clamp(RemoteIdSwarm.clamp(
+                pack.settings.copy(
+                    disclaimerAccepted = local.settings.disclaimerAccepted,
+                    disclaimerRev = local.settings.disclaimerRev,
+                    liveTourDone = local.settings.liveTourDone,
+                    liveTourRev = local.settings.liveTourRev,
+                    darkTheme = true,
+                    scanControlsExpanded = false,
+                    takCallsign = TakInstall.storedCallsign(pack.settings.takCallsign),
+                ).withOverlayBasemaps(),
+            )),
             filter = pack.filter,
             presets = pack.presets,
             watchlist = pack.watchlist,

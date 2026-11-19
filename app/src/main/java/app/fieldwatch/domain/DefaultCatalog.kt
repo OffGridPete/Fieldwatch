@@ -55,6 +55,7 @@ object DefaultCatalog {
         const val HOME_CAM = 6      // silver — PCs / home IoT / retail signage
         const val LAW = 7           // teal — public safety / vehicle (class splits them)
         const val VEHICLE = 7       // same teal; class (not color) splits LE vs civilian vehicle
+        const val MILITARY = 7      // same teal; class splits a military set from those two
         const val HEALTH = 8        // clinical blue — scanners, BP, scales, CGM
     }
 
@@ -141,6 +142,7 @@ object DefaultCatalog {
         swellPro(),
         crazyflie(),
         expressLrs(),
+        tbsCrossfire(),
         netgear(),
         tpLink(),
         asus(),
@@ -275,6 +277,10 @@ object DefaultCatalog {
         reolink(),
         ezviz(),
         hikvision(),
+        hikmicroOptics(),
+        pulsarOptics(),
+        steinerBurrisThermal(),
+        steinerLrf(),
         dahua(),
         meshtastic(),
         helium(),
@@ -283,6 +289,7 @@ object DefaultCatalog {
         goTenna(),
         senseCap(),
         rakWisGate(),
+        rnode(),
         icomId52(),
         icomIc705(),
         icomId5200(),
@@ -328,6 +335,7 @@ object DefaultCatalog {
         snapSpectacles(),
         vuzix(),
         brilliantFrame(),
+        mentraLive(),
         evenG1(),
         rayNeo(),
         hak5Pineapple(),
@@ -358,6 +366,7 @@ object DefaultCatalog {
         googleCast(),
         levoit(),
         melk(),
+        elkLed(),
         midea(),
         zebra(),
         jlab(),
@@ -380,6 +389,20 @@ object DefaultCatalog {
         blackvue(),
         galaxyWatch(),
         galaxyBuds(),
+        phillipsConnect(),
+        acuityLighting(),
+        cobra(),
+        jlgClearSky(),
+        gmPhoneAsKey(),
+        lgAppliance(),
+        gliOpenSign(),
+        iosix(),
+        rove(),
+        cardo(),
+        mazda(),
+        gree(),
+        tozo(),
+        irobot(),
     ).sortedBy { it.name.lowercase() }
 
     private fun flockCameras() = Fleet(
@@ -443,7 +466,7 @@ object DefaultCatalog {
 
     private fun airTags() = Fleet(
         id = "fleet-airtag",
-        name = "Apple AirTags",
+        name = "Find My (AirTag or other Apple)",
         colorIndex = Hue.FIND_MY,
         kind = SignatureClass.FINDER,
         matchAny = true,
@@ -827,11 +850,12 @@ object DefaultCatalog {
     private fun nissanMotor() = oemVehicle(
         id = "fleet-nissan",
         name = "Nissan",
-        notes = "Nissan or Infiniti phone-as-key / infotainment.",
+        notes = "Nissan or Infiniti phone-as-key / infotainment, or a MY ROGUE hotspot.",
         rules = listOf(
             mfg(0x0BA6),
             bleName("Nissan"),
             bleName("Infiniti"),
+            wifiGlob("MY ROGUE*"),
         ),
     )
 
@@ -848,11 +872,12 @@ object DefaultCatalog {
     private fun bmw() = oemVehicle(
         id = "fleet-bmw",
         name = "BMW",
-        notes = "BMW phone-as-key or in-car hotspot. Factory BMW_ Wi-Fi is the car, not a dealer showroom.",
+        notes = "BMW phone-as-key or in-car hotspot. Factory BMW_ or DIRECT-BMW Wi-Fi is the car, not a dealer showroom.",
         rules = listOf(
             mfg(0x05EB),
             bleName("BMW"),
             wifiGlob("BMW_*"),
+            wifiGlob("DIRECT-BMW*"),
         ),
     )
 
@@ -2225,11 +2250,12 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Aftermarket CarPlay / Android Auto adapter hotspot (CARLINK-). Head-unit dongle, not the car’s own modem.",
+        notes = "Aftermarket CarPlay / Android Auto adapter hotspot (CARLINK- or CARLINK_). Head-unit dongle, not the car's own modem.",
         builtIn = true,
         rules = withWifiOuis(
             listOf(
                 wifiGlob("CARLINK-??????"),
+                wifiGlob("CARLINK_*"),
             ),
             listOf("CC:57:63", "68:8F:C9"),
         ),
@@ -2279,7 +2305,7 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "HP home/office printer (ENVY, HP-Print). Office noise. Not HPE Aruba campus Wi-Fi.",
+        notes = "HP home/office printer (ENVY, HP-Print, DIRECT-HP). Office noise. Not HPE Aruba campus Wi-Fi.",
         builtIn = true,
         rules = withWifiOuis(
             listOf(
@@ -2288,6 +2314,7 @@ object DefaultCatalog {
                 bleName("ENVY"),
                 bleGlob("ENVY*"),
                 wifiGlob("HP-Print*"),
+                wifiGlob("DIRECT-*-HP *"),
             ),
             ApVendorOuis.HPINC,
         ),
@@ -2300,13 +2327,14 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Mercedes MBUX in-car hotspot. Factory name from the car.",
+        notes = "Mercedes MBUX or MB Hotspot in-car Wi-Fi. Factory name from the car.",
         builtIn = true,
         rules = listOf(
             mfg(0x017C),
             bleName("Mercedes"),
             wifiName("MBUX"),
             wifiGlob("MBUX*"),
+            wifiGlob("MB Hotspot*"),
         ),
     )
 
@@ -3493,35 +3521,50 @@ object DefaultCatalog {
 
     private fun brilliantFrame() = Fleet(
         id = "fleet-brilliant-frame",
-        name = "Brilliant Frame",
+        name = "Brilliant Labs glasses (Frame / Halo)",
         enabled = true,
         colorIndex = Hue.GLASSES,
         kind = SignatureClass.GLASSES,
         matchAny = true,
-        notes = "Brilliant Labs Frame AR glasses.",
-        attentionNote = "Brilliant Labs Frame AR glasses. BLE service 7A230001. Not proof someone is recording. A miss is not a clean bill (off, or a different brand). Look with your eyes.",
+        notes = "Brilliant Labs Frame or Halo smart glasses. Both have a camera. The BLE service 7A230001…49C4 is in the advert. The name is Frame or Halo plus two hex characters.",
+        attentionNote = "Brilliant Labs Frame or Halo glasses. Both have a camera. Not proof someone is recording. A miss is not a clean bill (off, paired and quiet, or a different brand). Look with your eyes.",
         builtIn = true,
         rules = listOf(
-            uuid("7A230001-5475-A6A4-654C-576174636800"),
-            bleName("Brilliant Frame"),
-            bleGlob("Brilliant Frame*"),
+            uuid("7A230001-5475-A6A4-654C-8431F6AD49C4"),
+        ),
+    )
+
+    private fun mentraLive() = Fleet(
+        id = "fleet-mentra-live",
+        name = "Mentra Live glasses",
+        enabled = true,
+        colorIndex = Hue.GLASSES,
+        kind = SignatureClass.GLASSES,
+        matchAny = true,
+        notes = "Mentra Live camera glasses (12 MP camera, no display). The name starts with Mentra_Live. A name that starts with XyBLE_ is the OEM base these glasses are built on and can be another brand on the same hardware.",
+        attentionNote = "Mentra Live camera glasses — they have a camera and microphones. Not proof someone is recording. A miss is not a clean bill (paired and quiet, off, or a different brand). Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("Mentra_Live*"),
+            bleGlob("XyBLE_*"),
         ),
     )
 
     private fun evenG1() = Fleet(
         id = "fleet-even-g1",
-        name = "Even G1",
+        name = "Even Realities G1 / G2",
         enabled = true,
         colorIndex = Hue.GLASSES,
         kind = SignatureClass.GLASSES,
         matchAny = true,
-        notes = "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Nordic UART is too common to use as a rule.",
-        attentionNote = "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+        notes = "Even Realities G1 or G2 glasses. The Even Realities company id, an Even G1 name, or an Even G2 name (one per arm, L or R). Nordic UART is too common to use as a rule.",
+        attentionNote = "Even Realities G1 or G2 glasses. The Even Realities company id or an Even G1 or Even G2 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
         builtIn = true,
         rules = listOf(
             mfg(0x10F9),
             bleName("Even G1"),
             bleGlob("Even G1*"),
+            bleGlob("Even G2_*"),
         ),
     )
 
@@ -4229,6 +4272,18 @@ object DefaultCatalog {
         rules = listOf(wifiGlob("ExpressLRS*")),
     )
 
+    private fun tbsCrossfire() = Fleet(
+        id = "fleet-tbs-crossfire",
+        name = "TBS Crossfire",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "TBS Crossfire radio transmitter or FUSION video receiver Wi-Fi. It's on the pilot's side, not the aircraft. The pilot can turn the network off or hide it.",
+        builtIn = true,
+        rules = listOf(wifiGlob("TBS_XF_AP_*")),
+    )
+
     private fun cradlepoint() = Fleet(
         id = "fleet-cradlepoint",
         name = "Cradlepoint",
@@ -4724,7 +4779,7 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "GM in-car hotspot (Cadillac, GMC, Buick). myChevrolet has its own row. BSSID is often randomized.",
+        notes = "GM in-car hotspot (Cadillac, GMC, Buick). A GMC name with four characters is the car. myChevrolet has its own row. BSSID is often randomized.",
         builtIn = true,
         rules = listOf(
             mfg(0x0068),
@@ -4734,6 +4789,7 @@ object DefaultCatalog {
             wifiGlob("CADILLAC*"),
             wifiGlob("BUICK*"),
             wifiGlob("CHEVROLET*"),
+            wifiGlob("GMC????"),
         ),
     )
 
@@ -5124,7 +5180,7 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, or CU8000. Phones, watches, and buds share Samsung's company id, so this row uses the name.",
+        notes = "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, CU8000, or Business TV. Phones, watches, and buds share Samsung's company id, so this row uses the name.",
         builtIn = true,
         rules = listOf(
             bleGlob("[TV]*"),
@@ -5134,6 +5190,7 @@ object DefaultCatalog {
             bleGlob("*Crystal UHD*"),
             bleGlob("*CU7000*"),
             bleGlob("*CU8000*"),
+            bleGlob("*Business TV*"),
         ),
     )
 
@@ -5174,6 +5231,18 @@ object DefaultCatalog {
         notes = "MELK lamp. The name starts with MELK-.",
         builtIn = true,
         rules = listOf(bleGlob("MELK-*")),
+    )
+
+    private fun elkLed() = Fleet(
+        id = "fleet-elk-led",
+        name = "ELK LED strip",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "ELK RGB light-strip controller. The name starts with ELK-BLEDO. The HID and Battery services are shared, and the manufacturer field is not a Bluetooth company id, so this row uses the name. MELK lamps stay on MELK.",
+        builtIn = true,
+        rules = listOf(bleGlob("ELK-BLEDO*")),
     )
 
     private fun midea() = Fleet(
@@ -5441,6 +5510,290 @@ object DefaultCatalog {
             bleGlob("Galaxy Buds*"),
             bleGlob("Buds FE*"),
         ),
+    )
+
+    private fun rnode() = Fleet(
+        id = "fleet-rnode",
+        name = "RNode (Reticulum)",
+        enabled = true,
+        colorIndex = Hue.MESH,
+        kind = SignatureClass.MESH,
+        matchAny = true,
+        notes = "Open-source LoRa radio for the Reticulum network. The name is RNode plus four hex characters. BLE shows only when Bluetooth is on in the RNode config. A Wi-Fi network with the same name is its remote mode or setup console.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("RNode ????"),
+            wifiGlob("RNode ????"),
+        ),
+    )
+
+    private fun hikmicroOptics() = Fleet(
+        id = "fleet-hikmicro-optics",
+        name = "HIKMICRO thermal optic",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "HIKMICRO thermal scope, monocular, or binocular with its hotspot on for the HIKMICRO Sight app. It can stream and record thermal video. Most owners are hunters. The suffix is its serial number. Not a Hikvision security camera.",
+        builtIn = true,
+        rules = listOf(wifiGlob("HIKMICRO_*")),
+    )
+
+    private fun pulsarOptics() = Fleet(
+        id = "fleet-pulsar-optics",
+        name = "Pulsar thermal / night-vision optic",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "Pulsar thermal or digital night-vision scope, monocular, or binocular with Wi-Fi on for the Stream Vision app. It can stream and record video. Most owners are hunters. The number is the end of its serial.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("Thermion2_????"),
+            wifiGlob("Thermion_????"),
+            wifiGlob("ThermionDuo_????"),
+            wifiGlob("Helion2_????"),
+            wifiGlob("Helion_????"),
+            wifiGlob("Axion2_????"),
+            wifiGlob("Axion_????"),
+            wifiGlob("Krypton2_????"),
+            wifiGlob("Krypton_????"),
+            wifiGlob("Telos_????"),
+            wifiGlob("Merger_????"),
+            wifiGlob("Talion_????"),
+            wifiGlob("Digex_????"),
+            wifiGlob("Forward F_????"),
+            wifiGlob("Accolade 2 LRF_????"),
+            wifiGlob("Oryx_*"),
+            wifiGlob("Symbion_*"),
+        ),
+    )
+
+    private fun steinerBurrisThermal() = Fleet(
+        id = "fleet-steiner-burris-thermal",
+        name = "Steiner / Burris thermal optic",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "Thermal handheld, scope, or clip-on built by Guide Sensmart for Steiner (Nighthunter, Thermal Commander) or Burris, with Wi-Fi on for the Steiner Connect or BurrisConnect app. It can stream and record thermal video. Most owners are hunters. The Steiner and Burris_BTH names are the rule. A short BTH, BTS, or BTC name is not.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("STEINER Thermal Handheld*"),
+            wifiGlob("Nighthunter-*"),
+            wifiGlob("Nighthunter C35*"),
+            wifiGlob("Burris_BTH*"),
+        ),
+    )
+
+    private fun steinerLrf() = Fleet(
+        id = "fleet-steiner-lrf",
+        name = "Steiner M830 LRF binocular",
+        enabled = true,
+        colorIndex = Hue.MILITARY,
+        kind = SignatureClass.MILITARY,
+        matchAny = true,
+        notes = "Bluetooth transceiver on a Steiner M830rc X LRF or M830r LRF 1535 rangefinding binocular. It sends a lased distance, bearing, and elevation to the Steiner Connect app, an IFS riflescope, a Kestrel, a Garmin tactix, or ATAK. It shows up only around a measurement. Sold mainly to military users, also to police and some civilians.",
+        attentionNote = "Military rangefinding binocular that can pass a lased target to ATAK. Name match while it is measuring. Not proof of who carries it. Look with your eyes.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("LRF X*"),
+            bleGlob("Steiner LRF X*"),
+            bleGlob("LRF1535*"),
+            bleGlob("Steiner LRF1535*"),
+        ),
+    )
+
+    private fun phillipsConnect() = Fleet(
+        id = "fleet-phillips-connect",
+        name = "Phillips Connect",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Phillips Connect trailer camera or gateway. The company id is Phillips Connect. Serial names are not the rule.",
+        builtIn = true,
+        rules = listOf(bleMfg(0x087F)),
+    )
+
+    private fun acuityLighting() = Fleet(
+        id = "fleet-acuity",
+        name = "Acuity lighting",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Acuity Brands lighting on its service or company id. Not an Atrius cart tag.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("7FC4C6D5-8FAB-452A-9871-8D707C939A6F"),
+            bleMfg(0x0346),
+        ),
+    )
+
+    private fun cobra() = Fleet(
+        id = "fleet-cobra",
+        name = "Cobra",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Cobra radar detector or dashcam on service 2A668FA4. Escort stays on its own row.",
+        builtIn = true,
+        rules = listOf(bleUuid("2A668FA4-2902-4468-8568-3EBE69A930A0")),
+    )
+
+    private fun jlgClearSky() = Fleet(
+        id = "fleet-jlg-clearsky",
+        name = "JLG ClearSky",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "JLG ClearSky Smart Fleet on an aerial lift. The company id is JLG Industries.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0753),
+            bleGlob("ClearSky Smart Fleet"),
+        ),
+    )
+
+    private fun gmPhoneAsKey() = Fleet(
+        id = "fleet-gm-peps",
+        name = "GM phone-as-key",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "GM phone-as-key. Service FE48, or a name that starts with GM_PEPS. The in-car hotspot stays on GM hotspot.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("FE48"),
+            bleGlob("GM_PEPS*"),
+        ),
+    )
+
+    private fun lgAppliance() = Fleet(
+        id = "fleet-lg-appliance",
+        name = "LG appliance",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "LG oven, microwave, fridge, washer, air conditioner, or soundbar from the setup name. LG's company id is shared, so this row uses the name. webOS TVs stay on LG webOS TV.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("[LG_Oven]*"),
+            wifiGlob("[LG_MicrowaveOven]*"),
+            wifiGlob("[LG_Refrigerator]*"),
+            wifiGlob("[LG_Washer]*"),
+            wifiGlob("[LG_Wall-Mount A/C]*"),
+            wifiGlob("[LG_Window A/C]*"),
+            bleGlob("LG_Speaker*"),
+            bleGlob("LG S77S*"),
+        ),
+    )
+
+    private fun gliOpenSign() = Fleet(
+        id = "fleet-gli-open",
+        name = "GLI open sign",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.SIGNAGE,
+        matchAny = true,
+        notes = "Open LED sign. The name starts with GLI1050. The Nordic UART service is shared, so this row uses the name.",
+        builtIn = true,
+        rules = listOf(bleGlob("GLI1050*")),
+    )
+
+    private fun iosix() = Fleet(
+        id = "fleet-iosix",
+        name = "IOSiX",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "IOSiX electronic logging device in a truck. The name starts with IOSiX ELD.",
+        builtIn = true,
+        rules = listOf(wifiGlob("IOSiX ELD*")),
+    )
+
+    private fun rove() = Fleet(
+        id = "fleet-rove",
+        name = "Rove",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Rove dashcam. The name starts with ROVE.",
+        builtIn = true,
+        rules = listOf(
+            glob("ROVE*"),
+            glob("ROVE_*"),
+        ),
+    )
+
+    private fun cardo() = Fleet(
+        id = "fleet-cardo",
+        name = "Cardo",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Cardo or Freecom motorcycle headset. The name is Cardo or starts with FREECOM.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("FREECOM*"),
+            bleGlob("Cardo"),
+        ),
+    )
+
+    private fun mazda() = Fleet(
+        id = "fleet-mazda",
+        name = "Mazda",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Mazda head unit. The name matches Mazda and ends with _SPL.",
+        builtIn = true,
+        rules = listOf(wifiGlob("Mazda_*_SPL")),
+    )
+
+    private fun gree() = Fleet(
+        id = "fleet-gree",
+        name = "Gree",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Gree air conditioner. The name starts with GR-AC_. Realtek's company id is shared, so this row uses the name.",
+        builtIn = true,
+        rules = listOf(bleGlob("GR-AC_*")),
+    )
+
+    private fun tozo() = Fleet(
+        id = "fleet-tozo",
+        name = "TOZO",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "TOZO earbuds. The name starts with TOZO.",
+        builtIn = true,
+        rules = listOf(bleGlob("TOZO*")),
+    )
+
+    private fun irobot() = Fleet(
+        id = "fleet-irobot",
+        name = "iRobot",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "iRobot Roomba or Braava. The company id is iRobot's. The serial-like name is not the rule.",
+        builtIn = true,
+        rules = listOf(bleMfg(0x0600)),
     )
 
     private fun oui(prefix: String) = MatchRule(RuleKind.OUI, text = prefix)

@@ -332,6 +332,23 @@ class TakPublishTest {
     }
 
     @Test
+    fun swarmRemarkStaysOnTheAircraftCard() {
+        val drone = radio(
+            fleetIds = setOf("fleet-remote-id"),
+            payloadLat = 40.0,
+            payloadLon = -74.0,
+            payloadUasId = "1581F6Z3C24A00001001",
+            payloadSelfId = "N12345",
+        )
+        val sentence = "Part of a drone swarm at 12:00 UTC"
+        assertEquals("a-u-A-M-H-Q", CotEvent.type(drone, fleets, advertised = true))
+        val text = CotEvent.remarks(drone, fleets, advertised = true, swarmNote = sentence)
+        assertEquals(sentence, text.lineSequence().last())
+        assertFalse(sentence.contains("1581F6Z3C24A00001001"))
+        assertTrue(text.contains("UAS ID 1581F6Z3C24A00001001"))
+    }
+
+    @Test
     fun cotHeardHereIsGroundUnknown() {
         val cam = radio(fleetIds = setOf("fleet-axon"), lat = 37.5, lon = -122.2)
         val xml = CotEvent.xml(

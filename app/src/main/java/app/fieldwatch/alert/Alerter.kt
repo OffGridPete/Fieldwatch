@@ -26,10 +26,12 @@ import androidx.core.app.NotificationCompat
 import app.fieldwatch.MainActivity
 import app.fieldwatch.R
 import app.fieldwatch.domain.AlertVoiceWhat
+import app.fieldwatch.domain.DroneNear
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sighting
+import app.fieldwatch.domain.swarmQuietsFleetWatch
 import app.fieldwatch.domain.SpokenName
 import app.fieldwatch.domain.WatchTarget
 import app.fieldwatch.domain.spokenWatchPhrase
@@ -82,12 +84,60 @@ class Alerter(private val context: Context) {
         arrivalsOnly: Boolean = false,
         demoMode: Boolean = false,
         spokenNames: List<SpokenName> = emptyList(),
+        quietDroneFleets: Set<String> = emptySet(),
+        holdRemoteId: (Sighting) -> Boolean = { false },
     ) {
         if (!alertsOn || watchlist.isEmpty()) return
         fireNewAppearances(
             devices, fleets, watchlist, beepOn, voiceOn, voiceWhat, shadeOn,
-            visibleOnLive, arrivalsOnly, demoMode, spokenNames,
+            visibleOnLive, arrivalsOnly, demoMode, spokenNames, quietDroneFleets,
+            holdRemoteId,
         )
+    }
+
+    /**
+     * One drone that broadcast inside the chosen distance. Own channel, silent.
+     * Beep and vibration are the pip. A later drone in the same pass can post
+     * without beeping again.
+     */
+    fun droneNearAlert(
+        title: String,
+        text: String,
+        phrase: String?,
+        beep: Boolean,
+        vibrate: Boolean,
+        shade: Boolean,
+        noteId: Int,
+    ) {
+        if (shade) {
+            ensureDroneNearChannel()
+            val pending = PendingIntent.getActivity(
+                context,
+                noteId,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val note = NotificationCompat.Builder(context, NEAR_CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .setContentIntent(pending)
+                .build()
+            manager.notify(noteId, note)
+        }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (vibrate) vibrate()
+        if (!phrase.isNullOrBlank()) {
+            prepareVoice()
+            queueVoice(phrase, afterBeep = beep)
+        }
     }
 
     fun playTestBeep(
@@ -149,6 +199,58 @@ class Alerter(private val context: Context) {
 
     fun clearGnssNote() {
         manager.cancel(GNSS_NOTE_ID)
+    }
+
+    /**
+     * One card for the whole Remote ID swarm, when [shade] is on. Later counts
+     * replace it. Own channel, silent, separate from the watchlist. Beep,
+     * voice, and vibration are for the first post. A rising count rewrites
+     * the text only.
+     */
+    fun swarmAlert(
+        title: String,
+        text: String,
+        phrase: String?,
+        beep: Boolean,
+        vibrate: Boolean,
+        shade: Boolean,
+    ) {
+        if (shade) {
+            ensureSwarmChannel()
+            val pending = PendingIntent.getActivity(
+                context,
+                SWARM_NOTE_ID,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val note = NotificationCompat.Builder(context, SWARM_CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setOnlyAlertOnce(true)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .setContentIntent(pending)
+                .build()
+            manager.notify(SWARM_NOTE_ID, note)
+        } else {
+            manager.cancel(SWARM_NOTE_ID)
+        }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (vibrate) vibrate()
+        if (!phrase.isNullOrBlank()) {
+            prepareVoice()
+            queueVoice(phrase, afterBeep = beep)
+        }
+    }
+
+    fun clearSwarmNote() {
+        manager.cancel(SWARM_NOTE_ID)
     }
 
     /**
@@ -265,6 +367,15 @@ class Alerter(private val context: Context) {
         manager.cancel(TRACKER_NOTE_ID)
     }
 
+    /** Beep and speak a tracker warning. The notification stays in [trackerNote]. */
+    fun trackerCue(phrase: String?, beep: Boolean) {
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (!phrase.isNullOrBlank()) {
+            prepareVoice()
+            queueVoice(phrase, afterBeep = beep)
+        }
+    }
+
     /**
      * A known mapped sensor ahead. Speaks [text], posts it on the layer channel, and pulses once.
      * [text] has no coordinates. This does not use the watchlist beep.
@@ -323,6 +434,8 @@ class Alerter(private val context: Context) {
         arrivalsOnly: Boolean,
         demoMode: Boolean,
         spokenNames: List<SpokenName>,
+        quietDroneFleets: Set<String>,
+        holdRemoteId: (Sighting) -> Boolean,
     ) {
         val now = System.currentTimeMillis()
         val onAir = devices.filter { !it.gone }
@@ -335,6 +448,13 @@ class Alerter(private val context: Context) {
         if (voiceOn) prepareVoice()
         for (target in watchlist) {
             for (device in onAir) {
+                if (swarmQuietsFleetWatch(target.deviceKey, target.fleetId, quietDroneFleets)) continue
+                if (target.deviceKey == null &&
+                    target.fleetId == DroneNear.REMOTE_ID_FLEET &&
+                    holdRemoteId(device)
+                ) {
+                    continue
+                }
                 if (!shouldRaiseWatch(target, device, mineKeys)) continue
                 if (!visibleOnLive(device)) continue
                 val token = "${target.id}\t${device.key}"
@@ -715,6 +835,38 @@ class Alerter(private val context: Context) {
         }
     }
 
+    private fun ensureDroneNearChannel() {
+        if (Build.VERSION.SDK_INT < 26) return
+        if (manager.getNotificationChannel(NEAR_CHANNEL) != null) return
+        manager.createNotificationChannel(
+            NotificationChannel(
+                NEAR_CHANNEL,
+                LanguageText.text("ui.near.section"),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = LanguageText.text("ui.near.note")
+                setSound(null, null)
+                enableVibration(false)
+            },
+        )
+    }
+
+    private fun ensureSwarmChannel() {
+        if (Build.VERSION.SDK_INT < 26) return
+        if (manager.getNotificationChannel(SWARM_CHANNEL) != null) return
+        manager.createNotificationChannel(
+            NotificationChannel(
+                SWARM_CHANNEL,
+                LanguageText.text("ui.swarm.section"),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = LanguageText.text("ui.swarm.note")
+                setSound(null, null)
+                enableVibration(false)
+            },
+        )
+    }
+
     private fun ensureGnssChannel() {
         if (Build.VERSION.SDK_INT < 26) return
         if (manager.getNotificationChannel(GNSS_CHANNEL) != null) return
@@ -800,6 +952,9 @@ class Alerter(private val context: Context) {
         const val CELL_CHANNEL = "fieldwatch_cell"
         const val TRACKER_CHANNEL = "fieldwatch_tracker"
         private const val GNSS_NOTE_ID = 71_001
+        private const val SWARM_NOTE_ID = 71_005
+        const val SWARM_CHANNEL = "fieldwatch_swarm"
+        const val NEAR_CHANNEL = "fieldwatch_drone_near"
         private const val TRUSTED_NOTE_ID = 71_002
         private const val CELL_NOTE_ID = 71_003
         private const val TRACKER_NOTE_ID = 71_004

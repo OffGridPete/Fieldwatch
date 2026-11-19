@@ -17,7 +17,7 @@ class TrackerMonitor {
 
     /**
      * Returns the warning that just became the one on screen, so the caller can
-     * post the quiet notification once.
+     * beep and speak once. A later rewrite of the same warning returns null.
      */
     fun hear(
         hears: List<TrackerWatch.Hear>,

@@ -14,6 +14,7 @@ import java.io.File
 class StockCatalogFileTest {
     @Test
     fun distPackMatchesDefaultCatalog() {
+        writeStockCatalogIfRequested()
         val dest = distPackFile()
         val encoded = SignatureExchange.encode(
             SignatureExchange.pack(
@@ -23,10 +24,6 @@ class StockCatalogFileTest {
                 exportedAt = "",
             ),
         )
-        if (System.getenv("WRITE_STOCK_CATALOG") == "1") {
-            dest.parentFile?.mkdirs()
-            dest.writeText(encoded)
-        }
         assertTrue("Missing ${dest.absolutePath}. Run tests with WRITE_STOCK_CATALOG=1.", dest.isFile)
         val pack = SignatureExchange.parse(dest.readText())
         assertEquals("fieldwatch-signatures", pack.format)
@@ -131,7 +128,71 @@ class StockCatalogFileTest {
         assertEquals(listOf("PTT-Z", "PTT-AZ", "PTT-Z01"), ptt.rules.map { it.text })
         assertTrue(ptt.rules.all { it.radio == RadioKind.BLE })
         assertTrue(ptt.attentionNote.isBlank())
-        assertTrue(pack.fleets.none { it.kind == SignatureClass.MILITARY })
+        val lrf = pack.fleets.single { it.kind == SignatureClass.MILITARY }
+        assertEquals("fleet-steiner-lrf", lrf.id)
+        assertEquals("Steiner M830 LRF binocular", lrf.name)
+        assertEquals(
+            listOf("LRF X*", "Steiner LRF X*", "LRF1535*", "Steiner LRF1535*"),
+            lrf.rules.map { it.text },
+        )
+        assertTrue(lrf.rules.all { it.radio == RadioKind.BLE })
+        assertTrue(lrf.attentionNote.isNotBlank())
+        assertEquals("", pack.publisher)
+        assertTrue(dest.readText().contains("\"format\": \"fieldwatch-signatures\""))
+        assertFalse(dest.readText().contains("\"publisher\""))
+    }
+
+    @Test
+    fun rsiPackMatchesBaselineCatalog() {
+        writeStockCatalogIfRequested()
+        val rsi = rsiPackFile()
+        assertTrue("Missing ${rsi.absolutePath}.", rsi.isFile)
+        val parsed = SignatureExchange.parsePack(rsi.readText())
+        assertEquals(SignaturePack.RSI_FORMAT, parsed.pack.format)
+        assertEquals(SignaturePack.PUBLISHER, parsed.pack.publisher)
+        assertFalse(parsed.newer)
+        assertEquals(ConfigStore.CATALOG_VERSION, parsed.pack.catalogVersion)
+        val baseline = SignatureExchange.parse(distPackFile().readText())
+        assertEquals(baseline.fleets.map { it.id }, parsed.pack.fleets.map { it.id })
+        assertEquals(baseline.catalogVersion, parsed.pack.catalogVersion)
+        parsed.pack.fleets.forEachIndexed { index, row ->
+            val expect = baseline.fleets[index]
+            assertEquals(expect.id, row.id)
+            assertEquals(expect.name, row.name)
+            assertEquals(expect.kind, row.kind)
+            assertEquals(expect.rules, row.rules)
+            assertEquals(expect.matchAny, row.matchAny)
+            assertEquals(expect.decode, row.decode)
+            assertEquals(SignaturePack.PUBLISHER, row.publisher)
+            assertTrue(row.visibleOnPhone())
+        }
+    }
+
+    private fun writeStockCatalogIfRequested() {
+        if (System.getenv("WRITE_STOCK_CATALOG") != "1") return
+        val dest = distPackFile()
+        dest.parentFile?.mkdirs()
+        val fleets = DefaultCatalog.fleets()
+        dest.writeText(
+            SignatureExchange.encode(
+                SignatureExchange.pack(
+                    fleets = fleets,
+                    catalogVersion = ConfigStore.CATALOG_VERSION,
+                    appVersion = "stock",
+                    exportedAt = "",
+                ),
+            ),
+        )
+        File(dest.parentFile, "fieldwatch-signatures.rsi").writeText(
+            SignatureExchange.encode(
+                SignatureExchange.exportPack(
+                    fleets = fleets,
+                    catalogVersion = ConfigStore.CATALOG_VERSION,
+                    appVersion = "stock",
+                    exportedAt = "",
+                ),
+            ),
+        )
     }
 
     private fun distPackFile(): File {
@@ -141,6 +202,11 @@ class StockCatalogFileTest {
             File(cwd.parentFile, "dist/fieldwatch-signatures-v2.json"),
         )
         return candidates.first { it.parentFile?.exists() == true }
+    }
+
+    private fun rsiPackFile(): File {
+        val v2 = distPackFile()
+        return File(v2.parentFile, "fieldwatch-signatures.rsi")
     }
 
     @Test

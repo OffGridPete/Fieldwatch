@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         val app = application as FieldwatchApp
         app.uiStarted()
-        if (app.pendingCrash == null) app.alerter.clearTrackerNote()
+        if (app.pendingCrash == null) app.syncTrackerShade(app.tracker.notice.value)
     }
 
     override fun onStop() {

@@ -138,8 +138,8 @@ class SignatureListSortTest {
     @Test
     fun testWatchPhraseMatchesFinderExample() {
         assertEquals("finder tags", testWatchPhrase(AlertVoiceWhat.CLASS))
-        assertEquals("Apple AirTags", testWatchPhrase(AlertVoiceWhat.SIGNATURE))
-        assertEquals("finder tags, Apple AirTags", testWatchPhrase(AlertVoiceWhat.BOTH))
+        assertEquals("Find My (AirTag or other Apple)", testWatchPhrase(AlertVoiceWhat.SIGNATURE))
+        assertEquals("finder tags, Find My (AirTag or other Apple)", testWatchPhrase(AlertVoiceWhat.BOTH))
     }
 
     private fun sampleDevice(fleetIds: Set<String>) = Sighting(

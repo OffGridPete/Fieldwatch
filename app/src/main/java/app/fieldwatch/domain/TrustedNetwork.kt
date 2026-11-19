@@ -284,6 +284,14 @@ object TrustedNets {
             mapOf("ssid" to ssid, "reason" to reasonLine(reasons)),
         )
 
+    /** What the title means. The Orient Power line follows only for 00:13:37. */
+    fun explain(ouiNote: Boolean): String {
+        val lead = LanguageText.text("trusted.explain")
+        if (!ouiNote) return lead
+        val note = LanguageText.text("trusted.oui.note", mapOf("oui" to "00:13:37"))
+        return "$lead\n\n$note"
+    }
+
     fun trust(book: TrustedBook, ssid: String, picks: List<TwinHear>, now: Long): TrustedBook {
         if (ssid.isBlank() || picks.isEmpty()) return book
         val aps = picks.map { hear -> apFrom(hear, now) }

@@ -458,7 +458,7 @@ class TrustedNetworkTest {
             now = now,
             window = window,
         )
-        assertTrue(plain.sections.none { it.title == "Trusted networks" })
+        assertTrue(plain.sections.none { it.title == "Trusted networks monitoring" })
         val line = TrustedSitLine("Home", "House", HOME, listOf(TrustedSecurity.REASON_OPEN), now - 1_000, now)
         val doc = DebriefReport.document(
             devices = emptyList(),
@@ -469,7 +469,7 @@ class TrustedNetworkTest {
             window = window,
             trusted = listOf(line),
         )
-        val section = doc.sections.single { it.title == "Trusted networks" }
+        val section = doc.sections.single { it.title == "Trusted networks monitoring" }
         assertTrue(section.body.contains("Home"))
         assertTrue(section.body.contains("House"))
         assertTrue(section.body.contains("open security"))
@@ -486,7 +486,7 @@ class TrustedNetworkTest {
             window = window,
             trusted = listOf(early),
         )
-        assertTrue(missed.sections.none { it.title == "Trusted networks" })
+        assertTrue(missed.sections.none { it.title == "Trusted networks monitoring" })
         val overlap = line.copy(at = window.startAt - 5_000, until = window.startAt + 1_000)
         val kept = DebriefReport.document(
             devices = emptyList(),
@@ -497,7 +497,7 @@ class TrustedNetworkTest {
             window = window,
             trusted = listOf(overlap),
         )
-        assertEquals(1, kept.sections.count { it.title == "Trusted networks" })
+        assertEquals(1, kept.sections.count { it.title == "Trusted networks monitoring" })
         val masked = DebriefReport.document(
             devices = emptyList(),
             fleets = emptyList(),
@@ -506,7 +506,7 @@ class TrustedNetworkTest {
             now = now,
             window = window,
             trusted = listOf(line),
-        ).sections.single { it.title == "Trusted networks" }
+        ).sections.single { it.title == "Trusted networks monitoring" }
         assertTrue(masked.body.contains("AA:BB:CC:**:**:**"))
         assertFalse(masked.body.contains("DD:EE:01"))
         val prompt = DebriefPrompt.build(

@@ -7,7 +7,7 @@ import org.junit.Test
 
 class SettingsExchangeTest {
     @Test
-    fun unknownClassAsksForANewerApp() {
+    fun unknownClassIsOtherAndNewerFormatWaits() {
         val pack = SettingsExchange.pack(
             settings = AppSettings(),
             filter = FilterState(),
@@ -19,12 +19,8 @@ class SettingsExchangeTest {
         )
         val encoded = SettingsExchange.encode(pack)
         val json = encoded.replace("\"classes\": []", "\"classes\": [\"NOT_A_CLASS\"]")
-        try {
-            SettingsExchange.parse(json)
-            throw AssertionError("expected a newer-app refusal")
-        } catch (e: CatalogNeedsNewerApp) {
-            assertEquals("NOT_A_CLASS", e.token)
-        }
+        val parsed = SettingsExchange.parse(json)
+        assertEquals(setOf(SignatureClass.OTHER), parsed.filter.classes)
         val newer = encoded.replace("\"formatVersion\": 1", "\"formatVersion\": 2")
         try {
             SettingsExchange.parse(newer)
@@ -378,6 +374,9 @@ class SettingsExchangeTest {
         assertFalse(missing.trustedWatch)
         assertFalse(missing.trackerFollow)
         assertFalse(missing.trackerPlaces)
+        assertTrue(missing.trackerBeep)
+        assertTrue(missing.trackerVoice)
+        assertFalse(missing.trackerShade)
         assertTrue(missing.trustedDowngrade)
         assertTrue(missing.trustedVendor)
         assertTrue(missing.trustedAway)

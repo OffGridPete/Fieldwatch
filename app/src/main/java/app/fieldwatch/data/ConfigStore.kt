@@ -3,6 +3,7 @@ package app.fieldwatch.data
 import android.content.Context
 import app.fieldwatch.domain.AppSettings
 import app.fieldwatch.domain.DefaultCatalog
+import app.fieldwatch.domain.DroneNear
 import app.fieldwatch.domain.FilterEngine
 import app.fieldwatch.domain.LIVE_TOUR_REV
 import app.fieldwatch.domain.offerLiveTourOnce
@@ -11,6 +12,8 @@ import app.fieldwatch.domain.FilterState
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MatchRule
 import app.fieldwatch.domain.PersistedConfig
+import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.RemoteIdSwarm
 import app.fieldwatch.domain.RuleKind
 import app.fieldwatch.domain.SignatureCandidates
 import app.fieldwatch.domain.SignatureClass
@@ -170,6 +173,7 @@ class ConfigStore(context: Context) {
                 fleet.id == "fleet-unknown" && fleet.name == "Unknown Fleet" -> stock.name
                 fleet.id == "fleet-seos" && fleet.name == "Seos" -> stock.name
                 fleet.id == "fleet-target-atrius" && fleet.name == "Target Atrius basket" -> stock.name
+                fleet.id == "fleet-airtag" && fleet.name == "Apple AirTags" -> stock.name
                 else -> fleet.name
             }
             val notes = if (
@@ -351,7 +355,13 @@ class ConfigStore(context: Context) {
             }
             version = CATALOG_V17
         }
-        var watchlist = cfg.watchlist
+        var watchlist = cfg.watchlist.map { target ->
+            if (target.fleetId == "fleet-airtag" && target.label == "Apple AirTags") {
+                target.copy(label = catalog.getValue("fleet-airtag").name)
+            } else {
+                target
+            }
+        }
         if (version < CATALOG_V18) {
             val have = watchlist.mapNotNull { it.fleetId }.toSet()
             val extras = DefaultCatalog.defaultWatchlist().filter { it.fleetId !in have }
@@ -1257,8 +1267,15 @@ class ConfigStore(context: Context) {
             fleets = catalog113Migrate(fleets, catalog)
             version = CATALOG_V113
         }
+        if (version < CATALOG_V114 || catalog114Pending(fleets, catalog)) {
+            val migrated = catalog114Migrate(fleets, catalog, watchlist)
+            fleets = migrated.first
+            watchlist = migrated.second
+            if (version < CATALOG_V114) version = CATALOG_V114
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
+        settings = DroneNear.clamp(RemoteIdSwarm.clamp(settings))
         presets = presets.filterNot { it.isBuiltIn() && it.id in hiddenPresetIds }
             .distinctBy { it.id }
         val fleetsChanged = fleets != cfg.fleets
@@ -1303,7 +1320,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 113
+        const val CATALOG_VERSION = 114
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1415,7 +1432,8 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V110 = 110
         private const val CATALOG_V111 = 111
         private const val CATALOG_V112 = 112
-        private const val CATALOG_V113 = CATALOG_VERSION
+        private const val CATALOG_V113 = 113
+        private const val CATALOG_V114 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -2085,6 +2103,220 @@ internal fun catalog113Migrate(
     val have = fleets.map { it.id }.toSet()
     val extras = ADDED_IN_V113.mapNotNull { stock[it] }.filter { it.id !in have }
     return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+internal val ADDED_IN_V114 = listOf(
+    "fleet-acuity",
+    "fleet-cardo",
+    "fleet-cobra",
+    "fleet-elk-led",
+    "fleet-gli-open",
+    "fleet-gm-peps",
+    "fleet-gree",
+    "fleet-hikmicro-optics",
+    "fleet-iosix",
+    "fleet-irobot",
+    "fleet-jlg-clearsky",
+    "fleet-lg-appliance",
+    "fleet-mazda",
+    "fleet-mentra-live",
+    "fleet-phillips-connect",
+    "fleet-pulsar-optics",
+    "fleet-rnode",
+    "fleet-rove",
+    "fleet-steiner-burris-thermal",
+    "fleet-steiner-lrf",
+    "fleet-tbs-crossfire",
+    "fleet-tozo",
+)
+
+internal const val BMW_NOTES_BEFORE_V114 =
+    "BMW phone-as-key or in-car hotspot. Factory BMW_ Wi-Fi is the car, not a dealer showroom."
+
+internal const val GM_HOTSPOT_NOTES_BEFORE_V114 =
+    "GM in-car hotspot (Cadillac, GMC, Buick). myChevrolet has its own row. BSSID is often randomized."
+
+internal const val MBUX_NOTES_BEFORE_V114 =
+    "Mercedes MBUX in-car hotspot. Factory name from the car."
+
+internal const val NISSAN_NOTES_BEFORE_V114 =
+    "Nissan or Infiniti phone-as-key / infotainment."
+
+internal const val HP_NOTES_BEFORE_V114 =
+    "HP home/office printer (ENVY, HP-Print). Office noise. Not HPE Aruba campus Wi-Fi."
+
+internal const val SAMSUNG_TV_NOTES_BEFORE_V114 =
+    "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, or CU8000. Phones, watches, and buds share Samsung's company id, so this row uses the name."
+
+internal const val CARLINK_NOTES_BEFORE_V114 =
+    "Aftermarket CarPlay / Android Auto adapter hotspot (CARLINK-). Head-unit dongle, not the car\u2019s own modem."
+
+internal const val BRILLIANT_NAME_BEFORE_V114 = "Brilliant Frame"
+
+internal const val BRILLIANT_NOTES_BEFORE_V114 = "Brilliant Labs Frame AR glasses."
+
+internal const val BRILLIANT_ATTENTION_BEFORE_V114 =
+    "Brilliant Labs Frame AR glasses. BLE service 7A230001. Not proof someone is recording. A miss is not a clean bill (off, or a different brand). Look with your eyes."
+
+internal val BRILLIANT_RULES_BEFORE_V114 = listOf(
+    MatchRule(RuleKind.SERVICE_UUID, text = "7A230001-5475-A6A4-654C-576174636800"),
+    MatchRule(RuleKind.NAME_CONTAINS, text = "Brilliant Frame", radio = RadioKind.BLE),
+    MatchRule(RuleKind.NAME_GLOB, text = "Brilliant Frame*", radio = RadioKind.BLE),
+)
+
+internal const val EVEN_NAME_BEFORE_V114 = "Even G1"
+
+internal const val EVEN_NOTES_BEFORE_V114 =
+    "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Nordic UART is too common to use as a rule."
+
+internal const val EVEN_ATTENTION_BEFORE_V114 =
+    "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes."
+
+internal val EVEN_RULES_BEFORE_V114 = listOf(
+    MatchRule(RuleKind.MANUFACTURER_ID, companyId = 0x10F9),
+    MatchRule(RuleKind.NAME_CONTAINS, text = "Even G1", radio = RadioKind.BLE),
+    MatchRule(RuleKind.NAME_GLOB, text = "Even G1*", radio = RadioKind.BLE),
+)
+
+/**
+ * True when a phone already stored catalog 114 and still lacks a catalog 114
+ * id, or still has the old Brilliant or Even rules. Running the migration
+ * again does not bookmark a row the operator already removed once those rows
+ * are in place.
+ */
+internal fun catalog114Pending(fleets: List<Fleet>, stock: Map<String, Fleet>): Boolean {
+    val ids = fleets.map { it.id }.toSet()
+    if (ADDED_IN_V114.any { it !in ids }) return true
+    val brilliant = fleets.find { it.builtIn && it.id == "fleet-brilliant-frame" }
+    val brilliantStock = stock["fleet-brilliant-frame"]
+    if (brilliant != null && brilliantStock != null && builtInTextNeedsRefresh(
+            brilliant,
+            brilliantStock,
+            BRILLIANT_RULES_BEFORE_V114,
+            BRILLIANT_NAME_BEFORE_V114,
+            BRILLIANT_NOTES_BEFORE_V114,
+            BRILLIANT_ATTENTION_BEFORE_V114,
+        )
+    ) {
+        return true
+    }
+    val even = fleets.find { it.builtIn && it.id == "fleet-even-g1" }
+    val evenStock = stock["fleet-even-g1"]
+    return even != null && evenStock != null && builtInTextNeedsRefresh(
+        even,
+        evenStock,
+        EVEN_RULES_BEFORE_V114,
+        EVEN_NAME_BEFORE_V114,
+        EVEN_NOTES_BEFORE_V114,
+        EVEN_ATTENTION_BEFORE_V114,
+    )
+}
+
+/**
+ * Catalog 114 adds the November sit families and the glasses, RNode, Crossfire,
+ * and optic rows when those ids are missing. A custom row with the same id stays.
+ * Sit rows are not bookmarked. Mentra Live and TBS Crossfire are, because a fresh
+ * install beeps for them. Notes and the Brilliant and Even text update only while
+ * each field is still the previous sentence. Brilliant and Even rules are replaced
+ * only while they are still the previous rules, including the form left after a
+ * missing stock rule was appended.
+ */
+internal fun catalog114Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+    watchlist: List<WatchTarget> = emptyList(),
+): Pair<List<Fleet>, List<WatchTarget>> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V114.mapNotNull { stock[it] }.filter { it.id !in have }
+    val next = if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+    val refreshed = next.map { fleet ->
+        if (!fleet.builtIn) return@map fleet
+        val fresh = stock[fleet.id] ?: return@map fleet
+        val noted = when (fleet.id) {
+            "fleet-bmw" -> BMW_NOTES_BEFORE_V114
+            "fleet-gm-hotspot" -> GM_HOTSPOT_NOTES_BEFORE_V114
+            "fleet-mbux" -> MBUX_NOTES_BEFORE_V114
+            "fleet-nissan" -> NISSAN_NOTES_BEFORE_V114
+            "fleet-hp" -> HP_NOTES_BEFORE_V114
+            "fleet-samsung-tv" -> SAMSUNG_TV_NOTES_BEFORE_V114
+            "fleet-carlink" -> CARLINK_NOTES_BEFORE_V114
+            else -> null
+        }
+        val withNote = if (noted != null && fleet.notes == noted) fleet.copy(notes = fresh.notes) else fleet
+        when (fleet.id) {
+            "fleet-brilliant-frame" -> refreshBuiltIn(
+                withNote,
+                fresh,
+                BRILLIANT_RULES_BEFORE_V114,
+                BRILLIANT_NAME_BEFORE_V114,
+                BRILLIANT_NOTES_BEFORE_V114,
+                BRILLIANT_ATTENTION_BEFORE_V114,
+            )
+            "fleet-even-g1" -> refreshBuiltIn(
+                withNote,
+                fresh,
+                EVEN_RULES_BEFORE_V114,
+                EVEN_NAME_BEFORE_V114,
+                EVEN_NOTES_BEFORE_V114,
+                EVEN_ATTENTION_BEFORE_V114,
+            )
+            else -> withNote
+        }
+    }
+    val renamed = watchlist.map { target ->
+        when {
+            target.fleetId == "fleet-brilliant-frame" && target.label == BRILLIANT_NAME_BEFORE_V114 ->
+                target.copy(label = stock.getValue("fleet-brilliant-frame").name)
+            target.fleetId == "fleet-even-g1" && target.label == EVEN_NAME_BEFORE_V114 ->
+                target.copy(label = stock.getValue("fleet-even-g1").name)
+            else -> target
+        }
+    }
+    val watched = renamed.mapNotNull { it.fleetId }.toSet()
+    val addWatch = DefaultCatalog.defaultWatchlist().filter {
+        it.fleetId in ADDED_IN_V114 && it.fleetId !in watched
+    }
+    val nextWatch = if (addWatch.isEmpty()) renamed else renamed + addWatch
+    return refreshed to nextWatch
+}
+
+private fun rulesStillPrevious(
+    rules: List<MatchRule>,
+    previous: List<MatchRule>,
+    stockRules: List<MatchRule>,
+): Boolean {
+    if (rules == stockRules) return false
+    if (rules == previous) return true
+    val patched = previous + stockRules.filter { it !in previous }
+    return rules == patched
+}
+
+private fun builtInTextNeedsRefresh(
+    fleet: Fleet,
+    stock: Fleet,
+    previousRules: List<MatchRule>,
+    previousName: String,
+    previousNotes: String,
+    previousAttention: String,
+): Boolean = rulesStillPrevious(fleet.rules, previousRules, stock.rules) ||
+    fleet.name == previousName ||
+    fleet.notes == previousNotes ||
+    fleet.attentionNote == previousAttention
+
+private fun refreshBuiltIn(
+    fleet: Fleet,
+    fresh: Fleet,
+    previousRules: List<MatchRule>,
+    previousName: String,
+    previousNotes: String,
+    previousAttention: String,
+): Fleet {
+    var next = fleet
+    if (rulesStillPrevious(fleet.rules, previousRules, fresh.rules)) next = next.copy(rules = fresh.rules)
+    if (fleet.name == previousName) next = next.copy(name = fresh.name)
+    if (fleet.notes == previousNotes) next = next.copy(notes = fresh.notes)
+    if (fleet.attentionNote == previousAttention) next = next.copy(attentionNote = fresh.attentionNote)
+    return next
 }
 
 /**

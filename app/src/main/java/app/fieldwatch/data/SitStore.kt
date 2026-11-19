@@ -2,6 +2,8 @@ package app.fieldwatch.data
 
 import android.app.ActivityManager
 import android.content.Context
+import app.fieldwatch.domain.BatteryMark
+import app.fieldwatch.domain.DroneNearMark
 import app.fieldwatch.domain.CellMark
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.FlockCamera
@@ -13,6 +15,7 @@ import app.fieldwatch.domain.OpenLivePath
 import app.fieldwatch.domain.PlaceMemory
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sit
+import app.fieldwatch.domain.SwarmBurst
 import app.fieldwatch.domain.SitDebrief
 import app.fieldwatch.domain.SitDiff
 import app.fieldwatch.domain.SitFile
@@ -90,7 +93,7 @@ class SitStore(
             open = keepOpen?.let {
                 SitSession(
                     it.summary, it.radios, it.operatorPath, it.floods, it.gnss, it.cells,
-                    it.pathCameras, it.cameraKept,
+                    it.pathCameras, it.cameraKept, it.swarms, it.battery, it.droneNear,
                 )
             }
             closed = closedAcc.sortedByDescending { it.startAt }
@@ -129,10 +132,32 @@ class SitStore(
         }
     }
 
+    /** No open sit keeps the warning on screen and leaves the file alone. */
+    fun noteSwarms(incoming: List<SwarmBurst>) {
+        if (incoming.isEmpty()) return
+        synchronized(lock) {
+            open?.noteSwarms(incoming)
+        }
+    }
+
     fun noteGnss(incoming: List<GnssMark>) {
         if (incoming.isEmpty()) return
         synchronized(lock) {
             open?.noteGnss(incoming)
+        }
+    }
+
+    /** No open sit keeps the warning and leaves the file alone. */
+    fun noteNear(incoming: List<DroneNearMark>) {
+        if (incoming.isEmpty()) return
+        synchronized(lock) {
+            open?.noteNear(incoming)
+        }
+    }
+
+    fun noteBattery(mark: BatteryMark) {
+        synchronized(lock) {
+            open?.noteBattery(mark)
         }
     }
 
@@ -320,6 +345,9 @@ class SitStore(
                     gnss = snap.gnss,
                     cells = snap.cells,
                     pathCameras = snap.cameraKept?.let { snap.pathCameras },
+                    swarms = snap.swarms,
+                    battery = snap.battery,
+                    droneNear = snap.droneNear,
                 )
             }
         }
@@ -336,6 +364,9 @@ class SitStore(
             gnss = file.gnss,
             cells = file.cells,
             pathCameras = file.cameraKept?.let { file.pathCameras },
+            swarms = file.swarms,
+            battery = file.battery,
+            droneNear = file.droneNear,
         )
     }
 

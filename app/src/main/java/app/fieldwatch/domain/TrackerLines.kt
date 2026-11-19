@@ -17,12 +17,25 @@ internal object TrackerLines {
             LanguageSlot.BODY,
         ),
         en(
-            "tracker.separated.for",
-            "Separated for {minutes} minutes, {places} places.",
+            "tracker.voice.note",
+            "Says separated tag with you, or heard at two places.",
             LanguageSlot.BODY,
         ),
-        en("tracker.seen.count", "Seen at {n} places.", LanguageSlot.BODY),
-        en("tracker.seen.streets", "Seen at {places}.", LanguageSlot.BODY),
+        en(
+            "tracker.separated.for",
+            "A tracking tag says it is away from its owner. This phone has heard it for {minutes} minutes, at {places} places.",
+            LanguageSlot.BODY,
+        ),
+        en(
+            "tracker.seen.count",
+            "A tracking tag was heard at {n} places where this phone was.",
+            LanguageSlot.BODY,
+        ),
+        en(
+            "tracker.seen.streets",
+            "A tracking tag was heard at {places}, where this phone was.",
+            LanguageSlot.BODY,
+        ),
         en("tracker.also.places", "Also heard at {n} places.", LanguageSlot.BODY),
         en("tracker.open", "Open radio", LanguageSlot.CONTROL),
     )

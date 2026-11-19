@@ -3,6 +3,7 @@ package app.fieldwatch.domain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -742,6 +743,101 @@ class SitPathPlotTest {
     }
 
     @Test
+    fun liveDotsCopiesAdvertisedMotionAndLeavesAHearPointBlank() {
+        val dots = SitPathPlot.liveDots(
+            listOf(
+                radioAt(
+                    "rid",
+                    trail = listOf(GpsSample(1L, 28.780, -81.370, rssi = -40)),
+                    payloadLat = 28.900,
+                    payloadLon = -81.500,
+                    payloadAlt = 100.0,
+                    payloadHeading = 90.0,
+                    payloadSpeed = 5.0,
+                ),
+                radioAt(
+                    "hear",
+                    trail = listOf(GpsSample(1L, 28.780, -81.370, rssi = -40)),
+                    payloadAlt = 50.0,
+                    payloadHeading = 10.0,
+                    payloadSpeed = 1.0,
+                ),
+            ),
+            emptyList(),
+        )
+        val pin = dots.single { it.advertised }
+        assertEquals(100.0, pin.altM!!, 0.0)
+        assertEquals(90.0, pin.headingDeg!!, 0.0)
+        assertEquals(5.0, pin.speedMps!!, 0.0)
+        val heard = dots.single { !it.advertised }
+        assertNull(heard.altM)
+        assertNull(heard.headingDeg)
+        assertNull(heard.speedMps)
+    }
+
+    @Test
+    fun liveDotsUsesTheLastAdvertisedFixForMotion() {
+        val dots = SitPathPlot.liveDots(
+            listOf(
+                radioAt(
+                    "rid",
+                    payloadLat = 28.1,
+                    payloadLon = -81.1,
+                    payloadAlt = 100.0,
+                    payloadHeading = 90.0,
+                    payloadSpeed = 5.0,
+                    payloadTrail = listOf(
+                        PayloadFix(1L, 28.2, -81.2, alt = 40.0, heading = 10.0, speed = 1.0),
+                        PayloadFix(2L, 28.3, -81.3, alt = null, heading = 180.0, speed = null),
+                    ),
+                ),
+            ),
+            emptyList(),
+        )
+        val pin = dots.single()
+        assertTrue(pin.advertised)
+        assertEquals(28.3, pin.lat, 1e-6)
+        assertEquals(100.0, pin.altM!!, 0.0)
+        assertEquals(180.0, pin.headingDeg!!, 0.0)
+        assertEquals(5.0, pin.speedMps!!, 0.0)
+    }
+
+    @Test
+    fun dotsFromCopiesAdvertisedMotion() {
+        val pin = radioAt(
+            "rid",
+            trail = listOf(GpsSample(1L, 28.78, -81.37)),
+            payloadLat = 28.9,
+            payloadLon = -81.5,
+            payloadAlt = 100.0,
+            payloadHeading = 90.0,
+            payloadSpeed = 5.0,
+        )
+        val hear = radioAt(
+            "hear",
+            trail = listOf(GpsSample(1L, 28.78, -81.37)),
+            payloadAlt = 12.0,
+            payloadHeading = 20.0,
+            payloadSpeed = 1.0,
+        )
+        val plot = SitPathPlot.dotsFrom(
+            listOf(pin, hear),
+            emptyList(),
+            namedKeys = emptySet(),
+            bookmarkedKeys = setOf("rid", "hear"),
+            alertsOnly = true,
+        )
+        val advertised = plot.points.single { it.advertised }
+        assertEquals(100.0, advertised.altM!!, 0.0)
+        assertEquals(90.0, advertised.headingDeg!!, 0.0)
+        assertEquals(5.0, advertised.speedMps!!, 0.0)
+        val heard = plot.points.single { !it.advertised }
+        assertNull(heard.altM)
+        assertNull(heard.headingDeg)
+        assertNull(heard.speedMps)
+    }
+
+    @Test
     fun liveDotsOmitsARadioWithNoFix() {
         val dots = SitPathPlot.liveDots(
             listOf(
@@ -1300,6 +1396,10 @@ class SitPathPlotTest {
         longitude: Double? = null,
         payloadLat: Double? = null,
         payloadLon: Double? = null,
+        payloadAlt: Double? = null,
+        payloadHeading: Double? = null,
+        payloadSpeed: Double? = null,
+        payloadTrail: List<PayloadFix> = emptyList(),
     ) = Sighting(
         key = key,
         kind = RadioKind.BLE,
@@ -1329,6 +1429,10 @@ class SitPathPlotTest {
         gpsTrail = trail,
         payloadLat = payloadLat,
         payloadLon = payloadLon,
+        payloadAlt = payloadAlt,
+        payloadHeading = payloadHeading,
+        payloadSpeed = payloadSpeed,
+        payloadTrail = payloadTrail,
     )
 
     @Test

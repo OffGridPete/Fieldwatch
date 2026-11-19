@@ -394,6 +394,7 @@ class SitTest {
             """{"format":"fieldwatch-sit","formatVersion":1,"summary":{"id":"a","name":"lot","startAt":1000}}""",
         )
         assertTrue(legacy.floods.isEmpty())
+        assertTrue(legacy.swarms.isEmpty())
         assertTrue(legacy.pathCameras.isEmpty())
         assertNull(legacy.cameraKept)
         val session = SitSession.start(
@@ -427,10 +428,29 @@ class SitTest {
         assertEquals(1_000L + 2, capped.first().at)
         val back = json.decodeFromString<SitFile>(json.encodeToString(session.snapshot()))
         assertEquals(capped, back.floods)
+        val swarmEarly = SwarmBurst(at = 500L, idCount = 5, uasIds = listOf("OLD"))
+        val swarmDuring = SwarmBurst(at = 5_000L, idCount = 6, uasIds = listOf("OLD", "NEW"))
+        session.noteSwarms(listOf(swarmEarly, swarmDuring))
+        val swarmLouder = swarmDuring.copy(idCount = 9, uasIds = listOf("OLD", "NEW", "MORE"))
+        session.noteSwarms(listOf(swarmLouder))
+        val keptSwarms = session.snapshot().swarms
+        assertEquals(1, keptSwarms.size)
+        assertEquals(5_000L, keptSwarms.single().at)
+        assertEquals(9, keptSwarms.single().idCount)
+        assertEquals(listOf("OLD", "NEW", "MORE"), keptSwarms.single().uasIds)
+        session.noteSwarms((1..41).map { SwarmBurst(at = 1_000L + it, idCount = 5) })
+        val cappedSwarms = session.snapshot().swarms
+        assertEquals(40, cappedSwarms.size)
+        assertEquals(1_000L + 2, cappedSwarms.first().at)
+        val swarmBack = json.decodeFromString<SitFile>(json.encodeToString(session.snapshot()))
+        assertEquals(cappedSwarms, swarmBack.swarms)
         session.end(50_000L, fleets)
         session.noteFloods(listOf(FloodBurst(60_000L, popupCount = 6, nameCount = 0)))
+        session.noteSwarms(listOf(SwarmBurst(at = 60_000L, idCount = 5)))
         assertEquals(40, session.snapshot().floods.size)
         assertTrue(session.snapshot().floods.none { it.at == 60_000L })
+        assertEquals(40, session.snapshot().swarms.size)
+        assertTrue(session.snapshot().swarms.none { it.at == 60_000L })
     }
 
     @Test

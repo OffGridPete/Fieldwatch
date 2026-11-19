@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -59,6 +60,7 @@ import app.fieldwatch.domain.FilterState
 import app.fieldwatch.domain.FilterPreset
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.SignatureClass
+import app.fieldwatch.domain.visibleOnPhone
 import app.fieldwatch.ui.ClassGlyphs
 import app.fieldwatch.ui.NestedTabInsets
 import app.fieldwatch.ui.NestedTopBar
@@ -394,7 +396,7 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 )
             }
             SignaturePickList(
-                fleets = state.fleets,
+                fleets = state.fleets.filter { it.visibleOnPhone() },
                 selected = filter.selectedSignatureIds(),
                 help = LanguageText.text("ui.tap.class.open"),
                 onToggle = { id, checked ->
@@ -428,15 +430,15 @@ fun FiltersScreen(state: FieldwatchUi, vm: FieldwatchViewModel) {
                 valueRange = -100f..-30f,
             )
 
-            FieldwatchOutlinedField(
-                filter.nameQuery,
-                { value -> vm.updateFilter { it.copy(nameQuery = value) } },
-                LanguageText.text("ui.name.mac.contains"),
+            FilterQueryField(
+                saved = filter.nameQuery,
+                onSave = { value -> vm.updateFilter { it.copy(nameQuery = value) } },
+                label = LanguageText.text("ui.name.mac.contains"),
             )
-            FieldwatchOutlinedField(
-                filter.ouiQuery,
-                { value -> vm.updateFilter { it.copy(ouiQuery = value) } },
-                LanguageText.text("ui.vendor.contains"),
+            FilterQueryField(
+                saved = filter.ouiQuery,
+                onSave = { value -> vm.updateFilter { it.copy(ouiQuery = value) } },
+                label = LanguageText.text("ui.vendor.contains"),
             )
 
             Text(LanguageText.text("ui.name.vendor.signal.class"), style = MaterialTheme.typography.labelLarge)
@@ -693,6 +695,30 @@ private fun fineValue(filter: FilterState): String? {
         if (filter.logic == FilterLogic.OR) add("OR")
     }
     return parts.joinToString(" · ").ifBlank { null }
+}
+
+@Composable
+private fun FilterQueryField(
+    saved: String,
+    onSave: (String) -> Unit,
+    label: String,
+) {
+    val draft = remember { FilterQueryDraft(saved) }
+    var text by remember { mutableStateOf(draft.text) }
+    SideEffect {
+        draft.observe(saved)
+        if (text != draft.text) text = draft.text
+    }
+    FieldwatchOutlinedField(
+        text,
+        { next ->
+            if (draft.edit(next)) {
+                text = draft.text
+                onSave(next)
+            }
+        },
+        label,
+    )
 }
 
 @Composable

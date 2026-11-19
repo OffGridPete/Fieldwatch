@@ -113,7 +113,8 @@ class SignatureEngine {
         val wifiPlans = ArrayList<Int>(fleets.size)
         val blePlans = ArrayList<Int>(fleets.size)
         fleets.forEachIndexed { idx, fleet ->
-            val active = fleet.rules.filter { it.enabled }
+            val blocked = !fleet.matchAny && fleet.rules.any { it.enabled && it.foreign != null }
+            val active = fleet.rules.filter { it.enabled && it.foreign == null }
             val other = ArrayList<FastRule>(8)
             active.forEach { rule ->
                 when (rule.kind) {
@@ -133,13 +134,16 @@ class SignatureEngine {
                 matchAny = fleet.matchAny,
                 otherRules = other,
                 rawRules = active,
+                blocked = blocked,
             )
-            when (radioScope(active)) {
-                RadioKind.WIFI -> wifiPlans += idx
-                RadioKind.BLE -> blePlans += idx
-                null -> {
-                    wifiPlans += idx
-                    blePlans += idx
+            if (!blocked && active.isNotEmpty()) {
+                when (radioScope(active)) {
+                    RadioKind.WIFI -> wifiPlans += idx
+                    RadioKind.BLE -> blePlans += idx
+                    null -> {
+                        wifiPlans += idx
+                        blePlans += idx
+                    }
                 }
             }
         }
@@ -229,12 +233,12 @@ class SignatureEngine {
         RuleKind.NAME_GLOB ->
             if (rule.text.isBlank()) null else FastRule.Glob(compileGlob(rule.text), rule.radio)
         RuleKind.SERVICE_UUID ->
-            if (rule.text.isBlank()) null else FastRule.Uuid(uuidAliases(rule.text), rule.radio)
+            if (rule.text.isBlank()) null else FastRule.Uuid(uuidAliases(rule.text), rule.radio ?: RadioKind.BLE)
         RuleKind.MANUFACTURER_ID ->
-            FastRule.MfgId(rule.companyId, rule.radio)
+            FastRule.MfgId(rule.companyId, rule.radio ?: RadioKind.BLE)
         RuleKind.MANUFACTURER_DATA -> {
             val prefix = hexOnly(rule.dataPrefixHex)
-            if (prefix.isEmpty()) null else FastRule.MfgData(rule.companyId, prefix, rule.radio)
+            if (prefix.isEmpty()) null else FastRule.MfgData(rule.companyId, prefix, rule.radio ?: RadioKind.BLE)
         }
         RuleKind.SERVICE_DATA -> {
             val prefix = hexOnly(rule.dataPrefixHex)
@@ -243,7 +247,7 @@ class SignatureEngine {
             else FastRule.SvcData(
                 aliases = aliases,
                 prefix = prefix,
-                radio = rule.radio,
+                radio = rule.radio ?: RadioKind.BLE,
                 contains = rule.text.isBlank() && prefix.isNotEmpty(),
             )
         }
@@ -268,10 +272,13 @@ class SignatureEngine {
     }
 
     private fun fleetHits(device: Sighting, plan: FleetPlan, ouiHit: Boolean): Boolean {
+        if (plan.blocked) return false
         if (plan.id == "fleet-ibeacon" && isTeslaPhoneKeyIBeacon(device)) return false
         if (plan.rawRules.isEmpty()) return false
         if (!plan.matchAny) {
-            return plan.rawRules.all { ruleHits(device, it) }
+            val applicable = plan.rawRules.filter { it.appliesTo(device.kind) }
+            if (applicable.isEmpty()) return false
+            return applicable.all { ruleHits(device, it) }
         }
         if (ouiHit) return true
         if (plan.otherRules.isEmpty()) return false
@@ -354,9 +361,7 @@ class SignatureEngine {
     }
 
     private fun ruleHits(device: Sighting, rule: MatchRule): Boolean {
-        if (rule.kind != RuleKind.RADIO_KIND && rule.radio != null && device.kind != rule.radio) {
-            return false
-        }
+        if (!rule.appliesTo(device.kind)) return false
         return when (rule.kind) {
             RuleKind.OUI, RuleKind.MAC_PREFIX ->
                 MacUtil.matchesPrefix(device.mac, rule.text) ||
@@ -438,7 +443,10 @@ class SignatureEngine {
         now: Long,
     ) {
         compiled.plans.forEachIndexed { idx, plan ->
-            if (!plan.cluster) return@forEachIndexed
+            if (!plan.cluster || plan.blocked) return@forEachIndexed
+            if (plan.rawRules.isEmpty() && plan.fleet.rules.any { it.enabled && it.foreign != null }) {
+                return@forEachIndexed
+            }
             val fleet = plan.fleet
             val windowMs = (if (fleet.peerWindowSec <= 0) 60 else fleet.peerWindowSec) * 1000L
             val live = devices.filter { now - it.lastSeen <= windowMs }
@@ -534,6 +542,7 @@ class SignatureEngine {
         val matchAny: Boolean,
         val otherRules: List<FastRule>,
         val rawRules: List<MatchRule>,
+        val blocked: Boolean,
     )
 
     private class LongOui(
@@ -599,7 +608,8 @@ class SignatureEngine {
         }
 
         object Hidden : FastRule() {
-            override fun hits(device: Sighting): Boolean = device.hiddenSsid
+            override fun hits(device: Sighting): Boolean =
+                device.kind == RadioKind.WIFI && device.hiddenSsid
         }
 
         companion object {

@@ -62,6 +62,7 @@ import app.fieldwatch.ui.component.FieldwatchFilterChip
 import app.fieldwatch.ui.component.FieldwatchOutlinedField
 import app.fieldwatch.ui.component.FieldwatchSwitch
 import app.fieldwatch.ui.component.SectionCard
+import app.fieldwatch.ui.component.WarningReachCard
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -220,27 +221,16 @@ private fun TrustedList(
         }
         Note(LanguageText.text("trusted.confidence.note"))
     }
-    SectionCard(LanguageText.text("trusted.reach")) {
-        Note(
-            LanguageText.text(
-                "trusted.reach.note",
-                mapOf(
-                    "beep" to LanguageText.text("ui.beep.label"),
-                    "voice" to LanguageText.text("ui.voice.label"),
-                    "watchlist" to LanguageText.text("settings.topic.alerts"),
-                ),
-            ),
-        )
-        SwitchRow(LanguageText.text("ui.beep.label"), settings.trustedBeep) { on ->
-            onChange { it.copy(trustedBeep = on) }
-        }
-        SwitchRow(LanguageText.text("ui.voice.label"), settings.trustedVoice) { on ->
-            onChange { it.copy(trustedVoice = on) }
-        }
-        SwitchRow(LanguageText.text("ui.system.notification"), settings.trustedShade) { on ->
-            onChange { it.copy(trustedShade = on) }
-        }
-    }
+    WarningReachCard(
+        intro = LanguageText.text("trusted.reach.note"),
+        beep = settings.trustedBeep,
+        onBeep = { on -> onChange { it.copy(trustedBeep = on) } },
+        voice = settings.trustedVoice,
+        onVoice = { on -> onChange { it.copy(trustedVoice = on) } },
+        voiceNote = LanguageText.text("trusted.voice.note"),
+        shade = settings.trustedShade,
+        onShade = { on -> onChange { it.copy(trustedShade = on) } },
+    )
     SectionCard(LanguageText.text("trusted.learn.section")) {
         SwitchRow(LanguageText.text("trusted.learn"), settings.trustedLearn) { on ->
             onChange { it.copy(trustedLearn = on) }
@@ -625,12 +615,10 @@ fun TrustedAlertDialog(vm: FieldwatchViewModel) {
         onDismissRequest = { vm.dismissTrusted(shown.ssid, shown.bssid) },
         title = { Text(TrustedNets.sentence(shown.ssid, shown.reasons)) },
         text = {
-            val note = if (shown.ouiNote) {
-                LanguageText.text("trusted.oui.note", mapOf("oui" to "00:13:37"))
-            } else {
-                ""
-            }
-            NoticeBody(note, MacUtil.screenMac(shown.bssid, ui.settings.demoMode))
+            NoticeBody(
+                TrustedNets.explain(shown.ouiNote),
+                MacUtil.screenMac(shown.bssid, ui.settings.demoMode),
+            )
         },
         confirmButton = {
             // One column. The dialog dismiss slot sits beside this column and covers the last action.

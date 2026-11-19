@@ -33,6 +33,13 @@ import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.TrackerWatch
 import app.fieldwatch.domain.trustedOpt
+import android.os.BatteryManager
+import app.fieldwatch.domain.BatteryFloor
+import app.fieldwatch.domain.BatteryFloorLive
+import app.fieldwatch.domain.BatteryFloorStep
+import app.fieldwatch.domain.BatteryMark
+import app.fieldwatch.domain.BatteryRestore
+import app.fieldwatch.domain.BatterySample
 import app.fieldwatch.domain.ScanIntensity
 import app.fieldwatch.domain.detectionPolicy
 import android.os.SystemClock
@@ -57,6 +64,10 @@ class ScanService : LifecycleService() {
     private val locationQuiet = LocationQuietWindow(nowMs = SystemClock::elapsedRealtime)
     private var locationWatching = false
     private var lastIntensity: ScanIntensity? = null
+    @Volatile private var batterySample: BatterySample? = null
+    private var batterySlowed = false
+    private var batteryStopping = false
+    private var batteryWatching = false
     private var lastNotifAt = 0L
     private val inbound = Channel<Observation>(512, BufferOverflow.DROP_OLDEST)
     private val publishGate = Any()
@@ -86,7 +97,13 @@ class ScanService : LifecycleService() {
                 app.devices.setScanning(true, msg)
             },
         )
+        registerBatteryWatch()
         startAsForeground()
+        val knownUas = app.devices.devices.value.mapNotNull { row ->
+            row.payloadUasId?.trim()?.takeIf { it.isNotEmpty() }
+        }
+        app.remoteIdSwarm.beginSession(knownUas)
+        app.alerter.clearSwarmNote()
         app.devices.setScanning(true, wifi.throttleHint())
         publishScanRadio()
         val locationOn = runCatching { app.systemLocationOn() }.getOrDefault(false)
@@ -102,6 +119,11 @@ class ScanService : LifecycleService() {
         pump = lifecycleScope.launch(Dispatchers.Default) { drainInbound() }
         loop = lifecycleScope.launch(Dispatchers.Default) {
             while (isActive) {
+                val decision = applyBatteryFloor()
+                if (decision == null) {
+                    stopScanning()
+                    break
+                }
                 val locationOn = runCatching { app.systemLocationOn() }.getOrDefault(false)
                 noteLocation(locationOn)
                 val hold = locationQuiet.radioHoldMs()
@@ -114,17 +136,19 @@ class ScanService : LifecycleService() {
                     resumeRadios = locationQuiet.takeRadioResume()
                     if (resumeRadios) restartRadios()
                     val settings = app.config.settings
-                    if (lastIntensity != settings.intensity) restartRadios()
+                    val effective = decision.effective
+                    if (lastIntensity != effective) restartRadios()
                     val unthrottled = !WifiRadio.osScanThrottled(this@ScanService)
-                    val wifiMin = if (unthrottled) {
+                    val ownPace = effective == settings.intensity
+                    val wifiMin = if (unthrottled && ownPace) {
                         WifiRadio.FAST_INTERVAL_MS
-                    } else when (settings.intensity) {
+                    } else when (effective) {
                         ScanIntensity.PERFORMANCE -> 30_000L
                         ScanIntensity.BALANCED -> 40_000L
                         ScanIntensity.SAVER -> 55_000L
                     }
                     if (!locationQuiet.radiosHeld()) {
-                        wifi.requestScan(wifiMin, unthrottled = unthrottled)
+                        wifi.requestScan(wifiMin, unthrottled = unthrottled && ownPace)
                     }
                     if (!bleStartPending() && ble.needsRestart() && !locationQuiet.radiosHeld()) {
                         app.devices.setRadioHold(ble = true)
@@ -140,7 +164,7 @@ class ScanService : LifecycleService() {
                                 resumeRadios = true
                                 restartRadios()
                             }
-                            else -> ble.start(settings.intensity)
+                            else -> ble.start(decision.effective)
                         }
                     }
                 }
@@ -156,9 +180,11 @@ class ScanService : LifecycleService() {
                     .joinToString(" · ")
                 app.devices.setScanning(true, hint)
                 publishScanRadio()
-                app.pairingFlood.tick(System.currentTimeMillis(), app.floodSpeed())
+                val swarmNow = System.currentTimeMillis()
+                app.pairingFlood.tick(swarmNow, app.floodSpeed())
                 app.sits.noteFloods(app.pairingFlood.bursts())
                 app.sits.noteFloods(app.wifiFlood.bursts())
+                app.announceSwarm(app.passRemoteIdSwarm(swarmNow))
                 val locationHeld = locationQuiet.locationHeld()
                 val resumeLocation = !resumeRadios && locationQuiet.takeLocationResume()
                 if (resumeLocation) {
@@ -231,7 +257,7 @@ class ScanService : LifecycleService() {
         val app = application as FieldwatchApp
         if (locationQuiet.radiosHeld()) return
         if (!runCatching { app.systemLocationOn() }.getOrDefault(false)) return
-        val intensity = app.config.settings.intensity
+        val intensity = effectiveIntensity()
         lastIntensity = intensity
         wifi.start()
         if (ble.isRunning()) {
@@ -246,7 +272,7 @@ class ScanService : LifecycleService() {
             if (!isActive || locationQuiet.radiosHeld()) return@launch
             val app = application as FieldwatchApp
             if (!runCatching { app.systemLocationOn() }.getOrDefault(false)) return@launch
-            ble.start(app.config.settings.intensity)
+            ble.start(effectiveIntensity())
             if (locationQuiet.radiosHeld() || !runCatching { app.systemLocationOn() }.getOrDefault(false)) {
                 ble.stop()
             }
@@ -377,6 +403,7 @@ class ScanService : LifecycleService() {
         if (raised != null || (before != null && after?.id != before)) {
             app.syncTrackerShade(after)
         }
+        if (raised != null) app.announceTracker(raised)
     }
 
     /** Lets a separated clock finish, or drop, between advertisements. */
@@ -401,6 +428,7 @@ class ScanService : LifecycleService() {
         if (raised != null || (before != null && after?.id != before)) {
             app.syncTrackerShade(after)
         }
+        if (raised != null) app.announceTracker(raised)
     }
 
     /**
@@ -435,17 +463,10 @@ class ScanService : LifecycleService() {
                 now,
             ) ?: continue
             val sentence = TrustedNets.sentence(alert.ssid, alert.reasons)
-            val note = if (alert.ouiNote) {
-                LanguageText.text("trusted.oui.note", mapOf("oui" to "00:13:37"))
-            } else {
-                null
-            }
             val body = buildString {
+                append(TrustedNets.explain(alert.ouiNote))
+                append('\n')
                 append(MacUtil.screenMac(alert.bssid, demo))
-                if (note != null) {
-                    append('\n')
-                    append(note)
-                }
             }
             app.alerter.trustedAlert(
                 title = sentence,
@@ -494,6 +515,10 @@ class ScanService : LifecycleService() {
             val liveKeys = live.mapTo(HashSet(live.size)) { it.key }
             app.pairingFlood.prune(liveKeys)
             app.wifiFlood.prune(liveKeys)
+            val nowMs = System.currentTimeMillis()
+            val swarm = app.passRemoteIdSwarm(nowMs)
+            val near = app.passDroneNear(nowMs)
+            val quietFleets = if (swarm.quiet) app.droneFleetIds() else emptySet()
             if (settings.alertsEnabled && app.config.watchlist.isNotEmpty()) {
                 app.alerter.checkLive(
                     live,
@@ -508,8 +533,19 @@ class ScanService : LifecycleService() {
                     visibleOnLive = app::wouldShowOnLive,
                     arrivalsOnly = app.config.filter.arrivalsOnly,
                     demoMode = settings.demoMode,
+                    quietDroneFleets = quietFleets,
+                    holdRemoteId = { device ->
+                        app.droneNear.holdsBookmark(
+                            device,
+                            RadioBookmarks.mineKeys(app.config.watchlist),
+                            nowMs,
+                            settings.droneNearM,
+                        )
+                    },
                 )
             }
+            app.announceSwarm(swarm)
+            app.announceDroneNear(near)
             val gnss = app.gnss.reading.value
             val floodNotice = app.pairingFlood.notice.value ?: app.wifiFlood.notice.value
             val phoneNote = listOfNotNull(
@@ -528,6 +564,7 @@ class ScanService : LifecycleService() {
                 gnssLives = gnss.lives,
                 installTag = cfg.takInstallTag,
                 legacySelfRetired = cfg.takLegacySelfRetired,
+                swarmNote = { device -> app.remoteIdSwarm.memberLine(device.payloadUasId) },
             )
             if (legacyRetired) {
                 app.config.update { cur ->
@@ -615,6 +652,130 @@ class ScanService : LifecycleService() {
         stopScanning()
     }
 
+    /**
+     * Returns null when this pass must stop the service.
+     * The saved intensity is unchanged. [lastIntensity] follows the effective one.
+     */
+    private fun applyBatteryFloor(): app.fieldwatch.domain.BatteryFloorResult? {
+        val app = application as FieldwatchApp
+        val settings = app.config.settings
+        val sample = batterySample
+        val decision = BatteryFloor.evaluate(settings, sample, batterySlowed)
+        app.publishBatteryFloor(
+            BatteryFloorLive(
+                percent = sample?.percent ?: -1,
+                plugged = sample?.plugged == true,
+                step = decision.step,
+            ),
+        )
+        when (decision.step) {
+            BatteryFloorStep.STOPPED -> {
+                val percent = sample?.percent ?: -1
+                app.sits.noteBattery(BatteryMark(System.currentTimeMillis(), "STOPPED", percent))
+                postBatteryStop(percent)
+                batteryStopping = true
+                return null
+            }
+            BatteryFloorStep.SLOW -> {
+                if (!batterySlowed) {
+                    batterySlowed = true
+                    app.sits.noteBattery(
+                        BatteryMark(
+                            System.currentTimeMillis(),
+                            "SLOWED",
+                            sample?.percent ?: -1,
+                        ),
+                    )
+                }
+            }
+            BatteryFloorStep.NONE -> {
+                if (batterySlowed) {
+                    batterySlowed = false
+                    val restored = decision.restored
+                    if (restored != null) {
+                        app.sits.noteBattery(
+                            BatteryMark(
+                                System.currentTimeMillis(),
+                                "RESTORED",
+                                sample?.percent ?: -1,
+                                plugged = restored == BatteryRestore.CHARGING,
+                                intensity = settings.intensity.name,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+        return decision
+    }
+
+    private fun effectiveIntensity(): ScanIntensity {
+        val app = application as FieldwatchApp
+        return BatteryFloor.evaluate(app.config.settings, batterySample, batterySlowed).effective
+    }
+
+    private val batteryWatch = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            batterySample = readBattery(intent)
+        }
+    }
+
+    private fun registerBatteryWatch() {
+        if (batteryWatching) return
+        val sticky = runCatching {
+            registerReceiver(batteryWatch, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        }.getOrNull()
+        batterySample = readBattery(sticky)
+        batteryWatching = true
+    }
+
+    private fun unregisterBatteryWatch() {
+        if (!batteryWatching) return
+        runCatching { unregisterReceiver(batteryWatch) }
+        batteryWatching = false
+    }
+
+    private fun readBattery(intent: Intent?): BatterySample? {
+        if (intent == null) return null
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
+        if (level < 0 || scale <= 0) return BatterySample(-1, plugged)
+        return BatterySample(((level * 100) / scale).coerceIn(0, 100), plugged)
+    }
+
+    private fun postBatteryStop(percent: Int) {
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    BATTERY_CHANNEL,
+                    LanguageText.text("ui.battery.label"),
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    setShowBadge(false)
+                    setSound(null, null)
+                },
+            )
+        }
+        val launch = PendingIntent.getActivity(
+            this,
+            2,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val level = if (percent < 0) "—" else percent.toString()
+        val note = NotificationCompat.Builder(this, BATTERY_CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+            .setContentTitle(LanguageText.text("ui.battery.stopped.title"))
+            .setContentText(LanguageText.text("ui.battery.stopped.body", mapOf("n" to level)))
+            .setAutoCancel(true)
+            .setContentIntent(launch)
+            .build()
+        nm.notify(BATTERY_NOTE_ID, note)
+    }
+
     override fun onDestroy() {
         unregisterLocationWatch()
         loop?.cancel()
@@ -628,8 +789,18 @@ class ScanService : LifecycleService() {
         runCatching { ble.stop() }
         runCatching { (application as FieldwatchApp).tak.close() }
         val app = application as FieldwatchApp
+        app.remoteIdSwarm.endSession()
+        app.alerter.clearSwarmNote()
         app.devices.setScanning(false)
         app.gnss.stop()
+        unregisterBatteryWatch()
+        if (!batteryStopping) {
+            val appNow = application as? FieldwatchApp
+            val live = appNow?.batteryFloor?.value
+            if (appNow != null && live != null) {
+                appNow.publishBatteryFloor(live.copy(step = BatteryFloorStep.NONE))
+            }
+        }
         app.stopLocationUpdates()
         if (Build.VERSION.SDK_INT >= 24) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -667,6 +838,8 @@ class ScanService : LifecycleService() {
         const val CHANNEL = "fieldwatch_scan"
         const val ACTION_STOP = "app.fieldwatch.STOP_SCAN"
         private const val NOTIF_ID = 42
+        private const val BATTERY_NOTE_ID = 43
+        private const val BATTERY_CHANNEL = "fieldwatch_battery"
         private const val PUBLISH_MS = 200L
         private const val BLE_START_STAGGER_MS = 500L
         private const val GNSS_START_DELAY_MS = 1_500L

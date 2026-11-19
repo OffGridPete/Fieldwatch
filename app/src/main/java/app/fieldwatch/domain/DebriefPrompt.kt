@@ -34,6 +34,9 @@ object DebriefPrompt {
         trusted: List<TrustedSitLine> = emptyList(),
         cells: List<CellMark> = emptyList(),
         savedCameras: List<FlockCamera>? = null,
+        swarms: List<SwarmBurst> = emptyList(),
+        battery: List<BatteryMark> = emptyList(),
+        droneNear: List<DroneNearMark> = emptyList(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -76,6 +79,9 @@ object DebriefPrompt {
             trusted = trusted,
             cells = cells,
             savedCameras = savedCameras,
+            swarms = swarms,
+            battery = battery,
+            droneNear = droneNear,
         )
         val iso = utc(windowEnd)
         val start = utc(windowStart)

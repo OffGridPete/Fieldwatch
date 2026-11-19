@@ -273,6 +273,14 @@ fun DeviceDetailScreen(
             if (notes.isNotEmpty()) {
                 StickyHeight(device.key to "notes") { SignatureNotesCard(notes) }
             }
+            val swarmLine = vm.swarmMemberLine(device.payloadUasId)
+            if (swarmLine != null) {
+                Text(
+                    swarmLine,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
 
             var notesDraft by remember(device.key) {
                 mutableStateOf(vm.watchObserverNoteFor(device.key).orEmpty())

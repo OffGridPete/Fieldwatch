@@ -598,3 +598,149 @@ class Catalog113MigrationTest {
         assertEquals(ADDED_IN_V113.size, kept.count { it.id in ADDED_IN_V113 })
     }
 }
+
+class Catalog114MigrationTest {
+    @Test
+    fun addsSitFamiliesWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 114)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog114Migrate(listOf(other), stock).first
+        assertEquals(ADDED_IN_V114.size + 1, added.size)
+        ADDED_IN_V114.forEach { id ->
+            val row = added.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            if (id != "fleet-mentra-live" && id != "fleet-steiner-lrf") {
+                assertTrue(id, row.attentionNote.isBlank())
+            }
+            assertTrue(id, row.matchAny)
+            assertNull(row.decode)
+        }
+        assertEquals(
+            (listOf("DJI") + ADDED_IN_V114.map { stock.getValue(it).name }).sortedBy { it.lowercase() },
+            added.map { it.name },
+        )
+        assertEquals(SignatureClass.VEHICLE, added.single { it.id == "fleet-cobra" }.kind)
+        assertEquals(SignatureClass.SIGNAGE, added.single { it.id == "fleet-gli-open" }.kind)
+        assertEquals(SignatureClass.HOME, added.single { it.id == "fleet-lg-appliance" }.kind)
+
+        val custom = stock.getValue("fleet-cobra").copy(builtIn = false, name = "Mine")
+        val kept = catalog114Migrate(listOf(custom, other), stock).first
+        assertEquals("Mine", kept.single { it.id == "fleet-cobra" }.name)
+        assertFalse(kept.single { it.id == "fleet-cobra" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-cobra" })
+        assertEquals(ADDED_IN_V114.size, kept.count { it.id in ADDED_IN_V114 })
+    }
+
+    @Test
+    fun copiesNameRuleNotesOnlyWhenUnedited() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val base = DefaultCatalog.fleets().map { fleet ->
+            when (fleet.id) {
+                "fleet-bmw" -> fleet.copy(notes = BMW_NOTES_BEFORE_V114)
+                "fleet-gm-hotspot" -> fleet.copy(notes = GM_HOTSPOT_NOTES_BEFORE_V114)
+                "fleet-mbux" -> fleet.copy(notes = MBUX_NOTES_BEFORE_V114)
+                "fleet-nissan" -> fleet.copy(notes = NISSAN_NOTES_BEFORE_V114)
+                "fleet-hp" -> fleet.copy(notes = HP_NOTES_BEFORE_V114)
+                "fleet-samsung-tv" -> fleet.copy(notes = SAMSUNG_TV_NOTES_BEFORE_V114)
+                "fleet-carlink" -> fleet.copy(notes = CARLINK_NOTES_BEFORE_V114)
+                else -> fleet
+            }
+        } + Fleet(
+            id = "custom-printer",
+            name = "Mine",
+            builtIn = false,
+            notes = "My printer",
+            rules = listOf(MatchRule(RuleKind.NAME_CONTAINS, text = "Printer")),
+        )
+        val updated = catalog114Migrate(base, stock).first
+        assertEquals(base.map { it.id }, updated.map { it.id })
+        assertEquals(stock.getValue("fleet-bmw").notes, updated.single { it.id == "fleet-bmw" }.notes)
+        assertEquals(stock.getValue("fleet-gm-hotspot").notes, updated.single { it.id == "fleet-gm-hotspot" }.notes)
+        assertEquals(stock.getValue("fleet-mbux").notes, updated.single { it.id == "fleet-mbux" }.notes)
+        assertEquals(stock.getValue("fleet-nissan").notes, updated.single { it.id == "fleet-nissan" }.notes)
+        assertEquals(stock.getValue("fleet-hp").notes, updated.single { it.id == "fleet-hp" }.notes)
+        assertEquals(stock.getValue("fleet-samsung-tv").notes, updated.single { it.id == "fleet-samsung-tv" }.notes)
+        assertEquals(stock.getValue("fleet-carlink").notes, updated.single { it.id == "fleet-carlink" }.notes)
+        assertEquals("My printer", updated.single { it.id == "custom-printer" }.notes)
+    }
+
+    @Test
+    fun bookmarksMentraAndCrossfireAndRefreshesGlassesWhenUnedited() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val oldFrame = stock.getValue("fleet-brilliant-frame").copy(
+            name = BRILLIANT_NAME_BEFORE_V114,
+            notes = BRILLIANT_NOTES_BEFORE_V114,
+            attentionNote = BRILLIANT_ATTENTION_BEFORE_V114,
+            rules = BRILLIANT_RULES_BEFORE_V114,
+        )
+        val patchedFrame = oldFrame.copy(
+            rules = BRILLIANT_RULES_BEFORE_V114 + stock.getValue("fleet-brilliant-frame").rules,
+        )
+        val oldEven = stock.getValue("fleet-even-g1").copy(
+            name = EVEN_NAME_BEFORE_V114,
+            notes = EVEN_NOTES_BEFORE_V114,
+            attentionNote = EVEN_ATTENTION_BEFORE_V114,
+            rules = EVEN_RULES_BEFORE_V114,
+        )
+        val customRule = MatchRule(RuleKind.NAME_CONTAINS, text = "Mine", radio = RadioKind.BLE)
+        val editedFrame = oldFrame.copy(rules = listOf(customRule))
+        val customEven = oldEven.copy(builtIn = false, name = "Mine")
+        val (added, watches) = catalog114Migrate(
+            listOf(other, oldFrame, oldEven),
+            stock,
+            listOf(WatchTarget(id = "watch-frame", fleetId = "fleet-brilliant-frame", label = "Brilliant Frame")),
+        )
+        assertEquals(stock.getValue("fleet-brilliant-frame").rules, added.single { it.id == "fleet-brilliant-frame" }.rules)
+        assertEquals("Brilliant Labs glasses (Frame / Halo)", added.single { it.id == "fleet-brilliant-frame" }.name)
+        assertEquals(stock.getValue("fleet-even-g1").rules, added.single { it.id == "fleet-even-g1" }.rules)
+        assertEquals("Even Realities G1 / G2", added.single { it.id == "fleet-even-g1" }.name)
+        assertEquals("Brilliant Labs glasses (Frame / Halo)", watches.single { it.fleetId == "fleet-brilliant-frame" }.label)
+        assertTrue(watches.any { it.id == "watch-fleet-steiner-lrf" && it.fleetId == "fleet-steiner-lrf" })
+        assertEquals(1, watches.count { it.fleetId == "fleet-steiner-lrf" })
+        assertTrue(watches.any { it.fleetId == "fleet-mentra-live" })
+        assertTrue(watches.any { it.fleetId == "fleet-tbs-crossfire" })
+        assertFalse(watches.any { it.fleetId == "fleet-rnode" })
+        assertFalse(watches.any { it.fleetId == "fleet-hikmicro-optics" })
+        assertFalse(watches.any { it.fleetId == "fleet-pulsar-optics" })
+        assertFalse(watches.any { it.fleetId == "fleet-steiner-burris-thermal" })
+        assertFalse(watches.any { it.fleetId == "fleet-phillips-connect" })
+        assertFalse(watches.any { it.fleetId == "fleet-elk-led" })
+        assertEquals(1, watches.count { it.fleetId == "fleet-mentra-live" })
+
+        val again = catalog114Migrate(added, stock, watches)
+        assertEquals(watches.map { it.fleetId }, again.second.map { it.fleetId })
+        assertFalse(catalog114Pending(again.first, stock))
+
+        val (patched, _) = catalog114Migrate(listOf(patchedFrame), stock)
+        assertEquals(
+            stock.getValue("fleet-brilliant-frame").rules,
+            patched.single { it.id == "fleet-brilliant-frame" }.rules,
+        )
+
+        val (keptRules, _) = catalog114Migrate(listOf(editedFrame), stock)
+        val keptFrame = keptRules.single { it.id == "fleet-brilliant-frame" }
+        assertEquals(listOf(customRule), keptFrame.rules)
+        assertEquals("Brilliant Labs glasses (Frame / Halo)", keptFrame.name)
+
+        val (keptCustom, _) = catalog114Migrate(listOf(customEven, other), stock)
+        assertEquals("Mine", keptCustom.single { it.id == "fleet-even-g1" }.name)
+        assertEquals(EVEN_RULES_BEFORE_V114, keptCustom.single { it.id == "fleet-even-g1" }.rules)
+    }
+
+    @Test
+    fun keepsACustomSteinerLrfAndBookmarksTheStockRowOnce() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val custom = stock.getValue("fleet-steiner-lrf").copy(builtIn = false, name = "Mine", attentionNote = "")
+        val other = stock.getValue("fleet-dji")
+        val (kept, watches) = catalog114Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-steiner-lrf" }.name)
+        assertFalse(kept.single { it.id == "fleet-steiner-lrf" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-steiner-lrf" })
+        assertEquals(1, watches.count { it.fleetId == "fleet-steiner-lrf" })
+        val (again, againWatches) = catalog114Migrate(kept, stock, watches)
+        assertEquals(watches.map { it.fleetId }, againWatches.map { it.fleetId })
+        assertEquals("Mine", again.single { it.id == "fleet-steiner-lrf" }.name)
+    }
+}

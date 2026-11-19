@@ -254,10 +254,14 @@ object DebriefReport {
         trusted: List<TrustedSitLine> = emptyList(),
         cells: List<CellMark> = emptyList(),
         savedCameras: List<FlockCamera>? = null,
+        swarms: List<SwarmBurst> = emptyList(),
+        battery: List<BatteryMark> = emptyList(),
+        droneNear: List<DroneNearMark> = emptyList(),
     ): String = document(
         devices, fleets, settings, operatorPath, now, places, window,
         customNames, observerNotes, bookmarkedKeys, watchedFleetIds, mineKeys,
-        floods, gnss, placeRecords, cameras, trusted, cells, savedCameras,
+        floods, gnss, placeRecords, cameras, trusted, cells, savedCameras, swarms, battery,
+        droneNear,
     ).toPlainText()
 
     fun document(
@@ -280,6 +284,9 @@ object DebriefReport {
         trusted: List<TrustedSitLine> = emptyList(),
         cells: List<CellMark> = emptyList(),
         savedCameras: List<FlockCamera>? = null,
+        swarms: List<SwarmBurst> = emptyList(),
+        battery: List<BatteryMark> = emptyList(),
+        droneNear: List<DroneNearMark> = emptyList(),
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -681,6 +688,15 @@ object DebriefReport {
             add(DebriefSection(next(), LanguageText.text("ui.anomalies.label"), anomalyBody))
             floodBody(floods, windowStart, windowEnd)?.let { body ->
                 add(DebriefSection(next(), LanguageText.text("ui.flood.label"), body))
+            }
+            swarmBody(swarms, windowStart, windowEnd)?.let { body ->
+                add(DebriefSection(next(), LanguageText.text("ui.swarm.section"), body))
+            }
+            nearBody(droneNear, windowStart, windowEnd)?.let { body ->
+                add(DebriefSection(next(), LanguageText.text("ui.near.section"), body))
+            }
+            batteryBody(battery, windowStart, windowEnd)?.let { body ->
+                add(DebriefSection(next(), LanguageText.text("ui.battery.label"), body))
             }
             gnssBody(gnss, windowStart, windowEnd, onPath = gnssOnPath)?.let { body ->
                 add(DebriefSection(next(), "GNSS", body, alert = true))
@@ -1599,6 +1615,24 @@ object DebriefReport {
                 appendLine(LanguageText.text("ui.path.map.marks.where"))
             }
         }.trimEnd()
+    }
+
+    private fun batteryBody(marks: List<BatteryMark>, start: Long, end: Long): String? {
+        val rows = marks.filter { it.at in start..end }.sortedBy { it.at }
+        if (rows.isEmpty()) return null
+        return rows.joinToString("\n") { BatteryFloor.debriefLine(it) }
+    }
+
+    private fun nearBody(marks: List<DroneNearMark>, start: Long, end: Long): String? {
+        val rows = marks.filter { it.at in start..end }.sortedBy { it.at }
+        if (rows.isEmpty()) return null
+        return rows.joinToString("\n") { it.reportLine() }
+    }
+
+    private fun swarmBody(swarms: List<SwarmBurst>, start: Long, end: Long): String? {
+        val rows = swarms.filter { it.at in start..end }.sortedBy { it.at }
+        if (rows.isEmpty()) return null
+        return rows.joinToString("\n") { it.reportLine() }
     }
 
     private fun floodBody(floods: List<FloodBurst>, start: Long, end: Long): String? {

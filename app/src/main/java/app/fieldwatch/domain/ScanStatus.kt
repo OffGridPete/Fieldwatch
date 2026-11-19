@@ -115,6 +115,7 @@ object ScanStatus {
         gnssRows: List<Pair<String, String>> = emptyList(),
         tak: TakDiagFacts = TakDiagFacts(),
         cellRows: List<Pair<String, String>> = emptyList(),
+        extraChecks: List<String> = emptyList(),
     ): ScanStatusReport {
         val rows = listOf(
             LanguageText.text("ui.app.label") to "${phone.versionName} (${phone.versionCode})",
@@ -136,7 +137,7 @@ object ScanStatus {
             LanguageText.text("tab.filters") to filtersLabel(phone),
         ) + takRows(tak) + gnssRows + cellRows
         val verdict = verdict(radio, phone, radiosOnAir)
-        val checks = checks(radio, phone, radiosOnAir)
+        val checks = checks(radio, phone, radiosOnAir) + extraChecks
         val blocked = isBlocked(radio, phone.locationOn, phone.locationPermission)
         val text = buildString {
             rows.forEach { (k, v) -> append(k).append(": ").append(v).append('\n') }

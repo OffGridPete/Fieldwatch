@@ -10,6 +10,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonObject
 
 /**
  * A signature pack, or a settings pack, named a value this app does not know.
@@ -186,7 +187,7 @@ internal object SignatureClassSerializer : KSerializer<SignatureClass> {
 
     override fun deserialize(decoder: Decoder): SignatureClass {
         val raw = decoder.decodeString()
-        return SignatureClass.entries.firstOrNull { it.name == raw } ?: throw CatalogNeedsNewerApp(raw)
+        return SignatureClass.entries.firstOrNull { it.name == raw } ?: SignatureClass.OTHER
     }
 }
 
@@ -257,11 +258,11 @@ fun spokenWatchPhrase(
     }
 }
 
-/** Test alert uses a Finder-tags / AirTags example so you can hear the mix without a live hit. */
+/** Test alert uses a finder-tags / Find My example so you can hear the mix without a live hit. */
 fun testWatchPhrase(what: AlertVoiceWhat): String = when (what) {
     AlertVoiceWhat.CLASS -> SignatureClass.FINDER.speechLabel()
-    AlertVoiceWhat.SIGNATURE -> speakableWatchName("Apple AirTags")
-    AlertVoiceWhat.BOTH -> "${SignatureClass.FINDER.speechLabel()}, ${speakableWatchName("Apple AirTags")}"
+    AlertVoiceWhat.SIGNATURE -> speakableWatchName("Find My (AirTag or other Apple)")
+    AlertVoiceWhat.BOTH -> "${SignatureClass.FINDER.speechLabel()}, ${speakableWatchName("Find My (AirTag or other Apple)")}"
 }
 
 @Serializable
@@ -321,7 +322,7 @@ internal object RuleKindSerializer : KSerializer<RuleKind> {
     }
 }
 
-@Serializable
+@Serializable(with = MatchRuleSerializer::class)
 data class MatchRule(
     val kind: RuleKind,
     val text: String = "",
@@ -329,6 +330,8 @@ data class MatchRule(
     val dataPrefixHex: String = "",
     val radio: RadioKind? = null,
     val enabled: Boolean = true,
+    /** Original object when [kind] or [radio] is not one this phone applies. */
+    val foreign: JsonObject? = null,
 )
 
 @Serializable
@@ -351,6 +354,12 @@ data class Fleet(
     /** Optional BLE cleartext field map. Null = no signature decode. */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val decode: FleetDecode? = null,
+    /** Empty until a file names a publisher. A built-in row can be filled with fieldwatch. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val publisher: String = "",
+    /** Class token this phone does not know. Display uses [kind], which is then Other. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val kindRaw: String = "",
 ) {
     /** Decode fields only apply to BLE ads. Hide the editor on Wi-Fi-only signatures. */
     fun canHaveBleDecode(): Boolean {
@@ -359,12 +368,57 @@ data class Fleet(
     }
 }
 
-fun MatchRule.couldMatchBle(): Boolean = when (kind) {
-    RuleKind.HIDDEN_SSID, RuleKind.VENDOR_IE_OUI -> false
-    RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA -> true
-    RuleKind.RADIO_KIND -> radio != RadioKind.WIFI
-    else -> radio != RadioKind.WIFI
+fun MatchRule.couldMatchBle(): Boolean {
+    if (foreign != null) return false
+    return when (kind) {
+        RuleKind.HIDDEN_SSID, RuleKind.VENDOR_IE_OUI -> false
+        RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA, RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA -> true
+        RuleKind.RADIO_KIND -> radio != RadioKind.WIFI
+        else -> radio != RadioKind.WIFI
+    }
 }
+
+/**
+ * Omitted radio on a service or company rule is Bluetooth only.
+ * Omitted radio on a hidden network or a vendor IE is Wi-Fi only.
+ * Omitted radio on a name or address applies to both. An unknown radio does not apply.
+ */
+fun MatchRule.appliesTo(kind: RadioKind): Boolean {
+    if (foreign != null) return false
+    if (this.kind == RuleKind.RADIO_KIND) return radio == null || radio == kind
+    if (radio != null) return radio == kind
+    return when (this.kind) {
+        RuleKind.SERVICE_UUID, RuleKind.SERVICE_DATA,
+        RuleKind.MANUFACTURER_ID, RuleKind.MANUFACTURER_DATA,
+        -> kind == RadioKind.BLE
+        RuleKind.HIDDEN_SSID, RuleKind.VENDOR_IE_OUI -> kind == RadioKind.WIFI
+        else -> true
+    }
+}
+
+/** This phone can show and edit the signature. Hidden rows stay in the file. */
+fun Fleet.visibleOnPhone(): Boolean {
+    val enabledRules = rules.filter { it.enabled }
+    if (enabledRules.none { it.foreign == null }) return false
+    if (!matchAny && enabledRules.any { it.foreign != null }) return false
+    return true
+}
+
+/** Id written to a file. A second publisher is stored as publisher:id so the list stays unique. */
+fun Fleet.exportId(): String {
+    val prefix = "$publisher:"
+    return if (publisher.isNotEmpty() && id.startsWith(prefix)) id.removePrefix(prefix) else id
+}
+
+/** Phone export. Built-in rows with no publisher yet are fieldwatch. Custom rows stay blank. */
+fun Fleet.forExport(): Fleet = copy(
+    id = exportId(),
+    publisher = when {
+        publisher.isNotEmpty() -> publisher
+        builtIn -> SignaturePack.PUBLISHER
+        else -> ""
+    },
+)
 
 @Serializable(with = DecodeSourceSerializer::class)
 enum class DecodeSource {
@@ -489,6 +543,7 @@ data class FleetDecode(
      */
     @EncodeDefault(EncodeDefault.Mode.NEVER)
     val includeCompanyId: Boolean = false,
+    @Serializable(with = DecodeFieldListSerializer::class)
     val fields: List<DecodeField> = emptyList(),
 )
 
@@ -1566,6 +1621,43 @@ data class AppSettings(
     val trackerFollow: Boolean = false,
     /** Popup when a finder reaches two stops. Off until chosen. The place list stays. */
     val trackerPlaces: Boolean = false,
+    /** Pip for a tracker warning. Independent of the watchlist beep. */
+    val trackerBeep: Boolean = true,
+    /** Spoken tracker warning title. On by default. Independent of watchlist voice. */
+    val trackerVoice: Boolean = true,
+    /** Silent notification for a tracker warning. Off unless chosen. */
+    val trackerShade: Boolean = false,
+    /** Many new Remote ID drones at once. Off until chosen, including after an upgrade. */
+    val remoteIdSwarm: Boolean = false,
+    /** Distinct new UAS IDs inside [swarmWindowSec]. Out of range clamps to 3–20. */
+    val swarmMinIds: Int = 5,
+    /** Seconds. Out of range clamps to 10–120. */
+    val swarmWindowSec: Int = 30,
+    /** Minutes with no new UAS ID before another warning. Out of range clamps to 1–10. */
+    val swarmQuietMin: Int = 2,
+    /** Pip for the swarm warning and the distance warning. Independent of the watchlist beep. */
+    val swarmBeep: Boolean = true,
+    /** Spoken swarm title, or broadcast within the distance. On by default. */
+    val swarmVoice: Boolean = true,
+    /** Silent notification for both warnings on this page. Off unless chosen. */
+    val swarmShade: Boolean = false,
+    /**
+     * Horizontal meters while Drone perimeter detection is on.
+     * 0 is off. Choices are 100, 250, 500, and 1000.
+     * Off until chosen, including after an upgrade.
+     */
+    val droneNearM: Int = 0,
+    /** Distance chip kept while the switch is off. Missing JSON is 250. */
+    val droneNearPick: Int = 250,
+    /**
+     * Drop to Battery saver, then stop, when the phone battery is low.
+     * Off until chosen, including after an upgrade. The saved intensity stays.
+     */
+    val batteryFloor: Boolean = false,
+    /** Percent. 0 is Off. Choices are 10, 15, 20, and 30. Missing JSON is 20. */
+    val batterySlowPct: Int = 20,
+    /** Percent. 0 is Off. Choices are 3, 5, and 10. Missing JSON is 5. */
+    val batteryStopPct: Int = 5,
 )
 
 const val DISCLAIMER_REV = 3

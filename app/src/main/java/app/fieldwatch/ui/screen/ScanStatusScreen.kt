@@ -37,7 +37,9 @@ import androidx.compose.ui.unit.dp
 import app.fieldwatch.BuildConfig
 import app.fieldwatch.FieldwatchApp
 import app.fieldwatch.radio.WifiRadio
+import app.fieldwatch.domain.BatteryFloor
 import app.fieldwatch.domain.CellWatch
+import app.fieldwatch.domain.DroneNear
 import app.fieldwatch.domain.GnssCalibration
 import app.fieldwatch.domain.ScanPhoneFacts
 import app.fieldwatch.domain.ScanStatus
@@ -67,7 +69,9 @@ fun ScanStatusScreen(
     val app = context.applicationContext as FieldwatchApp
     val gnss by app.gnss.reading.collectAsStateWithLifecycle()
     val cell by app.cells.reading.collectAsStateWithLifecycle()
+    val battery by app.batteryFloor.collectAsStateWithLifecycle()
     val gnssProfile by app.gnssProfile.profile.collectAsStateWithLifecycle()
+    val nearLine = DroneNear.diag(state.settings.droneNearM, app.gpsAccFix(now), now)
     val report = ScanStatus.report(
         radio = state.scanRadio,
         phone = scanPhoneFacts(context, state, now),
@@ -76,6 +80,7 @@ fun ScanStatusScreen(
         gnssRows = gnss.diagRows + GnssCalibration.diagRows(gnssProfile),
         tak = takDiag(state, app),
         cellRows = CellWatch.diagRows(cell),
+        extraChecks = listOfNotNull(nearLine),
     )
     Scaffold(
         contentWindowInsets = NestedTabInsets,
@@ -102,6 +107,19 @@ fun ScanStatusScreen(
             Text(LanguageText.text("ui.what.check"), style = MaterialTheme.typography.titleSmall)
             report.checks.forEach { line ->
                 Text(line, style = MaterialTheme.typography.bodyMedium)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    LanguageText.text("ui.battery.label"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(0.42f),
+                )
+                Text(
+                    BatteryFloor.diagValue(battery),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.weight(0.58f),
+                )
             }
             report.rows.forEach { (label, value) ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -24,8 +24,11 @@ internal object Cta2063 {
         "1914" to "BRINC",
         "1839FTD" to "Teal 2",
         "1839" to "Teal",
-        // Declared stems. Bare 1748 and 1668 are not these makers.
+        // Declared stems. Bare 1748, 1668, 1581, 1701, and 1587 are not these makers.
         "1748C" to "Autel",
         "1668B" to "Skydio",
+        "1581F" to "DJI",
+        "1701A" to "Percepto",
+        "1587A" to "AgEagle",
     )
 }

@@ -437,6 +437,44 @@ object AircraftTrail {
         return bits.joinToString(" · ")
     }
 
+    /**
+     * Altitude, course, and speed from the last advertised fix.
+     * A fix that left a field out keeps the current payload value.
+     * A number that is not finite is left off.
+     */
+    fun advertisedMotion(
+        trail: List<PayloadFix>,
+        alt: Double?,
+        heading: Double?,
+        speed: Double?,
+    ): Triple<Double?, Double?, Double?> {
+        val kept = trail.lastOrNull { PayloadLocation.validCoord(it.lat, it.lon) }
+        return Triple(
+            (kept?.alt ?: alt)?.takeIf { it.isFinite() },
+            (kept?.heading ?: heading)?.takeIf { it.isFinite() },
+            (kept?.speed ?: speed)?.takeIf { it.isFinite() },
+        )
+    }
+
+    /**
+     * Map-card lines for an advertised pin. Altitude, then speed, then course.
+     * Speed under 0 is left off. Course 0 is north and stays. A hear-point passes nulls.
+     */
+    fun motionLines(alt: Double?, heading: Double?, speed: Double?): List<String> {
+        val lines = ArrayList<String>(3)
+        if (alt != null && alt.isFinite()) {
+            lines += LanguageText.text("ui.craft.alt", mapOf("n" to fmtNum(alt)))
+        }
+        if (speed != null && speed.isFinite() && speed >= 0.0) {
+            lines += LanguageText.text("ui.craft.speed", mapOf("n" to fmtNum(speed)))
+        }
+        if (heading != null && heading.isFinite()) {
+            val wrapped = ((heading % 360.0) + 360.0) % 360.0
+            lines += LanguageText.text("ui.craft.course", mapOf("n" to fmtNum(wrapped)))
+        }
+        return lines
+    }
+
     /** Path key row for the class icon at the end of an advertised track. */
     fun pathKeyLine(pic: Picture): String {
         val last = pic.fixes.lastOrNull()

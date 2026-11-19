@@ -9,10 +9,14 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 import kotlinx.coroutines.CancellationException
 
-/** HTTPS GET of the stock signature pack on GitHub. No account. */
+/**
+ * HTTPS GET of the stock signature pack on GitHub. No account.
+ * Phones on 1.1.44 still fetch dist/fieldwatch-signatures-v2.json.
+ * This build fetches the RSI file. That file is not on GitHub until it is pushed.
+ */
 object CatalogRemote {
     const val STOCK_PACK_URL =
-        "https://raw.githubusercontent.com/OffGridPete/Fieldwatch/main/dist/fieldwatch-signatures-v2.json"
+        "https://raw.githubusercontent.com/OffGridPete/Fieldwatch/main/dist/fieldwatch-signatures.rsi"
 
     enum class Reason {
         REACH, TRUST, SERVER, LARGE, EMPTY, OTHER,

@@ -93,9 +93,11 @@ object AdvPayloadDecoder {
                     }
                     0x08 -> out += RoleHint("siri", tx("explain.siri"), tx("explain.siri.why"), 6)
                     0x09 -> out += RoleHint("audio-speaker", tx("explain.airplay"), tx("explain.airplay.why"), 5)
-                    0x0B -> out += RoleHint("phone", tx("explain.handoff"), tx("explain.handoff.why"), 4)
-                    0x0C -> out += RoleHint("phone", tx("explain.hotspot.look"), tx("explain.hotspot.look.why"), 5)
-                    0x0D, 0x0E -> out += RoleHint("hotspot", tx("explain.hotspot.offer"), tx("explain.hotspot.offer.why"), 6)
+                    0x0A -> out += RoleHint("phone", tx("explain.airplay.source"), tx("explain.airplay.source.why"), 4)
+                    0x0B -> out += RoleHint("phone", tx("explain.magic.switch"), tx("explain.magic.switch.why"), 4)
+                    0x0C -> out += RoleHint("phone", tx("explain.handoff"), tx("explain.handoff.why"), 4)
+                    0x0D -> out += RoleHint("phone", tx("explain.hotspot.look"), tx("explain.hotspot.look.why"), 5)
+                    0x0E -> out += RoleHint("hotspot", tx("explain.hotspot.offer"), tx("explain.hotspot.offer.why"), 6)
                     0x0F -> out += RoleHint("phone", tx("explain.nearby.action"), nearbyActionReason(tlv.data), 4)
                     0x10 -> out += RoleHint("phone", tx("explain.nearby.info"), nearbyInfoReason(tlv.data), 5)
                     0x12 -> out += RoleHint("tag", tx("explain.findmy"), tx("explain.findmy.long"), 4)
@@ -161,11 +163,12 @@ object AdvPayloadDecoder {
                 }
                 0x07 -> decodeAirPods(tlv.data)
                 0x08 -> decodeHeySiri(tlv.data)
-                0x09 -> listOf(Field("AirPlay", "This device is advertising as an AirPlay source or target."))
-                0x0A -> listOf(Field("Magic Switch", "Apple Watch wrist / unlock related."))
-                0x0B -> decodeHandoff(tlv.data)
-                0x0C -> decodeHandoffOrTetherTarget(tlv.data)
-                0x0D, 0x0E -> decodeTetherSource(tlv.data)
+                0x09 -> listOf(Field("AirPlay Target", "This device is an AirPlay target, such as a speaker or Apple TV."))
+                0x0A -> listOf(Field("AirPlay Source", "This Apple device has the AirPlay menu open."))
+                0x0B -> listOf(Field("Magic Switch", "An Apple Watch with its screen on has lost its iPhone."))
+                0x0C -> decodeHandoff(tlv.data)
+                0x0D -> listOf(Field("Instant Hotspot (looking)", "This Mac or iPad is looking for a paired iPhone hotspot."))
+                0x0E -> decodeTetherSource(tlv.data)
                 0x0F -> decodeNearbyAction(tlv.data)
                 0x10 -> decodeNearbyInfo(tlv.data)
                 0x12 -> decodeFindMy(tlv.data)
@@ -230,11 +233,11 @@ object AdvPayloadDecoder {
         0x06 -> "HomeKit"
         0x07 -> "Proximity Pairing (AirPods / Beats)"
         0x08 -> "Hey Siri"
-        0x09 -> "AirPlay"
-        0x0A -> "Magic Switch (Watch)"
-        0x0B -> "Handoff"
-        0x0C -> "Handoff or Instant Hotspot (target)"
-        0x0D -> "Instant Hotspot (source)"
+        0x09 -> "AirPlay Target"
+        0x0A -> "AirPlay Source"
+        0x0B -> "Magic Switch (Watch)"
+        0x0C -> "Handoff"
+        0x0D -> "Instant Hotspot (target)"
         0x0E -> "Instant Hotspot (source)"
         0x0F -> "Nearby Action"
         0x10 -> "Nearby Info"
@@ -405,10 +408,6 @@ object AdvPayloadDecoder {
 
     private fun decodeHandoff(data: ByteArray): List<Field> =
         listOf(Field("Handoff", "Continuity Handoff: a task can be continued on another Apple device. Payload is encrypted."))
-
-    private fun decodeHandoffOrTetherTarget(data: ByteArray): List<Field> =
-        if (data.size >= 14) decodeHandoff(data)
-        else listOf(Field("Instant Hotspot (looking)", "This Apple device is searching for a paired phone’s hotspot."))
 
     private fun decodeTetherSource(data: ByteArray): List<Field> {
         if (data.size < 6) return listOf(Field("Instant Hotspot", "An iPhone/iPad is offering a personal hotspot."))

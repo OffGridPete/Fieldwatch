@@ -549,6 +549,8 @@ class SignatureExchangeTest {
         val pack = SignatureExchange.parse(json)
         assertEquals(stock.size, pack.fleets.size)
         assertEquals("fieldwatch-signatures", pack.format)
+        assertEquals("", pack.publisher)
+        assertTrue(pack.fleets.all { it.publisher.isEmpty() })
         assertEquals(37, pack.catalogVersion)
 
         val (merged, result) = SignatureExchange.merge(stock, pack.fleets)
@@ -605,7 +607,7 @@ class SignatureExchangeTest {
     }
 
     @Test
-    fun unknownClassRuleOrRadioAsksForANewerApp() {
+    fun unknownClassRuleOrRadioStaysInTheFile() {
         val base = """
             {"format":"fieldwatch-signatures","formatVersion":1,"catalogVersion":103,"fleets":[
               {"id":"fleet-x","name":"X","kind":"MESH","rules":[{"kind":"NAME_CONTAINS","text":"X","radio":"BLE"}]}
@@ -614,30 +616,51 @@ class SignatureExchangeTest {
         val back = SignatureExchange.parse(base)
         assertEquals(SignatureClass.MESH, back.fleets.single().kind)
         assertEquals(RadioKind.BLE, back.fleets.single().rules.single().radio)
-        assertNeedsNewer(base.replace("\"kind\":\"MESH\"", "\"kind\":\"NOT_A_CLASS\""), "NOT_A_CLASS")
-        assertNeedsNewer(base.replace("NAME_CONTAINS", "NOT_A_RULE"), "NOT_A_RULE")
-        assertNeedsNewer(base.replace("\"radio\":\"BLE\"", "\"radio\":\"ZIGBEE\""), "ZIGBEE")
-        assertNeedsNewer(base.replace("\"formatVersion\":1", "\"formatVersion\":2"), "formatVersion 2")
+        assertTrue(back.fleets.single().visibleOnPhone())
+
+        val unknownClass = SignatureExchange.parsePack(base.replace("\"kind\":\"MESH\"", "\"kind\":\"NOT_A_CLASS\""))
+        val classRow = unknownClass.pack.fleets.single()
+        assertEquals(SignatureClass.OTHER, classRow.kind)
+        assertEquals("NOT_A_CLASS", classRow.kindRaw)
+        assertTrue(classRow.visibleOnPhone())
+        val classJson = SignatureExchange.encode(unknownClass.pack)
+        assertTrue(classJson.contains("\"kind\": \"NOT_A_CLASS\""))
+        assertFalse(classJson.contains("kindRaw"))
+
+        val unknownRule = SignatureExchange.parsePack(base.replace("NAME_CONTAINS", "NOT_A_RULE"))
+        val ruleRow = unknownRule.pack.fleets.single()
+        assertTrue(ruleRow.rules.single().foreign.toString().contains("NOT_A_RULE"))
+        assertFalse(ruleRow.visibleOnPhone())
+        assertTrue(SignatureExchange.encode(unknownRule.pack).contains("NOT_A_RULE"))
+
+        val unknownRadio = SignatureExchange.parsePack(base.replace("\"radio\":\"BLE\"", "\"radio\":\"ZIGBEE\""))
+        assertFalse(unknownRadio.pack.fleets.single().visibleOnPhone())
+        assertTrue(SignatureExchange.encode(unknownRadio.pack).contains("ZIGBEE"))
+
+        val newer = SignatureExchange.parsePack(base.replace("\"formatVersion\":1", "\"formatVersion\":2"))
+        assertTrue(newer.newer)
+        assertEquals("fleet-x", newer.pack.fleets.single().id)
+        assertTrue(newer.pack.fleets.single().visibleOnPhone())
+
         val decode = base.replace(
             "\"rules\":[{\"kind\":\"NAME_CONTAINS\",\"text\":\"X\",\"radio\":\"BLE\"}]",
             "\"rules\":[{\"kind\":\"NAME_CONTAINS\",\"text\":\"X\",\"radio\":\"BLE\"}]," +
-                "\"decode\":{\"source\":\"manufacturerData\",\"fields\":[{\"id\":\"a\",\"label\":\"A\",\"offset\":0,\"type\":\"q99\"}]}",
+                "\"decode\":{\"source\":\"manufacturerData\",\"fields\":[" +
+                "{\"id\":\"a\",\"label\":\"A\",\"offset\":0,\"type\":\"q99\"}," +
+                "{\"id\":\"ok\",\"label\":\"Ok\",\"offset\":1,\"type\":\"u8\"}" +
+                "]}",
         )
-        assertNeedsNewer(decode, "q99")
+        val decoded = SignatureExchange.parsePack(decode)
+        assertEquals(listOf("ok"), decoded.pack.fleets.single().decode!!.fields.map { it.id })
+        val wifi = sighting(kind = RadioKind.WIFI, mac = "AA:BB:CC:11:22:33", name = "X")
+        assertFalse(
+            "fleet-x" in SignatureEngine().match(listOf(wifi), unknownRadio.pack.fleets).getValue(wifi.key),
+        )
         try {
             SignatureExchange.parse("not json")
             throw AssertionError("a broken file is not an app update")
         } catch (e: IllegalArgumentException) {
             assertTrue(e.message!!.contains("Not a Fieldwatch signature pack"))
-        }
-    }
-
-    private fun assertNeedsNewer(json: String, token: String) {
-        try {
-            SignatureExchange.parse(json)
-            throw AssertionError("expected a newer-app refusal for $token")
-        } catch (e: CatalogNeedsNewerApp) {
-            assertEquals(token, e.token)
         }
     }
 
@@ -716,7 +739,7 @@ class SignatureExchangeTest {
     }
 
     @Test
-    fun importedBodywornFoldsIntoWearables() {
+    fun importedBodywornStaysBodyworn() {
         val custom = Fleet(
             id = "custom-old-bodyworn",
             name = "Old body cam",
@@ -726,8 +749,157 @@ class SignatureExchangeTest {
         val (added, result) = SignatureExchange.merge(stock, listOf(custom))
         assertEquals(1, result.added)
         val row = added.first { it.id == custom.id }
-        assertEquals(SignatureClass.WEARABLE, row.kind)
-        assertTrue(added.none { it.kind == SignatureClass.BODYWORN })
+        assertEquals(SignatureClass.BODYWORN, row.kind)
+        assertEquals("", row.kindRaw)
+    }
+
+    @Test
+    fun exportPackIsRadioSignaturesAndPublishesBuiltInOnly() {
+        val custom = Fleet(
+            id = "custom-bag",
+            name = "Bag",
+            builtIn = false,
+            rules = listOf(MatchRule(RuleKind.NAME_CONTAINS, text = "Bag")),
+        )
+        val json = SignatureExchange.encode(
+            SignatureExchange.exportPack(
+                fleets = listOf(stock.first(), custom),
+                catalogVersion = 113,
+                appVersion = "1.1.44",
+                exportedAt = "now",
+            ),
+        )
+        assertTrue(json.contains("\"format\": \"radio-signatures\""))
+        val pack = SignatureExchange.parse(json)
+        assertEquals(SignaturePack.RSI_FORMAT, pack.format)
+        assertEquals(SignaturePack.PUBLISHER, pack.publisher)
+        assertEquals(SignaturePack.PUBLISHER, pack.fleets.first { it.builtIn }.publisher)
+        assertEquals("", pack.fleets.first { it.id == "custom-bag" }.publisher)
+    }
+
+    @Test
+    fun sameIdWithMissingPublisherStaysOneRow() {
+        val local = stock.first { it.id == "fleet-govee" }
+        val incoming = local.copy(publisher = "fieldwatch")
+        val (merged, result) = SignatureExchange.merge(listOf(local), listOf(incoming))
+        assertEquals(1, merged.size)
+        assertEquals(0, result.merged)
+        assertEquals(1, result.skipped)
+        assertEquals("fieldwatch", merged.single().publisher)
+        assertEquals("fleet-govee", merged.single().id)
+    }
+
+    @Test
+    fun differentPublisherSameIdIsASecondSignature() {
+        val local = stock.first { it.id == "fleet-govee" }.copy(publisher = "fieldwatch")
+        val incoming = local.copy(publisher = "example.com", name = "Other Govee")
+        val (merged, result) = SignatureExchange.merge(listOf(local), listOf(incoming))
+        assertEquals(1, result.added)
+        val other = merged.first { it.publisher == "example.com" }
+        assertEquals("example.com:fleet-govee", other.id)
+        val exported = SignatureExchange.parse(
+            SignatureExchange.encode(SignatureExchange.exportPack(merged, 1, "1.1.44", "now")),
+        )
+        assertEquals("fleet-govee", exported.fleets.first { it.publisher == "example.com" }.id)
+        assertEquals("fleet-govee", exported.fleets.first { it.publisher == "fieldwatch" }.id)
+    }
+
+    @Test
+    fun otherRadioIsLoadedHiddenAndDoesNotMatch() {
+        val json = """
+            {"format":"radio-signatures","formatVersion":1,"publisher":"example.com","catalogVersion":1,"fleets":[
+              {"id":"fleet-433","name":"Sensor","publisher":"example.com","matchAny":false,"rules":[
+                {"kind":"NAME_CONTAINS","text":"Sensor","radio":"ISM433"}
+              ]},
+              {"id":"fleet-mix","name":"Mix","matchAny":true,"rules":[
+                {"kind":"NAME_CONTAINS","text":"Desk","radio":"WIFI"},
+                {"kind":"PULSE","text":"x","radio":"ISM433","extra":1}
+              ]},
+              {"id":"fleet-all","name":"All","matchAny":false,"rules":[
+                {"kind":"NAME_CONTAINS","text":"Desk","radio":"WIFI"},
+                {"kind":"NAME_CONTAINS","text":"Nope","radio":"ISM433"}
+              ]},
+              {"id":"fleet-off","name":"Off","matchAny":false,"rules":[
+                {"kind":"NAME_CONTAINS","text":"Desk","radio":"WIFI"},
+                {"kind":"NAME_CONTAINS","text":"Nope","radio":"ISM433","enabled":false}
+              ]}
+            ]}
+        """.trimIndent()
+        val parsed = SignatureExchange.parsePack(json)
+        assertFalse(parsed.newer)
+        val fleets = parsed.pack.fleets
+        assertFalse(fleets[0].visibleOnPhone())
+        assertTrue(fleets[1].visibleOnPhone())
+        assertFalse(fleets[2].visibleOnPhone())
+        assertTrue(fleets[3].visibleOnPhone())
+        val wifi = sighting(kind = RadioKind.WIFI, mac = "AA:BB:CC:11:22:33", name = "Desk")
+        val hits = SignatureEngine().match(listOf(wifi), fleets).getValue(wifi.key)
+        assertFalse("fleet-433" in hits)
+        assertTrue("fleet-mix" in hits)
+        assertFalse("fleet-all" in hits)
+        assertTrue("fleet-off" in hits)
+        val encoded = SignatureExchange.encode(parsed.pack)
+        assertTrue(encoded.contains("ISM433"))
+        assertTrue(encoded.contains("PULSE"))
+        assertTrue(encoded.contains("extra"))
+        val again = SignatureExchange.parse(encoded)
+        assertEquals(4, again.fleets.size)
+        assertEquals("example.com", again.fleets.first { it.id == "fleet-433" }.publisher)
+    }
+
+    @Test
+    fun omittedServiceUuidDoesNotMatchWifi() {
+        val fleet = Fleet(
+            id = "fleet-svc",
+            name = "Svc",
+            matchAny = true,
+            rules = listOf(MatchRule(RuleKind.SERVICE_UUID, text = "FEA0")),
+        )
+        val wifi = sighting(kind = RadioKind.WIFI, mac = "AA:BB:CC:11:22:33", name = "FEA0").copy(
+            serviceUuids = listOf("FEA0"),
+        )
+        val ble = bleUuid("AA:BB:CC:DD:EE:09", "", "FEA0")
+        val engine = SignatureEngine()
+        assertFalse("fleet-svc" in engine.match(listOf(wifi), listOf(fleet)).getValue(wifi.key))
+        assertTrue("fleet-svc" in engine.match(listOf(ble), listOf(fleet)).getValue(ble.key))
+    }
+
+    @Test
+    fun matchAllIgnoresARuleForTheOtherRadio() {
+        val fleet = Fleet(
+            id = "fleet-split",
+            name = "Split",
+            matchAny = false,
+            rules = listOf(
+                MatchRule(RuleKind.NAME_CONTAINS, text = "Ray", radio = RadioKind.BLE),
+                MatchRule(RuleKind.NAME_CONTAINS, text = "Ray", radio = RadioKind.WIFI),
+            ),
+        )
+        assertTrue(fleet.visibleOnPhone())
+        val engine = SignatureEngine()
+        val wifi = sighting(kind = RadioKind.WIFI, mac = "AA:BB:CC:11:22:33", name = "Ray")
+        val bleHit = ble(name = "Ray")
+        assertTrue("fleet-split" in engine.match(listOf(wifi), listOf(fleet)).getValue(wifi.key))
+        assertTrue("fleet-split" in engine.match(listOf(bleHit), listOf(fleet)).getValue(bleHit.key))
+        val ray = sighting(kind = RadioKind.WIFI, mac = "AA:BB:CC:11:22:44", name = "RayNeo X")
+        assertFalse("fleet-rayneo" in engine.match(listOf(ray), stock).getValue(ray.key))
+    }
+
+    @Test
+    fun overlayKeepsBodywornClass() {
+        val local = Fleet(
+            id = "fleet-old-body",
+            name = "Old",
+            builtIn = true,
+            kind = SignatureClass.BODYWORN,
+            rules = listOf(MatchRule(RuleKind.NAME_CONTAINS, text = "Cam")),
+        )
+        val (next, result) = SignatureExchange.overlayStock(
+            listOf(local),
+            listOf(local.copy(notes = "kept")),
+        )
+        assertEquals(1, result.updated)
+        assertEquals(SignatureClass.BODYWORN, next.single().kind)
     }
 
     @Test

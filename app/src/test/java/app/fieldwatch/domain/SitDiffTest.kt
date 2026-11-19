@@ -415,6 +415,42 @@ class SitDiffTest {
         }
     }
 
+    @Test
+    fun compareMapKeepsAdvertisedMotion() {
+        val craft = radio("BLE:AA:BB:CC:DD:EE:10", "Remote ID", ble = true).copy(
+            bookmarked = true,
+            payloadLat = 28.9,
+            payloadLon = -81.5,
+            payloadAlt = 100.0,
+            payloadHeading = 90.0,
+            payloadSpeed = 5.0,
+        )
+        val hear = radio("BLE:AA:BB:CC:DD:EE:11", "tag", ble = true).copy(
+            bookmarked = true,
+            lat = 28.78,
+            lon = -81.37,
+            payloadAlt = 12.0,
+            payloadHeading = 20.0,
+            payloadSpeed = 1.0,
+        )
+        val path = listOf(
+            GpsSample(0L, 28.78, -81.37),
+            GpsSample(60_000L, 28.79, -81.37),
+        )
+        val doc = SitDiff.document(
+            SitDiff.Side("today", ram = false, radios = listOf(craft, hear), path = path),
+            SitDiff.Side("week", ram = false, radios = emptyList()),
+        )
+        val pin = doc.pathFigure!!.dots.single { it.advertised }
+        assertEquals(100.0, pin.altM!!, 0.0)
+        assertEquals(90.0, pin.headingDeg!!, 0.0)
+        assertEquals(5.0, pin.speedMps!!, 0.0)
+        val heard = doc.pathFigure!!.dots.single { !it.advertised }
+        assertNull(heard.altM)
+        assertNull(heard.headingDeg)
+        assertNull(heard.speedMps)
+    }
+
     private fun radio(
         key: String,
         name: String,

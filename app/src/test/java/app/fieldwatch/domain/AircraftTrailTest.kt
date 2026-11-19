@@ -241,6 +241,44 @@ class AircraftTrailTest {
     }
 
     @Test
+    fun motionLinesKeepAdvertisedNumbersAndDropTheRest() {
+        assertEquals(
+            listOf("Altitude: 100 m", "Speed: 5 m/s", "Course: 90°"),
+            AircraftTrail.motionLines(100.0, 90.0, 5.0),
+        )
+        assertEquals(
+            listOf("Altitude: -5 m", "Speed: 0 m/s", "Course: 0°"),
+            AircraftTrail.motionLines(-5.0, 0.0, 0.0),
+        )
+        assertEquals(
+            listOf("Altitude: 12.5 m", "Speed: 1.5 m/s", "Course: 90.4°"),
+            AircraftTrail.motionLines(12.5, 90.4, 1.5),
+        )
+        assertEquals(emptyList<String>(), AircraftTrail.motionLines(null, null, null))
+        assertEquals(emptyList<String>(), AircraftTrail.motionLines(Double.NaN, Double.NaN, -1.0))
+        assertEquals(listOf("Course: 10°"), AircraftTrail.motionLines(null, 370.0, null))
+        assertEquals(listOf("Course: 350°"), AircraftTrail.motionLines(null, -10.0, null))
+        val kept = AircraftTrail.advertisedMotion(
+            listOf(PayloadFix(1L, 1.0, 2.0, alt = null, heading = 180.0, speed = null)),
+            alt = 100.0,
+            heading = 90.0,
+            speed = 5.0,
+        )
+        assertEquals(100.0, kept.first!!, 0.0)
+        assertEquals(180.0, kept.second!!, 0.0)
+        assertEquals(5.0, kept.third!!, 0.0)
+        val dropped = AircraftTrail.advertisedMotion(
+            emptyList(),
+            alt = Double.NaN,
+            heading = Double.POSITIVE_INFINITY,
+            speed = -3.0,
+        )
+        assertNull(dropped.first)
+        assertNull(dropped.second)
+        assertEquals(-3.0, dropped.third!!, 0.0)
+    }
+
+    @Test
     fun advertisedNoteLeadsWithTheSerialMaker() {
         val note = AircraftTrail.advertisedNote(
             status = "Airborne",

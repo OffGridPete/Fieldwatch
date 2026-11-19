@@ -100,7 +100,7 @@ object EnglishCopy {
     const val FORMAT = "fieldwatch-language"
     const val FORMAT_VERSION = 1
 
-    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all + AppUpdateLines.all + TrackerLines.all + FrenchRidLines.all + RidAuthLines.all + HomekitLines.all + MatterLines.all + SidewalkLines.all + BthomeLines.all + ExposureLines.all
+    val lines: List<EnglishLine> = buildLines() + ChromeLines.all + CoverageLines.all + CellLines.all + AppUpdateLines.all + TrackerLines.all + FrenchRidLines.all + RidAuthLines.all + HomekitLines.all + MatterLines.all + SidewalkLines.all + BthomeLines.all + ExposureLines.all + SwarmLines.all + DroneNearLines.all
     val byKey: Map<String, EnglishLine> = lines.associateBy { it.key }
     val placeholders: Map<String, Set<String>> = lines.associate { it.key to placeholderNames(it.text) }
 
@@ -215,10 +215,10 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("settings.topic.appearance", "Appearance", LanguageSlot.CONTROL),
     en("settings.topic.scanning", "Scanning", LanguageSlot.CONTROL),
     en("settings.topic.watchlist", "Watchlist", LanguageSlot.CONTROL),
-    en("settings.topic.alerts", "Alerts", LanguageSlot.CONTROL),
+    en("settings.topic.alerts", "Signature watchlist alerts", LanguageSlot.CONTROL),
     en("settings.topic.location", "Location", LanguageSlot.CONTROL),
     en("settings.topic.location.maps", "Location and Maps", LanguageSlot.CONTROL),
-    en("settings.topic.gnss", "GNSS interference", LanguageSlot.CONTROL),
+    en("settings.topic.gnss", "GNSS interference monitoring", LanguageSlot.CONTROL),
     en("settings.topic.tak", "TAK / CoT", LanguageSlot.CONTROL),
     en("settings.topic.logging", "Logging", LanguageSlot.CONTROL),
     en("settings.topic.signatures", "Signatures", LanguageSlot.CONTROL),
@@ -552,7 +552,7 @@ private fun buildLines(): List<EnglishLine> = listOf(
     en("map.rotate.travel", "Rotate with travel", LanguageSlot.BODY),
     en("map.close.heading", "Nearby, heading up", LanguageSlot.BODY),
     en("map.close.north", "Nearby, north up", LanguageSlot.BODY),
-    en("ui.radios.here", "Radios here: {n}", LanguageSlot.CONTROL),
+    en("ui.radios.here", "Radios at this spot: {n}", LanguageSlot.CONTROL),
     en("ui.move.path", "Move the path", LanguageSlot.CONTROL),
     en("ui.waiting.gps.fix", "Waiting for a GPS fix.", LanguageSlot.BODY),
     en("display.mac", "MAC address", LanguageSlot.CONTROL),

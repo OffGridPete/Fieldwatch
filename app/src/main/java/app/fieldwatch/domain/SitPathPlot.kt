@@ -47,6 +47,12 @@ object SitPathPlot {
          * when this radio advertised them. Empty for a hear-point.
          */
         val advertisedNote: String = "",
+        /** Advertised altitude, meters. Null on a hear-point or when the ad left it out. */
+        val altM: Double? = null,
+        /** Advertised course, degrees clockwise from north. */
+        val headingDeg: Double? = null,
+        /** Advertised speed, meters per second. A negative value is stored and not shown. */
+        val speedMps: Double? = null,
     )
 
     data class Model(
@@ -1166,6 +1172,16 @@ object SitPathPlot {
                 val fleet = d.fleetIds.firstNotNullOfOrNull { id ->
                     fleets.firstOrNull { it.id == id && id in watchedFleetIds }
                 } ?: d.fleetIds.firstNotNullOfOrNull { id -> fleets.firstOrNull { it.id == id } }
+                val motion = if (pin != null) {
+                    AircraftTrail.advertisedMotion(
+                        d.payloadTrail,
+                        d.payloadAlt,
+                        d.payloadHeading,
+                        d.payloadSpeed,
+                    )
+                } else {
+                    Triple(null, null, null)
+                }
                 points += Dot(
                     key = d.key,
                     lat = fix.lat,
@@ -1207,6 +1223,9 @@ object SitPathPlot {
                     } else {
                         ""
                     },
+                    altM = motion.first,
+                    headingDeg = motion.second,
+                    speedMps = motion.third,
                 )
             }
         val sorted = if (alertsOnly) {
@@ -1378,6 +1397,16 @@ object SitPathPlot {
             val pin = advertisedFix(d)
             val fix = pin ?: loudestFix(d, since) ?: continue
             val fleet = d.fleetIds.firstNotNullOfOrNull { id -> fleets.firstOrNull { it.id == id } }
+            val motion = if (pin != null) {
+                AircraftTrail.advertisedMotion(
+                    d.payloadTrail,
+                    d.payloadAlt,
+                    d.payloadHeading,
+                    d.payloadSpeed,
+                )
+            } else {
+                Triple(null, null, null)
+            }
             points += Dot(
                 key = d.key,
                 lat = fix.lat,
@@ -1393,6 +1422,9 @@ object SitPathPlot {
                 classKind = fleet?.kind,
                 accentArgb = fleet?.let { Palette.color(it.colorIndex) } ?: 0,
                 advertised = pin != null,
+                altM = motion.first,
+                headingDeg = motion.second,
+                speedMps = motion.third,
             )
         }
         return points

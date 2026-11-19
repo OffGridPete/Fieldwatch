@@ -42,11 +42,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -77,6 +79,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.fieldwatch.data.PathTiles
+import app.fieldwatch.domain.AircraftTrail
 import app.fieldwatch.domain.CameraGather
 import app.fieldwatch.domain.FlockIndex
 import app.fieldwatch.domain.Geo
@@ -127,13 +130,23 @@ fun SitPathCanvas(
     modifier: Modifier = Modifier,
     tiles: List<PathTiles.Tile> = emptyList(),
     onOpenRadio: (String) -> Unit = {},
-    /** Live path fills its parent. Reports keep the fixed picture. */
+    /** Live path fills its parent. Reports keep a fixed picture. */
     expand: Boolean = false,
+    /** Height of that fixed picture. The live map ignores this. */
+    pictureHeight: Dp = 240.dp,
     viewport: SitPathPlot.Viewport? = null,
     /** Pinch and drag. Null keeps the picture fitted and ignores those gestures. */
     onViewport: ((SitPathPlot.Viewport?) -> Unit)? = null,
     /** Where this phone is now. Blank stays off. The path figure does not pass this. */
     position: String? = null,
+    /**
+     * Live list only. Distance and bearing from this phone to an advertised pin.
+     * Reports leave these unset, including an open sit and the last 15 minutes.
+     */
+    phoneLat: Double? = null,
+    phoneLon: Double? = null,
+    /** Privacy mode. Leaves that bearing line off. */
+    demoMode: Boolean = false,
     /** Degrees clockwise from north. NaN keeps this frame north-up. */
     courseDeg: Double = Double.NaN,
     /** [MapFrame]. Reports leave this at north-up and leave the button off. */
@@ -183,6 +196,7 @@ fun SitPathCanvas(
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val surface = MaterialTheme.colorScheme.surface
     val outline = MaterialTheme.colorScheme.outline
+    val spotBar = lerp(MaterialTheme.colorScheme.surfaceVariant, PhosphorActive.nightIf(night), 0.42f)
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val uriHandler = LocalUriHandler.current
@@ -349,6 +363,7 @@ fun SitPathCanvas(
         return if (onRight && camerasShown) maxOf(chrome, cameraCardClearDp(compass).dp) else chrome
     }
     fun mapCard(key: String, minWidth: Dp = 0.dp): Modifier {
+        val shape = RoundedCornerShape(8.dp)
         return Modifier
             .widthIn(min = minWidth, max = 248.dp)
             .onGloballyPositioned { coords ->
@@ -357,9 +372,9 @@ fun SitPathCanvas(
                 val h = coords.size.height.toFloat()
                 placedCard = MapCardBox(key, origin.x, origin.y, origin.x + w, origin.y + h)
             }
-            .background(surface, RoundedCornerShape(8.dp))
-            .border(1.dp, outline, RoundedCornerShape(8.dp))
-            .padding(8.dp)
+            .clip(shape)
+            .background(surface)
+            .border(1.dp, outline, shape)
     }
     fun handleTap(raw: Offset) {
         val lay = layout
@@ -434,7 +449,7 @@ fun SitPathCanvas(
         }
     }
     tapRef.value = { handleTap(it) }
-    val frame = if (expand) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(240.dp)
+    val frame = if (expand) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(pictureHeight)
     val gestures = if (onViewport == null) {
         Modifier.pointerInput(Unit) {
             detectTapGestures { tapRef.value(it) }
@@ -840,7 +855,8 @@ fun SitPathCanvas(
                 Modifier
                     .align(if (onRight) Alignment.TopEnd else Alignment.TopStart)
                     .padding(start = 8.dp, top = cardTop(onRight), end = 8.dp, bottom = 8.dp)
-                    .then(mapCard("g:$selectedGnss")),
+                    .then(mapCard("g:$selectedGnss"))
+                    .padding(8.dp),
             ) {
                 Text(
                     if (gnssCard.size == 1) LanguageText.text("ui.gnss.detection") else "${gnssCard.size} GNSS detections",
@@ -874,19 +890,19 @@ fun SitPathCanvas(
                     .then(mapCard("r:${selected.id}")),
             ) {
                 Text(
-                    if (model.live) {
-                        LanguageText.text(
-                            "ui.radios.here",
-                            mapOf("n" to selected.members.size.toString()),
-                        )
-                    } else if (selected.members.size == 1) {
-                        LanguageText.text("ui.1.alert.here")
-                    } else {
-                        "${selected.members.size} alerts here"
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = muted,
+                    LanguageText.text(
+                        if (model.live) "ui.radios.here" else "ui.1.alert.here",
+                        mapOf("n" to selected.members.size.toString()),
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(spotBar)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = track,
+                    textAlign = TextAlign.Center,
                 )
+                Column(Modifier.padding(8.dp)) {
                 selected.members.forEach { m ->
                     val accent = discColor(m.dot, night)
                     val obs = m.dot.observerNotes.trim()
@@ -919,8 +935,26 @@ fun SitPathCanvas(
                                     maxLines = 2,
                                 )
                             }
+                            if (m.dot.advertised) {
+                                AircraftTrail.motionLines(m.dot.altM, m.dot.headingDeg, m.dot.speedMps)
+                                    .forEach { line ->
+                                        Text(
+                                            line,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = muted,
+                                        )
+                                    }
+                                Geo.liveRange(phoneLat, phoneLon, m.dot.lat, m.dot.lon, demoMode)?.let { range ->
+                                    Text(
+                                        range,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = muted,
+                                    )
+                                }
+                            }
                         }
                     }
+                }
                 }
             }
         } else {
@@ -938,7 +972,8 @@ fun SitPathCanvas(
                     Modifier
                         .align(if (onRight) Alignment.TopEnd else Alignment.TopStart)
                         .padding(start = 8.dp, top = cardTop(onRight), end = 8.dp, bottom = 8.dp)
-                        .then(mapCard("c:${cameraId(picked)}", minWidth = 168.dp)),
+                        .then(mapCard("c:${cameraId(picked)}", minWidth = 168.dp))
+                        .padding(8.dp),
                 ) {
                     group.forEachIndexed { i, mark ->
                         if (i > 0) Spacer(Modifier.height(8.dp))

@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 113,
+    "catalogVersion": 114,
     "fleets": [
         {
             "id": "fleet-70mai",
@@ -326,6 +326,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-acuity",
+            "name": "Acuity lighting",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "7FC4C6D5-8FAB-452A-9871-8D707C939A6F",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 838,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Acuity Brands lighting on its service or company id. Not an Atrius cart tag.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-adtran",
@@ -938,55 +971,6 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
-        },
-        {
-            "id": "fleet-airtag",
-            "name": "Apple AirTags",
-            "enabled": true,
-            "matchAny": true,
-            "colorIndex": 4,
-            "rules": [
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "AirTag",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "Find My",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "MANUFACTURER_DATA",
-                    "text": "",
-                    "companyId": 76,
-                    "dataPrefixHex": "12",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "SERVICE_UUID",
-                    "text": "FD44",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                }
-            ],
-            "minPeers": 0,
-            "peerWindowSec": 60,
-            "clusterByOui": false,
-            "sequentialMac": false,
-            "notes": "Apple AirTag or Find My accessory. iPhones also send Find My so they can be located — that stays on Apple Device unless the name is AirTag. Addresses rotate.",
-            "attentionNote": "",
-            "builtIn": true,
-            "kind": "FINDER"
         },
         {
             "id": "fleet-apple-audio",
@@ -9299,13 +9283,21 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DIRECT-BMW*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "BMW phone-as-key or in-car hotspot. Factory BMW_ Wi-Fi is the car, not a dealer showroom.",
+            "notes": "BMW phone-as-key or in-car hotspot. Factory BMW_ or DIRECT-BMW Wi-Fi is the car, not a dealer showroom.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -9361,33 +9353,17 @@
         },
         {
             "id": "fleet-brilliant-frame",
-            "name": "Brilliant Frame",
+            "name": "Brilliant Labs glasses (Frame / Halo)",
             "enabled": true,
             "matchAny": true,
             "colorIndex": 5,
             "rules": [
                 {
                     "kind": "SERVICE_UUID",
-                    "text": "7A230001-5475-A6A4-654C-576174636800",
+                    "text": "7A230001-5475-A6A4-654C-8431F6AD49C4",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_CONTAINS",
-                    "text": "Brilliant Frame",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": "BLE",
-                    "enabled": true
-                },
-                {
-                    "kind": "NAME_GLOB",
-                    "text": "Brilliant Frame*",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": "BLE",
                     "enabled": true
                 }
             ],
@@ -9395,8 +9371,8 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Brilliant Labs Frame AR glasses.",
-            "attentionNote": "Brilliant Labs Frame AR glasses. BLE service 7A230001. Not proof someone is recording. A miss is not a clean bill (off, or a different brand). Look with your eyes.",
+            "notes": "Brilliant Labs Frame or Halo smart glasses. Both have a camera. The BLE service 7A230001…49C4 is in the advert. The name is Frame or Halo plus two hex characters.",
+            "attentionNote": "Brilliant Labs Frame or Halo glasses. Both have a camera. Not proof someone is recording. A miss is not a clean bill (off, paired and quiet, or a different brand). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
         },
@@ -10119,6 +10095,39 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-cardo",
+            "name": "Cardo",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "FREECOM*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Cardo",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Cardo or Freecom motorcycle headset. The name is Cardo or starts with FREECOM.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-carlink",
             "name": "CARLINK",
             "enabled": true,
@@ -10128,6 +10137,14 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "CARLINK-??????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "CARLINK_*",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "WIFI",
@@ -10154,7 +10171,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Aftermarket CarPlay / Android Auto adapter hotspot (CARLINK-). Head-unit dongle, not the car’s own modem.",
+            "notes": "Aftermarket CarPlay / Android Auto adapter hotspot (CARLINK- or CARLINK_). Head-unit dongle, not the car's own modem.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -20662,6 +20679,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-cobra",
+            "name": "Cobra",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "2A668FA4-2902-4468-8568-3EBE69A930A0",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Cobra radar detector or dashcam on service 2A668FA4. Escort stays on its own row.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-compex",
             "name": "Compex",
             "enabled": true,
@@ -23590,6 +23632,31 @@
             "kind": "SIGNAGE"
         },
         {
+            "id": "fleet-elk-led",
+            "name": "ELK LED strip",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ELK-BLEDO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "ELK RGB light-strip controller. The name starts with ELK-BLEDO. The HID and Battery services are shared, and the manufacturer field is not a Bluetooth company id, so this row uses the name. MELK lamps stay on MELK.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-engenius",
             "name": "EnGenius",
             "enabled": true,
@@ -23862,7 +23929,7 @@
         },
         {
             "id": "fleet-even-g1",
-            "name": "Even G1",
+            "name": "Even Realities G1 / G2",
             "enabled": true,
             "matchAny": true,
             "colorIndex": 5,
@@ -23890,14 +23957,22 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Even G2_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Nordic UART is too common to use as a rule.",
-            "attentionNote": "Even Realities G1 glasses. The Even Realities company id or an Even G1 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
+            "notes": "Even Realities G1 or G2 glasses. The Even Realities company id, an Even G1 name, or an Even G2 name (one per arm, L or R). Nordic UART is too common to use as a rule.",
+            "attentionNote": "Even Realities G1 or G2 glasses. The Even Realities company id or an Even G1 or Even G2 name. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
         },
@@ -24820,6 +24895,55 @@
             "kind": "WEARABLE"
         },
         {
+            "id": "fleet-airtag",
+            "name": "Find My (AirTag or other Apple)",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 4,
+            "rules": [
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "AirTag",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "Find My",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 76,
+                    "dataPrefixHex": "12",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FD44",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Apple AirTag or Find My accessory. iPhones also send Find My so they can be located — that stays on Apple Device unless the name is AirTag. Addresses rotate.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "FINDER"
+        },
+        {
             "id": "fleet-fitbit",
             "name": "Fitbit",
             "enabled": true,
@@ -25708,6 +25832,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-gli-open",
+            "name": "GLI open sign",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GLI1050*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Open LED sign. The name starts with GLI1050. The Nordic UART service is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "SIGNAGE"
+        },
+        {
             "id": "fleet-gm-hotspot",
             "name": "GM hotspot",
             "enabled": true,
@@ -25769,13 +25918,54 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GMC????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "GM in-car hotspot (Cadillac, GMC, Buick). myChevrolet has its own row. BSSID is often randomized.",
+            "notes": "GM in-car hotspot (Cadillac, GMC, Buick). A GMC name with four characters is the car. myChevrolet has its own row. BSSID is often randomized.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-gm-peps",
+            "name": "GM phone-as-key",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE48",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GM_PEPS*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "GM phone-as-key. Service FE48, or a name that starts with GM_PEPS. The in-car hotspot stays on GM hotspot.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -26984,6 +27174,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-gree",
+            "name": "Gree",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GR-AC_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Gree air conditioner. The name starts with GR-AC_. Realtek's company id is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-gt201",
             "name": "GT201",
             "enabled": true,
@@ -27350,6 +27565,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "MESH"
+        },
+        {
+            "id": "fleet-hikmicro-optics",
+            "name": "HIKMICRO thermal optic",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HIKMICRO_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "HIKMICRO thermal scope, monocular, or binocular with its hotspot on for the HIKMICRO Sight app. It can stream and record thermal video. Most owners are hunters. The suffix is its serial number. Not a Hikvision security camera.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-hikvision",
@@ -28168,6 +28408,14 @@
                     "enabled": true
                 },
                 {
+                    "kind": "NAME_GLOB",
+                    "text": "DIRECT-*-HP *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
                     "kind": "OUI",
                     "text": "00:68:EB",
                     "companyId": 0,
@@ -28524,7 +28772,7 @@
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "HP home/office printer (ENVY, HP-Print). Office noise. Not HPE Aruba campus Wi-Fi.",
+            "notes": "HP home/office printer (ENVY, HP-Print, DIRECT-HP). Office noise. Not HPE Aruba campus Wi-Fi.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -45785,6 +46033,56 @@
             "kind": "CAMERA"
         },
         {
+            "id": "fleet-iosix",
+            "name": "IOSiX",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "IOSiX ELD*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "IOSiX electronic logging device in a truck. The name starts with IOSiX ELD.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-irobot",
+            "name": "iRobot",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1536,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "iRobot Roomba or Braava. The company id is iRobot's. The serial-like name is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-jlr",
             "name": "Jaguar Land Rover",
             "enabled": true,
@@ -45898,6 +46196,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "AUDIO"
+        },
+        {
+            "id": "fleet-jlg-clearsky",
+            "name": "JLG ClearSky",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1875,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ClearSky Smart Fleet",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "JLG ClearSky Smart Fleet on an aerial lift. The company id is JLG Industries.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-kenwood-khs-55bt",
@@ -46247,6 +46578,87 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "Levoit air purifier. The name starts with LAP- or Core300. Espressif's company id is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-lg-appliance",
+            "name": "LG appliance",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_Oven]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_MicrowaveOven]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_Refrigerator]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_Washer]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_Wall-Mount A/C]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "[LG_Window A/C]*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LG_Speaker*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LG S77S*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "LG oven, microwave, fridge, washer, air conditioner, or soundbar from the setup name. LG's company id is shared, so this row uses the name. webOS TVs stay on LG webOS TV.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -47151,6 +47563,31 @@
             "kind": "HOME"
         },
         {
+            "id": "fleet-mazda",
+            "name": "Mazda",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Mazda_*_SPL",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Mazda head unit. The name matches Mazda and ends with _SPL.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-melk",
             "name": "MELK",
             "enabled": true,
@@ -47174,6 +47611,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
+        },
+        {
+            "id": "fleet-mentra-live",
+            "name": "Mentra Live glasses",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Mentra_Live*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "XyBLE_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Mentra Live camera glasses (12 MP camera, no display). The name starts with Mentra_Live. A name that starts with XyBLE_ is the OEM base these glasses are built on and can be another brand on the same hardware.",
+            "attentionNote": "Mentra Live camera glasses — they have a camera and microphones. Not proof someone is recording. A miss is not a clean bill (paired and quiet, off, or a different brand). Look with your eyes.",
+            "builtIn": true,
+            "kind": "GLASSES"
         },
         {
             "id": "fleet-meraki",
@@ -47702,13 +48172,21 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MB Hotspot*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Mercedes MBUX in-car hotspot. Factory name from the car.",
+            "notes": "Mercedes MBUX or MB Hotspot in-car Wi-Fi. Factory name from the car.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -49628,13 +50106,21 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MY ROGUE*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Nissan or Infiniti phone-as-key / infotainment.",
+            "notes": "Nissan or Infiniti phone-as-key / infotainment, or a MY ROGUE hotspot.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -51072,6 +51558,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-phillips-connect",
+            "name": "Phillips Connect",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2175,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Phillips Connect trailer camera or gateway. The company id is Phillips Connect. Serial names are not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-phone-hotspot",
             "name": "Phone hotspot",
             "enabled": true,
@@ -51520,6 +52031,159 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
+        },
+        {
+            "id": "fleet-pulsar-optics",
+            "name": "Pulsar thermal / night-vision optic",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Thermion2_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Thermion_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ThermionDuo_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Helion2_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Helion_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Axion2_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Axion_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Krypton2_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Krypton_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Telos_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Merger_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Talion_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Digex_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Forward F_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Accolade 2 LRF_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Oryx_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Symbion_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Pulsar thermal or digital night-vision scope, monocular, or binocular with Wi-Fi on for the Stream Vision app. It can stream and record video. Most owners are hunters. The number is the end of its serial.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-pwnagotchi",
@@ -54153,6 +54817,39 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-rnode",
+            "name": "RNode (Reticulum)",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 0,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "RNode ????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "RNode ????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Open-source LoRa radio for the Reticulum network. The name is RNode plus four hex characters. BLE shows only when Bluetooth is on in the RNode config. A Wi-Fi network with the same name is its remote mode or setup console.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "MESH"
+        },
+        {
             "id": "fleet-roku",
             "name": "Roku",
             "enabled": true,
@@ -54432,6 +55129,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
+        },
+        {
+            "id": "fleet-rove",
+            "name": "Rove",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ROVE*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ROVE_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Rove dashcam. The name starts with ROVE.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-ruckus",
@@ -58059,13 +58789,21 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*Business TV*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, or CU8000. Phones, watches, and buds share Samsung's company id, so this row uses the name.",
+            "notes": "Samsung TV or soundbar from the setup name. The name starts with [TV] or [AV], or it says QLED, The Frame, Crystal UHD, CU7000, CU8000, or Business TV. Phones, watches, and buds share Samsung's company id, so this row uses the name.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -59137,6 +59875,104 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-steiner-burris-thermal",
+            "name": "Steiner / Burris thermal optic",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "STEINER Thermal Handheld*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Nighthunter-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Nighthunter C35*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Burris_BTH*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Thermal handheld, scope, or clip-on built by Guide Sensmart for Steiner (Nighthunter, Thermal Commander) or Burris, with Wi-Fi on for the Steiner Connect or BurrisConnect app. It can stream and record thermal video. Most owners are hunters. The Steiner and Burris_BTH names are the rule. A short BTH, BTS, or BTC name is not.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
+        },
+        {
+            "id": "fleet-steiner-lrf",
+            "name": "Steiner M830 LRF binocular",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LRF X*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Steiner LRF X*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LRF1535*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Steiner LRF1535*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Bluetooth transceiver on a Steiner M830rc X LRF or M830r LRF 1535 rangefinding binocular. It sends a lased distance, bearing, and elevation to the Steiner Connect app, an IFS riflescope, a Kestrel, a Garmin tactix, or ATAK. It shows up only around a measurement. Sold mainly to military users, also to police and some civilians.",
+            "attentionNote": "Military rangefinding binocular that can pass a lased target to ATAK. Name match while it is measuring. Not proof of who carries it. Look with your eyes.",
+            "builtIn": true,
+            "kind": "MILITARY"
+        },
+        {
             "id": "fleet-subaru",
             "name": "Subaru",
             "enabled": true,
@@ -59534,6 +60370,31 @@
             "attentionNote": "Tattile plate readers on roads and at gates. Name-only when advertised. Pattern match, not that camera. Look with your eyes.",
             "builtIn": true,
             "kind": "SURVEILLANCE"
+        },
+        {
+            "id": "fleet-tbs-crossfire",
+            "name": "TBS Crossfire",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TBS_XF_AP_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "TBS Crossfire radio transmitter or FUSION video receiver Wi-Fi. It's on the pilot's side, not the aircraft. The pilot can turn the network off or hide it.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
         },
         {
             "id": "fleet-tedee",
@@ -60322,6 +61183,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-tozo",
+            "name": "TOZO",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TOZO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "TOZO earbuds. The name starts with TOZO.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
         },
         {
             "id": "fleet-tplink",

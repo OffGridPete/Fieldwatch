@@ -77,6 +77,7 @@ class TakPublisher(context: Context? = null) {
         gnssRemark: String? = null,
         gnssNotice: GnssNotice? = null,
         gnssLives: List<GnssLive> = emptyList(),
+        swarmNote: (Sighting) -> String? = { null },
     ): Boolean {
         if (!settings.takEnabled || settings.demoMode) {
             retractRadios(settings, now)
@@ -292,6 +293,7 @@ class TakPublisher(context: Context? = null) {
                     tag = tag,
                     pilot = mark.pilot,
                     viaCallsign = TakInstall.viaLine(mark.uid, tag, phoneCallsign),
+                    swarmNote = swarmNote(mark.device),
                 )
                 val xml = CotEvent.render(
                     uid = mark.uid,

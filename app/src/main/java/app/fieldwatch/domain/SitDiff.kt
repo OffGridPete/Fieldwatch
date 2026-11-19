@@ -48,6 +48,7 @@ object SitDiff {
         val path: List<GpsSample> = emptyList(),
         val floods: List<FloodBurst> = emptyList(),
         val gnss: List<GnssMark> = emptyList(),
+        val swarms: List<SwarmBurst> = emptyList(),
     ) {
         val keys: Set<String> get() = radios.map { it.key }.toSet()
 
@@ -239,6 +240,9 @@ object SitDiff {
         floodSection(thisSit, second)?.let { body ->
             sections += DebriefSection(next(), "Flood", body)
         }
+        swarmSection(thisSit, second)?.let { body ->
+            sections += DebriefSection(next(), LanguageText.text("ui.swarm.section"), body)
+        }
         gnssSection(thisSit, second)?.let { body ->
             sections += DebriefSection(next(), "GNSS", body, alert = true)
         }
@@ -331,6 +335,16 @@ object SitDiff {
                 val notes = RadioBookmarks.pathNote(r.bookmarked, r.observerNotes, r.mine)
                 val label = r.name.ifBlank { r.mac }
                 val kept = r.payloadTrail.lastOrNull { PayloadLocation.validCoord(it.lat, it.lon) }
+                val motion = if (advertised != null) {
+                    AircraftTrail.advertisedMotion(
+                        r.payloadTrail,
+                        r.payloadAlt,
+                        r.payloadHeading,
+                        r.payloadSpeed,
+                    )
+                } else {
+                    Triple(null, null, null)
+                }
                 SitPathPlot.Dot(
                     key = r.key,
                     lat = pin.first,
@@ -367,6 +381,9 @@ object SitDiff {
                     } else {
                         ""
                     },
+                    altM = motion.first,
+                    headingDeg = motion.second,
+                    speedMps = motion.third,
                 )
             }
             .sortedBy { it.label }
@@ -722,6 +739,22 @@ object SitDiff {
                 appendLine()
                 appendLine("The path map marks where this phone was. It does not say where the interference came from.")
             }
+        }.trimEnd()
+    }
+
+    private fun swarmSection(thisSit: Side, second: Side): String? {
+        if (thisSit.swarms.isEmpty() && second.swarms.isEmpty()) return null
+        fun StringBuilder.linesFor(side: Side) {
+            if (side.swarms.isEmpty()) return
+            appendLine(side.name)
+            side.swarms.sortedBy { it.at }.forEach { burst ->
+                appendLine("  ${burst.reportLine()}")
+            }
+        }
+        return buildString {
+            linesFor(thisSit)
+            if (thisSit.swarms.isNotEmpty() && second.swarms.isNotEmpty()) appendLine()
+            linesFor(second)
         }.trimEnd()
     }
 

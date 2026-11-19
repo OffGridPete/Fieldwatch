@@ -24,7 +24,7 @@ object DeviceExplain {
         hints += AdvPayloadDecoder.roleHints(device).map {
             Hint(it.bucket, it.label, it.reason, it.weight)
         }
-        hints += signatureHints(signatureNames)
+        hints += signatureHints(signatureNames, device.name)
         if (device.kind == RadioKind.WIFI) hints += wifiHints(device, signatureNames)
 
         if (hints.isEmpty()) {
@@ -310,7 +310,7 @@ object DeviceExplain {
         return out
     }
 
-    private fun signatureHints(names: List<String>): List<Hint> {
+    private fun signatureHints(names: List<String>, deviceName: String = ""): List<Hint> {
         return names.mapNotNull { raw ->
             if (isGenericSignatureName(raw)) return@mapNotNull null
             val n = raw.lowercase()
@@ -719,10 +719,22 @@ object DeviceExplain {
                     Hint("wearable", "an Omi pendant or OpenGlass camera glasses", matched(raw), 8)
                 "friend pendant" in n ->
                     Hint("wearable", "a Friend Pendant necklace", matched(raw), 8)
-                "brilliant frame" in n ->
-                    Hint("glasses", "Brilliant Labs Frame AR glasses", matched(raw), 8)
-                n == "even g1" ->
-                    Hint("glasses", "Even Realities G1 glasses", matched(raw), 8)
+                n == "brilliant labs glasses (frame / halo)" -> {
+                    val advertised = deviceName.trim().lowercase()
+                    when {
+                        advertised.matches(Regex("frame [0-9a-f]{2}")) || advertised == "frame lite" ->
+                            Hint("glasses", "Brilliant Labs Frame", matched(raw), 8)
+                        advertised.matches(Regex("halo [0-9a-f]{2}")) ->
+                            Hint("glasses", "Brilliant Labs Halo", matched(raw), 8)
+                        else -> null
+                    }
+                }
+                n == "even g1" || n == "even realities g1 / g2" ->
+                    if (deviceName.trim().lowercase().startsWith("even g2_")) {
+                        Hint("glasses", "Even Realities G2 glasses", matched(raw), 8)
+                    } else {
+                        Hint("glasses", "Even Realities G1 glasses", matched(raw), 8)
+                    }
                 n == "meta quest" ->
                     Hint("wearable", "a Meta Quest headset", matched(raw), 8)
                 "hayden" in n ->
@@ -760,6 +772,34 @@ object DeviceExplain {
                         matched(raw),
                         3,
                     )
+                n == "phillips connect" ->
+                    Hint("vehicle", "a Phillips Connect trailer camera or gateway", matched(raw), 7)
+                n == "acuity lighting" ->
+                    Hint("light", "an Acuity light", matched(raw), 6)
+                n == "cobra" ->
+                    Hint("vehicle", "a Cobra radar detector or dashcam", matched(raw), 7)
+                n == "jlg clearsky" ->
+                    Hint("vehicle", "a JLG ClearSky aerial lift", matched(raw), 7)
+                n == "gm phone-as-key" ->
+                    Hint("vehicle", "a GM phone-as-key", matched(raw), 7)
+                n == "lg appliance" ->
+                    Hint("iot", "an LG appliance or soundbar", matched(raw), 6)
+                n == "gli open sign" ->
+                    Hint("iot", "a GLI open LED sign", matched(raw), 6)
+                n == "iosix" ->
+                    Hint("hotspot", "an IOSiX electronic logging device", matched(raw), 6)
+                n == "rove" ->
+                    Hint("camera", "a Rove dashcam", matched(raw), 7)
+                n == "cardo" ->
+                    Hint("audio-personal", "a Cardo or Freecom headset", matched(raw), 7)
+                n == "mazda" ->
+                    Hint("vehicle", "a Mazda head unit", matched(raw), 7)
+                n == "gree" ->
+                    Hint("iot", "a Gree air conditioner", matched(raw), 6)
+                n == "tozo" ->
+                    Hint("audio-personal", "TOZO earbuds", matched(raw), 6)
+                n == "irobot" ->
+                    Hint("iot", "an iRobot Roomba or Braava", matched(raw), 7)
                 "chipolo" in n || "pebblebee" in n || "moto tag" in n ->
                     Hint("tag", "a finder tag", matched(raw), 7)
                 "airpods" in n ->

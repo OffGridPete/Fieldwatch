@@ -666,7 +666,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(306, stock.size)
+        assertEquals(328, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -935,6 +935,490 @@ class DefaultCatalogTest {
     }
 
     @Test
+    fun catalog114AddsSitFamiliesAndNameRules() {
+        val stock = DefaultCatalog.fleets()
+        val added = listOf(
+            "fleet-phillips-connect", "fleet-acuity", "fleet-cobra", "fleet-jlg-clearsky",
+            "fleet-gm-peps", "fleet-lg-appliance", "fleet-gli-open", "fleet-iosix",
+            "fleet-rove", "fleet-cardo", "fleet-mazda", "fleet-gree", "fleet-tozo",
+            "fleet-irobot",
+        )
+        assertEquals(added.toSet(), stock.map { it.id }.filter { it in added }.toSet())
+        assertEquals(328, stock.size)
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        added.forEach { id ->
+            val row = stock.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.enabled)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertTrue(id, row.matchAny)
+            assertTrue(id, row.decode == null)
+            assertFalse(id, id in watched)
+        }
+        assertFalse(stock.single { it.id == "fleet-target-atrius" }.rules.any { it.companyId == 0x0346 })
+        assertFalse(stock.any { fleet ->
+            fleet.rules.any { it.text.equals("Hotspot*", true) || it.text.equals("Hotspot????", true) }
+        })
+        val cobra = stock.single { it.id == "fleet-cobra" }
+        assertEquals(1, cobra.rules.size)
+        assertFalse(cobra.rules.any { it.text.contains("C46B558B", true) })
+        val peps = stock.single { it.id == "fleet-gm-peps" }
+        assertFalse(peps.rules.any { it.text.equals("FE47", true) })
+        val lg = stock.single { it.id == "fleet-lg-appliance" }
+        assertFalse(lg.rules.any { it.companyId == 0x00C4 })
+        assertFalse(stock.single { it.id == "fleet-gree" }.rules.any { it.companyId == 0x005D })
+        assertFalse(stock.single { it.id == "fleet-tozo" }.rules.any { it.companyId == 35757 })
+        val cardo = stock.single { it.id == "fleet-cardo" }
+        assertFalse(cardo.rules.any { it.text.contains("CD007F80", true) || it.companyId == 0xA106 })
+        assertFalse(stock.single { it.id == "fleet-gli-open" }.rules.any { it.text.contains("E7810A71", true) })
+        assertFalse(stock.single { it.id == "fleet-irobot" }.rules.any { it.kind == RuleKind.SERVICE_UUID })
+        assertEquals(SignatureClass.VEHICLE, stock.single { it.id == "fleet-rove" }.kind)
+        assertEquals(SignatureClass.SIGNAGE, stock.single { it.id == "fleet-gli-open" }.kind)
+        assertEquals(SignatureClass.AUDIO, cardo.kind)
+        assertEquals(SignatureClass.HOME, lg.kind)
+
+        val phillips = ble(name = "PCAM_1234", manufacturerId = 0x087F)
+            .copy(key = "BLE:pc", mac = "AA:BB:CC:14:00:01")
+        val pcam = ble(name = "PCAM_1234").copy(key = "BLE:pcam", mac = "AA:BB:CC:14:00:02")
+        val acuityCo = ble(name = "A1B2C3", manufacturerId = 0x0346)
+            .copy(key = "BLE:acu", mac = "AA:BB:CC:14:00:03")
+        val acuityUuid = ble(
+            name = "",
+            serviceUuids = listOf("7fc4c6d5-8fab-452a-9871-8d707c939a6f"),
+        ).copy(key = "BLE:acuu", mac = "AA:BB:CC:14:00:04")
+        val cobraHit = ble(
+            name = "RAD 480i",
+            serviceUuids = listOf("2A668FA4-2902-4468-8568-3EBE69A930A0"),
+        ).copy(key = "BLE:cobra", mac = "AA:BB:CC:14:00:05")
+        val cobraOther = ble(name = "SC 200", serviceUuids = listOf("C46B558B"))
+            .copy(key = "BLE:sc", mac = "AA:BB:CC:14:00:06")
+        val escortName = ble(name = "MAX 360c").copy(key = "BLE:max2", mac = "AA:BB:CC:14:00:07")
+        val jlg = ble(name = "serial", manufacturerId = 0x0753)
+            .copy(key = "BLE:jlg", mac = "AA:BB:CC:14:00:08")
+        val clearSky = ble(name = "ClearSky Smart Fleet").copy(key = "BLE:cs", mac = "AA:BB:CC:14:00:09")
+        val pepsUuid = ble(
+            name = "",
+            serviceUuids = listOf("0000FE48-0000-1000-8000-00805F9B34FB"),
+        ).copy(key = "BLE:fe48", mac = "AA:BB:CC:14:00:0A")
+        val pepsName = ble(name = "GM_PEPS_VKM").copy(key = "BLE:vkm", mac = "AA:BB:CC:14:00:0B")
+        val fe47 = ble(name = "", serviceUuids = listOf("FE47"))
+            .copy(key = "BLE:fe47", mac = "AA:BB:CC:14:00:0C")
+        val oven = wifi("AA:BB:CC:14:00:0D", "[LG_Oven]1234")
+        val micro = wifi("AA:BB:CC:14:00:0E", "[LG_MicrowaveOven]1")
+        val fridge = wifi("AA:BB:CC:14:00:0F", "[LG_Refrigerator]1")
+        val washer = wifi("AA:BB:CC:14:00:10", "[LG_Washer]1")
+        val wall = wifi("AA:BB:CC:14:00:11", "[LG_Wall-Mount A/C]1")
+        val window = wifi("AA:BB:CC:14:00:12", "[LG_Window A/C]1")
+        val speaker = ble(name = "LG_Speaker_SC9S_2129").copy(key = "BLE:spk", mac = "AA:BB:CC:14:00:13")
+        val bar = ble(name = "LG S77S(37)").copy(key = "BLE:s77", mac = "AA:BB:CC:14:00:14")
+        val webos = ble(name = "webOS TV").copy(key = "BLE:webos", mac = "AA:BB:CC:14:00:15")
+        val lgCo = ble(name = "", manufacturerId = 0x00C4).copy(key = "BLE:lgc", mac = "AA:BB:CC:14:00:16")
+        val gli = ble(name = "GLI1050.I", serviceUuids = listOf("E7810A71"))
+            .copy(key = "BLE:gli", mac = "AA:BB:CC:14:00:17")
+        val uart = ble(name = "", serviceUuids = listOf("E7810A71", "18F0"))
+            .copy(key = "BLE:uart", mac = "AA:BB:CC:14:00:18")
+        val gliShort = ble(name = "GLI").copy(key = "BLE:glishort", mac = "AA:BB:CC:14:00:19")
+        val eld = wifi("AA:BB:CC:14:00:1A", "IOSiX ELD")
+        val eldHex = wifi("AA:BB:CC:14:00:1B", "IOSiX ELD; AB12")
+        val eldBare = wifi("AA:BB:CC:14:00:1C", "IOSiX")
+        val eldUuid = ble(name = "", serviceUuids = listOf("FC32AE3C"))
+            .copy(key = "BLE:fc32", mac = "AA:BB:CC:14:00:1D")
+        val rovePro = wifi("AA:BB:CC:14:00:1E", "ROVE R2-PRO-4K_1")
+        val roveDual = wifi("AA:BB:CC:14:00:1F", "ROVE_R2-4K-DUAL_1")
+        val rove4k = wifi("AA:BB:CC:14:00:20", "ROVE_R2-4K_1")
+        val freecom = ble(name = "FREECOM4X").copy(key = "BLE:free", mac = "AA:BB:CC:14:00:21")
+        val cardoName = ble(name = "Cardo").copy(key = "BLE:cardo", mac = "AA:BB:CC:14:00:22")
+        val cardboard = ble(name = "Cardboard").copy(key = "BLE:board", mac = "AA:BB:CC:14:00:23")
+        val cardoUuid = ble(name = "", serviceUuids = listOf("CD007F80"), manufacturerId = 0xA106)
+            .copy(key = "BLE:cdu", mac = "AA:BB:CC:14:00:24")
+        val mazdaHit = wifi("AA:BB:CC:14:00:25", "Mazda_CX5_SPL")
+        val greeHit = ble(name = "GR-AC_10001_09_1_SC", manufacturerId = 0x005D)
+            .copy(key = "BLE:gree", mac = "AA:BB:CC:14:00:26")
+        val realtek = ble(name = "RTL", manufacturerId = 0x005D)
+            .copy(key = "BLE:rtl", mac = "AA:BB:CC:14:00:27")
+        val tozoHit = ble(name = "TOZO NC20", manufacturerId = 35757)
+            .copy(key = "BLE:tozo", mac = "AA:BB:CC:14:00:28")
+        val tozoCo = ble(name = "", manufacturerId = 35757)
+            .copy(key = "BLE:tozoc", mac = "AA:BB:CC:14:00:29")
+        val roomba = ble(name = "G181020", manufacturerId = 0x0600, serviceUuids = listOf("C74EDD21"))
+            .copy(key = "BLE:roomba", mac = "AA:BB:CC:14:00:2A")
+        val roombaUuid = ble(name = "G181020", serviceUuids = listOf("C74EDD21"))
+            .copy(key = "BLE:c74", mac = "AA:BB:CC:14:00:2B")
+        val bmwDirect = wifi("AA:BB:CC:14:00:2C", "DIRECT-BMW1234")
+        val bmwUnder = wifi("AA:BB:CC:14:00:2D", "BMW_1234")
+        val gmc = wifi("AA:BB:CC:14:00:2E", "GMC3088")
+        val gmcShort = wifi("AA:BB:CC:14:00:2F", "GMC308")
+        val gmcLong = wifi("AA:BB:CC:14:00:30", "GMC30888")
+        val myGmc = wifi("AA:BB:CC:14:00:31", "myGMC1234")
+        val mb = wifi("AA:BB:CC:14:00:32", "MB Hotspot 1")
+        val mbux = wifi("AA:BB:CC:14:00:33", "MBUX1234")
+        val rogue = wifi("AA:BB:CC:14:00:34", "MY ROGUE")
+        val rogueOnly = wifi("AA:BB:CC:14:00:35", "ROGUE")
+        val laser = wifi("AA:BB:CC:14:00:36", "DIRECT-03-HP M283 LaserJet")
+        val office = wifi("AA:BB:CC:14:00:37", "DIRECT-06-HP OfficeJet Pro 7740")
+        val envy = wifi("AA:BB:CC:14:00:38", "DIRECT-6F-HP ENVY 7640 series")
+        val canon = wifi("AA:BB:CC:14:00:39", "DIRECT-99-Canon")
+        val business = ble(name = "Business TV BED-H").copy(key = "BLE:bed", mac = "AA:BB:CC:14:00:3A")
+        val carUnder = wifi("AA:BB:CC:14:00:3B", "CARLINK_54BF42")
+        val carDash = wifi("AA:BB:CC:14:00:3C", "CARLINK-54BF42")
+        val carAp = wifi("AA:BB:CC:14:00:3D", "CarLinkAP276")
+        val bareHotspot = wifi("AA:BB:CC:14:00:3E", "Hotspot1234")
+
+        val hits = SignatureEngine().match(
+            listOf(
+                phillips, pcam, acuityCo, acuityUuid, cobraHit, cobraOther, escortName, jlg, clearSky,
+                pepsUuid, pepsName, fe47, oven, micro, fridge, washer, wall, window, speaker, bar,
+                webos, lgCo, gli, uart, gliShort, eld, eldHex, eldBare, eldUuid, rovePro, roveDual,
+                rove4k, freecom, cardoName, cardboard, cardoUuid, mazdaHit, greeHit, realtek, tozoHit,
+                tozoCo, roomba, roombaUuid, bmwDirect, bmwUnder, gmc, gmcShort, gmcLong, myGmc, mb,
+                mbux, rogue, rogueOnly, laser, office, envy, canon, business, carUnder, carDash,
+                carAp, bareHotspot,
+            ),
+            stock,
+        )
+        fun ids(radio: Sighting) = hits.getValue(radio.key)
+        assertTrue("Phillips company", "fleet-phillips-connect" in ids(phillips))
+        assertFalse("Phillips serial", "fleet-phillips-connect" in ids(pcam))
+        assertTrue("Acuity company", "fleet-acuity" in ids(acuityCo))
+        assertFalse("Acuity is not a cart tag", "fleet-target-atrius" in ids(acuityCo))
+        assertTrue("Acuity service", "fleet-acuity" in ids(acuityUuid))
+        assertTrue("Cobra service", "fleet-cobra" in ids(cobraHit))
+        assertFalse("Cobra is not Escort", "fleet-escort" in ids(cobraHit))
+        assertFalse("other Cobra service", "fleet-cobra" in ids(cobraOther))
+        assertFalse("Escort name", "fleet-cobra" in ids(escortName))
+        assertFalse("Escort name stays off Escort", "fleet-escort" in ids(escortName))
+        assertTrue("JLG company", "fleet-jlg-clearsky" in ids(jlg))
+        assertTrue("ClearSky name", "fleet-jlg-clearsky" in ids(clearSky))
+        assertTrue("FE48", "fleet-gm-peps" in ids(pepsUuid))
+        assertFalse("phone-as-key is not the hotspot row", "fleet-gm-hotspot" in ids(pepsUuid))
+        assertTrue("GM_PEPS", "fleet-gm-peps" in ids(pepsName))
+        assertFalse("FE47", "fleet-gm-peps" in ids(fe47))
+        assertTrue("LG oven", "fleet-lg-appliance" in ids(oven))
+        assertTrue("LG microwave", "fleet-lg-appliance" in ids(micro))
+        assertTrue("LG fridge", "fleet-lg-appliance" in ids(fridge))
+        assertTrue("LG washer", "fleet-lg-appliance" in ids(washer))
+        assertTrue("LG wall A/C", "fleet-lg-appliance" in ids(wall))
+        assertTrue("LG window A/C", "fleet-lg-appliance" in ids(window))
+        assertTrue("LG speaker", "fleet-lg-appliance" in ids(speaker))
+        assertTrue("LG soundbar", "fleet-lg-appliance" in ids(bar))
+        assertFalse("webOS stays off the appliance row", "fleet-lg-appliance" in ids(webos))
+        assertTrue("webOS TV", "fleet-lg-webos" in ids(webos))
+        assertFalse("LG company id", "fleet-lg-appliance" in ids(lgCo))
+        assertTrue("GLI1050", "fleet-gli-open" in ids(gli))
+        assertFalse("Nordic UART", "fleet-gli-open" in ids(uart))
+        assertFalse("short GLI", "fleet-gli-open" in ids(gliShort))
+        assertTrue("IOSiX ELD", "fleet-iosix" in ids(eld))
+        assertTrue("IOSiX ELD hex", "fleet-iosix" in ids(eldHex))
+        assertFalse("IOSiX alone", "fleet-iosix" in ids(eldBare))
+        assertFalse("IOSiX service", "fleet-iosix" in ids(eldUuid))
+        assertTrue("ROVE R2-PRO", "fleet-rove" in ids(rovePro))
+        assertTrue("ROVE dual", "fleet-rove" in ids(roveDual))
+        assertTrue("ROVE 4K", "fleet-rove" in ids(rove4k))
+        assertTrue("FREECOM", "fleet-cardo" in ids(freecom))
+        assertTrue("Cardo", "fleet-cardo" in ids(cardoName))
+        assertFalse("Cardboard", "fleet-cardo" in ids(cardboard))
+        assertFalse("Cardo service and company", "fleet-cardo" in ids(cardoUuid))
+        assertTrue("Mazda", "fleet-mazda" in ids(mazdaHit))
+        assertTrue("Gree name", "fleet-gree" in ids(greeHit))
+        assertFalse("Realtek company", "fleet-gree" in ids(realtek))
+        assertTrue("TOZO name", "fleet-tozo" in ids(tozoHit))
+        assertFalse("TOZO company", "fleet-tozo" in ids(tozoCo))
+        assertTrue("iRobot company", "fleet-irobot" in ids(roomba))
+        assertFalse("iRobot service", "fleet-irobot" in ids(roombaUuid))
+        assertTrue("DIRECT-BMW", "fleet-bmw" in ids(bmwDirect))
+        assertTrue("BMW_", "fleet-bmw" in ids(bmwUnder))
+        assertTrue("GMC and four characters", "fleet-gm-hotspot" in ids(gmc))
+        assertFalse("short GMC", "fleet-gm-hotspot" in ids(gmcShort))
+        assertFalse("long GMC", "fleet-gm-hotspot" in ids(gmcLong))
+        assertTrue("myGMC", "fleet-gm-hotspot" in ids(myGmc))
+        assertTrue("MB Hotspot", "fleet-mbux" in ids(mb))
+        assertTrue("MBUX", "fleet-mbux" in ids(mbux))
+        assertTrue("MY ROGUE", "fleet-nissan" in ids(rogue))
+        assertFalse("ROGUE alone", "fleet-nissan" in ids(rogueOnly))
+        assertTrue("LaserJet", "fleet-hp" in ids(laser))
+        assertTrue("OfficeJet", "fleet-hp" in ids(office))
+        assertTrue("ENVY", "fleet-hp" in ids(envy))
+        assertFalse("DIRECT Canon", "fleet-hp" in ids(canon))
+        assertTrue("Business TV", "fleet-samsung-tv" in ids(business))
+        assertTrue("Business TV needs no company id", business.manufacturerId == null)
+        assertTrue("CARLINK_", "fleet-carlink" in ids(carUnder))
+        assertTrue("CARLINK-", "fleet-carlink" in ids(carDash))
+        assertFalse("CarLinkAP", "fleet-carlink" in ids(carAp))
+        assertTrue("bare Hotspot stays unmatched", ids(bareHotspot).isEmpty())
+        assertTrue(
+            DeviceExplain.guess(phillips, listOf("Phillips Connect")).headline.contains("Phillips Connect"),
+        )
+        assertTrue(DeviceExplain.guess(cobraHit, listOf("Cobra")).headline.contains("Cobra"))
+        assertTrue(DeviceExplain.guess(roomba, listOf("iRobot")).headline.contains("iRobot"))
+    }
+
+    @Test
+    fun catalog114AddsGlassesMeshCrossfireAndOptics() {
+        val stock = DefaultCatalog.fleets()
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        val frame = stock.single { it.id == "fleet-brilliant-frame" }
+        val mentra = stock.single { it.id == "fleet-mentra-live" }
+        val even = stock.single { it.id == "fleet-even-g1" }
+        val rnode = stock.single { it.id == "fleet-rnode" }
+        val tbs = stock.single { it.id == "fleet-tbs-crossfire" }
+        val hik = stock.single { it.id == "fleet-hikmicro-optics" }
+        val pulsar = stock.single { it.id == "fleet-pulsar-optics" }
+        assertEquals(
+            listOf("7A230001-5475-A6A4-654C-8431F6AD49C4"),
+            frame.rules.map { it.text },
+        )
+        assertTrue(frame.attentionNote.isNotBlank())
+        assertTrue("fleet-brilliant-frame" in watched)
+        assertEquals(SignatureClass.GLASSES, mentra.kind)
+        assertTrue(mentra.attentionNote.isNotBlank())
+        assertTrue("fleet-mentra-live" in watched)
+        assertTrue(even.rules.any { it.text == "Even G2_*" })
+        assertFalse(even.rules.any { it.companyId == 0x4552 })
+        assertEquals(SignatureClass.MESH, rnode.kind)
+        assertTrue(rnode.attentionNote.isBlank())
+        assertFalse("fleet-rnode" in watched)
+        assertEquals(SignatureClass.DRONE, tbs.kind)
+        assertTrue(tbs.attentionNote.isBlank())
+        assertTrue("fleet-tbs-crossfire" in watched)
+        assertEquals(SignatureClass.CAMERA, hik.kind)
+        assertEquals(SignatureClass.CAMERA, pulsar.kind)
+        assertEquals(17, pulsar.rules.size)
+        assertFalse("fleet-hikmicro-optics" in watched)
+        assertFalse("fleet-pulsar-optics" in watched)
+        assertFalse(pulsar.rules.any { it.text.startsWith("Trail_") || it.text.startsWith("PROTON_") })
+        assertEquals(listOf("fleet-steiner-lrf"), stock.filter { it.kind == SignatureClass.MILITARY }.map { it.id })
+
+        val frameUuid = ble(
+            name = "Frame 3C",
+            serviceUuids = listOf("7a230001-5475-a6a4-654c-8431f6ad49c4"),
+        ).copy(key = "BLE:fr", mac = "AA:BB:CC:14:01:01")
+        val oldUuid = ble(
+            name = "Brilliant Frame",
+            serviceUuids = listOf("7A230001-5475-A6A4-654C-576174636800"),
+        ).copy(key = "BLE:old", mac = "AA:BB:CC:14:01:02")
+        val frameName = ble(name = "Frame 3C").copy(key = "BLE:fn", mac = "AA:BB:CC:14:01:03")
+        val halo = ble(
+            name = "Halo A1",
+            serviceUuids = listOf("7A230001-5475-A6A4-654C-8431F6AD49C4"),
+        ).copy(key = "BLE:halo", mac = "AA:BB:CC:14:01:04")
+        val mentraName = ble(name = "Mentra_Live_01A4").copy(key = "BLE:ml", mac = "AA:BB:CC:14:01:05")
+        val mentraUpper = ble(name = "MENTRA_LIVE_BLE").copy(key = "BLE:mu", mac = "AA:BB:CC:14:01:06")
+        val mentraLower = ble(name = "mentra_live").copy(key = "BLE:mlo", mac = "AA:BB:CC:14:01:07")
+        val xy = ble(name = "XyBLE_K900").copy(key = "BLE:xy", mac = "AA:BB:CC:14:01:08")
+        val xyShort = ble(name = "Xy_A").copy(key = "BLE:xya", mac = "AA:BB:CC:14:01:09")
+        val mentraWifi = wifi("AA:BB:CC:14:01:0A", "Mentra_Live_01A4")
+        val g2 = ble(name = "Even G2_32_L_123456", manufacturerId = 0x4552)
+            .copy(key = "BLE:g2", mac = "AA:BB:CC:14:01:0B")
+        val g2Only = ble(name = "", manufacturerId = 0x4552)
+            .copy(key = "BLE:er", mac = "AA:BB:CC:14:01:0C")
+        val rnodeBle = ble(name = "RNode 3FA2").copy(key = "BLE:rn", mac = "AA:BB:CC:14:01:0D")
+        val rnodeWifi = wifi("AA:BB:CC:14:01:0E", "rnode 3fa2")
+        val rnodeShort = ble(name = "RNode 3FA").copy(key = "BLE:rns", mac = "AA:BB:CC:14:01:0F")
+        val rnodeLong = ble(name = "RNode 3FA2X").copy(key = "BLE:rnl", mac = "AA:BB:CC:14:01:10")
+        val tbsHit = wifi("AA:BB:CC:14:01:11", "TBS_XF_AP_3A2F1C")
+        val tbsBle = ble(name = "TBS_XF_AP_3A2F1C").copy(key = "BLE:tbs", mac = "AA:BB:CC:14:01:12")
+        val tbsShort = wifi("AA:BB:CC:14:01:13", "TBS_XF")
+        val tbsMid = wifi("AA:BB:CC:14:01:14", "My TBS_XF_AP_1")
+        val hikHit = wifi("AA:BB:CC:14:01:15", "HIKMICRO_FA1234567")
+        val hikBare = wifi("AA:BB:CC:14:01:16", "HIKMICRO")
+        val hikMine = wifi("AA:BB:CC:14:01:17", "MyHIKMICRO_1")
+        val hikBle = ble(name = "HIKMICRO_FA1234567").copy(key = "BLE:hik", mac = "AA:BB:CC:14:01:18")
+        val thermion2 = wifi("AA:BB:CC:14:01:19", "Thermion2_1234")
+        val thermion = wifi("AA:BB:CC:14:01:1A", "Thermion_1234")
+        val axion = wifi("AA:BB:CC:14:01:1B", "AXION2_1234")
+        val helionLong = wifi("AA:BB:CC:14:01:1C", "Helion2_12345")
+        val oryx = wifi("AA:BB:CC:14:01:1D", "Oryx_serial")
+        val trail = wifi("AA:BB:CC:14:01:1E", "Trail_1234")
+        val forward = wifi("AA:BB:CC:14:01:1F", "Forward F_12AB")
+        val hits = SignatureEngine().match(
+            listOf(
+                frameUuid, oldUuid, frameName, halo, mentraName, mentraUpper, mentraLower, xy, xyShort,
+                mentraWifi, g2, g2Only, rnodeBle, rnodeWifi, rnodeShort, rnodeLong, tbsHit, tbsBle, tbsShort,
+                tbsMid, hikHit, hikBare, hikMine, hikBle, thermion2, thermion, axion, helionLong, oryx, trail,
+                forward,
+            ),
+            stock,
+        )
+        fun ids(sighting: Sighting) = hits.getValue(sighting.key)
+        assertTrue("Frame UUID", "fleet-brilliant-frame" in ids(frameUuid))
+        assertFalse("old Frame UUID", "fleet-brilliant-frame" in ids(oldUuid))
+        assertFalse("Frame name alone", "fleet-brilliant-frame" in ids(frameName))
+        assertTrue("Halo UUID", "fleet-brilliant-frame" in ids(halo))
+        assertTrue("Mentra_Live", "fleet-mentra-live" in ids(mentraName))
+        assertTrue("MENTRA_LIVE_BLE", "fleet-mentra-live" in ids(mentraUpper))
+        assertTrue("mentra_live", "fleet-mentra-live" in ids(mentraLower))
+        assertTrue("XyBLE_", "fleet-mentra-live" in ids(xy))
+        assertFalse("Xy_A", "fleet-mentra-live" in ids(xyShort))
+        assertFalse("Mentra Wi-Fi", "fleet-mentra-live" in ids(mentraWifi))
+        assertTrue("Even G2 name", "fleet-even-g1" in ids(g2))
+        assertFalse("company 0x4552", "fleet-even-g1" in ids(g2Only))
+        assertTrue("RNode BLE", "fleet-rnode" in ids(rnodeBle))
+        assertTrue("RNode Wi-Fi", "fleet-rnode" in ids(rnodeWifi))
+        assertFalse("short RNode", "fleet-rnode" in ids(rnodeShort))
+        assertFalse("long RNode", "fleet-rnode" in ids(rnodeLong))
+        assertTrue("Crossfire", "fleet-tbs-crossfire" in ids(tbsHit))
+        assertFalse("Crossfire BLE", "fleet-tbs-crossfire" in ids(tbsBle))
+        assertFalse("TBS_XF", "fleet-tbs-crossfire" in ids(tbsShort))
+        assertFalse("TBS in the middle", "fleet-tbs-crossfire" in ids(tbsMid))
+        assertTrue("HIKMICRO", "fleet-hikmicro-optics" in ids(hikHit))
+        assertFalse("HIKMICRO is not Hikvision", "fleet-hikvision" in ids(hikHit))
+        assertFalse("bare HIKMICRO", "fleet-hikmicro-optics" in ids(hikBare))
+        assertFalse("MyHIKMICRO", "fleet-hikmicro-optics" in ids(hikMine))
+        assertFalse("HIKMICRO BLE", "fleet-hikmicro-optics" in ids(hikBle))
+        assertTrue("Thermion2", "fleet-pulsar-optics" in ids(thermion2))
+        assertTrue("Thermion", "fleet-pulsar-optics" in ids(thermion))
+        assertTrue("AXION2", "fleet-pulsar-optics" in ids(axion))
+        assertFalse("Helion2 five digits", "fleet-pulsar-optics" in ids(helionLong))
+        assertTrue("Oryx", "fleet-pulsar-optics" in ids(oryx))
+        assertFalse("Trail", "fleet-pulsar-optics" in ids(trail))
+        assertTrue("Forward F", "fleet-pulsar-optics" in ids(forward))
+
+        val frameHint = DeviceExplain.guess(frameUuid, listOf(frame.name))
+        assertTrue(frameHint.headline.contains("Brilliant Labs Frame"))
+        val haloHint = DeviceExplain.guess(halo, listOf(frame.name))
+        assertTrue(haloHint.headline.contains("Brilliant Labs Halo"))
+        val bareFrame = DeviceExplain.guess(frameName, emptyList())
+        assertFalse(bareFrame.headline.contains("Brilliant"))
+        val g2Hint = DeviceExplain.guess(g2, listOf(even.name))
+        assertTrue(g2Hint.headline.contains("Even Realities G2 glasses"))
+        val g2Alone = DeviceExplain.guess(g2, emptyList())
+        assertFalse(g2Alone.headline.contains("Even Realities G2"))
+    }
+
+    @Test
+    fun catalog114AddsSteinerBurrisThermalNames() {
+        val stock = DefaultCatalog.fleets()
+        val row = stock.single { it.id == "fleet-steiner-burris-thermal" }
+        assertEquals(SignatureClass.CAMERA, row.kind)
+        assertTrue(row.attentionNote.isBlank())
+        assertFalse(
+            "fleet-steiner-burris-thermal" in
+                DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId },
+        )
+        assertEquals(
+            listOf(
+                "STEINER Thermal Handheld*",
+                "Nighthunter-*",
+                "Nighthunter C35*",
+                "Burris_BTH*",
+            ),
+            row.rules.map { it.text },
+        )
+        val handheld = wifi("AA:BB:CC:14:02:01", "STEINER Thermal Handheld-1A2B3C")
+        val h35 = wifi("AA:BB:CC:14:02:02", "Nighthunter-H35-0042")
+        val s35 = wifi("AA:BB:CC:14:02:03", "Nighthunter-S35X")
+        val c35 = wifi("AA:BB:CC:14:02:04", "Nighthunter C35 12")
+        val burris = wifi("AA:BB:CC:14:02:05", "Burris_BTH_9F21")
+        val shortBth = wifi("AA:BB:CC:14:02:06", "BTH-A1B2")
+        val shortBts = wifi("AA:BB:CC:14:02:07", "BTS-0001")
+        val shortBtc = wifi("AA:BB:CC:14:02:08", "BTC-ZZ99")
+        val noDash = wifi("AA:BB:CC:14:02:09", "BTHA1B2")
+        val mid = wifi("AA:BB:CC:14:02:0A", "XBTS-0001")
+        val bleName = ble(name = "STEINER Thermal Handheld-1")
+            .copy(key = "BLE:st", mac = "AA:BB:CC:14:02:0B")
+        val hik = wifi("AA:BB:CC:14:02:0C", "HIKMICRO_123")
+        val thermion = wifi("AA:BB:CC:14:02:0D", "Thermion2_1234")
+        val hits = SignatureEngine().match(
+            listOf(handheld, h35, s35, c35, burris, shortBth, shortBts, shortBtc, noDash, mid, bleName, hik, thermion),
+            stock,
+        )
+        fun ids(sighting: Sighting) = hits.getValue(sighting.key)
+        assertTrue("handheld", "fleet-steiner-burris-thermal" in ids(handheld))
+        assertTrue("H35", "fleet-steiner-burris-thermal" in ids(h35))
+        assertTrue("S35", "fleet-steiner-burris-thermal" in ids(s35))
+        assertTrue("C35", "fleet-steiner-burris-thermal" in ids(c35))
+        assertTrue("Burris_BTH", "fleet-steiner-burris-thermal" in ids(burris))
+        assertFalse("short BTH", "fleet-steiner-burris-thermal" in ids(shortBth))
+        assertFalse("short BTS", "fleet-steiner-burris-thermal" in ids(shortBts))
+        assertFalse("short BTC", "fleet-steiner-burris-thermal" in ids(shortBtc))
+        assertFalse("no dash", "fleet-steiner-burris-thermal" in ids(noDash))
+        assertFalse("in the middle", "fleet-steiner-burris-thermal" in ids(mid))
+        assertFalse("BLE name", "fleet-steiner-burris-thermal" in ids(bleName))
+        assertFalse("HIKMICRO", "fleet-steiner-burris-thermal" in ids(hik))
+        assertTrue("HIKMICRO stays on its row", "fleet-hikmicro-optics" in ids(hik))
+        assertFalse("Thermion", "fleet-steiner-burris-thermal" in ids(thermion))
+        assertTrue("Thermion stays on Pulsar", "fleet-pulsar-optics" in ids(thermion))
+    }
+
+    @Test
+    fun catalog114AddsSteinerM830LrfAsMilitary() {
+        val stock = DefaultCatalog.fleets()
+        val row = stock.single { it.id == "fleet-steiner-lrf" }
+        assertEquals(SignatureClass.MILITARY, row.kind)
+        assertEquals(7, row.colorIndex)
+        assertTrue(row.attentionNote.isNotBlank())
+        assertFalse(row.rules.any { it.companyId == 0x04CA || it.text.startsWith("Dongle") })
+        assertEquals(
+            listOf("watch-fleet-steiner-lrf"),
+            DefaultCatalog.defaultWatchlist().filter { it.fleetId == row.id }.map { it.id },
+        )
+        val lrfX = ble(name = "LRF X 1234567").copy(key = "BLE:l1", mac = "AA:BB:CC:14:03:01")
+        val steinerX = ble(name = "Steiner LRF X1234567").copy(key = "BLE:l2", mac = "AA:BB:CC:14:03:02")
+        val lrf1535 = ble(name = "LRF1535 004711").copy(key = "BLE:l3", mac = "AA:BB:CC:14:03:03")
+        val steiner1535 = ble(name = "Steiner LRF1535").copy(key = "BLE:l4", mac = "AA:BB:CC:14:03:04")
+        val lower = ble(name = "lrf x 12").copy(key = "BLE:l5", mac = "AA:BB:CC:14:03:05")
+        val dongle = ble(name = "Dongle 01").copy(key = "BLE:l6", mac = "AA:BB:CC:14:03:06")
+        val noSpace = ble(name = "LRFX").copy(key = "BLE:l7", mac = "AA:BB:CC:14:03:07")
+        val mine = ble(name = "MyLRF X").copy(key = "BLE:l8", mac = "AA:BB:CC:14:03:08")
+        val accolade = wifi("AA:BB:CC:14:03:09", "Accolade 2 LRF_1234")
+        val wifiName = wifi("AA:BB:CC:14:03:0A", "LRF X 1234567")
+        val hits = SignatureEngine().match(
+            listOf(lrfX, steinerX, lrf1535, steiner1535, lower, dongle, noSpace, mine, accolade, wifiName),
+            stock,
+        )
+        fun ids(sighting: Sighting) = hits.getValue(sighting.key)
+        assertTrue("LRF X", "fleet-steiner-lrf" in ids(lrfX))
+        assertTrue("Steiner LRF X", "fleet-steiner-lrf" in ids(steinerX))
+        assertTrue("LRF1535", "fleet-steiner-lrf" in ids(lrf1535))
+        assertTrue("Steiner LRF1535", "fleet-steiner-lrf" in ids(steiner1535))
+        assertTrue("lowercase", "fleet-steiner-lrf" in ids(lower))
+        assertFalse("Dongle", "fleet-steiner-lrf" in ids(dongle))
+        assertFalse("LRFX", "fleet-steiner-lrf" in ids(noSpace))
+        assertFalse("MyLRF X", "fleet-steiner-lrf" in ids(mine))
+        assertFalse("Accolade", "fleet-steiner-lrf" in ids(accolade))
+        assertTrue("Accolade stays on Pulsar", "fleet-pulsar-optics" in ids(accolade))
+        assertFalse("Wi-Fi name", "fleet-steiner-lrf" in ids(wifiName))
+        assertFalse("thermal row", "fleet-steiner-burris-thermal" in ids(lrfX))
+    }
+
+    @Test
+    fun catalog114AddsElkLedStrip() {
+        val stock = DefaultCatalog.fleets()
+        val row = stock.single { it.id == "fleet-elk-led" }
+        assertEquals("ELK LED strip", row.name)
+        assertEquals(SignatureClass.HOME, row.kind)
+        assertTrue(row.attentionNote.isBlank())
+        assertFalse("fleet-elk-led" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        assertEquals(listOf("ELK-BLEDO*"), row.rules.map { it.text })
+        assertTrue(row.rules.all { it.kind == RuleKind.NAME_GLOB && it.radio == RadioKind.BLE })
+        val dob = ble(name = "ELK-BLEDOB").copy(key = "BLE:e1", mac = "AA:BB:CC:14:04:01")
+        val dom = ble(name = "ELK-BLEDOM").copy(key = "BLE:e2", mac = "AA:BB:CC:14:04:02")
+        val suffix = ble(name = "ELK-BLEDOM0B").copy(key = "BLE:e3", mac = "AA:BB:CC:14:04:03")
+        val lower = ble(name = "elk-bledob").copy(key = "BLE:e4", mac = "AA:BB:CC:14:04:04")
+        val short = ble(name = "ELK-BLE").copy(key = "BLE:e5", mac = "AA:BB:CC:14:04:05")
+        val bulb = ble(name = "ELK-BULB").copy(key = "BLE:e6", mac = "AA:BB:CC:14:04:06")
+        val melk = ble(name = "MELK-1234").copy(key = "BLE:e7", mac = "AA:BB:CC:14:04:07")
+        val hid = ble(name = "", serviceUuids = listOf("1812", "180F"), manufacturerId = 12849)
+            .copy(key = "BLE:e8", mac = "AA:BB:CC:14:04:08")
+        val wifiName = wifi("AA:BB:CC:14:04:09", "ELK-BLEDOB")
+        val hits = SignatureEngine().match(
+            listOf(dob, dom, suffix, lower, short, bulb, melk, hid, wifiName),
+            stock,
+        )
+        fun ids(sighting: Sighting) = hits.getValue(sighting.key)
+        assertTrue("ELK-BLEDOB", "fleet-elk-led" in ids(dob))
+        assertTrue("ELK-BLEDOM", "fleet-elk-led" in ids(dom))
+        assertTrue("ELK-BLEDOM0B", "fleet-elk-led" in ids(suffix))
+        assertTrue("lowercase", "fleet-elk-led" in ids(lower))
+        assertFalse("ELK-BLE", "fleet-elk-led" in ids(short))
+        assertFalse("ELK-BULB", "fleet-elk-led" in ids(bulb))
+        assertFalse("MELK name", "fleet-elk-led" in ids(melk))
+        assertTrue("MELK stays on MELK", "fleet-melk" in ids(melk))
+        assertFalse("HID and company field", "fleet-elk-led" in ids(hid))
+        assertFalse("Wi-Fi name", "fleet-elk-led" in ids(wifiName))
+    }
+
+    @Test
     fun catalog100AddsExpressLrsXiaomiMiHomeAndEzviz() {
         val stock = DefaultCatalog.fleets()
         val elrs = stock.single { it.id == "fleet-elrs" }
@@ -1047,7 +1531,7 @@ class DefaultCatalogTest {
         assertEquals(listOf("ICOM BT(ID-52)"), icom.rules.map { it.text })
         assertEquals(RadioKind.BLE, icom.rules.single().radio)
         assertFalse("fleet-icom-id52" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
-        assertTrue(stock.none { it.kind == SignatureClass.MILITARY })
+        assertEquals(listOf("fleet-steiner-lrf"), stock.filter { it.kind == SignatureClass.MILITARY }.map { it.id })
         assertEquals(17, stock.count { it.kind == SignatureClass.TWO_WAY })
 
         val named = ble(name = "ICOM BT(ID-52)").copy(key = "BLE:i1", mac = "AA:BB:CC:DD:11:01")

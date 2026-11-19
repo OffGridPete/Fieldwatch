@@ -75,6 +75,7 @@ import app.fieldwatch.ui.component.FieldwatchActionButton
 import app.fieldwatch.ui.component.FieldwatchFilterChip
 import app.fieldwatch.ui.component.FieldwatchSwitch
 import app.fieldwatch.ui.component.SectionCard
+import app.fieldwatch.ui.component.WarningReachCard
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -298,21 +299,16 @@ private fun CellWatchCards(
         }
         Note(LanguageText.text("cell.warn.drop.note"))
     }
-    SectionCard(LanguageText.text("trusted.reach")) {
-        Note(LanguageText.text("cell.reach.note"))
-        SwitchRow(LanguageText.text("ui.beep.label"), settings.cellBeep) { on ->
-            onChange { it.copy(cellBeep = on) }
-        }
-        Note(LanguageText.text("cell.beep.note"))
-        SwitchRow(LanguageText.text("ui.voice.label"), settings.cellVoice) { on ->
-            onChange { it.copy(cellVoice = on) }
-        }
-        Note(LanguageText.text("cell.voice.note"))
-        SwitchRow(LanguageText.text("ui.system.notification"), settings.cellShade) { on ->
-            onChange { it.copy(cellShade = on) }
-        }
-        Note(LanguageText.text("cell.shade.note"))
-    }
+    WarningReachCard(
+        intro = LanguageText.text("trusted.reach.note"),
+        beep = settings.cellBeep,
+        onBeep = { on -> onChange { it.copy(cellBeep = on) } },
+        voice = settings.cellVoice,
+        onVoice = { on -> onChange { it.copy(cellVoice = on) } },
+        voiceNote = LanguageText.text("cell.voice.note"),
+        shade = settings.cellShade,
+        onShade = { on -> onChange { it.copy(cellShade = on) } },
+    )
     SectionCard(LanguageText.text("cell.cannot")) {
         Note(LanguageText.text("cell.cannot.other"))
     }
