@@ -311,11 +311,11 @@ class FlockCamerasTest {
         val parsed = GZIPInputStream(FileInputStream(file)).use { stream ->
             parseFlock(InputStreamReader(stream, Charsets.UTF_8))
         }
-        assertEquals(40496, parsed.size)
-        assertEquals(1828, parsed.count { it.kind == SensorKind.SPEED })
-        assertEquals(682, parsed.count { it.kind == SensorKind.RED })
-        assertEquals(4019, parsed.count { it.kind == SensorKind.GUNSHOT })
-        assertEquals(33967, parsed.count { it.kind == SensorKind.CAMERA })
+        assertEquals(40743, parsed.size)
+        assertEquals(1832, parsed.count { it.kind == SensorKind.SPEED })
+        assertEquals(681, parsed.count { it.kind == SensorKind.RED })
+        assertEquals(4126, parsed.count { it.kind == SensorKind.GUNSHOT })
+        assertEquals(34104, parsed.count { it.kind == SensorKind.CAMERA })
         assertTrue(parsed.none { it.kind == SensorKind.PLATE })
     }
 
