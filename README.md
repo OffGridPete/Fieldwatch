@@ -74,9 +74,9 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
   </tr>
   <tr>
     <td align="center" valign="top">
-      <img src="docs/readme/cell-connection.png" width="200" alt="Warning that this phone camped on a cell it has not used here">
+      <img src="docs/readme/cell-connection.png" width="200" alt="Warning that this phone connected to a cell it has not used in this location">
       <br><strong>Cell connection</strong>
-      <br>A warning when this phone camps on a cell it has not used here. It does not name a cause. The numbers in the shot are an example.
+      <br>A warning when this phone connects to a cell it has not used in this location. It does not name a cause. The numbers in the shot are an example.
     </td>
     <td align="center" valign="top">
       <img src="docs/readme/cell-learn.png" width="200" alt="Cell connection monitoring learning settings">
