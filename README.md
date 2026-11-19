@@ -81,9 +81,9 @@ There is a lot of functionality in Fieldwatch. I wrote a comprehensive user guid
       <br>A warning when this phone connects to a cell it has not used in this location. It does not name a cause. The numbers in the shot are an example.
     </td>
     <td align="center" valign="top">
-      <img src="docs/readme/cell-learn.png" width="200" alt="Cell connection monitoring learning settings">
-      <br><strong>How it learns</strong>
-      <br>Off until you turn it on. The first still visit only learns. A later new cell can warn.
+      <img src="docs/readme/drone-swarm.png" width="200" alt="Drone swarm detected warning">
+      <br><strong>Drone swarm detection</strong>
+      <br>Warns when Remote ID detects new drones in the time window you set. Drone perimeter detection warns when a drone using Remote ID is inside the distance you pick: 100 m, 250 m, 500 m, or 1 km.
     </td>
     <td align="center" valign="top">
       <img src="docs/readme/tracker.png" width="200" alt="Separated tag with you warning">
