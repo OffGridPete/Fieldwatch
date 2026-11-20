@@ -11,11 +11,9 @@ class NoticeTextTest {
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
         val note = AppUpdate.parse(file.readText())!!
         val parts = NoticeText.paragraphs(note.notes)
-        assertEquals(7, parts.size)
+        assertEquals(1, parts.size)
         assertEquals(note.notes, parts.joinToString("\n\n"))
-        assertTrue(parts[0].startsWith("Drone monitoring is in Settings"))
-        assertTrue(parts[3].startsWith("These warnings are a guide"))
-        assertTrue(parts[6].startsWith("Bundled language files"))
+        assertTrue(parts[0].startsWith("Sorry for the quick patch"))
     }
 
     @Test
