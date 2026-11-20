@@ -247,6 +247,8 @@ class LanguagePackTest {
         assertEquals(63, previous.newSince)
         val shipped = ok(pack("tab.live" to "Direct", writtenFor = "1.2.0"))
         assertEquals(0, shipped.newSince)
+        val thisRelease = ok(pack("tab.live" to "Direct", writtenFor = "1.2.1"))
+        assertEquals(0, thisRelease.newSince)
         val missing = ok(pack("tab.live" to "Direct"))
         assertNull(missing.newSince)
         val odd = ok(pack("tab.live" to "Direct", writtenFor = "v1.1.21"))
@@ -599,7 +601,7 @@ class LanguagePackTest {
             val parsed = LanguagePack.parse(File(dir, "${bundled.tag}.json").readBytes())
             val preview = (parsed as LanguageParse.Ok).preview
             assertEquals(bundled.name, preview.language)
-            assertEquals("${bundled.tag} writtenFor", "1.2.0", preview.writtenFor)
+            assertEquals("${bundled.tag} writtenFor", "1.2.1", preview.writtenFor)
             assertTrue("${bundled.tag} display.live.path", preview.accepted.containsKey("display.live.path"))
             assertTrue("${bundled.tag} display.recenter", preview.accepted.containsKey("display.recenter"))
             assertTrue("${bundled.tag} map.north.up", preview.accepted.containsKey("map.north.up"))

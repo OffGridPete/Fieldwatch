@@ -479,8 +479,8 @@ def draw_cover(c, doc):
         y -= 16
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 9)
-    c.drawString(48, 108, "Version 1.2.0")
-    c.drawString(48, 94, "19 November 2026")
+    c.drawString(48, 108, "Version 1.2.1")
+    c.drawString(48, 94, "20 November 2026")
     c.drawString(48, 80, "Package  app.fieldwatch   ·   Android 10+ (API 29)   ·   Target API 35")
     c.setStrokeColor(colors.HexColor("#2A3340"))
     c.setLineWidth(0.6)
@@ -521,7 +521,7 @@ def draw_body(c, doc):
     c.line(48, 40, PAGE_W - 48, 40)
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8)
-    label = "v1.2.0  ·  Off Grid Pete LLC"
+    label = "v1.2.1  ·  Off Grid Pete LLC"
     c.drawString(48, 28, label)
     # Fixed x values ran the Instagram mark into "LLC".
     ig_s, x_s = 5.2, 5.0
@@ -7470,9 +7470,9 @@ def story():
                 ["X", "@OGridPete"],
                 ["Document", "User Manual and Technical Documentation"],
                 ["Application ID", "app.fieldwatch"],
-                ["Software version", "1.2.0 (versionCode 55), field build of 19 November 2026"],
-                ["Document version", "1.2.0"],
-                ["Document date", "19 November 2026"],
+                ["Software version", "1.2.1 (versionCode 56), field build of 20 November 2026"],
+                ["Document version", "1.2.1"],
+                ["Document date", "20 November 2026"],
                 ["License", "MIT License (see LICENSE); third-party: NOTICE"],
                 ["Platform", "Android 10+ (minSdk 29), targetSdk 35"],
                 ["Classification", "A copy filled with a sit log is sensitive."],

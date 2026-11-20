@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Suomi",
   "languageTag": "fi",
-  "writtenFor": "1.2.0",
+  "writtenFor": "1.2.1",
   "strings": {
     "tab.live": "Suora",
     "tab.pause": "Tauko",

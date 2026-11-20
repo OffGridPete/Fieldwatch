@@ -4,6 +4,11 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.2.1 — 20 November 2026
+
+- Watchlist voice speaks again after the beep. A long watchlist could beep and then drop the sentence, because the beep ended before the sentence was saved. The sentence is kept. A speech engine that has stopped is started again. Voice that was already on stays on.
+- Bundled language files are written for this version.
+
 ## 1.2.0 — 19 November 2026
 
 - Settings → Drone monitoring has Drone perimeter detection. The line under the switch says it detects a drone using Remote ID within the range selected below. The distances under the switch are 100 m, 250 m, 500 m, and 1 km, starting at 250 m. It needs a GPS fix of 50 m or better. Beep, voice, and the silent notification are the same switches as the swarm warning. The live row says within that distance while the latest fresh position is inside. It warns again after the broadcast is past one and a half times the distance, or after that drone has gone. The Remote ID bookmark waits up to 10 seconds so this warning can take that first cue. A named radio with Alert on still alerts on its own.

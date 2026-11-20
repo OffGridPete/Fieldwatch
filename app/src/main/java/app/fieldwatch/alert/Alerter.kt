@@ -55,7 +55,15 @@ class Alerter(private val context: Context) {
     private var utteranceStarted = false
     private var ttsSpeakTries = 0
     private var pendingSpeak: String? = null
+    /** Written off the main thread, read when the beep timer fires. */
+    @Volatile
     private var speakAfterBeep: String? = null
+    /** Bumped before the beep is posted so a stale timer cannot eat the next phrase. */
+    @Volatile
+    private var beepToken = 0
+    /** Init failed, or speak() found the engine unbound. The next attempt builds a new one. */
+    private var ttsFailed = false
+    private var ttsGeneration = 0
     private val speakWatchdog = Runnable {
         if (!speaking) return@Runnable
         val retry = pendingSpeak
@@ -132,12 +140,12 @@ class Alerter(private val context: Context) {
                 .build()
             manager.notify(noteId, note)
         }
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
-        if (vibrate) vibrate()
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (vibrate) vibrate()
     }
 
     fun playTestBeep(
@@ -145,12 +153,14 @@ class Alerter(private val context: Context) {
         speakClass: Boolean = false,
         voiceWhat: AlertVoiceWhat = AlertVoiceWhat.CLASS,
     ) {
-        if (speakClass) prepareVoice()
+        if (speakClass) {
+            prepareVoice()
+            queueVoice(testWatchPhrase(voiceWhat), afterBeep = beepOn)
+        }
         if (beepOn) {
             beep(holdFocus = !speakClass)
             vibrate()
         }
-        if (speakClass) queueVoice(testWatchPhrase(voiceWhat), afterBeep = beepOn)
     }
 
     /** Warm the TTS engine on the main thread so the first alert is not silent. */
@@ -190,11 +200,11 @@ class Alerter(private val context: Context) {
         } else {
             manager.cancel(GNSS_NOTE_ID)
         }
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
     }
 
     fun clearGnssNote() {
@@ -241,12 +251,14 @@ class Alerter(private val context: Context) {
         } else {
             manager.cancel(SWARM_NOTE_ID)
         }
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
-        if (vibrate) vibrate()
+        // Store the phrase before posting the beep. The timer can finish
+        // before a later write, and then the line is never spoken.
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (vibrate) vibrate()
     }
 
     fun clearSwarmNote() {
@@ -283,11 +295,11 @@ class Alerter(private val context: Context) {
         } else {
             manager.cancel(TRUSTED_NOTE_ID)
         }
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
     }
 
     fun clearTrustedNote() {
@@ -324,11 +336,11 @@ class Alerter(private val context: Context) {
         } else {
             manager.cancel(CELL_NOTE_ID)
         }
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
     }
 
     fun clearCellNote() {
@@ -369,11 +381,11 @@ class Alerter(private val context: Context) {
 
     /** Beep and speak a tracker warning. The notification stays in [trackerNote]. */
     fun trackerCue(phrase: String?, beep: Boolean) {
-        if (beep) beep(holdFocus = phrase.isNullOrBlank())
         if (!phrase.isNullOrBlank()) {
             prepareVoice()
             queueVoice(phrase, afterBeep = beep)
         }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
     }
 
     /**
@@ -470,19 +482,22 @@ class Alerter(private val context: Context) {
                 )
                 if (shadeOn && target.notify) notify(label, device, demoMode)
                 if (target.vibrate) vibrate()
-                if (beepOn && !beepFired) {
-                    beep(holdFocus = !voiceOn)
-                    beepFired = true
-                }
-                if (beepOn || voiceOn) _flashes.tryEmit(device.key)
                 if (voiceOn && voicePhrase == null) {
                     voicePhrase = spokenWatchPhrase(
                         device, fleets, voiceWhat, target, spokenNames, watchlist,
                     )
                 }
+                if (beepOn && !beepFired) {
+                    // The scan loop keeps going after this. Queue first so the
+                    // beep timer cannot finish while the phrase is still unset.
+                    if (voicePhrase != null) queueVoice(voicePhrase, afterBeep = true)
+                    beep(holdFocus = voicePhrase == null)
+                    beepFired = true
+                }
+                if (beepOn || voiceOn) _flashes.tryEmit(device.key)
             }
         }
-        if (voicePhrase != null) queueVoice(voicePhrase, afterBeep = beepFired)
+        if (voicePhrase != null && !beepFired) queueVoice(voicePhrase, afterBeep = false)
     }
 
     private fun queueVoice(text: String, afterBeep: Boolean) {
@@ -531,10 +546,13 @@ class Alerter(private val context: Context) {
     }
 
     private fun beep(holdFocus: Boolean = true) {
-        main.post { playSynthBeep(holdFocus) }
+        val token = beepToken + 1
+        beepToken = token
+        main.post { playSynthBeep(holdFocus, token) }
     }
 
-    private fun playSynthBeep(holdFocus: Boolean) {
+    private fun playSynthBeep(holdFocus: Boolean, token: Int) {
+        if (token != beepToken) return
         runCatching {
             stopBeep()
             val sampleRate = 22_050
@@ -568,7 +586,7 @@ class Alerter(private val context: Context) {
             val written = track.write(pcm, 0, pcm.size)
             if (written <= 0) {
                 track.release()
-                finishBeep()
+                if (token == beepToken) finishBeep()
                 return@runCatching
             }
             // TTS engines run in another process. Holding media focus here ducks
@@ -585,11 +603,12 @@ class Alerter(private val context: Context) {
             track.play()
             val playMs = total * 1000L / sampleRate
             main.postDelayed({
+                if (token != beepToken) return@postDelayed
                 if (beepTrack === track) stopBeep()
                 finishBeep()
             }, playMs + 40L)
         }.onFailure {
-            finishBeep()
+            if (token == beepToken) finishBeep()
         }
     }
 
@@ -613,6 +632,7 @@ class Alerter(private val context: Context) {
         val phrase = speakAfterBeep ?: return
         speakAfterBeep = null
         releaseFocus()
+        ttsSpeakTries = 0
         main.postDelayed({ speakClassName(phrase) }, VOICE_AFTER_TRACK_MS)
     }
 
@@ -726,11 +746,25 @@ class Alerter(private val context: Context) {
     }
 
     private fun ensureTts() {
-        if (tts != null) return
-        tts = TextToSpeech(context) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (!ttsReady) return@TextToSpeech
-            val engine = tts ?: return@TextToSpeech
+        if (tts != null && !ttsFailed) return
+        if (tts != null) releaseTts()
+        val generation = ++ttsGeneration
+        var created: TextToSpeech? = null
+        created = TextToSpeech(context) { status ->
+            main.post {
+            val engine = created ?: return@post
+            if (generation != ttsGeneration || tts !== engine) return@post
+            if (status != TextToSpeech.SUCCESS) {
+                ttsReady = false
+                ttsFailed = true
+                val phrase = pendingSpeak
+                if (phrase != null && ttsSpeakTries < 2) {
+                    ttsSpeakTries++
+                    main.post { ensureTts() }
+                }
+                return@post
+            }
+            ttsReady = true
             engine.setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -773,13 +807,27 @@ class Alerter(private val context: Context) {
             main.postDelayed({
                 pendingSpeak?.let { startSpeak(it) }
             }, TTS_AFTER_INIT_MS)
+            }
         }
+        tts = created
+    }
+
+    /** Drop a speech engine that failed to start or is no longer bound. */
+    private fun releaseTts() {
+        val dead = tts
+        tts = null
+        ttsReady = false
+        ttsFailed = false
+        speaking = false
+        utteranceStarted = false
+        if (dead != null) runCatching { dead.shutdown() }
     }
 
     private fun startSpeak(text: String) {
-        val engine = tts ?: return
-        if (!ttsReady) {
+        val engine = tts
+        if (engine == null || !ttsReady) {
             pendingSpeak = text
+            if (ttsFailed || engine == null) ensureTts()
             return
         }
         if (speaking && utteranceStarted) return
@@ -790,8 +838,14 @@ class Alerter(private val context: Context) {
         val ok = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE)
         if (ok != TextToSpeech.SUCCESS) {
             speaking = false
+            // speak() does not rebind after the speech process dies.
             if (ttsSpeakTries < 2) {
-                main.postDelayed({ startSpeak(text) }, TTS_AFTER_INIT_MS)
+                ttsFailed = true
+                pendingSpeak = text
+                ensureTts()
+            } else {
+                pendingSpeak = null
+                ttsSpeakTries = 0
             }
             return
         }

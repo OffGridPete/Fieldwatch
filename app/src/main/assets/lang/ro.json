@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Română",
   "languageTag": "ro",
-  "writtenFor": "1.2.0",
+  "writtenFor": "1.2.1",
   "strings": {
     "tab.live": "În direct",
     "tab.pause": "Pauză",

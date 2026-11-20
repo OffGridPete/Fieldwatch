@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Shqip",
   "languageTag": "sq",
-  "writtenFor": "1.2.0",
+  "writtenFor": "1.2.1",
   "strings": {
     "tab.live": "Drejtpërdrejt",
     "tab.pause": "Pauzë",

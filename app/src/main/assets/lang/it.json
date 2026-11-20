@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "language": "Italiano",
   "languageTag": "it",
-  "writtenFor": "1.2.0",
+  "writtenFor": "1.2.1",
   "strings": {
     "tab.live": "Dal vivo",
     "tab.pause": "Pausa",
