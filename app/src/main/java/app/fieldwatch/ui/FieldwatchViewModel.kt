@@ -2483,7 +2483,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 }
                 publishCandidates(0.92f, LanguageText.text("ui.matching.catalog"))
                 withContext(Dispatchers.Default) {
-                    SignatureCandidates.analyze(radios, app.config.fleets)
+                    SignatureCandidates.analyze(
+                        radios,
+                        app.config.fleets,
+                        notSignatures = RadioBookmarks.notSignatures(app.config.watchlist),
+                    )
                 }
             }.onSuccess { report ->
                 _candidates.value = CandidatesUi(report = report)
@@ -2881,6 +2885,26 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
             app.config.update { cfg ->
                 cfg.copy(watchlist = RadioBookmarks.setMine(cfg.watchlist, device.key, on, suggest))
             }
+        }
+    }
+
+    /** Signature ids marked as false positives for this radio. */
+    fun notSignatures(deviceKey: String): Set<String> =
+        app.config.watchlist.firstOrNull { it.deviceKey == deviceKey }?.notSignatures.orEmpty()
+
+    /** Live and alerts pick up the change on this refresh, without waiting for the radio to be heard again. */
+    fun setRadioNotSignature(device: Sighting, fleetId: String, on: Boolean) {
+        viewModelScope.launch {
+            val suggest = RadioBookmarks.suggestLabel(device, device.fleetIds.map { fleetName(it) })
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setNotSignature(cfg.watchlist, device.key, fleetId, on, suggest))
+            }
+            app.devices.refresh(
+                app.config.fleets,
+                app.config.settings.staleSec,
+                policy = app.config.settings.detectionPolicy(),
+                decaySec = app.config.settings.decaySec,
+            )
         }
     }
 

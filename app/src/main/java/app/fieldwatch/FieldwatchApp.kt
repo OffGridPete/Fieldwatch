@@ -802,7 +802,7 @@ class FieldwatchApp : Application() {
         started = true
         config = ConfigStore(this)
         RadioDb.init(this)
-        devices = DeviceStore()
+        devices = DeviceStore(notSignatures = { RadioBookmarks.notSignatures(config.watchlist) })
         logs = LogStore(this)
         sits = SitStore(this, scope)
         sits.watchPathCameras { cameraReport()?.near }

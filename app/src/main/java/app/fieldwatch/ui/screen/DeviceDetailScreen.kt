@@ -380,6 +380,9 @@ fun DeviceDetailScreen(
                     }
                 }
             }
+            if (canName) {
+                FalsePositiveCard(device, vm, snackbarHostState)
+            }
             if (device.kind == RadioKind.WIFI) {
                 TrustNetworkControl(device, vm)
             }
@@ -1102,6 +1105,54 @@ private fun ObserverNotesCard(
                     } else {
                         Text(LanguageText.text("ui.save.notes"))
                     }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One switch per signature on this radio. A marked signature drops off the radio, so it
+ * would vanish from fleetIds. We keep listing the marked ones here so they can be undone.
+ */
+@Composable
+private fun FalsePositiveCard(device: Sighting, vm: FieldwatchViewModel, snackbarHostState: SnackbarHostState) {
+    var marked by remember(device.key) { mutableStateOf(vm.notSignatures(device.key)) }
+    val ids = (device.fleetIds + marked).toList()
+    if (ids.isEmpty()) return
+    val scope = rememberCoroutineScope()
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Text(
+                LanguageText.text("ui.false.positive.label"),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                LanguageText.text("ui.false.positive.hint"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ids.forEach { id ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(vm.fleetName(id), Modifier.weight(1f))
+                    FieldwatchSwitch(
+                        checked = id in marked,
+                        onCheckedChange = { on ->
+                            vm.setRadioNotSignature(device, id, on)
+                            marked = if (on) marked + id else marked - id
+                            if (on) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(LanguageText.text("ui.false.positive.marked"))
+                                }
+                            }
+                        },
+                    )
                 }
             }
         }
