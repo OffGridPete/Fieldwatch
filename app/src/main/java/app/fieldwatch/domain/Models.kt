@@ -805,6 +805,11 @@ data class WatchTarget(
     val observerNotes: String = "",
     /** This radio is the operator's. Missing JSON = off. Alert is left as last set. */
     val mine: Boolean = false,
+    /**
+     * Signature ids the operator marked as false positives for this radio. Those signatures
+     * never label it, so it drops out of Live, alerts, logs, and reports for them.
+     */
+    val notSignatures: Set<String> = emptySet(),
 )
 
 /**

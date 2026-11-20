@@ -158,6 +158,43 @@ class RadioBookmarksTest {
     }
 
     @Test
+    fun notThisSignatureOnANewRadioNamesItAndLeavesAlertOff() {
+        val key = "WIFI:10:20:30:40:50:60"
+        val created = RadioBookmarks.setNotSignature(listOf(fleet), key, "fleet-porkchop", true, "PorkChopSuey")
+        val row = created.single { it.deviceKey != null }
+        assertEquals("PorkChopSuey", row.label)
+        assertFalse(row.alert)
+        assertFalse(row.mine)
+        assertEquals(setOf("fleet-porkchop"), row.notSignatures)
+        assertEquals(mapOf(key to setOf("fleet-porkchop")), RadioBookmarks.notSignatures(created))
+    }
+
+    @Test
+    fun notThisSignatureKeepsTheRestOfAnExistingRow() {
+        val key = radio.deviceKey!!
+        val first = RadioBookmarks.setNotSignature(listOf(radio.copy(alert = true)), key, "fleet-a", true, "ignored")
+        val both = RadioBookmarks.setNotSignature(first, key, "fleet-b", true, "ignored")
+        val row = both.single()
+        assertEquals("van tag", row.label)
+        assertTrue(row.alert)
+        assertEquals(setOf("fleet-a", "fleet-b"), row.notSignatures)
+
+        val undone = RadioBookmarks.setNotSignature(both, key, "fleet-a", false, "ignored")
+        assertEquals(setOf("fleet-b"), undone.single().notSignatures)
+        val cleared = RadioBookmarks.setNotSignature(undone, key, "fleet-b", false, "ignored")
+        assertEquals("van tag", cleared.single().label)
+        assertTrue(RadioBookmarks.notSignatures(cleared).isEmpty())
+    }
+
+    @Test
+    fun undoingNotThisSignatureOnAnUnknownRadioChangesNothing() {
+        assertEquals(
+            listOf(fleet),
+            RadioBookmarks.setNotSignature(listOf(fleet), "WIFI:10:20:30:40:50:60", "fleet-a", false, "x"),
+        )
+    }
+
+    @Test
     fun pathNoteDoesNotInventADot() {
         assertEquals("", RadioBookmarks.pathNote(bookmarked = false, observerNotes = "lot B", mine = false))
         assertEquals("lot B", RadioBookmarks.pathNote(bookmarked = true, observerNotes = "lot B", mine = false))

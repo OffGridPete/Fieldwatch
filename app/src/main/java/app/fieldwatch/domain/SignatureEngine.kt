@@ -18,14 +18,17 @@ class SignatureEngine {
         fleets: List<Fleet>,
         now: Long = System.currentTimeMillis(),
         policy: DetectionPolicy = DetectionPolicy(),
+        notSignatures: Map<String, Set<String>> = emptyMap(),
     ): Map<String, Set<String>> {
         val compiled = compiled(fleets)
         val byKey = LinkedHashMap<String, MutableSet<String>>(devices.size)
         devices.forEach { device ->
             val hits = linkedSetOf<String>()
             val ouiHit = compiled.ouiHits(device)
+            val excluded = notSignatures[device.key].orEmpty()
             compiled.plansFor(device.kind).forEach { idx ->
                 val plan = compiled.plans[idx]
+                if (plan.id in excluded) return@forEach
                 if (!plan.cluster && fleetHits(device, plan, ouiHit[idx])) {
                     hits += plan.id
                 }
@@ -39,7 +42,7 @@ class SignatureEngine {
             dropAmazonWhenSidewalk(hits)
             byKey[device.key] = hits
         }
-        applyClusters(devices, compiled, byKey, now)
+        applyClusters(devices, compiled, byKey, now, notSignatures)
         return byKey
     }
 
@@ -441,6 +444,7 @@ class SignatureEngine {
         compiled: Compiled,
         byKey: MutableMap<String, MutableSet<String>>,
         now: Long,
+        notSignatures: Map<String, Set<String>>,
     ) {
         compiled.plans.forEachIndexed { idx, plan ->
             if (!plan.cluster || plan.blocked) return@forEachIndexed
@@ -449,7 +453,10 @@ class SignatureEngine {
             }
             val fleet = plan.fleet
             val windowMs = (if (fleet.peerWindowSec <= 0) 60 else fleet.peerWindowSec) * 1000L
-            val live = devices.filter { now - it.lastSeen <= windowMs }
+            // A radio marked "not this signature" neither gets the label nor counts as a peer.
+            val live = devices.filter {
+                now - it.lastSeen <= windowMs && plan.id !in notSignatures[it.key].orEmpty()
+            }
             live.forEach { a ->
                 val aOui = compiled.ouiHits(a)
                 val aEligible = when {

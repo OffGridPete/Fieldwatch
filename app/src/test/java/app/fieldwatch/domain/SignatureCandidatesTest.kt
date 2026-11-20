@@ -89,6 +89,18 @@ class SignatureCandidatesTest {
     }
 
     @Test
+    fun notThisSignatureRadioCountsAsUnmatched() {
+        val radios = listOf(wifi("10:20:30:40:50:60", "PorkChopSuey"))
+        val fleets = DefaultCatalog.fleets()
+        assertEquals(0, SignatureCandidates.analyze(radios, fleets, engine).unmatchedRadios)
+        val excluded = mapOf("WIFI:10:20:30:40:50:60" to setOf("fleet-porkchop"))
+        assertEquals(
+            1,
+            SignatureCandidates.analyze(radios, fleets, engine, notSignatures = excluded).unmatchedRadios,
+        )
+    }
+
+    @Test
     fun singleRadioIsNotAFamily() {
         val a = wifi("00:11:22:33:44:55", "H2O-047bcbd11400")
         val report = SignatureCandidates.analyze(listOf(a), emptyList(), engine)

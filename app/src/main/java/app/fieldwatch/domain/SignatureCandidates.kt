@@ -69,9 +69,14 @@ object SignatureCandidates {
         fleets: List<Fleet>,
         engine: SignatureEngine = SignatureEngine(),
         sourceLabel: String = "Rotating log",
+        notSignatures: Map<String, Set<String>> = emptyMap(),
     ): CandidateReport {
         val sightings = radios.map { it.toSighting() }
-        val hits = if (sightings.isEmpty()) emptyMap() else engine.match(sightings, fleets)
+        val hits = if (sightings.isEmpty()) {
+            emptyMap()
+        } else {
+            engine.match(sightings, fleets, notSignatures = notSignatures)
+        }
         val unmatched = radios.filter { radio ->
             hits[radio.key].isNullOrEmpty()
         }

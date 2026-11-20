@@ -167,6 +167,41 @@ object RadioBookmarks {
         }
     }
 
+    /** Signature ids each radio must never match, keyed KIND:MAC. Radios with none are left out. */
+    fun notSignatures(watchlist: List<WatchTarget>): Map<String, Set<String>> =
+        watchlist.mapNotNull { row ->
+            val key = row.deviceKey ?: return@mapNotNull null
+            if (row.notSignatures.isEmpty()) null else key to row.notSignatures
+        }.toMap()
+
+    /**
+     * Marks or clears one signature as a false positive for this radio. Like Mine, a new row
+     * gets the suggested name and Alert off, and clearing the last mark keeps the row and its name.
+     */
+    fun setNotSignature(
+        watchlist: List<WatchTarget>,
+        deviceKey: String,
+        fleetId: String,
+        on: Boolean,
+        suggestLabel: String,
+    ): List<WatchTarget> {
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (i < 0) {
+            if (!on) return watchlist
+            return watchlist + WatchTarget(
+                id = UUID.randomUUID().toString(),
+                deviceKey = deviceKey,
+                label = clip(suggestLabel),
+                alert = false,
+                notSignatures = setOf(fleetId),
+            )
+        }
+        return watchlist.mapIndexed { idx, row ->
+            if (idx != i) row
+            else row.copy(notSignatures = if (on) row.notSignatures + fleetId else row.notSignatures - fleetId)
+        }
+    }
+
     /** Named-radios row. A blank label is filled from the key when Mine turns on. */
     fun setMineOnRow(watchlist: List<WatchTarget>, id: String, on: Boolean): List<WatchTarget> {
         val row = watchlist.firstOrNull { it.id == id && it.deviceKey != null } ?: return watchlist

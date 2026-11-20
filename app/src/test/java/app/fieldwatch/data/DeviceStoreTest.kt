@@ -1,10 +1,13 @@
 package app.fieldwatch.data
 
 import app.fieldwatch.domain.DefaultCatalog
+import app.fieldwatch.domain.Fleet
+import app.fieldwatch.domain.MatchRule
 import app.fieldwatch.domain.Observation
 import app.fieldwatch.domain.OperatorLoc
 import app.fieldwatch.domain.RadioFacts
 import app.fieldwatch.domain.RadioKind
+import app.fieldwatch.domain.RuleKind
 import app.fieldwatch.domain.ServiceDataRecord
 import app.fieldwatch.domain.VendorIeRecord
 import app.fieldwatch.domain.toHexUpper
@@ -534,6 +537,58 @@ class DeviceStoreTest {
         store.refresh(fleets, 30)
         val published = store.devices.value.first { it.mac == mac }
         assertTrue("fleet-cisco" in published.fleetIds)
+    }
+
+    @Test
+    fun notThisSignatureDropsOnlyThatRadioFromThatSignature() {
+        val neighbor = "WIFI:10:20:30:40:50:60"
+        val store = DeviceStore(notSignatures = { mapOf(neighbor to setOf("fleet-porkchop")) })
+        store.ingestBatch(
+            listOf(
+                wifi("10:20:30:40:50:60", name = "PorkChopSuey"),
+                wifi("10:20:30:40:50:61", name = "PorkChopSuey"),
+            ),
+            fleets,
+            30,
+        )
+        assertFalse("fleet-porkchop" in store.find(neighbor)!!.fleetIds)
+        assertTrue("fleet-porkchop" in store.find("WIFI:10:20:30:40:50:61")!!.fleetIds)
+    }
+
+    @Test
+    fun changingNotThisSignatureRelabelsOnRefresh() {
+        val neighbor = "WIFI:10:20:30:40:50:60"
+        var excluded = emptyMap<String, Set<String>>()
+        val store = DeviceStore(notSignatures = { excluded })
+        store.ingestBatch(listOf(wifi("10:20:30:40:50:60", name = "PorkChopSuey")), fleets, 30)
+        assertTrue("fleet-porkchop" in store.find(neighbor)!!.fleetIds)
+
+        excluded = mapOf(neighbor to setOf("fleet-porkchop"))
+        store.refresh(fleets, 30)
+        assertFalse("fleet-porkchop" in store.find(neighbor)!!.fleetIds)
+
+        excluded = emptyMap()
+        store.refresh(fleets, 30)
+        assertTrue("fleet-porkchop" in store.find(neighbor)!!.fleetIds)
+    }
+
+    @Test
+    fun notThisSignatureRadioIsNotACountedPeer() {
+        val swarm = listOf(
+            Fleet(
+                id = "fleet-swarm",
+                name = "Swarm",
+                rules = listOf(MatchRule(RuleKind.NAME_CONTAINS, text = "swarm")),
+                minPeers = 3,
+            ),
+        )
+        val macs = listOf("10:20:30:40:50:01", "10:20:30:40:50:02", "10:20:30:40:50:03")
+        val excludedKey = "WIFI:${macs[0]}"
+        val store = DeviceStore(notSignatures = { mapOf(excludedKey to setOf("fleet-swarm")) })
+        store.ingestBatch(macs.map { wifi(it, name = "swarm") }, swarm, 30)
+        macs.forEach { mac ->
+            assertFalse(mac, "fleet-swarm" in store.find("WIFI:$mac")!!.fleetIds)
+        }
     }
 
     private fun wifi(

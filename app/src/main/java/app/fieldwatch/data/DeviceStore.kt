@@ -23,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class DeviceStore(
     private val engine: SignatureEngine = SignatureEngine(),
+    /** Signature ids each radio must never match, keyed KIND:MAC. Read on every relabel. */
+    private val notSignatures: () -> Map<String, Set<String>> = { emptyMap() },
 ) {
     private val live = ConcurrentHashMap<String, Sighting>()
     private val _devices = MutableStateFlow<List<Sighting>>(emptyList())
@@ -45,6 +47,7 @@ class DeviceStore(
     /** Identity fingerprint → skip signature search while name / IEs / UUIDs / mfg stay the same. */
     private val matchStamp = HashMap<String, String>(512)
     private var catalogRef: List<Fleet>? = null
+    private var notSignaturesRef: Map<String, Set<String>> = emptyMap()
 
     fun keyOf(kind: app.fieldwatch.domain.RadioKind, mac: String) =
         "${kind.name}:${MacUtil.normalize(mac)}"
@@ -195,8 +198,12 @@ class DeviceStore(
         fleets: List<Fleet>,
         heard: Map<String, HeardFix> = emptyMap(),
     ) {
-        if (fleets !== catalogRef) {
+        val excluded = notSignatures()
+        // The match stamp only tracks what a radio sends, so a new catalog or a changed
+        // false-positive mark has to force every radio through the engine again.
+        if (fleets !== catalogRef || excluded != notSignaturesRef) {
             catalogRef = fleets
+            notSignaturesRef = excluded
             matchStamp.clear()
         }
         val cluster = fleets.any { it.minPeers > 0 || it.clusterByOui || it.sequentialMac }
@@ -212,7 +219,7 @@ class DeviceStore(
         }
         if (dirty.isEmpty()) return
         val pool: Collection<Sighting> = if (cluster) live.values else dirty
-        val matches = engine.match(pool, fleets)
+        val matches = engine.match(pool, fleets, notSignatures = excluded)
         val update = if (cluster) ArrayList(live.values) else dirty
         for (d in update) {
             val cur = live[d.key] ?: continue
