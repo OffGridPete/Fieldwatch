@@ -403,6 +403,40 @@ object DefaultCatalog {
         gree(),
         tozo(),
         irobot(),
+        airlift(),
+        blueparrott(),
+        cocaColaFreestyle(),
+        danlaw(),
+        directedDs4(),
+        dreo(),
+        eddystone(),
+        ezlynk(),
+        gnHearing(),
+        grundfos(),
+        hughesnet(),
+        ifit(),
+        kia(),
+        kuna(),
+        lippert(),
+        optimum(),
+        otodata(),
+        polaraAps(),
+        prepwizard(),
+        proconArrowq(),
+        pura(),
+        redtiger(),
+        resmed(),
+        rinnai(),
+        sennheiser(),
+        sonicwall(),
+        soundstreamTable(),
+        supraLockbox(),
+        toastPos(),
+        turtleBeach(),
+        ubee(),
+        valveLighthouse(),
+        victron(),
+        vivint(),
     ).sortedBy { it.name.lowercase() }
 
     private fun flockCameras() = Fleet(
@@ -5794,6 +5828,556 @@ object DefaultCatalog {
         notes = "iRobot Roomba or Braava. The company id is iRobot's. The serial-like name is not the rule.",
         builtIn = true,
         rules = listOf(bleMfg(0x0600)),
+    )
+
+
+    private fun airlift() = Fleet(
+        id = "fleet-airlift",
+        name = "Air Lift WirelessONE",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Air Lift WirelessONE Bluetooth air-spring suspension compressor manifold on a pickup, van, or RV.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("WirelessONE-*"),
+        ),
+    )
+
+    private fun blueparrott() = Fleet(
+        id = "fleet-blueparrott",
+        name = "BlueParrott",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "GN Audio (ex-VXi) BlueParrott commercial trucking or push-to-talk wireless headset.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("95665A00-8704-11E5-960C-0002A5D5C51B"),
+            bleGlob("BlueParrott*"),
+            oui("00:25:52"),
+            oui("3C:68:16"),
+        ),
+    )
+
+    private fun cocaColaFreestyle() = Fleet(
+        id = "fleet-coca-cola-freestyle",
+        name = "Coca-Cola Freestyle",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.SIGNAGE,
+        matchAny = true,
+        notes = "Coca-Cola Freestyle touchscreen fountain dispenser advertising mobile-pour Bluetooth.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0794),
+            bleUuid("FD9E"),
+        ),
+    )
+
+    private fun danlaw() = Fleet(
+        id = "fleet-danlaw",
+        name = "Danlaw DataLogger",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Danlaw DataLogger OBD-II telematics dongle, used by usage-based auto insurance programs and commercial fleets.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("DL-??????????"),
+            oui("4C:CE:2D"),
+            oui("08:90:BA"),
+        ),
+    )
+
+    private fun directedDs4() = Fleet(
+        id = "fleet-directed-ds4",
+        name = "Directed SmartStart",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Directed Electronics (Viper, Clifford, Python, or Autostart) DS4 vehicle remote-start and security module.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("B4520100-A308-4E56-8A52-536C2AD07147"),
+            bleGlob("DEI-*"),
+        ),
+    )
+
+    private fun dreo() = Fleet(
+        id = "fleet-dreo",
+        name = "Dreo",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Dreo smart tower fan, air circulator, or space heater.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("DREO*"),
+        ),
+    )
+
+    private fun eddystone() = Fleet(
+        id = "fleet-eddystone",
+        name = "Eddystone",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.BEACON,
+        matchAny = true,
+        notes = "Google Eddystone proximity or telemetry beacon (UID, URL, TLM, or EID frame). Retail and campus beacons are common; Google Find Hub tracker frames stay on Google Find Hub.",
+        builtIn = true,
+        rules = listOf(
+            svcData("FEAA", "00"),
+            svcData("FEAA", "10"),
+            svcData("FEAA", "20"),
+            svcData("FEAA", "30"),
+        ),
+    )
+
+    private fun ezlynk() = Fleet(
+        id = "fleet-ezlynk",
+        name = "EZ LYNK Auto Agent",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "EZ LYNK Auto Agent OBD-II vehicle diagnostic and ECU tuning Wi-Fi bridge.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("EZLYNK_*"),
+        ),
+    )
+
+    private fun gnHearing() = Fleet(
+        id = "fleet-gn-hearing",
+        name = "GN ReSound",
+        enabled = true,
+        colorIndex = Hue.HEALTH,
+        kind = SignatureClass.HEALTH,
+        matchAny = true,
+        notes = "GN Hearing (ReSound, Beltone, or Jabra Enhance) wireless hearing aid. Pattern match, not a person.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0089),
+            bleUuid("FD20"),
+            bleUuid("FEFE"),
+        ),
+    )
+
+    private fun grundfos() = Fleet(
+        id = "fleet-grundfos",
+        name = "Grundfos",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Grundfos smart hot-water recirculation or booster pump.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("FE5D"),
+            bleGlob("ALPHA HWR*"),
+        ),
+    )
+
+    private fun hughesnet() = Fleet(
+        id = "fleet-hughesnet",
+        name = "HughesNet",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Hughes Network Systems satellite internet gateway.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("HughesNet*"),
+            wifiGlob("HNS_*"),
+            wifiOui("00:80:AE"),
+            wifiOui("C4:F0:35"),
+        ),
+    )
+
+    private fun ifit() = Fleet(
+        id = "fleet-ifit",
+        name = "iFIT / NordicTrack",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Icon Health and Fitness (NordicTrack, ProForm, or iFIT) treadmill or exercise machine.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x01A5),
+        ),
+    )
+
+    private fun kia() = Fleet(
+        id = "fleet-kia",
+        name = "Kia",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Kia in-car infotainment or wireless projection access point.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("Kia_*"),
+            bleGlob("Kia *"),
+        ),
+    )
+
+    private fun kuna() = Fleet(
+        id = "fleet-kuna",
+        name = "Kuna",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = false,
+        notes = "Kuna or Maximus smart security light camera in Bluetooth setup. Consumer porch camera, not a roadside pole.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("Kuna*"),
+            bleUuid("FEF1"),
+        ),
+    )
+
+    private fun lippert() = Fleet(
+        id = "fleet-lippert",
+        name = "Lippert OneControl",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Lippert Components (LCI OneControl) RV leveling, slide-out, or awning controller.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x05C7),
+            bleUuid("00000041-0200-A58E-E411-AFE28044E62C"),
+            bleGlob("LCIRemote*"),
+        ),
+    )
+
+    private fun optimum() = Fleet(
+        id = "fleet-optimum",
+        name = "Optimum",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Optimum or Altice USA residential cable or fiber gateway. Many boxes are Ubee or Altice Labs OEM.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("MyOptimum*"),
+            wifiGlob("MyAltice*"),
+            wifiGlob("OptimumWiFi*"),
+            wifiName("optimumwifi"),
+        ),
+    )
+
+    private fun otodata() = Fleet(
+        id = "fleet-otodata",
+        name = "Otodata Tank Monitor",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Otodata wireless propane or fuel-tank level telemetry monitor.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x03B1),
+            bleGlob("TM5040 *"),
+        ),
+    )
+
+    private fun polaraAps() = Fleet(
+        id = "fleet-polara-aps",
+        name = "Polara PedApp",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.OTHER,
+        matchAny = true,
+        notes = "Polara iNavigator accessible pedestrian signal crosswalk button advertising for PedApp.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("60054001-F97C-C5A3-9941-1C799C307DDF"),
+        ),
+    )
+
+    private fun prepwizard() = Fleet(
+        id = "fleet-prepwizard",
+        name = "PrepWizard",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "PrepWizard commercial kitchen food-prep label printer (Bixolon thermal OEM).",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("PrepWizard*"),
+        ),
+    )
+
+    private fun proconArrowq() = Fleet(
+        id = "fleet-procon-arrowq",
+        name = "Procon Arrow-Q",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Procon Analytics (Advantage GPS) Arrow-QI hardwired dealer lot and auto-finance vehicle tracker.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0BD3),
+            bleGlob("ArrowQ*"),
+        ),
+    )
+
+    private fun pura() = Fleet(
+        id = "fleet-pura",
+        name = "Pura",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Pura smart home or car fragrance diffuser.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0BD8),
+            bleGlob("Pura-*"),
+            bleGlob("PCar-*"),
+        ),
+    )
+
+    private fun redtiger() = Fleet(
+        id = "fleet-redtiger",
+        name = "Redtiger",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Redtiger dashcam Wi-Fi.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("REDTIGER-*"),
+            wifiGlob("Redtiger-*"),
+        ),
+    )
+
+    private fun resmed() = Fleet(
+        id = "fleet-resmed",
+        name = "ResMed",
+        enabled = true,
+        colorIndex = Hue.HEALTH,
+        kind = SignatureClass.HEALTH,
+        matchAny = true,
+        notes = "ResMed AirSense or AirMini CPAP sleep-therapy machine. Home medical gear; pattern match, not a patient.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x038D),
+            bleUuid("FD56"),
+            bleGlob("ResMed *"),
+        ),
+    )
+
+    private fun rinnai() = Fleet(
+        id = "fleet-rinnai",
+        name = "Rinnai",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Rinnai SENSEI tankless water heater Bluetooth setup link.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("Rinnai *"),
+        ),
+    )
+
+    private fun sennheiser() = Fleet(
+        id = "fleet-sennheiser",
+        name = "Sennheiser",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Sennheiser headphones or AMBEO soundbar.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0494),
+            bleUuid("FDCE"),
+            bleName("Sennheiser"),
+            bleName("AMBEO Soundbar"),
+        ),
+    )
+
+    private fun sonicwall() = Fleet(
+        id = "fleet-sonicwall",
+        name = "SonicWall",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "SonicWall SonicWave or TZ small-business firewall and access point.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("SonicWall*"),
+            wifiOui("00:06:B1"),
+            wifiOui("00:17:C5"),
+            wifiOui("18:B1:69"),
+            wifiOui("18:C2:41"),
+            wifiOui("2C:B8:ED"),
+            wifiOui("C0:EA:E4"),
+            wifiOui("FC:39:5A"),
+        ),
+    )
+
+    private fun soundstreamTable() = Fleet(
+        id = "fleet-soundstream-table",
+        name = "Soundstream Nimbus",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Soundstream Nimbus smart speaker table.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("ST-NIMBUS*"),
+            MatchRule(RuleKind.MANUFACTURER_DATA, companyId = 0x1006, dataPrefixHex = "534F554E445441424C45", radio = RadioKind.BLE),
+        ),
+    )
+
+    private fun supraLockbox() = Fleet(
+        id = "fleet-supra-lockbox",
+        name = "Supra eKEY",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
+        matchAny = true,
+        notes = "Carrier / UTC (ex-GE Security) Supra iBox real-estate Bluetooth lockbox.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x01F4),
+            bleUuid("FEA7"),
+            MatchRule(RuleKind.OUI, text = "00:17:55", radio = RadioKind.BLE),
+        ),
+    )
+
+    private fun toastPos() = Fleet(
+        id = "fleet-toast-pos",
+        name = "Toast POS",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Toast restaurant point-of-sale managed Wi-Fi access point (often Pronto Networks OEM).",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("*_TOAST"),
+            wifiOui("00:0C:66"),
+        ),
+    )
+
+    private fun turtleBeach() = Fleet(
+        id = "fleet-turtle-beach",
+        name = "Turtle Beach",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Turtle Beach wireless gaming headset or USB transmitter.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x00D9),
+            bleGlob("No Connect TB *"),
+        ),
+    )
+
+    private fun ubee() = Fleet(
+        id = "fleet-ubee",
+        name = "Ubee",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Ubee Interactive cable or voice gateway. Common Optimum / Altice and Spectrum OEM; renamed SSIDs still hit on the board vendor.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("Ubee*"),
+            wifiOui("0C:B9:37"),
+            wifiOui("1C:83:EC"),
+            wifiOui("2C:8A:C7"),
+            wifiOui("54:49:FC"),
+            wifiOui("58:76:B3"),
+            wifiOui("5C:53:C3"),
+            wifiOui("5C:A9:31"),
+            wifiOui("64:7C:34"),
+            wifiOui("6C:38:A1"),
+            wifiOui("94:4E:5B"),
+            wifiOui("A0:ED:6D"),
+            wifiOui("A4:CF:D2"),
+            wifiOui("D8:78:7F"),
+            wifiOui("F0:D5:06"),
+        ),
+    )
+
+    private fun valveLighthouse() = Fleet(
+        id = "fleet-valve-lighthouse",
+        name = "SteamVR Base Station",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Valve SteamVR Lighthouse tracking base station.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x055D),
+            bleGlob("LHB-*"),
+        ),
+    )
+
+    private fun victron() = Fleet(
+        id = "fleet-victron",
+        name = "Victron Energy",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Victron Energy solar charge controller, battery shunt, or GX monitor, common on RVs, campervans, boats, and off-grid power.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x02E1),
+            bleUuid("CD54C012-880B-425B-B167-81ED6A15E913"),
+            bleGlob("SmartSolar *"),
+            bleGlob("SmartShunt *"),
+            bleGlob("Cerbo GX *"),
+        ),
+    )
+
+    private fun vivint() = Fleet(
+        id = "fleet-vivint",
+        name = "Vivint",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "Vivint Smart Home hub, Doorbell Camera Pro, or outdoor security camera. Residential alarm and camera gear, not a municipal pole.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0DE8),
+            bleUuid("C5B2544E-7597-49B2-90E2-49EAC275DEED"),
+            bleUuid("0939EB10-D9A5-411D-8EC0-EEB89AF1E418"),
+            bleGlob("VIVINT-HUB-*"),
+            bleGlob("DBC350_*"),
+            bleGlob("HALIBUT2-*"),
+            wifiOui("5C:2B:F5"),
+            wifiOui("84:EB:3E"),
+            wifiOui("84:EB:3F"),
+            wifiOui("A0:FE:61"),
+        ),
     )
 
     private fun oui(prefix: String) = MatchRule(RuleKind.OUI, text = prefix)

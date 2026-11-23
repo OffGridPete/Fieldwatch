@@ -737,6 +737,31 @@
             "kind": "TWO_WAY"
         },
         {
+            "id": "fleet-airlift",
+            "name": "Air Lift WirelessONE",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "WirelessONE-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Air Lift WirelessONE Bluetooth air-spring suspension compressor manifold on a pickup, van, or RV.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-airlink",
             "name": "AirLink",
             "enabled": true,
@@ -9115,6 +9140,55 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-blueparrott",
+            "name": "BlueParrott",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "95665A00-8704-11E5-960C-0002A5D5C51B",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "BlueParrott*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:25:52",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "3C:68:16",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "GN Audio (ex-VXi) BlueParrott commercial trucking or push-to-talk wireless headset.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
         },
         {
             "id": "fleet-bluetoad",
@@ -20704,6 +20778,39 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-coca-cola-freestyle",
+            "name": "Coca-Cola Freestyle",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1940,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FD9E",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Coca-Cola Freestyle touchscreen fountain dispenser advertising mobile-pour Bluetooth.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "SIGNAGE"
+        },
+        {
             "id": "fleet-compex",
             "name": "Compex",
             "enabled": true,
@@ -21790,6 +21897,47 @@
             "kind": "SURVEILLANCE"
         },
         {
+            "id": "fleet-danlaw",
+            "name": "Danlaw DataLogger",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DL-??????????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "4C:CE:2D",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "08:90:BA",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": null,
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Danlaw DataLogger OBD-II telematics dongle, used by usage-based auto insurance programs and commercial fleets.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-dexcom",
             "name": "Dexcom",
             "enabled": true,
@@ -21894,6 +22042,39 @@
             "attentionNote": "Digital Ally body-worn or in-car (FirstVu / EVO family). IEEE OUI 00:23:BD is Digital Ally, Inc. — camera gear, not a chip vendor. Patrol units may stay on LTE and stay quiet. Pattern match, not that officer. Look with your eyes. Not identity.",
             "builtIn": true,
             "kind": "LAW_ENFORCEMENT"
+        },
+        {
+            "id": "fleet-directed-ds4",
+            "name": "Directed SmartStart",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "B4520100-A308-4E56-8A52-536C2AD07147",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DEI-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Directed Electronics (Viper, Clifford, Python, or Autostart) DS4 vehicle remote-start and security module.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-dji",
@@ -22135,6 +22316,31 @@
             "kind": "LOCK"
         },
         {
+            "id": "fleet-dreo",
+            "name": "Dreo",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DREO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Dreo smart tower fan, air circulator, or space heater.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-dult",
             "name": "DULT tracker",
             "enabled": true,
@@ -22371,6 +22577,55 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
+        },
+        {
+            "id": "fleet-eddystone",
+            "name": "Eddystone",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "SERVICE_DATA",
+                    "text": "FEAA",
+                    "companyId": 0,
+                    "dataPrefixHex": "00",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_DATA",
+                    "text": "FEAA",
+                    "companyId": 0,
+                    "dataPrefixHex": "10",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_DATA",
+                    "text": "FEAA",
+                    "companyId": 0,
+                    "dataPrefixHex": "20",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_DATA",
+                    "text": "FEAA",
+                    "companyId": 0,
+                    "dataPrefixHex": "30",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Google Eddystone proximity or telemetry beacon (UID, URL, TLM, or EID frame). Retail and campus beacons are common; Google Find Hub tracker frames stay on Google Find Hub.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "BEACON"
         },
         {
             "id": "fleet-edgecore",
@@ -24812,6 +25067,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-ezlynk",
+            "name": "EZ LYNK Auto Agent",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "EZLYNK_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "EZ LYNK Auto Agent OBD-II vehicle diagnostic and ECU tuning Wi-Fi bridge.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-ezviz",
             "name": "EZVIZ",
             "enabled": true,
@@ -25969,6 +26249,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-gn-hearing",
+            "name": "GN ReSound",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 137,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FD20",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEFE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "GN Hearing (ReSound, Beltone, or Jabra Enhance) wireless hearing aid. Pattern match, not a person.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
         },
         {
             "id": "fleet-goodyear",
@@ -27194,6 +27515,39 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "Gree air conditioner. The name starts with GR-AC_. Realtek's company id is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-grundfos",
+            "name": "Grundfos",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE5D",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ALPHA HWR*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Grundfos smart hot-water recirculation or booster pump.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -45253,6 +45607,55 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-hughesnet",
+            "name": "HughesNet",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HughesNet*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HNS_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:80:AE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "C4:F0:35",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Hughes Network Systems satellite internet gateway.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-humax",
             "name": "HUMAX",
             "enabled": true,
@@ -45798,6 +46201,31 @@
             "kind": "TWO_WAY"
         },
         {
+            "id": "fleet-ifit",
+            "name": "iFIT / NordicTrack",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 421,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Icon Health and Fitness (NordicTrack, ProForm, or iFIT) treadmill or exercise machine.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-igloohome",
             "name": "igloohome",
             "enabled": true,
@@ -46338,6 +46766,39 @@
             "kind": "LOCK"
         },
         {
+            "id": "fleet-kia",
+            "name": "Kia",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kia_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kia *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kia in-car infotainment or wireless projection access point.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-kontakt",
             "name": "Kontakt.io",
             "enabled": true,
@@ -46515,6 +46976,39 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-kuna",
+            "name": "Kuna",
+            "enabled": true,
+            "matchAny": false,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kuna*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEF1",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kuna or Maximus smart security light camera in Bluetooth setup. Consumer porch camera, not a roadside pole.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-kwikset",
@@ -47025,6 +47519,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-lippert",
+            "name": "Lippert OneControl",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1479,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "00000041-0200-A58E-E411-AFE28044E62C",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LCIRemote*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Lippert Components (LCI OneControl) RV leveling, slide-out, or awning controller.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-liteon-camera-radio",
@@ -50707,6 +51242,55 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-optimum",
+            "name": "Optimum",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MyOptimum*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MyAltice*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "OptimumWiFi*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "optimumwifi",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Optimum or Altice USA residential cable or fiber gateway. Many boxes are Ubee or Altice Labs OEM.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-bhyve",
             "name": "Orbit B-hyve",
             "enabled": true,
@@ -50993,6 +51577,39 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-otodata",
+            "name": "Otodata Tank Monitor",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 945,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TM5040 *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Otodata wireless propane or fuel-tank level telemetry monitor.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-oura",
@@ -51918,6 +52535,31 @@
             "kind": "WEARABLE"
         },
         {
+            "id": "fleet-polara-aps",
+            "name": "Polara PedApp",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "60054001-F97C-C5A3-9941-1C799C307DDF",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Polara iNavigator accessible pedestrian signal crosswalk button advertising for PedApp.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "OTHER"
+        },
+        {
             "id": "fleet-porkchop",
             "name": "Porkchop",
             "enabled": true,
@@ -52031,6 +52673,64 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
+        },
+        {
+            "id": "fleet-prepwizard",
+            "name": "PrepWizard",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PrepWizard*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "PrepWizard commercial kitchen food-prep label printer (Bixolon thermal OEM).",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-procon-arrowq",
+            "name": "Procon Arrow-Q",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3027,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ArrowQ*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Procon Analytics (Advantage GPS) Arrow-QI hardwired dealer lot and auto-finance vehicle tracker.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-pulsar-optics",
@@ -52184,6 +52884,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
+        },
+        {
+            "id": "fleet-pura",
+            "name": "Pura",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3032,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Pura-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PCar-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Pura smart home or car fragrance diffuser.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-pwnagotchi",
@@ -52582,6 +53323,39 @@
             "attentionNote": "RayNeo smart glasses. The name has to start with RayNeo, and the advertisement has to use the TCL company id. A TCL phone without that name does not match. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
+        },
+        {
+            "id": "fleet-redtiger",
+            "name": "Redtiger",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "REDTIGER-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Redtiger-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Redtiger dashcam Wi-Fi.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-rekor",
@@ -54596,6 +55370,47 @@
             "kind": "CAMERA"
         },
         {
+            "id": "fleet-resmed",
+            "name": "ResMed",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 909,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FD56",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ResMed *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "ResMed AirSense or AirMini CPAP sleep-therapy machine. Home medical gear; pattern match, not a patient.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
+        },
+        {
             "id": "fleet-retail-led-sign",
             "name": "Retail LED sign",
             "enabled": true,
@@ -54774,6 +55589,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
+        },
+        {
+            "id": "fleet-rinnai",
+            "name": "Rinnai",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Rinnai *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Rinnai SENSEI tankless water heater Bluetooth setup link.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-rivian",
@@ -58916,6 +59756,55 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-sennheiser",
+            "name": "Sennheiser",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1172,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FDCE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "Sennheiser",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "AMBEO Soundbar",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Sennheiser headphones or AMBEO soundbar.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-sensecap",
             "name": "SenseCAP",
             "enabled": true,
@@ -59573,6 +60462,87 @@
             "kind": "HOME"
         },
         {
+            "id": "fleet-sonicwall",
+            "name": "SonicWall",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SonicWall*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:06:B1",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:17:C5",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "18:B1:69",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "18:C2:41",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "2C:B8:ED",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "C0:EA:E4",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "FC:39:5A",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SonicWall SonicWave or TZ small-business firewall and access point.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-sonos",
             "name": "Sonos",
             "enabled": true,
@@ -59737,6 +60707,39 @@
             "kind": "AUDIO"
         },
         {
+            "id": "fleet-soundstream-table",
+            "name": "Soundstream Nimbus",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ST-NIMBUS*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 4102,
+                    "dataPrefixHex": "534F554E445441424C45",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Soundstream Nimbus smart speaker table.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-spectrum",
             "name": "Spectrum",
             "enabled": true,
@@ -59875,6 +60878,39 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-valve-lighthouse",
+            "name": "SteamVR Base Station",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1373,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LHB-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Valve SteamVR Lighthouse tracking base station.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-steiner-burris-thermal",
             "name": "Steiner / Burris thermal optic",
             "enabled": true,
@@ -60004,6 +61040,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-supra-lockbox",
+            "name": "Supra eKEY",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 500,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEA7",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:17:55",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Carrier / UTC (ex-GE Security) Supra iBox real-estate Bluetooth lockbox.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "LOCK"
         },
         {
             "id": "fleet-swellpro",
@@ -61126,6 +62203,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-toast-pos",
+            "name": "Toast POS",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*_TOAST",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "00:0C:66",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Toast restaurant point-of-sale managed Wi-Fi access point (often Pronto Networks OEM).",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
         },
         {
             "id": "fleet-toyota",
@@ -63453,6 +64563,39 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-turtle-beach",
+            "name": "Turtle Beach",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 217,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "No Connect TB *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Turtle Beach wireless gaming headset or USB transmitter.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-tuya",
             "name": "Tuya",
             "enabled": true,
@@ -63550,6 +64693,143 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-ubee",
+            "name": "Ubee",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Ubee*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "0C:B9:37",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "1C:83:EC",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "2C:8A:C7",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "54:49:FC",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "58:76:B3",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "5C:53:C3",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "5C:A9:31",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "64:7C:34",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "6C:38:A1",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "94:4E:5B",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "A0:ED:6D",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "A4:CF:D2",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "D8:78:7F",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "F0:D5:06",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Ubee Interactive cable or voice gateway. Common Optimum / Altice and Spectrum OEM; renamed SSIDs still hit on the board vendor.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
         },
         {
             "id": "fleet-uconnect",
@@ -65480,6 +66760,160 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-victron",
+            "name": "Victron Energy",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 737,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "CD54C012-880B-425B-B167-81ED6A15E913",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartSolar *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartShunt *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Cerbo GX *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Victron Energy solar charge controller, battery shunt, or GX monitor, common on RVs, campervans, boats, and off-grid power.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-vivint",
+            "name": "Vivint",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3560,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "C5B2544E-7597-49B2-90E2-49EAC275DEED",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "0939EB10-D9A5-411D-8EC0-EEB89AF1E418",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VIVINT-HUB-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DBC350_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HALIBUT2-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "5C:2B:F5",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "84:EB:3E",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "84:EB:3F",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "OUI",
+                    "text": "A0:FE:61",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Vivint Smart Home hub, Doorbell Camera Pro, or outdoor security camera. Residential alarm and camera gear, not a municipal pole.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-vizio",

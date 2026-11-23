@@ -217,7 +217,7 @@ class DefaultCatalogTest {
         val flock = stock.single { it.id == "fleet-flock-cameras" }
 
         assertFalse(ray.matchAny)
-        assertEquals(listOf("fleet-sidewalk", "fleet-rayneo"), stock.filter { !it.matchAny }.map { it.id })
+        assertEquals(listOf("fleet-sidewalk", "fleet-kuna", "fleet-rayneo"), stock.filter { !it.matchAny }.map { it.id })
         assertEquals(SignatureClass.GLASSES, ray.kind)
         assertTrue(ray.attentionNote.isNotBlank())
         assertEquals(0x0BC6, ray.rules.single { it.kind == RuleKind.MANUFACTURER_ID }.companyId)
@@ -666,7 +666,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(328, stock.size)
+        assertEquals(362, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -944,7 +944,7 @@ class DefaultCatalogTest {
             "fleet-irobot",
         )
         assertEquals(added.toSet(), stock.map { it.id }.filter { it in added }.toSet())
-        assertEquals(328, stock.size)
+        assertEquals(362, stock.size)
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         added.forEach { id ->
             val row = stock.single { it.id == id }
