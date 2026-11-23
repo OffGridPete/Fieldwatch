@@ -486,13 +486,14 @@ object DefaultCatalog {
         colorIndex = Hue.TRACKER,
         kind = SignatureClass.FINDER,
         matchAny = true,
-        notes = "Samsung SmartTag / SmartTag+ item finder. Matches the name or service FD5A. Addresses often rotate.",
+        notes = "Samsung SmartTag or SmartThings Find offline-finding beacon. Matches the SmartTag name, command service FD5A, or offline-finding service FD69. Offline Galaxy phones can also advertise FD69. Addresses rotate.",
         builtIn = true,
         rules = listOf(
             name("SmartTag"),
             name("Smart Tag"),
             name("Galaxy SmartTag"),
             uuid("FD5A"),
+            bleUuid("FD69"),
         ),
     )
 
@@ -507,6 +508,7 @@ object DefaultCatalog {
         builtIn = true,
         rules = listOf(
             mfgData(0x004C, "0215"),
+            MatchRule(RuleKind.MANUFACTURER_DATA, companyId = 0x4C00, dataPrefixHex = "0215", radio = RadioKind.BLE),
             bleName("iBeacon"),
             bleGlob("*iBeacon*"),
         ),
@@ -1585,6 +1587,7 @@ object DefaultCatalog {
                 wifiGlob("VerizonFiOS*"),
                 wifiGlob("Fios-*"),
                 wifiGlob("MyVerizon*"),
+                wifiGlob("FWA_*"),
                 wifiName("Verizon"),
             ),
             ApVendorOuis.VERIZON,
@@ -1940,15 +1943,19 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound.",
+        notes = "Tuya / SmartLife plug, light, camera, or sensor on BLE or setup Wi-Fi. Dense in some apartments. Decoded fields can show whether it is bound.",
         builtIn = true,
         decode = CatalogDecodes.tuya,
-        rules = listOf(
-            mfg(0x07D0),
-            uuid("FD50"),
-            bleName("TUYA"),
-            bleGlob("TUYA*"),
-            bleGlob("Tuya*"),
+        rules = withWifiOuis(
+            listOf(
+                mfg(0x07D0),
+                uuid("FD50"),
+                bleName("TUYA"),
+                bleGlob("TUYA*"),
+                bleGlob("Tuya*"),
+                wifiGlob("SmartLife-????"),
+            ),
+            ApVendorOuis.TUYA,
         ),
     )
 
@@ -2235,11 +2242,20 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "In-car CarPlay / Alpine head-unit hotspot. Factory name from the dash, not an ISP.",
+        notes = "In-car Wireless CarPlay or Android Auto head-unit projection hotspot (OEM Panasonic, Visteon, Alps Alpine, or aftermarket Sony XAV, Pioneer NEX, and JVC receivers). Factory name from the dash, not an ISP.",
         builtIn = true,
-        rules = listOf(
-            wifiGlob("CarPlay*"),
-            wifiName("CarPlay"),
+        rules = withWifiOuis(
+            listOf(
+                wifiGlob("CarPlay*"),
+                wifiName("CarPlay"),
+                wifiGlob("PROJ??????"),
+                wifiGlob("Smartphone_connect_??????"),
+                wifiGlob("ScreenAudio????"),
+                wifiGlob("XAV-AX*"),
+                wifiGlob("DMH-W*"),
+                wifiGlob("KW-Z*"),
+            ),
+            listOf("EC:65:CC", "0C:65:9A", "F8:55:CD", "A8:40:0B", "4C:D9:C4", "50:C3:A2"),
         ),
     )
 
@@ -2256,6 +2272,9 @@ object DefaultCatalog {
             listOf(
                 wifiGlob("CARLINK-??????"),
                 wifiGlob("CARLINK_*"),
+                wifiGlob("AutoSky-*"),
+                wifiGlob("AIBox-BT-*"),
+                wifiGlob("CarScreen_*"),
             ),
             listOf("CC:57:63", "68:8F:C9"),
         ),
@@ -2345,13 +2364,15 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck.",
+        notes = "Motive (KeepTruckin) electronic logging device, asset gateway, or fleet Wi-Fi in a truck.",
         builtIn = true,
         rules = listOf(
             wifiGlob("Motive *"),
             wifiGlob("Motive_*"),
             wifiGlob("Motive Hotspot*"),
             wifiGlob("KeepTruckin*"),
+            bleUuid("FC6D"),
+            bleGlob("AABL36*"),
         ),
     )
 
@@ -2567,17 +2588,15 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Samsara fleet tracker or vehicle Wi-Fi. Truck / van telematics, adjacent to Motive.",
+        notes = "Samsara fleet vehicle gateway, asset tag, or in-cab Wi-Fi. Truck and van telematics, adjacent to Motive.",
         builtIn = true,
-        rules = withWifiOuis(
-            listOf(
-                mfg(0x0B6B),
-                bleName("Samsara"),
-                bleGlob("Samsara*"),
-                wifiGlob("Samsara*"),
-            ),
-            ApVendorOuis.SAMSARA,
-        ),
+        rules = listOf(
+            mfg(0x0B6B),
+            bleUuid("FCE5"),
+            bleName("Samsara"),
+            bleGlob("Samsara*"),
+            wifiGlob("Samsara*"),
+        ) + ApVendorOuis.SAMSARA.map { oui(it) },
     )
 
     private fun tapo() = Fleet(
@@ -3376,6 +3395,10 @@ object DefaultCatalog {
             glob("UAP-*"),
             glob("U6-*"),
             glob("UXG*"),
+            bleGlob("UDM"),
+            bleGlob("UDM-*"),
+            bleUuid("D83B80E3-E81F-4F66-879B-779BE5F6A693"),
+            bleUuid("73B08668-52DF-4626-A3E3-7638815B781A"),
         ),
     )
 
@@ -4044,15 +4067,22 @@ object DefaultCatalog {
         matchAny = true,
         notes = "Epson EcoTank or WorkForce printer (Wi-Fi Direct or BLE).",
         builtIn = true,
-        rules = listOf(
-            wifiGlob("*EPSON-ET-*"),
-            wifiGlob("*EPSON-WF-*"),
-            bleGlob("EPSON-ET-*"),
-            bleGlob("EPSON-WF-*"),
-            bleName("EPSON-ET"),
-            bleName("EPSON-WF"),
-            bleGlob("ET-* Series"),
-            wifiGlob("ET-* Series"),
+        rules = withWifiOuis(
+            listOf(
+                wifiGlob("*EPSON-ET-*"),
+                wifiGlob("*EPSON-WF-*"),
+                wifiGlob("*EPSON-EP-*"),
+                wifiGlob("*EPSON-XP-*"),
+                bleGlob("EPSON-ET-*"),
+                bleGlob("EPSON-WF-*"),
+                bleGlob("EPSON-EP-*"),
+                bleGlob("EPSON-XP-*"),
+                bleName("EPSON-ET"),
+                bleName("EPSON-WF"),
+                bleGlob("ET-* Series"),
+                wifiGlob("ET-* Series"),
+            ),
+            ApVendorOuis.EPSON,
         ),
     )
 
@@ -4392,13 +4422,14 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.ISP,
         matchAny = true,
-        notes = "HPE Aruba campus or Instant On Wi-Fi access point. An HPE BSSID here is an AP, not a server. Not an HP printer.",
+        notes = "HPE Aruba campus or Instant On Wi-Fi access point, including its built-in BLE telemetry radio. An HPE BSSID here is an AP, not a server. Not an HP printer.",
         builtIn = true,
         rules = withWifiOuis(
             listOf(
                 wifiGlob("Aruba*"),
                 wifiGlob("SetMeUp*"),
                 wifiGlob("InstantOn*"),
+                bleMfg(0x011B),
             ),
             ApVendorOuis.HPE,
         ),
@@ -5213,11 +5244,15 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Levoit air purifier. The name starts with LAP- or Core300. Espressif's company id is shared, so this row uses the name.",
+        notes = "Levoit air purifier or humidifier (LAP-, Core, or LUH- series). Shared company ids are omitted so this row uses the name.",
         builtIn = true,
         rules = listOf(
             bleGlob("LAP-*"),
+            bleGlob("Core200*"),
             bleGlob("Core300*"),
+            bleGlob("Core400*"),
+            bleGlob("Core600*"),
+            bleGlob("LUH-*"),
         ),
     )
 
@@ -5252,9 +5287,15 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Midea air conditioner. The company id is Midea's. The advertisement name is often just net, and that word is not the rule.",
+        notes = "Midea air conditioner or dehumidifier on BLE or setup Wi-Fi.",
         builtIn = true,
-        rules = listOf(bleMfg(0x06A8)),
+        rules = withWifiOuis(
+            listOf(
+                bleMfg(0x06A8),
+                wifiGlob("midea_??_????"),
+            ),
+            ApVendorOuis.MIDEA,
+        ),
     )
 
     private fun zebra() = Fleet(
@@ -5691,6 +5732,10 @@ object DefaultCatalog {
             wifiGlob("[LG_Window A/C]*"),
             bleGlob("LG_Speaker*"),
             bleGlob("LG S77S*"),
+            bleGlob("LG S??TR(*)"),
+            bleGlob("LG SP*(*)"),
+            bleGlob("LG SH*(*)"),
+            bleGlob("LG CK*(*)"),
         ),
     )
 
