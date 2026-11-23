@@ -403,6 +403,42 @@ object DefaultCatalog {
         gree(),
         tozo(),
         irobot(),
+        lednetwf(),
+        ezLynk(),
+        trackunit(),
+        oontz(),
+        itag(),
+        viofo(),
+        ufoDrone(),
+        airLift(),
+        blueParrott(),
+        danlaw(),
+        directed(),
+        dreo(),
+        gnHearing(),
+        grundfos(),
+        hughesNet(),
+        ifit(),
+        kia(),
+        kuna(),
+        lighthouse(),
+        lippert(),
+        optimum(),
+        otodata(),
+        prepWizard(),
+        procon(),
+        pura(),
+        redtiger(),
+        resMed(),
+        rinnai(),
+        sennheiser(),
+        sonicWall(),
+        soundstream(),
+        toastPos(),
+        turtleBeach(),
+        ubee(),
+        victron(),
+        vivint(),
     ).sortedBy { it.name.lowercase() }
 
     private fun flockCameras() = Fleet(
@@ -1940,7 +1976,7 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound.",
+        notes = "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound. A setup Wi-Fi name is SmartLife- or SmartLife_ plus four characters. That name is only on during pairing.",
         builtIn = true,
         decode = CatalogDecodes.tuya,
         rules = listOf(
@@ -1949,6 +1985,8 @@ object DefaultCatalog {
             bleName("TUYA"),
             bleGlob("TUYA*"),
             bleGlob("Tuya*"),
+            wifiGlob("SmartLife-????"),
+            wifiGlob("SmartLife_????"),
         ),
     )
 
@@ -2345,13 +2383,14 @@ object DefaultCatalog {
         colorIndex = Hue.VEHICLE,
         kind = SignatureClass.VEHICLE,
         matchAny = true,
-        notes = "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck.",
+        notes = "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck. A Bluetooth name that starts with AABL is a Vehicle Gateway serial. That name is only seen while the gateway advertises it.",
         builtIn = true,
         rules = listOf(
             wifiGlob("Motive *"),
             wifiGlob("Motive_*"),
             wifiGlob("Motive Hotspot*"),
             wifiGlob("KeepTruckin*"),
+            bleGlob("AABL*"),
         ),
     )
 
@@ -3367,7 +3406,7 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.ISP,
         matchAny = true,
-        notes = "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
+        notes = "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. A setup Wi-Fi name that starts with UDM Setup is a Dream Machine. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
         builtIn = true,
         rules = listOf(
             name("UniFi"),
@@ -3376,6 +3415,7 @@ object DefaultCatalog {
             glob("UAP-*"),
             glob("U6-*"),
             glob("UXG*"),
+            wifiGlob("UDM Setup*"),
         ),
     )
 
@@ -3706,8 +3746,7 @@ object DefaultCatalog {
         attentionNote = "M5PORKCHOP / Porkchop — pocket Wi-Fi pentest firmware (Cardputer or Cheap Yellow Display). Default CYD remote AP is named PORKCHOP. BACON-mode fake APs brand vendor IE 50:52:4B. A miss is not a clean bill (renamed, passive only, or no AP). Pattern match, not identity, not proof of an attack. Look with your eyes.",
         builtIn = true,
         rules = listOf(
-            name("PORKCHOP"),
-            glob("PORKCHOP*"),
+            glob("PORKCHOP"),
             glob("M5PORKCHOP*"),
             vendorIe("50:52:4B"),
         ),
@@ -5252,9 +5291,12 @@ object DefaultCatalog {
         colorIndex = Hue.HOME_CAM,
         kind = SignatureClass.HOME,
         matchAny = true,
-        notes = "Midea air conditioner. The company id is Midea's. The advertisement name is often just net, and that word is not the rule.",
+        notes = "Midea air conditioner. The company id is Midea's. A setup Wi-Fi name that starts with net_ac_ is this row. The advertisement name is often just net, and that word is not the rule.",
         builtIn = true,
-        rules = listOf(bleMfg(0x06A8)),
+        rules = listOf(
+            bleMfg(0x06A8),
+            wifiGlob("net_ac_*"),
+        ),
     )
 
     private fun zebra() = Fleet(
@@ -5796,6 +5838,488 @@ object DefaultCatalog {
         rules = listOf(bleMfg(0x0600)),
     )
 
+    private fun lednetwf() = Fleet(
+        id = "fleet-lednetwf",
+        name = "LEDnetWF",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Zengge LED controller, also called Magic Home. The name starts with LEDnetWF. The Phyplus address is the chip, so this row uses the name.",
+        builtIn = true,
+        rules = listOf(bleGlob("LEDnetWF*")),
+    )
+
+    private fun ezLynk() = Fleet(
+        id = "fleet-ez-lynk",
+        name = "EZ Lynk",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "EZ Lynk vehicle tuner hotspot. The Wi-Fi name starts with EZLYNK. The chip vendor is not the rule.",
+        builtIn = true,
+        rules = listOf(wifiGlob("EZLYNK*")),
+    )
+
+    private fun trackunit() = Fleet(
+        id = "fleet-trackunit",
+        name = "Trackunit",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Trackunit equipment tracker. The company id is Trackunit's. The generic alert service and the module address are not the rule.",
+        builtIn = true,
+        rules = listOf(bleMfg(0x086F)),
+    )
+
+    private fun oontz() = Fleet(
+        id = "fleet-oontz",
+        name = "OontZ",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "OontZ Bluetooth speaker. The name starts with OontZ. Cube Technologies is the module company id, so this row uses the name.",
+        builtIn = true,
+        rules = listOf(bleGlob("OontZ*")),
+    )
+
+    private fun itag() = Fleet(
+        id = "fleet-itag",
+        name = "iTAG",
+        enabled = true,
+        colorIndex = Hue.FIND_MY,
+        kind = SignatureClass.FINDER,
+        matchAny = true,
+        notes = "Generic key finder. The Bluetooth name is exactly iTAG. A longer name does not match.",
+        builtIn = true,
+        rules = listOf(bleGlob("iTAG")),
+    )
+
+    private fun viofo() = Fleet(
+        id = "fleet-viofo",
+        name = "VIOFO",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "VIOFO dashcam. The Wi-Fi name starts with VIOFO. It is on when the camera Wi-Fi is on.",
+        builtIn = true,
+        rules = listOf(wifiGlob("VIOFO*")),
+    )
+
+    private fun ufoDrone() = Fleet(
+        id = "fleet-ufo-drone",
+        name = "UFO drone",
+        enabled = true,
+        colorIndex = Hue.DRONE,
+        kind = SignatureClass.DRONE,
+        matchAny = true,
+        notes = "Toy camera drone. The Wi-Fi name starts with WIFI_UFO or FLY-UFO-. It is on while the drone is powered. This phone does not hear the video.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("WIFI_UFO*"),
+            wifiGlob("FLY-UFO-*"),
+        ),
+    )
+
+    private fun airLift() = Fleet(
+        id = "fleet-air-lift",
+        name = "Air Lift",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Air Lift WirelessONE suspension manifold. The Bluetooth name starts with WirelessONE-.",
+        builtIn = true,
+        rules = listOf(bleGlob("WirelessONE-*")),
+    )
+
+    private fun blueParrott() = Fleet(
+        id = "fleet-blueparrott",
+        name = "BlueParrott",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "BlueParrott headset. The Bluetooth name starts with BlueParrott.",
+        builtIn = true,
+        rules = listOf(bleGlob("BlueParrott*")),
+    )
+
+    private fun danlaw() = Fleet(
+        id = "fleet-danlaw",
+        name = "Danlaw",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Danlaw DataLogger. The Bluetooth name is DL- plus ten characters.",
+        builtIn = true,
+        rules = listOf(bleGlob("DL-??????????")),
+    )
+
+    private fun directed() = Fleet(
+        id = "fleet-directed",
+        name = "Directed",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Directed remote start (Viper, Clifford, Python, or Autostart). The Bluetooth name starts with DEI-.",
+        builtIn = true,
+        rules = listOf(bleGlob("DEI-*")),
+    )
+
+    private fun dreo() = Fleet(
+        id = "fleet-dreo",
+        name = "Dreo",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Dreo fan or heater. The Bluetooth name starts with DREO.",
+        builtIn = true,
+        rules = listOf(bleGlob("DREO*")),
+    )
+
+    private fun gnHearing() = Fleet(
+        id = "fleet-gn-hearing",
+        name = "GN Hearing",
+        enabled = true,
+        colorIndex = Hue.HEALTH,
+        kind = SignatureClass.HEALTH,
+        matchAny = true,
+        notes = "GN Hearing aid (ReSound). The company id is GN Hearing's. Service FEFE is ReSound. Pattern match, not a person.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0089),
+            bleUuid("FEFE"),
+        ),
+    )
+
+    private fun grundfos() = Fleet(
+        id = "fleet-grundfos",
+        name = "Grundfos",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Grundfos pump. The Bluetooth name starts with ALPHA HWR.",
+        builtIn = true,
+        rules = listOf(bleGlob("ALPHA HWR*")),
+    )
+
+    private fun hughesNet() = Fleet(
+        id = "fleet-hughesnet",
+        name = "HughesNet",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "HughesNet satellite gateway. The Wi-Fi name starts with HughesNet or HNS_.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("HughesNet*"),
+            wifiGlob("HNS_*"),
+        ),
+    )
+
+    private fun ifit() = Fleet(
+        id = "fleet-ifit",
+        name = "iFIT",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "NordicTrack, ProForm, or iFIT machine. The company id is Icon Health and Fitness.",
+        builtIn = true,
+        rules = listOf(bleMfg(0x01A5)),
+    )
+
+    private fun kia() = Fleet(
+        id = "fleet-kia",
+        name = "Kia",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Kia in-car hotspot. A Wi-Fi name starts with Kia_. A Bluetooth name starts with Kia followed by a space. Nokia does not match.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("Kia_*"),
+            bleGlob("Kia *"),
+        ),
+    )
+
+    private fun kuna() = Fleet(
+        id = "fleet-kuna",
+        name = "Kuna",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "Kuna porch-light camera. The Bluetooth name starts with Kuna. Not a roadside pole.",
+        builtIn = true,
+        rules = listOf(bleGlob("Kuna*")),
+    )
+
+    private fun lighthouse() = Fleet(
+        id = "fleet-lighthouse",
+        name = "Lighthouse",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "SteamVR Lighthouse base station. The Bluetooth name starts with LHB-. Valve's company id is not the rule.",
+        builtIn = true,
+        rules = listOf(bleGlob("LHB-*")),
+    )
+
+    private fun lippert() = Fleet(
+        id = "fleet-lippert",
+        name = "Lippert",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Lippert OneControl. The Bluetooth name starts with LCIRemote.",
+        builtIn = true,
+        rules = listOf(bleGlob("LCIRemote*")),
+    )
+
+    private fun optimum() = Fleet(
+        id = "fleet-optimum",
+        name = "Optimum",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Optimum or Altice gateway. The Wi-Fi name starts with MyOptimum, MyAltice, or OptimumWiFi, or the name contains optimumwifi.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("MyOptimum*"),
+            wifiGlob("MyAltice*"),
+            wifiGlob("OptimumWiFi*"),
+            wifiName("optimumwifi"),
+        ),
+    )
+
+    private fun otodata() = Fleet(
+        id = "fleet-otodata",
+        name = "Otodata",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Otodata propane or fuel tank monitor. The company id is Otodata's, or the Bluetooth name starts with TM5040 followed by a space.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x03B1),
+            bleGlob("TM5040 *"),
+        ),
+    )
+
+    private fun prepWizard() = Fleet(
+        id = "fleet-prepwizard",
+        name = "PrepWizard",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "PrepWizard kitchen label printer. The Bluetooth name starts with PrepWizard.",
+        builtIn = true,
+        rules = listOf(bleGlob("PrepWizard*")),
+    )
+
+    private fun procon() = Fleet(
+        id = "fleet-procon",
+        name = "Procon",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Procon Arrow-Q dealer or finance vehicle tracker. The company id is Procon's, or the Bluetooth name starts with ArrowQ. Pattern match, not that car.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0BD3),
+            bleGlob("ArrowQ*"),
+        ),
+    )
+
+    private fun pura() = Fleet(
+        id = "fleet-pura",
+        name = "Pura",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Pura diffuser. The company id is Pura's, or the Bluetooth name starts with Pura- or PCar-.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0BD8),
+            bleGlob("Pura-*"),
+            bleGlob("PCar-*"),
+        ),
+    )
+
+    private fun redtiger() = Fleet(
+        id = "fleet-redtiger",
+        name = "Redtiger",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Redtiger dashcam. The Wi-Fi name starts with REDTIGER-.",
+        builtIn = true,
+        rules = listOf(wifiGlob("REDTIGER-*")),
+    )
+
+    private fun resMed() = Fleet(
+        id = "fleet-resmed",
+        name = "ResMed",
+        enabled = true,
+        colorIndex = Hue.HEALTH,
+        kind = SignatureClass.HEALTH,
+        matchAny = true,
+        notes = "ResMed sleep machine. The company id is ResMed's, or the Bluetooth name starts with ResMed followed by a space. Pattern match, not a person.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x038D),
+            bleGlob("ResMed *"),
+        ),
+    )
+
+    private fun rinnai() = Fleet(
+        id = "fleet-rinnai",
+        name = "Rinnai",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Rinnai water heater. The Bluetooth name starts with Rinnai followed by a space.",
+        builtIn = true,
+        rules = listOf(bleGlob("Rinnai *")),
+    )
+
+    private fun sennheiser() = Fleet(
+        id = "fleet-sennheiser",
+        name = "Sennheiser",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Sennheiser headphones or an AMBEO soundbar. The company id is Sennheiser's, or the Bluetooth name is Sennheiser or AMBEO Soundbar.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0494),
+            bleName("Sennheiser"),
+            bleName("AMBEO Soundbar"),
+        ),
+    )
+
+    private fun sonicWall() = Fleet(
+        id = "fleet-sonicwall",
+        name = "SonicWall",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "SonicWall access point or firewall. The Wi-Fi name starts with SonicWall.",
+        builtIn = true,
+        rules = listOf(wifiGlob("SonicWall*")),
+    )
+
+    private fun soundstream() = Fleet(
+        id = "fleet-soundstream",
+        name = "Soundstream",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Soundstream Nimbus speaker table. The Bluetooth name starts with ST-NIMBUS, or the manufacturer data starts with SOUNDTABLE.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("ST-NIMBUS*"),
+            bleMfgData(0x1006, "534F554E445441424C45"),
+        ),
+    )
+
+    private fun toastPos() = Fleet(
+        id = "fleet-toast",
+        name = "Toast",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Toast point-of-sale Wi-Fi. The name ends with _TOAST.",
+        builtIn = true,
+        rules = listOf(wifiGlob("*_TOAST")),
+    )
+
+    private fun turtleBeach() = Fleet(
+        id = "fleet-turtle-beach",
+        name = "Turtle Beach",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Turtle Beach headset. The company id is Turtle Beach's, or the Bluetooth name starts with No Connect TB followed by a space.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x00D9),
+            bleGlob("No Connect TB *"),
+        ),
+    )
+
+    private fun ubee() = Fleet(
+        id = "fleet-ubee",
+        name = "Ubee",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "Ubee cable gateway. The Wi-Fi name starts with Ubee.",
+        builtIn = true,
+        rules = listOf(wifiGlob("Ubee*")),
+    )
+
+    private fun victron() = Fleet(
+        id = "fleet-victron",
+        name = "Victron",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Victron solar controller, shunt, or GX monitor, common on an RV or a boat. The company id is Victron's, or the Bluetooth name starts with SmartSolar, SmartShunt, or Cerbo GX.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x02E1),
+            bleGlob("SmartSolar *"),
+            bleGlob("SmartShunt *"),
+            bleGlob("Cerbo GX *"),
+        ),
+    )
+
+    private fun vivint() = Fleet(
+        id = "fleet-vivint",
+        name = "Vivint",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "Vivint hub or doorbell camera. Residential alarm gear, not a municipal pole. The company id is Vivint's, or the Bluetooth name starts with VIVINT-HUB-, DBC350_, or HALIBUT2-.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0DE8),
+            bleGlob("VIVINT-HUB-*"),
+            bleGlob("DBC350_*"),
+            bleGlob("HALIBUT2-*"),
+        ),
+    )
+
     private fun oui(prefix: String) = MatchRule(RuleKind.OUI, text = prefix)
     private fun vendorIe(prefix: String) = MatchRule(RuleKind.VENDOR_IE_OUI, text = prefix)
     private fun name(text: String) = MatchRule(RuleKind.NAME_CONTAINS, text = text)
@@ -5831,6 +6355,8 @@ object DefaultCatalog {
         MatchRule(RuleKind.MANUFACTURER_ID, companyId = id, radio = RadioKind.BLE)
     private fun mfgData(id: Int, prefix: String) =
         MatchRule(RuleKind.MANUFACTURER_DATA, companyId = id, dataPrefixHex = prefix)
+    private fun bleMfgData(id: Int, prefix: String) =
+        MatchRule(RuleKind.MANUFACTURER_DATA, companyId = id, dataPrefixHex = prefix, radio = RadioKind.BLE)
 
     fun newBlankFleet(): Fleet = Fleet(
         id = UUID.randomUUID().toString(),

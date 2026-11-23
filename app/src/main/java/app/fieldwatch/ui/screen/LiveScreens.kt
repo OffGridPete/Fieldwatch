@@ -163,6 +163,7 @@ fun LivePane(
     val alertedKeys by vm.alertedKeys.collectAsStateWithLifecycle()
     val flood by vm.floodNotice.collectAsStateWithLifecycle()
     val swarm by vm.swarmNotice.collectAsStateWithLifecycle()
+    val emergency by vm.emergencyNotice.collectAsStateWithLifecycle()
     val gnss by vm.gnssNotice.collectAsStateWithLifecycle()
     val gnssStatus by vm.gnssStatus.collectAsStateWithLifecycle()
     val floodHide by vm.floodHide.collectAsStateWithLifecycle()
@@ -254,6 +255,17 @@ fun LivePane(
                 text = { NoticeBody(swarmNotice.body(), swarmNotice.details()) },
                 confirmButton = {
                     TextButton(onClick = { vm.dismissSwarm() }) { Text(LanguageText.text("ui.ok.label")) }
+                },
+            )
+        }
+        val emergencyNotice = emergency
+        if (emergencyNotice != null && emergencyNotice.showDialog) {
+            AlertDialog(
+                onDismissRequest = { vm.dismissEmergency() },
+                title = { Text(emergencyNotice.title()) },
+                text = { NoticeBody(emergencyNotice.body) },
+                confirmButton = {
+                    TextButton(onClick = { vm.dismissEmergency() }) { Text(LanguageText.text("ui.ok.label")) }
                 },
             )
         }
@@ -477,6 +489,7 @@ private fun LivePathSplit(
         state.fleets,
         names,
     ) {
+        val craft = SitPathPlot.liveCraft(pathRadios)
         SitPathPlot.Model(
             samples = pathSamples,
             dots = SitPathPlot.liveDots(
@@ -489,6 +502,8 @@ private fun LivePathSplit(
             spanM = 0.0,
             title = "",
             live = true,
+            frameSamples = SitPathPlot.liveCraftFrame(craft),
+            craft = craft,
         )
     }
     val online = state.settings.onlineLookup
@@ -883,21 +898,12 @@ private fun ClassOutlineView(
             return@LazyColumn
         }
         item(key = "outline-summary") {
-            val hidden = slices.count { it.radios.isEmpty() }
             val summary = buildString {
                 append(LanguageText.text("live.summary.radios", mapOf("n" to devices.size.toString())))
-                if (unmatched > 0) {
-                    append(" · ")
-                    append(LanguageText.text("live.summary.unmatched", mapOf("n" to unmatched.toString())))
-                }
-                if (multi > 0) {
-                    append(" · ")
-                    append(LanguageText.text("live.summary.multi", mapOf("n" to multi.toString())))
-                }
-                if (hideEmpty && hidden > 0) {
-                    append(" · ")
-                    append(LanguageText.text("live.summary.hidden", mapOf("n" to hidden.toString())))
-                }
+                append(" · ")
+                append(LanguageText.text("live.summary.unmatched", mapOf("n" to unmatched.toString())))
+                append(" · ")
+                append(LanguageText.text("live.summary.multi", mapOf("n" to multi.toString())))
             }
             Text(
                 summary,

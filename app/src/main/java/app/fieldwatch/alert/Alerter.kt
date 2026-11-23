@@ -29,6 +29,9 @@ import app.fieldwatch.domain.AlertVoiceWhat
 import app.fieldwatch.domain.DroneNear
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.MacUtil
+import app.fieldwatch.domain.QuietAlert
+import app.fieldwatch.domain.QuietEdge
+import app.fieldwatch.domain.QuietMark
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sighting
 import app.fieldwatch.domain.swarmQuietsFleetWatch
@@ -48,6 +51,7 @@ class Alerter(private val context: Context) {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var beepTrack: AudioTrack? = null
     private var huntTrack: AudioTrack? = null
+    private var quietTrack: AudioTrack? = null
     private var focusRequest: AudioFocusRequest? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
@@ -128,6 +132,50 @@ class Alerter(private val context: Context) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val note = NotificationCompat.Builder(context, NEAR_CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .setContentIntent(pending)
+                .build()
+            manager.notify(noteId, note)
+        }
+        if (!phrase.isNullOrBlank()) {
+            prepareVoice()
+            queueVoice(phrase, afterBeep = beep)
+        }
+        if (beep) beep(holdFocus = phrase.isNullOrBlank())
+        if (vibrate) vibrate()
+    }
+
+    /**
+     * One Remote ID emergency. Own channel, silent. A later drone in the same
+     * pass can post without beeping again. The note stays when the declaration ends.
+     */
+    fun emergencyAlert(
+        title: String,
+        text: String,
+        phrase: String?,
+        beep: Boolean,
+        vibrate: Boolean,
+        shade: Boolean,
+        noteId: Int,
+    ) {
+        if (shade) {
+            ensureEmergencyChannel()
+            val pending = PendingIntent.getActivity(
+                context,
+                noteId,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val note = NotificationCompat.Builder(context, EMERGENCY_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_fieldwatch)
                 .setContentTitle(title)
                 .setContentText(text)
@@ -424,6 +472,62 @@ class Alerter(private val context: Context) {
         main.post { manager.cancel(FLOCK_NOTE_ID) }
     }
 
+    /**
+     * One low pip when a named radio goes quiet. Does not jump the Live list
+     * and does not take audio focus, so a watchlist phrase is left alone.
+     * Returns a mark for each radio that actually cued.
+     */
+    fun wentQuiet(
+        edges: List<QuietEdge>,
+        watchlist: List<WatchTarget>,
+        beepOn: Boolean,
+        voiceOn: Boolean,
+        shadeOn: Boolean,
+        demoMode: Boolean,
+    ): List<QuietMark> {
+        if (edges.isEmpty()) return emptyList()
+        val rows = HashMap<String, WatchTarget>(watchlist.size)
+        for (row in watchlist) {
+            val key = row.deviceKey ?: continue
+            if (QuietAlert.armed(row)) rows[key] = row
+        }
+        if (rows.isEmpty()) return emptyList()
+        val now = System.currentTimeMillis()
+        val marks = ArrayList<QuietMark>()
+        var pip = false
+        var pulse = false
+        var phrase: String? = null
+        for (edge in edges) {
+            val row = rows[edge.key] ?: continue
+            val name = QuietAlert.cueName(row.label, edge.name, edge.mac, demoMode)
+            marks += QuietMark(
+                at = now,
+                lastHeard = edge.lastSeen,
+                key = edge.key,
+                name = name,
+                rssi = edge.rssi,
+            )
+            if (shadeOn && row.notify) notifyQuiet(name, edge)
+            if (row.vibrate) pulse = true
+            if (voiceOn && phrase == null) {
+                phrase = LanguageText.text("alert.quiet.voice", mapOf("name" to name))
+            }
+            if (beepOn) pip = true
+        }
+        if (marks.isEmpty()) return marks
+        if (pip) main.post { playQuietPip() }
+        if (pulse) main.post { vibrateOnce() }
+        val say = phrase
+        if (say != null && speakAfterBeep == null && !speaking) {
+            prepareVoice()
+            val wait = if (pip) QUIET_PIP_MS + 120L else 0L
+            main.postDelayed({
+                if (speakAfterBeep == null && !speaking) speakClassName(say)
+            }, wait)
+        }
+        return marks
+    }
+
     /** Short Hunt geiger tick. Not the watchlist double-pip. */
     fun huntTick(beepOn: Boolean, vibrateOn: Boolean) {
         if (vibrateOn) main.post { huntPulse() }
@@ -455,6 +559,7 @@ class Alerter(private val context: Context) {
         announced.removeAll { token -> token.substringAfter('\t') !in liveKeys }
         val fleetNames = fleets.associateBy { it.id }
         val mineKeys = RadioBookmarks.mineKeys(watchlist)
+        val muteKeys = RadioBookmarks.muteKeys(watchlist)
         var beepFired = false
         var voicePhrase: String? = null
         if (voiceOn) prepareVoice()
@@ -467,7 +572,7 @@ class Alerter(private val context: Context) {
                 ) {
                     continue
                 }
-                if (!shouldRaiseWatch(target, device, mineKeys)) continue
+                if (!shouldRaiseWatch(target, device, mineKeys, muteKeys)) continue
                 if (!visibleOnLive(device)) continue
                 val token = "${target.id}\t${device.key}"
                 if (token in announced) continue
@@ -862,6 +967,90 @@ class Alerter(private val context: Context) {
         }, TTS_START_WAIT_MS)
     }
 
+    private fun notifyQuiet(name: String, edge: QuietEdge) {
+        val title = LanguageText.text("alert.quiet.voice", mapOf("name" to name))
+        val body = LanguageText.text(
+            "alert.quiet.body",
+            mapOf(
+                "time" to QuietAlert.heardClock(edge.lastSeen),
+                "rssi" to QuietAlert.rssiText(edge.rssi),
+            ),
+        )
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_DEVICE_KEY, edge.key)
+        }
+        val pending = PendingIntent.getActivity(
+            context,
+            ("q:" + edge.key).hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val note = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_fieldwatch)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setSilent(true)
+            .setContentIntent(pending)
+            .build()
+        manager.notify(("q:" + edge.key).hashCode() and 0x7FFFFFFF, note)
+    }
+
+    /** One sine. Separate from the arrival double-pip so it does not cancel that beep. */
+    private fun playQuietPip() {
+        runCatching {
+            stopQuietPip()
+            val sampleRate = 22_050
+            val n = sampleRate * QUIET_PIP_MS / 1000
+            val pcm = ShortArray(n)
+            writeSine(pcm, 0, n, sampleRate, QUIET_FREQ_HZ)
+            val attrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            val format = AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build()
+            val minBuf = AudioTrack.getMinBufferSize(
+                sampleRate,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
+            val track = AudioTrack.Builder()
+                .setAudioAttributes(attrs)
+                .setAudioFormat(format)
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .setBufferSizeInBytes(maxOf(n * 2, minBuf))
+                .build()
+            val written = track.write(pcm, 0, pcm.size)
+            if (written <= 0) {
+                track.release()
+                return@runCatching
+            }
+            quietTrack = track
+            track.play()
+            val playMs = n * 1000L / sampleRate
+            main.postDelayed({
+                if (quietTrack === track) stopQuietPip()
+            }, playMs + 20L)
+        }
+    }
+
+    private fun stopQuietPip() {
+        val track = quietTrack
+        quietTrack = null
+        if (track != null) {
+            runCatching { track.stop() }
+            runCatching { track.release() }
+        }
+    }
+
     private fun vibrate() {
         val vibrator = if (Build.VERSION.SDK_INT >= 31) {
             val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -872,6 +1061,18 @@ class Alerter(private val context: Context) {
         }
         if (!vibrator.hasVibrator()) return
         vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 60, 80), -1))
+    }
+
+    private fun vibrateOnce() {
+        val vibrator = if (Build.VERSION.SDK_INT >= 31) {
+            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        if (!vibrator.hasVibrator()) return
+        vibrator.vibrate(VibrationEffect.createOneShot(80, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
     private fun ensureChannel() {
@@ -899,6 +1100,22 @@ class Alerter(private val context: Context) {
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = LanguageText.text("ui.near.note")
+                setSound(null, null)
+                enableVibration(false)
+            },
+        )
+    }
+
+    private fun ensureEmergencyChannel() {
+        if (Build.VERSION.SDK_INT < 26) return
+        if (manager.getNotificationChannel(EMERGENCY_CHANNEL) != null) return
+        manager.createNotificationChannel(
+            NotificationChannel(
+                EMERGENCY_CHANNEL,
+                LanguageText.text("ui.rid.emergency.row"),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = LanguageText.text("ui.rid.emergency.note")
                 setSound(null, null)
                 enableVibration(false)
             },
@@ -1009,6 +1226,7 @@ class Alerter(private val context: Context) {
         private const val SWARM_NOTE_ID = 71_005
         const val SWARM_CHANNEL = "fieldwatch_swarm"
         const val NEAR_CHANNEL = "fieldwatch_drone_near"
+        const val EMERGENCY_CHANNEL = "fieldwatch_rid_emergency"
         private const val TRUSTED_NOTE_ID = 71_002
         private const val CELL_NOTE_ID = 71_003
         private const val TRACKER_NOTE_ID = 71_004
@@ -1020,6 +1238,8 @@ class Alerter(private val context: Context) {
         private const val NEW_WINDOW_MS = 20_000L
         private const val HUNT_FREQ_HZ = 1680.0
         private const val HUNT_PIP_MS = 22
+        private const val QUIET_FREQ_HZ = 520.0
+        private const val QUIET_PIP_MS = 140
         private const val HUNT_PULSE_MS = 60L
         private const val VOICE_AFTER_TRACK_MS = 220L
         private const val TTS_AFTER_INIT_MS = 250L
@@ -1030,15 +1250,17 @@ class Alerter(private val context: Context) {
 }
 
 /**
- * Mine skips beep, voice, flash, vibrate, and the shade card for that device key.
- * A fleet watch still matches every other radio. Alert on the row is left as set.
+ * Mine or mute skips beep, voice, flash, vibrate, and the shade card for that device key.
+ * A fleet watch still matches every other radio. Mute does not mark the radio as yours.
+ * Alert on the row is left as set.
  */
 internal fun shouldRaiseWatch(
     target: WatchTarget,
     device: Sighting,
     mineKeys: Set<String>,
+    muteKeys: Set<String> = emptySet(),
 ): Boolean {
-    if (device.key in mineKeys) return false
+    if (device.key in mineKeys || device.key in muteKeys) return false
     if (target.deviceKey != null && !target.alert) return false
     return when {
         target.deviceKey != null -> device.key == target.deviceKey

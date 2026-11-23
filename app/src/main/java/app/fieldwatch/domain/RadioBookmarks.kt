@@ -49,6 +49,23 @@ object RadioBookmarks {
             if (row.mine) key else null
         }.toSet()
 
+    /** Device keys muted. Fleet rows are not included. Mine is separate. */
+    fun muteKeys(watchlist: List<WatchTarget>): Set<String> =
+        watchlist.mapNotNull { row ->
+            val key = row.deviceKey ?: return@mapNotNull null
+            if (row.mute) key else null
+        }.toSet()
+
+    /**
+     * Device keys with the quiet switch on. Mute is not removed here.
+     * The cue checks Mute when it fires.
+     */
+    fun quietKeys(watchlist: List<WatchTarget>): Set<String> =
+        watchlist.mapNotNull { row ->
+            val key = row.deviceKey ?: return@mapNotNull null
+            if (row.alertOnGone) key else null
+        }.toSet()
+
     /**
      * Path-list note for a radio that is already plotted.
      * Mine does not add a dot. A bookmark still gates the observer caption.
@@ -177,6 +194,92 @@ object RadioBookmarks {
         }
         return setMine(watchlist, key, on, suggest)
     }
+
+    /**
+     * Mute on a new row writes the suggested name and leaves Alert off.
+     * An existing name, Alert, and Mine are kept. Turning Mute off keeps the row.
+     */
+    fun setMute(
+        watchlist: List<WatchTarget>,
+        deviceKey: String,
+        on: Boolean,
+        suggestLabel: String,
+    ): List<WatchTarget> {
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (!on) {
+            if (i < 0) return watchlist
+            return watchlist.mapIndexed { idx, row ->
+                if (idx == i) row.copy(mute = false) else row
+            }
+        }
+        if (i < 0) {
+            return watchlist + WatchTarget(
+                id = UUID.randomUUID().toString(),
+                deviceKey = deviceKey,
+                label = clip(suggestLabel),
+                alert = false,
+                mute = true,
+            )
+        }
+        val row = watchlist[i]
+        val label = if (row.label.trim().isEmpty()) clip(suggestLabel) else row.label
+        return watchlist.mapIndexed { idx, it ->
+            if (idx == i) it.copy(label = label, mute = true) else it
+        }
+    }
+
+    /** Named-radios row. A blank label is filled from the key when Mute turns on. */
+    fun setMuteOnRow(watchlist: List<WatchTarget>, id: String, on: Boolean): List<WatchTarget> {
+        val row = watchlist.firstOrNull { it.id == id && it.deviceKey != null } ?: return watchlist
+        val key = row.deviceKey ?: return watchlist
+        val suggest = blankLabel(row, key)
+        return setMute(watchlist, key, on, suggest)
+    }
+
+    /**
+     * Quiet on a new row writes the suggested name and leaves Alert on.
+     * An existing name, Alert, Mine, and Mute are kept. Turning it off keeps the row.
+     */
+    fun setQuiet(
+        watchlist: List<WatchTarget>,
+        deviceKey: String,
+        on: Boolean,
+        suggestLabel: String,
+    ): List<WatchTarget> {
+        val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }
+        if (!on) {
+            if (i < 0) return watchlist
+            return watchlist.mapIndexed { idx, row ->
+                if (idx == i) row.copy(alertOnGone = false) else row
+            }
+        }
+        if (i < 0) {
+            return watchlist + WatchTarget(
+                id = UUID.randomUUID().toString(),
+                deviceKey = deviceKey,
+                label = clip(suggestLabel),
+                alertOnGone = true,
+            )
+        }
+        val row = watchlist[i]
+        val label = if (row.label.trim().isEmpty()) clip(suggestLabel) else row.label
+        return watchlist.mapIndexed { idx, it ->
+            if (idx == i) it.copy(label = label, alertOnGone = true) else it
+        }
+    }
+
+    /** Named-radios row. A blank label is filled from the key when the quiet switch turns on. */
+    fun setQuietOnRow(watchlist: List<WatchTarget>, id: String, on: Boolean): List<WatchTarget> {
+        val row = watchlist.firstOrNull { it.id == id && it.deviceKey != null } ?: return watchlist
+        val key = row.deviceKey ?: return watchlist
+        return setQuiet(watchlist, key, on, blankLabel(row, key))
+    }
+
+    private fun blankLabel(row: WatchTarget, key: String): String =
+        row.label.trim().ifBlank {
+            val mac = key.substringAfter(':')
+            if (key.startsWith("BLE:")) "unnamed LE" else mac.takeLast(8)
+        }
 
     fun toggleAlert(watchlist: List<WatchTarget>, deviceKey: String, suggest: String): List<WatchTarget> {
         val i = watchlist.indexOfFirst { it.deviceKey == deviceKey }

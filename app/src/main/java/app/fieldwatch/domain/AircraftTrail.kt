@@ -1,5 +1,8 @@
 package app.fieldwatch.domain
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.serialization.Serializable
 
 /** One advertised position stored on a sit. Not the phone's GPS. */
@@ -11,6 +14,10 @@ data class PayloadFix(
     val alt: Double? = null,
     val heading: Double? = null,
     val speed: Double? = null,
+    /** Heard while a Remote ID emergency was declared. A hover keeps this on the point already stored. */
+    val emergency: Boolean = false,
+    /** Words from that declaration. Blank when the packet sent none. */
+    val emergencyText: String = "",
 )
 
 /**
@@ -28,25 +35,27 @@ object AircraftTrail {
     fun append(trail: List<PayloadFix>, device: Sighting): List<PayloadFix> {
         val lat = device.payloadLat ?: return trail
         val lon = device.payloadLon ?: return trail
-        return append(
-            trail,
-            PayloadFix(
-                at = device.lastSeen,
-                lat = lat,
-                lon = lon,
-                alt = device.payloadAlt,
-                heading = device.payloadHeading,
-                speed = device.payloadSpeed,
-            ),
-        )
+        return append(trail, fixOf(device, lat, lon))
     }
+
+    /** This advertisement declared an emergency. A later location that is not one clears nothing already stored. */
+    fun declared(device: Sighting): Boolean =
+        device.payloadStatus == OpenDroneId.STATUS_EMERGENCY || device.payloadEmergencyText != null
 
     fun append(trail: List<PayloadFix>, fix: PayloadFix): List<PayloadFix> {
         if (!PayloadLocation.validCoord(fix.lat, fix.lon)) return trail
         val last = trail.lastOrNull()
         if (last != null) {
             val d = Geo.meters(last.lat, last.lon, fix.lat, fix.lon)
-            if (d < MIN_M) return trail
+            if (d < MIN_M) {
+                val words = fix.emergencyText.trim()
+                val text = if (fix.emergency && words.isNotEmpty()) words else last.emergencyText
+                val flagged = last.emergency || fix.emergency
+                if (flagged != last.emergency || text != last.emergencyText) {
+                    return trail.dropLast(1) + last.copy(emergency = flagged, emergencyText = text)
+                }
+                return trail
+            }
             val dt = fix.at - last.at
             if (dt <= 0L) return trail
             val mps = d / (dt / 1000.0)
@@ -120,16 +129,7 @@ object AircraftTrail {
         val fixes = device.payloadTrail.ifEmpty {
             val lat = device.payloadLat ?: return null
             val lon = device.payloadLon ?: return null
-            listOf(
-                PayloadFix(
-                    at = device.lastSeen,
-                    lat = lat,
-                    lon = lon,
-                    alt = device.payloadAlt,
-                    heading = device.payloadHeading,
-                    speed = device.payloadSpeed,
-                ),
-            )
+            listOf(fixOf(device, lat, lon))
         }.filter { PayloadLocation.validCoord(it.lat, it.lon) }
         if (fixes.isEmpty()) return null
         val last = fixes.last()
@@ -157,7 +157,7 @@ object AircraftTrail {
         )
     }
 
-    fun body(pictures: List<Picture>): String {
+    fun body(pictures: List<Picture>, hideWords: Boolean = false): String {
         if (pictures.isEmpty()) return ""
         return buildString {
             pictures.forEachIndexed { index, pic ->
@@ -171,12 +171,9 @@ object AircraftTrail {
                 Geo.reportRange(pic.phoneLat, pic.phoneLon, last.lat, last.lon, pic.fixAt)?.let {
                     appendLine("  $it")
                 }
-                val motion = listOfNotNull(
-                    pic.alt?.let { "${fmtNum(it)} m" },
-                    pic.heading?.let { "course ${fmtNum(it)}°" },
-                    pic.speed?.let { "${fmtNum(it)} m/s" },
-                )
+                val motion = motionBits(pic)
                 if (motion.isNotEmpty()) appendLine("  ${motion.joinToString("  ·  ")}")
+                emergencyLines(pic.fixes, hideWords).forEach { appendLine("  $it") }
                 val length = lengthM(pic.fixes)
                 val count = pic.fixes.size
                 val shape = if (count == 1) "1 advertised fix" else "$count advertised fixes, ${fmtDist(length)}"
@@ -228,6 +225,7 @@ object AircraftTrail {
         secondary = secondary,
         aircraft = true,
         headingDeg = pic.heading,
+        emergency = emergencyIndexes(pic.fixes),
     )
 
     fun pilotMark(pic: Picture): SitPathPlot.Mark? {
@@ -250,14 +248,14 @@ object AircraftTrail {
             spanM = Geo.spanM(framed),
             caption = if (secondary) {
                 val line = LanguageText.text("report.craft.second")
-                if (line in base.caption || "second sit’s advertised track" in base.caption) {
+                if (line in base.caption || noted(base.caption, "second sit's advertised track", "second sit’s advertised track")) {
                     base.caption
                 } else {
                     base.caption + " " + line
                 }
             } else {
                 val line = LanguageText.text("report.craft.near")
-                if (line in base.caption || "black dotted line is an advertised track" in base.caption) {
+                if (line in base.caption || noted(base.caption, "black dotted line is an advertised track", "Chevrons are an advertised track")) {
                     base.caption
                 } else {
                     base.caption + " " + line
@@ -415,6 +413,7 @@ object AircraftTrail {
         opAt: Long? = null,
         opPhoneLat: Double? = null,
         opPhoneLon: Double? = null,
+        emergencyWhen: String = "",
     ): String {
         val bits = ArrayList<String>()
         val craft = aircraft.trim()
@@ -429,6 +428,8 @@ object AircraftTrail {
         alt?.let { bits += "${fmtNum(it)} m" }
         heading?.let { bits += "course ${fmtNum(it)}°" }
         speed?.let { bits += "${fmtNum(it)} m/s" }
+        val emergency = emergencyWhen.trim()
+        if (emergency.isNotEmpty()) bits += "Emergency $emergency"
         if (PayloadLocation.validCoord(pilotLat, pilotLon)) {
             bits += "${OperatorLoc.label(opKind)} ${fmtCoord(pilotLat!!, pilotLon!!)}"
             Mgrs.format(pilotLat, pilotLon)?.let { bits += "grid $it" }
@@ -475,6 +476,25 @@ object AircraftTrail {
         return lines
     }
 
+    /**
+     * Altitude, speed, and course across one visit.
+     * Altitude and speed use the low and high values. Course uses the first and last heading.
+     * Unknown altitude and a negative speed stay off.
+     */
+    fun motionSpanLines(fixes: List<PayloadFix>): List<String> {
+        val lines = ArrayList<String>(3)
+        spanNum(fixes.mapNotNull { it.alt?.takeIf { v -> OperatorLoc.knownAlt(v) } })?.let {
+            lines += LanguageText.text("ui.craft.alt", mapOf("n" to it))
+        }
+        spanNum(fixes.mapNotNull { it.speed?.takeIf { v -> v.isFinite() && v >= 0.0 } })?.let {
+            lines += LanguageText.text("ui.craft.speed", mapOf("n" to it))
+        }
+        spanCourse(fixes.mapNotNull { it.heading?.takeIf { v -> v.isFinite() } })?.let {
+            lines += LanguageText.text("ui.craft.course", mapOf("n" to it))
+        }
+        return lines
+    }
+
     /** Path key row for the class icon at the end of an advertised track. */
     fun pathKeyLine(pic: Picture): String {
         val last = pic.fixes.lastOrNull()
@@ -504,6 +524,7 @@ object AircraftTrail {
             opAt = pic.opAt,
             opPhoneLat = pic.opPhoneLat,
             opPhoneLon = pic.opPhoneLon,
+            emergencyWhen = emergencyWhen(pic.fixes),
         )
         return "$head — $note"
     }
@@ -521,6 +542,8 @@ object AircraftTrail {
             " last ${fmtCoord(last.lat, last.lon)}$grid$range"
         }
         val count = if (pic.fixes.size == 1) "1 fix" else "${pic.fixes.size} fixes"
+        val motion = motionBits(pic).joinToString(", ").let { if (it.isEmpty()) "" else " $it" }
+        val emergency = emergencyWhen(pic.fixes).let { if (it.isEmpty()) "" else " Emergency $it" }
         val pilot = if (!PayloadLocation.validCoord(pic.pilotLat, pic.pilotLon)) {
             ""
         } else {
@@ -529,8 +552,112 @@ object AircraftTrail {
                 ?.let { " $it" }.orEmpty()
             " ${OperatorLoc.label(pic.opKind)} ${fmtCoord(pic.pilotLat, pic.pilotLon)}$grid$range"
         }
-        return "$craft$status$count$where$pilot".trim()
+        return "$craft$status$count$where$motion$emergency$pilot".trim()
     }
+
+    /** Indexes heard while an emergency was declared. Same order as [samples]. */
+    fun emergencyIndexes(fixes: List<PayloadFix>): List<Int> =
+        fixes.indices.filter { fixes[it].emergency }
+
+    /**
+     * Local clock for each declared run, joined for one line.
+     * A hover that only raised the flag still has a time.
+     */
+    fun emergencyWhen(fixes: List<PayloadFix>): String =
+        emergencyRuns(fixes).joinToString(", ") { run ->
+            val start = clock(run.start)
+            val end = clock(run.end)
+            if (start == end) start else "$start–$end"
+        }
+
+    /** Trail clocks, or this advertisement when the trail has not stored a point yet. */
+    fun emergencyWhen(device: Sighting): String {
+        val stored = emergencyWhen(device.payloadTrail)
+        if (stored.isNotEmpty()) return stored
+        if (!declared(device)) return ""
+        return clock(device.lastSeen)
+    }
+
+    /** Latest emergency words on the trail. Blank when the declaration had none. */
+    fun emergencyWords(fixes: List<PayloadFix>): String =
+        fixes.lastOrNull { it.emergency && it.emergencyText.isNotBlank() }?.emergencyText?.trim().orEmpty()
+
+    private fun fixOf(device: Sighting, lat: Double, lon: Double): PayloadFix {
+        val on = declared(device)
+        return PayloadFix(
+            at = device.lastSeen,
+            lat = lat,
+            lon = lon,
+            alt = device.payloadAlt,
+            heading = device.payloadHeading,
+            speed = device.payloadSpeed,
+            emergency = on,
+            emergencyText = if (on) device.payloadEmergencyText?.trim().orEmpty() else "",
+        )
+    }
+
+    private fun motionBits(pic: Picture): List<String> {
+        val fromFixes = motionBits(pic.fixes)
+        if (fromFixes.isNotEmpty()) return fromFixes
+        return listOfNotNull(
+            pic.alt?.takeIf { OperatorLoc.knownAlt(it) }?.let { "${fmtNum(it)} m" },
+            pic.heading?.takeIf { it.isFinite() }?.let { "course ${fmtNum(wrapCourse(it))}°" },
+            pic.speed?.takeIf { it.isFinite() && it >= 0.0 }?.let { "${fmtNum(it)} m/s" },
+        )
+    }
+
+    private fun motionBits(fixes: List<PayloadFix>): List<String> {
+        val bits = ArrayList<String>(3)
+        spanNum(fixes.mapNotNull { it.alt?.takeIf { v -> OperatorLoc.knownAlt(v) } })?.let { bits += "$it m" }
+        spanCourse(fixes.mapNotNull { it.heading?.takeIf { v -> v.isFinite() } })?.let { bits += "course $it°" }
+        spanNum(fixes.mapNotNull { it.speed?.takeIf { v -> v.isFinite() && v >= 0.0 } })?.let { bits += "$it m/s" }
+        return bits
+    }
+
+    private fun emergencyLines(fixes: List<PayloadFix>, hideWords: Boolean): List<String> {
+        val lines = ArrayList<String>()
+        for (run in emergencyRuns(fixes)) {
+            val start = clock(run.start)
+            val end = clock(run.end)
+            val whenText = if (start == end) start else "$start–$end"
+            lines += "Emergency $whenText"
+            if (!hideWords && run.text.isNotBlank()) lines += run.text
+        }
+        return lines
+    }
+
+    private data class EmergencyRun(val start: Long, val end: Long, val text: String)
+
+    private fun emergencyRuns(fixes: List<PayloadFix>): List<EmergencyRun> {
+        val runs = ArrayList<EmergencyRun>()
+        var start = -1
+        var text = ""
+        fun close(end: Int) {
+            if (start < 0) return
+            runs += EmergencyRun(fixes[start].at, fixes[end].at, text.trim())
+            start = -1
+            text = ""
+        }
+        for (i in fixes.indices) {
+            val fix = fixes[i]
+            if (!fix.emergency) {
+                close(i - 1)
+                continue
+            }
+            if (start < 0) start = i
+            if (fix.emergencyText.isNotBlank()) text = fix.emergencyText
+        }
+        close(fixes.lastIndex)
+        return runs
+    }
+
+    private fun clock(at: Long): String =
+        Instant.ofEpochMilli(at).atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("HH:mm", LanguageText.dateLocale()))
+
+    private fun wrapCourse(heading: Double) = ((heading % 360.0) + 360.0) % 360.0
+
+    private fun noted(caption: String, vararg bits: String): Boolean = bits.any { it in caption }
 
     private fun cap(samples: List<PayloadFix>, limit: Int): List<PayloadFix> {
         if (samples.size <= limit) return samples
@@ -552,6 +679,21 @@ object AircraftTrail {
 
     private fun fmtNum(n: Double): String =
         if (n % 1.0 == 0.0) n.toInt().toString() else "%.1f".format(java.util.Locale.US, n)
+
+    private fun spanNum(values: List<Double>): String? {
+        if (values.isEmpty()) return null
+        val low = fmtNum(values.min())
+        val high = fmtNum(values.max())
+        return if (low == high) low else "$low–$high"
+    }
+
+    private fun spanCourse(values: List<Double>): String? {
+        if (values.isEmpty()) return null
+        fun wrap(heading: Double) = ((heading % 360.0) + 360.0) % 360.0
+        val first = fmtNum(wrap(values.first()))
+        val last = fmtNum(wrap(values.last()))
+        return if (first == last) first else "$first–$last"
+    }
 
     private fun fmtDist(m: Double): String =
         if (m >= 1000) "${"%.1f".format(java.util.Locale.US, m / 1000)} km" else "${m.toInt()} m"

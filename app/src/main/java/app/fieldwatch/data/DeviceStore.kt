@@ -13,6 +13,9 @@ import app.fieldwatch.domain.FastPair
 import app.fieldwatch.domain.Fleet
 import app.fieldwatch.domain.HeardFix
 import app.fieldwatch.domain.PayloadLocation
+import app.fieldwatch.domain.QuietAlert
+import app.fieldwatch.domain.QuietEdge
+import app.fieldwatch.domain.RadioKind
 import app.fieldwatch.domain.Rssi
 import app.fieldwatch.domain.withLiveDecode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +44,15 @@ class DeviceStore(
     @Volatile private var lastWifiBatchAt = 0L
     @Volatile private var wifiHold = false
     @Volatile private var bleHold = false
+    /** Tests freeze this. Live code uses the wall clock. */
+    internal var wallClock: () -> Long = { System.currentTimeMillis() }
+    /** False after Stop, swipe-away, or process death. A true tick does not reset the latch. */
+    @Volatile private var scanLive = false
+    private var bleQuietHealthy = false
+    private var wifiQuietHealthy = false
+    private var bleQuietLive = false
+    private var wifiQuietLive = false
+    private val pendingQuiet = ArrayList<QuietEdge>()
     private val lock = Any()
     /** Identity fingerprint → skip signature search while name / IEs / UUIDs / mfg stay the same. */
     private val matchStamp = HashMap<String, String>(512)
@@ -79,7 +91,7 @@ class DeviceStore(
     private fun upsert(observation: Observation): Sighting {
         val mac = MacUtil.normalize(observation.mac)
         val key = keyOf(observation.kind, mac)
-        val now = if (observation.at > 0L) observation.at else System.currentTimeMillis()
+        val now = if (observation.at > 0L) observation.at else wallClock()
         val existing = live[key]
         if (observation.kind == app.fieldwatch.domain.RadioKind.WIFI && !observation.fresh && existing != null) {
             val next = existing.copy(
@@ -185,7 +197,7 @@ class DeviceStore(
         }
         live[key] = merged
         if (observation.kind == app.fieldwatch.domain.RadioKind.WIFI && observation.fresh) {
-            lastWifiBatchAt = System.currentTimeMillis()
+            lastWifiBatchAt = wallClock()
         }
         return merged
     }
@@ -296,15 +308,19 @@ class DeviceStore(
         policy: DetectionPolicy = DetectionPolicy(),
         decaySec: Int = 0,
     ) {
-        val now = System.currentTimeMillis()
+        val now = wallClock()
         val staleMs = staleSec.coerceAtLeast(15) * 1000L
         val lingerMs = maxOf(staleMs, decaySec.coerceAtLeast(0) * 1000L)
         val wifiScanFresh = lastWifiBatchAt != 0L && now - lastWifiBatchAt <= lingerMs
+        // The first healthy pass after a hold, a start, or a location quiet drops edges.
+        val bleWasLive = scanLive && bleQuietLive && bleQuietHealthy
+        val wifiWasLive = scanLive && wifiQuietLive && wifiQuietHealthy
         live.replaceAll { _, device ->
+            val wasGone = device.gone
             val gone = !stillHeard(
                 kind = device.kind,
                 lastSeen = device.lastSeen,
-                alreadyGone = device.gone,
+                alreadyGone = wasGone,
                 now = now,
                 lingerMs = lingerMs,
                 wifiScanFresh = wifiScanFresh,
@@ -312,12 +328,33 @@ class DeviceStore(
                 bleHold = bleHold,
             )
             val last = device.presence.lastOrNull()
+            val spanStart = if (last != null && last.end == null) last.start else null
             when {
                 gone && last != null && last.end == null -> last.end = device.lastSeen
                 !gone && last != null && last.end != null -> last.end = null
             }
+            val kindLive = when (device.kind) {
+                RadioKind.BLE -> bleWasLive
+                RadioKind.WIFI -> wifiWasLive
+            }
+            if (!wasGone && gone && spanStart != null && kindLive &&
+                QuietAlert.heardLongEnough(spanStart, device.lastSeen) &&
+                QuietAlert.onTime(device.kind, device.lastSeen, now, lingerMs)
+            ) {
+                pendingQuiet += QuietEdge(
+                    key = device.key,
+                    kind = device.kind,
+                    mac = device.mac,
+                    name = device.displayName,
+                    rssi = device.rssi,
+                    lastSeen = device.lastSeen,
+                    spanStart = spanStart,
+                )
+            }
             if (device.gone == gone) device else device.copy(gone = gone)
         }
+        bleQuietLive = bleQuietHealthy
+        wifiQuietLive = wifiQuietHealthy
         relabel(live.values, fleets)
         live.values.filter { device ->
             val cut = if (device.fleetIds.isEmpty()) evictAnonMs else evictAfterMs
@@ -352,6 +389,18 @@ class DeviceStore(
     }
 
     fun setScanning(on: Boolean, throttleHint: String = "") {
+        if (on) {
+            scanLive = true
+        } else {
+            synchronized(lock) {
+                scanLive = false
+                bleQuietHealthy = false
+                wifiQuietHealthy = false
+                bleQuietLive = false
+                wifiQuietLive = false
+                pendingQuiet.clear()
+            }
+        }
         _stats.update { it.copy(scanning = on, throttleHint = throttleHint) }
     }
 
@@ -380,8 +429,61 @@ class DeviceStore(
     }
 
     fun setRadioHold(wifi: Boolean = wifiHold, ble: Boolean = bleHold) {
+        val enterWifi = wifi && !wifiHold
+        val enterBle = ble && !bleHold
         wifiHold = wifi
         bleHold = ble
+        if (!enterWifi && !enterBle) return
+        synchronized(lock) {
+            if (enterWifi) disarmQuiet(RadioKind.WIFI)
+            if (enterBle) disarmQuiet(RadioKind.BLE)
+        }
+    }
+
+    /**
+     * Healthy means this scanner is reporting. True does not arm the latch.
+     * The next refresh drops the backlog, then later refreshes can cue.
+     */
+    fun noteQuietScan(bleHealthy: Boolean, wifiHealthy: Boolean) {
+        synchronized(lock) {
+            if (bleHealthy) {
+                bleQuietHealthy = true
+            } else {
+                disarmQuiet(RadioKind.BLE)
+            }
+            if (wifiHealthy) {
+                wifiQuietHealthy = true
+            } else {
+                disarmQuiet(RadioKind.WIFI)
+            }
+        }
+    }
+
+    fun isScanLive(): Boolean = scanLive
+
+    /** Live scan loop only. Empty after Stop, and the pending edges are dropped. */
+    fun takeQuietEdges(): List<QuietEdge> = synchronized(lock) {
+        if (!scanLive) {
+            pendingQuiet.clear()
+            return emptyList()
+        }
+        val out = pendingQuiet.toList()
+        pendingQuiet.clear()
+        out
+    }
+
+    private fun disarmQuiet(kind: RadioKind) {
+        when (kind) {
+            RadioKind.BLE -> {
+                bleQuietHealthy = false
+                bleQuietLive = false
+            }
+            RadioKind.WIFI -> {
+                wifiQuietHealthy = false
+                wifiQuietLive = false
+            }
+        }
+        pendingQuiet.removeAll { it.kind == kind }
     }
 
     fun bumpLogs(lines: Long) {

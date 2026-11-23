@@ -536,11 +536,211 @@ class DeviceStoreTest {
         assertTrue("fleet-cisco" in published.fleetIds)
     }
 
+    @Test
+    fun quietCueFiresOnceForABleRadioHeardTwoMinutes() {
+        val (store, clock) = armedQuietStore()
+        val mac = "AA:BB:CC:DD:EE:01"
+        val t0 = clock[0]
+        store.ingestBatch(listOf(ble(mac, "bag", at = t0)), fleets, 15)
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        val heard = t0 + 130_000L
+        clock[0] = heard
+        store.ingestBatch(listOf(ble(mac, "bag", at = heard)), fleets, 15)
+        store.refresh(fleets, 15)
+        assertFalse(store.find("BLE:$mac")!!.gone)
+        clock[0] = heard + 16_000L
+        store.refresh(fleets, 15)
+        val edges = store.takeQuietEdges()
+        assertEquals(1, edges.size)
+        assertEquals("BLE:$mac", edges.single().key)
+        assertEquals(RadioKind.BLE, edges.single().kind)
+        assertTrue(store.find("BLE:$mac")!!.gone)
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        val back = clock[0] + 1_000L
+        clock[0] = back
+        store.ingestBatch(listOf(ble(mac, "bag", at = back)), fleets, 15)
+        store.refresh(fleets, 15)
+        assertFalse(store.find("BLE:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        val heardAgain = back + 130_000L
+        clock[0] = heardAgain
+        store.ingestBatch(listOf(ble(mac, "bag", at = heardAgain)), fleets, 15)
+        store.refresh(fleets, 15)
+        clock[0] = heardAgain + 16_000L
+        store.refresh(fleets, 15)
+        assertEquals(1, store.takeQuietEdges().size)
+    }
+
+    @Test
+    fun quietCueStaysOffWhenTheRadioWasHeardUnderTwoMinutes() {
+        val (store, clock) = armedQuietStore()
+        val mac = "AA:BB:CC:DD:EE:02"
+        val t0 = clock[0]
+        store.ingestBatch(listOf(ble(mac, "bag", at = t0)), fleets, 15)
+        val heard = t0 + 60_000L
+        clock[0] = heard
+        store.ingestBatch(listOf(ble(mac, "bag", at = heard)), fleets, 15)
+        store.refresh(fleets, 15)
+        clock[0] = heard + 16_000L
+        store.refresh(fleets, 15)
+        assertTrue(store.find("BLE:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+    }
+
+    @Test
+    fun armingRefreshDoesNotCueARadioThatIsAlreadyGone() {
+        val clock = longArrayOf(1_700_000_000_000L)
+        val store = DeviceStore()
+        store.wallClock = { clock[0] }
+        store.setScanning(true)
+        val mac = "00:11:22:33:44:55"
+        store.ingestBatch(listOf(wifi(mac, name = "porch", at = clock[0])), fleets, 15)
+        clock[0] = clock[0] + 130_000L
+        store.ingestBatch(listOf(wifi(mac, name = "porch", at = clock[0])), fleets, 15)
+        val last = clock[0]
+        clock[0] = last + 15_000L + 30_000L
+        store.ingestBatch(listOf(wifi("00:11:22:33:44:66", name = "other", at = clock[0])), fleets, 15)
+        store.noteQuietScan(true, true)
+        store.refresh(fleets, 15)
+        assertTrue(store.find("WIFI:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+    }
+
+    @Test
+    fun lateBleBacklogDoesNotCue() {
+        val (store, clock) = armedQuietStore()
+        val mac = "AA:BB:CC:DD:EE:03"
+        hearBle(store, clock, mac)
+        clock[0] = clock[0] + 15_000L + 7_000L
+        store.refresh(fleets, 15)
+        assertTrue(store.find("BLE:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+    }
+
+    @Test
+    fun wifiLeaveInsideFortyFiveSecondsCues() {
+        val (store, clock) = armedQuietStore()
+        val mac = "00:11:22:33:44:70"
+        val heard = hearWifi(store, clock, mac)
+        store.setRadioHold(wifi = false, ble = false)
+        clock[0] = heard + 15_000L + 25_000L
+        store.ingestBatch(listOf(wifi("00:11:22:33:44:71", name = "other", at = clock[0])), fleets, 15)
+        store.refresh(fleets, 15)
+        val edges = store.takeQuietEdges()
+        assertEquals(1, edges.size)
+        assertEquals(RadioKind.WIFI, edges.single().kind)
+        assertEquals("WIFI:$mac", edges.single().key)
+    }
+
+    @Test
+    fun wifiHoldCatchUpDropsTheFirstPassAfterTheHoldLifts() {
+        val (store, clock) = armedQuietStore()
+        val mac = "00:11:22:33:44:80"
+        val heard = hearWifi(store, clock, mac)
+        store.setRadioHold(wifi = true)
+        clock[0] = heard + 40_000L
+        store.ingestBatch(listOf(wifi("00:11:22:33:44:81", name = "other", at = clock[0])), fleets, 15)
+        store.refresh(fleets, 15)
+        assertFalse(store.find("WIFI:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        store.setRadioHold(wifi = false)
+        store.noteQuietScan(true, true)
+        store.refresh(fleets, 15)
+        assertTrue(store.find("WIFI:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+    }
+
+    @Test
+    fun quietCueStaysOffWhenTheScannerIsNotReportingOrNotScanning() {
+        val (store, clock) = armedQuietStore()
+        val mac = "AA:BB:CC:DD:EE:04"
+        hearBle(store, clock, mac)
+        store.noteQuietScan(false, false)
+        clock[0] = clock[0] + 16_000L
+        store.refresh(fleets, 15)
+        assertTrue(store.find("BLE:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+
+        val (live, liveClock) = armedQuietStore()
+        val other = "AA:BB:CC:DD:EE:05"
+        val heard = hearBle(live, liveClock, other)
+        liveClock[0] = heard + 16_000L
+        live.refresh(fleets, 15)
+        assertEquals(1, live.takeQuietEdges().size)
+        live.setScanning(false)
+        assertTrue(live.takeQuietEdges().isEmpty())
+
+        val (stopped, stoppedClock) = armedQuietStore()
+        val third = "AA:BB:CC:DD:EE:06"
+        hearBle(stopped, stoppedClock, third)
+        stopped.setScanning(false)
+        stoppedClock[0] = stoppedClock[0] + 16_000L
+        stopped.refresh(fleets, 15)
+        assertTrue(stopped.find("BLE:$third")!!.gone)
+        assertTrue(stopped.takeQuietEdges().isEmpty())
+    }
+
+    @Test
+    fun aHealthyBlipDropsTheNextGonePass() {
+        val (store, clock) = armedQuietStore()
+        val mac = "AA:BB:CC:DD:EE:07"
+        hearBle(store, clock, mac)
+        store.noteQuietScan(false, true)
+        store.noteQuietScan(true, true)
+        clock[0] = clock[0] + 16_000L
+        store.refresh(fleets, 15)
+        assertTrue(store.find("BLE:$mac")!!.gone)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+    }
+
+    private fun armedQuietStore(): Pair<DeviceStore, LongArray> {
+        val clock = longArrayOf(1_700_000_000_000L)
+        val store = DeviceStore()
+        store.wallClock = { clock[0] }
+        store.setScanning(true)
+        store.noteQuietScan(true, true)
+        store.refresh(fleets, 15)
+        assertTrue(store.takeQuietEdges().isEmpty())
+        return store to clock
+    }
+
+    /** Leaves the clock on the second hear, with the radio still on the list. */
+    private fun hearBle(store: DeviceStore, clock: LongArray, mac: String): Long {
+        val t0 = clock[0]
+        store.ingestBatch(listOf(ble(mac, "bag", at = t0)), fleets, 15)
+        val heard = t0 + 130_000L
+        clock[0] = heard
+        store.ingestBatch(listOf(ble(mac, "bag", at = heard)), fleets, 15)
+        store.refresh(fleets, 15)
+        assertFalse(store.find("BLE:$mac")!!.gone)
+        return heard
+    }
+
+    private fun hearWifi(store: DeviceStore, clock: LongArray, mac: String): Long {
+        val t0 = clock[0]
+        store.ingestBatch(listOf(wifi(mac, name = "porch", at = t0)), fleets, 15)
+        val heard = t0 + 130_000L
+        clock[0] = heard
+        store.ingestBatch(listOf(wifi(mac, name = "porch", at = heard)), fleets, 15)
+        store.refresh(fleets, 15)
+        assertFalse(store.find("WIFI:$mac")!!.gone)
+        return heard
+    }
+
     private fun wifi(
         mac: String,
         name: String = "",
         rssi: Int = -50,
         ies: List<String> = emptyList(),
+        at: Long = System.currentTimeMillis(),
     ) = Observation(
         kind = RadioKind.WIFI,
         mac = mac,
@@ -554,7 +754,7 @@ class DeviceStoreTest {
         manufacturerDataHex = "",
         rawHex = "",
         extras = "",
-        at = System.currentTimeMillis(),
+        at = at,
         vendorIeOuis = ies,
     )
 
@@ -563,6 +763,7 @@ class DeviceStoreTest {
         name: String,
         facts: RadioFacts = RadioFacts.Empty,
         rssi: Int = -50,
+        at: Long = System.currentTimeMillis(),
     ) = Observation(
         kind = RadioKind.BLE,
         mac = mac,
@@ -576,7 +777,7 @@ class DeviceStoreTest {
         manufacturerDataHex = "",
         rawHex = "",
         extras = "",
-        at = System.currentTimeMillis(),
+        at = at,
         facts = facts,
     )
 

@@ -258,6 +258,30 @@ class AircraftTrailTest {
         assertEquals(emptyList<String>(), AircraftTrail.motionLines(Double.NaN, Double.NaN, -1.0))
         assertEquals(listOf("Course: 10°"), AircraftTrail.motionLines(null, 370.0, null))
         assertEquals(listOf("Course: 350°"), AircraftTrail.motionLines(null, -10.0, null))
+        assertEquals(
+            listOf("Altitude: 40–80 m", "Speed: 6.5–9 m/s"),
+            AircraftTrail.motionSpanLines(
+                listOf(
+                    PayloadFix(1L, 1.0, 2.0, alt = 40.0, speed = 6.5),
+                    PayloadFix(2L, 1.0, 2.0, alt = 80.0, speed = 9.0),
+                    PayloadFix(3L, 1.0, 2.0, alt = -1000.0, speed = -1.0),
+                ),
+            ),
+        )
+        assertEquals(
+            listOf("Altitude: 12 m", "Speed: 0 m/s"),
+            AircraftTrail.motionSpanLines(listOf(PayloadFix(1L, 1.0, 2.0, alt = 12.0, speed = 0.0))),
+        )
+        assertEquals(emptyList<String>(), AircraftTrail.motionSpanLines(emptyList()))
+        assertEquals(
+            listOf("Altitude: 40 m", "Speed: 5 m/s", "Course: 350–10°"),
+            AircraftTrail.motionSpanLines(
+                listOf(
+                    PayloadFix(1L, 1.0, 2.0, alt = 40.0, heading = -10.0, speed = 5.0),
+                    PayloadFix(2L, 1.0, 2.0, alt = 40.0, heading = 370.0, speed = 5.0),
+                ),
+            ),
+        )
         val kept = AircraftTrail.advertisedMotion(
             listOf(PayloadFix(1L, 1.0, 2.0, alt = null, heading = 180.0, speed = null)),
             alt = 100.0,
@@ -414,6 +438,94 @@ class AircraftTrailTest {
         val saved = session.snapshot().radios.single()
         assertEquals("SESSION1", saved.payloadUasId)
         assertNull(saved.payloadAircraft)
+    }
+
+    @Test
+    fun aDeclaredEmergencyStaysOnThePointAndALaterHoverDoesNotClearIt() {
+        var trail = AircraftTrail.append(emptyList(), drone(1_000L, 28.0, -81.0))
+        assertFalse(trail.single().emergency)
+        trail = AircraftTrail.append(
+            trail,
+            drone(2_000L, 28.00002, -81.0).copy(
+                payloadStatus = OpenDroneId.STATUS_EMERGENCY,
+                payloadEmergencyText = "Low battery",
+            ),
+        )
+        assertEquals(1, trail.size)
+        assertTrue(trail.single().emergency)
+        assertEquals("Low battery", trail.single().emergencyText)
+        trail = AircraftTrail.append(trail, drone(3_000L, 28.00003, -81.0).copy(payloadStatus = 2))
+        assertEquals(1, trail.size)
+        assertTrue(trail.single().emergency)
+        assertEquals("Low battery", trail.single().emergencyText)
+        trail = AircraftTrail.append(
+            trail,
+            drone(20_000L, 28.002, -81.0).copy(payloadEmergencyText = "Motor"),
+        )
+        assertEquals(2, trail.size)
+        assertEquals("Low battery", trail.first().emergencyText)
+        assertTrue(trail.last().emergency)
+        assertEquals("Motor", trail.last().emergencyText)
+        trail = AircraftTrail.append(trail, drone(40_000L, 28.004, -81.0))
+        assertEquals(3, trail.size)
+        assertFalse(trail.last().emergency)
+        assertEquals(listOf(0, 1), AircraftTrail.emergencyIndexes(trail))
+        val blank = AircraftTrail.append(
+            emptyList(),
+            drone(1_000L, 28.0, -81.0).copy(payloadEmergencyText = ""),
+        )
+        assertTrue(blank.single().emergency)
+        assertEquals("", blank.single().emergencyText)
+    }
+
+    @Test
+    fun theReportSpansTheTrackAndNotesWhenTheEmergencyWasDeclared() {
+        val at = 1_700_000_000_000L
+        val fixes = listOf(
+            PayloadFix(at, 28.0, -81.0, alt = 40.0, heading = 10.0, speed = 3.0, emergency = true, emergencyText = "Low battery"),
+            PayloadFix(at + 20_000L, 28.002, -81.0, alt = 80.0, heading = 90.0, speed = 8.0),
+        )
+        val pic = AircraftTrail.pictures(
+            listOf(
+                AircraftTrail.Source(
+                    uasId = "ABC123",
+                    title = "ABC123",
+                    lastSeen = fixes.last().at,
+                    status = "Airborne",
+                    fixes = fixes,
+                    alt = 80.0,
+                    heading = 90.0,
+                    speed = 8.0,
+                    pilotLat = null,
+                    pilotLon = null,
+                ),
+            ),
+            emptyList(),
+        ).single()
+        assertEquals(listOf(0), AircraftTrail.track(pic, secondary = false).emergency)
+        val whenText = AircraftTrail.emergencyWhen(fixes)
+        assertTrue(whenText.isNotEmpty())
+        val shown = AircraftTrail.body(listOf(pic))
+        assertTrue(shown.contains("40–80 m"))
+        assertTrue(shown.contains("course 10–90°"))
+        assertTrue(shown.contains("3–8 m/s"))
+        assertTrue(shown.contains("Emergency $whenText"))
+        assertTrue(shown.contains("Low battery"))
+        val hidden = AircraftTrail.body(listOf(pic), hideWords = true)
+        assertTrue(hidden.contains("Emergency $whenText"))
+        assertFalse(hidden.contains("Low battery"))
+        val key = AircraftTrail.pathKeyLine(pic)
+        assertTrue(key.contains("80 m"))
+        assertTrue(key.contains("course 90°"))
+        assertTrue(key.contains("Emergency $whenText"))
+        assertFalse(key.contains("Low battery"))
+        assertFalse(key.contains("40–80"))
+        val compared = AircraftTrail.compareBody("Here", listOf(pic), "There", emptyList())
+        assertTrue(compared.contains("40–80 m"))
+        assertTrue(compared.contains("course 10–90°"))
+        assertTrue(compared.contains("3–8 m/s"))
+        assertTrue(compared.contains("Emergency $whenText"))
+        assertFalse(compared.contains("Low battery"))
     }
 
     private fun fix(at: Long, lat: Double, lon: Double) = PayloadFix(at, lat, lon)

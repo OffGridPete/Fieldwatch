@@ -18,6 +18,7 @@ import app.fieldwatch.alert.Alerter
 import app.fieldwatch.crash.CrashNotes
 import app.fieldwatch.radio.CellRadio
 import app.fieldwatch.radio.GnssMonitor
+import app.fieldwatch.data.AircraftStore
 import app.fieldwatch.data.AssetLanguageFiles
 import app.fieldwatch.data.CellStore
 import app.fieldwatch.data.ConfigStore
@@ -51,7 +52,7 @@ import app.fieldwatch.domain.FlockLatch
 import app.fieldwatch.domain.PathCameras
 import app.fieldwatch.domain.alertsFor
 import app.fieldwatch.domain.anySensorAlert
-import app.fieldwatch.domain.sensorNotice
+import app.fieldwatch.domain.spokenAlert
 import app.fieldwatch.domain.Geo
 import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.Hunt
@@ -67,6 +68,8 @@ import app.fieldwatch.domain.DroneNear
 import app.fieldwatch.domain.DroneNearMark
 import app.fieldwatch.domain.DroneNearOutcome
 import app.fieldwatch.domain.GpsAccFix
+import app.fieldwatch.domain.RemoteIdEmergency
+import app.fieldwatch.domain.RemoteIdEmergencyOutcome
 import app.fieldwatch.domain.RemoteIdSwarm
 import app.fieldwatch.domain.SignatureClass
 import app.fieldwatch.domain.WifiBeaconFlood
@@ -108,6 +111,7 @@ class FieldwatchApp : Application() {
     lateinit var sits: SitStore
         private set
     lateinit var places: PlaceStore
+    lateinit var aircraft: AircraftStore
         private set
     val tracker = TrackerMonitor()
     private val uiDepth = AtomicInteger(0)
@@ -133,6 +137,7 @@ class FieldwatchApp : Application() {
     val wifiFlood = WifiBeaconFlood()
     val remoteIdSwarm = RemoteIdSwarm()
     val droneNear = DroneNear()
+    val remoteIdEmergency = RemoteIdEmergency()
     /** Latest GPS fix at 75 m or better. Network points and a missing accuracy stay out. */
     @Volatile private var lastGpsAccFix: GpsAccFix? = null
 
@@ -282,6 +287,37 @@ class FieldwatchApp : Application() {
             vibrate = beep,
             shade = settings.swarmShade,
         )
+    }
+
+    /**
+     * A live Remote ID that just declared an emergency. Beep once for the pass.
+     * Each sentence is spoken now. The popup is the notice, including when
+     * beep, voice, and the notification are off.
+     */
+    fun passRemoteIdEmergency(): RemoteIdEmergencyOutcome {
+        val scanning = devices.stats.value.scanning
+        return remoteIdEmergency.pass(
+            devices = if (scanning) devices.devices.value else null,
+            enabled = config.settings.remoteIdEmergency,
+        )
+    }
+
+    fun announceEmergency(outcome: RemoteIdEmergencyOutcome) {
+        if (!::alerter.isInitialized || outcome.fires.isEmpty()) return
+        val settings = config.settings
+        val phrase = if (settings.swarmVoice) outcome.fires.joinToString(" ") { it.body } else null
+        outcome.fires.forEachIndexed { index, fire ->
+            val first = index == 0
+            alerter.emergencyAlert(
+                title = fire.title,
+                text = fire.body,
+                phrase = if (first) phrase else null,
+                beep = first && settings.swarmBeep,
+                vibrate = first && settings.swarmBeep,
+                shade = settings.swarmShade,
+                noteId = fire.noteId,
+            )
+        }
     }
 
     private val filters = FilterEngine()
@@ -807,6 +843,7 @@ class FieldwatchApp : Application() {
         sits = SitStore(this, scope)
         sits.watchPathCameras { cameraReport()?.near }
         places = PlaceStore(File(filesDir, "place-memory.json"))
+        aircraft = AircraftStore(File(filesDir, "aircraft-history.json"))
         trusted = TrustedNetworkStore(File(filesDir, "trusted-networks.json"), scope)
         cells = CellStore(File(filesDir, "cell-places.json"), scope)
         alerter = Alerter(this)
@@ -832,6 +869,7 @@ class FieldwatchApp : Application() {
             )
             sits.load()
             places.load()
+            aircraft.load()
             trusted.load()
             cells.load()
             Log.i("Fieldwatch", "cell places loaded: ${cells.bookFlow.value.places.size}")
@@ -841,6 +879,7 @@ class FieldwatchApp : Application() {
         }
         sits.startFlusher()
         places.startFlusher(scope)
+        aircraft.startFlusher(scope)
         trusted.startFlusher()
         cells.startFlusher()
         syncLocationUpdates()
@@ -978,6 +1017,19 @@ class FieldwatchApp : Application() {
 
     fun stopScanning() {
         stopService(Intent(this, ScanService::class.java))
+    }
+
+    /** Same start the Reports button uses. False when a sit is already open. */
+    suspend fun startNamedSit(name: String): Boolean {
+        val heard = devices.devices.value.filter { !it.gone }
+        return sits.start(name, heard, config.fleets, config.watchlist) != null
+    }
+
+    /** Same end the Reports button uses, including a drone-near span that is still open. */
+    suspend fun endOpenSit(): Boolean {
+        val closing = droneNear.closeOpen(System.currentTimeMillis())
+        sits.noteNear(closing)
+        return sits.end(config.fleets) != null
     }
 
     fun systemLocationOn(): Boolean {
@@ -1308,10 +1360,10 @@ class FieldwatchApp : Application() {
         val hit = runCatching {
             val nearby = flockIndex.near(lat, lon, FlockApproach.REARM_M + 40.0)
                 .filter { settings.alertsFor(it.kind) }
-            flockLatch.consider(lat, lon, travelDeg, floodSpeed(), nearby)
+            val groupM = if (settings.groupCameraAlerts) FlockApproach.GROUP_M else 0.0
+            flockLatch.consider(lat, lon, travelDeg, floodSpeed(), nearby, groupM)
         }.getOrNull() ?: return
-        val (key, values) = sensorNotice(hit)
-        alerter.flockNote(if (values.isEmpty()) LanguageText.text(key) else LanguageText.text(key, values))
+        alerter.flockNote(spokenAlert(hit.hit, hit.cameras))
     }
 
     /** GPS speed in m/s, or null when the latest fix has no usable speed. */

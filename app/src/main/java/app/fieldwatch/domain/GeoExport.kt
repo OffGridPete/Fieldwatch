@@ -22,6 +22,14 @@ enum class LogExportKind(val titleKey: String, val sitOnly: Boolean = false) {
     ;
 
     fun label(): String = LanguageText.text(titleKey)
+
+    companion object {
+        /** Missing or unknown stays CSV. A sit-only name is CSV when the log cannot use it. */
+        fun fromSaved(name: String?, allowSitOnly: Boolean): LogExportKind {
+            val kind = entries.firstOrNull { it.name == name } ?: LOG_CSV
+            return if (!allowSitOnly && kind.sitOnly) LOG_CSV else kind
+        }
+    }
 }
 
 enum class LogExportRadios(val titleKey: String) {

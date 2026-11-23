@@ -19,6 +19,12 @@ object SpokenNames {
     const val MAX_LABEL = 32
     const val MAX_NETWORK = 64
 
+    /** Detail switch: a Wi-Fi radio with a network name and a signature. */
+    fun offersCard(device: Sighting): Boolean =
+        device.kind == RadioKind.WIFI &&
+            networkOf(device.name, device.mac) != null &&
+            device.fleetIds.isNotEmpty()
+
     /**
      * Advertised SSID or BLE name. Blank, the radio's own address, and a name
      * longer than [MAX_NETWORK] cannot have a row. Matching stays exact.

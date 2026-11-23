@@ -158,6 +158,81 @@ class RadioBookmarksTest {
     }
 
     @Test
+    fun setMuteFillsABlankNameAndLeavesAlertAndMine() {
+        val created = RadioBookmarks.setMute(listOf(fleet), "WIFI:00:11:22:33:44:55", true, "PORKCHOP")
+        val row = created.single { it.deviceKey != null }
+        assertEquals("PORKCHOP", row.label)
+        assertEquals(false, row.alert)
+        assertFalse(row.mine)
+        assertTrue(row.mute)
+        assertEquals(setOf("WIFI:00:11:22:33:44:55"), RadioBookmarks.muteKeys(created))
+        assertTrue(RadioBookmarks.mineKeys(created).isEmpty())
+        val kept = RadioBookmarks.setMute(
+            listOf(radio.copy(alert = true, mine = true)),
+            radio.deviceKey!!,
+            true,
+            "ignored",
+        )
+        val named = kept.single { it.deviceKey != null }
+        assertEquals("van tag", named.label)
+        assertTrue(named.alert)
+        assertTrue(named.mine)
+        assertTrue(named.mute)
+        val blank = radio.copy(id = "r2", deviceKey = "BLE:11:22:33:44:55:66", label = "  ", alert = true, mine = true)
+        val filled = RadioBookmarks.setMute(listOf(blank), blank.deviceKey!!, true, "Tile")
+        assertEquals("Tile", filled.single().label)
+        assertTrue(filled.single().alert)
+        assertTrue(filled.single().mine)
+        val off = RadioBookmarks.setMute(filled, blank.deviceKey!!, false, "ignored")
+        assertEquals("Tile", off.single().label)
+        assertFalse(off.single().mute)
+        assertTrue(off.single().mine)
+        assertTrue(off.single().alert)
+        assertTrue(RadioBookmarks.muteKeys(off).isEmpty())
+        assertEquals(listOf(fleet), RadioBookmarks.setMute(listOf(fleet), "WIFI:00:11:22:33:44:55", false, "van"))
+        val mined = RadioBookmarks.setMine(created, "WIFI:00:11:22:33:44:55", true, "ignored")
+        val both = mined.single { it.deviceKey != null }
+        assertTrue(both.mute)
+        assertTrue(both.mine)
+        assertFalse(both.alert)
+    }
+
+    @Test
+    fun setQuietFillsABlankNameAndLeavesAlertMineAndMute() {
+        val created = RadioBookmarks.setQuiet(listOf(fleet), "WIFI:00:11:22:33:44:55", true, "porch")
+        val row = created.single { it.deviceKey != null }
+        assertEquals("porch", row.label)
+        assertTrue(row.alert)
+        assertFalse(row.mine)
+        assertFalse(row.mute)
+        assertTrue(row.alertOnGone)
+        assertEquals(setOf("WIFI:00:11:22:33:44:55"), RadioBookmarks.quietKeys(created))
+        val kept = RadioBookmarks.setQuiet(
+            listOf(radio.copy(alert = false, mine = true, mute = true)),
+            radio.deviceKey!!,
+            true,
+            "ignored",
+        )
+        val named = kept.single { it.deviceKey != null }
+        assertEquals("van tag", named.label)
+        assertFalse(named.alert)
+        assertTrue(named.mine)
+        assertTrue(named.mute)
+        assertTrue(named.alertOnGone)
+        assertTrue(radio.deviceKey in RadioBookmarks.quietKeys(kept))
+        assertTrue(radio.deviceKey in RadioBookmarks.muteKeys(kept))
+        val blank = radio.copy(id = "r2", deviceKey = "BLE:11:22:33:44:55:66", label = "  ", alert = false)
+        val filled = RadioBookmarks.setQuiet(listOf(blank), blank.deviceKey!!, true, "Tile")
+        assertEquals("Tile", filled.single().label)
+        assertFalse(filled.single().alert)
+        val off = RadioBookmarks.setQuiet(filled, blank.deviceKey!!, false, "ignored")
+        assertEquals("Tile", off.single().label)
+        assertFalse(off.single().alertOnGone)
+        assertTrue(off.single().deviceKey !in RadioBookmarks.quietKeys(off))
+        assertEquals(listOf(fleet), RadioBookmarks.setQuiet(listOf(fleet), "WIFI:00:11:22:33:44:55", false, "van"))
+    }
+
+    @Test
     fun pathNoteDoesNotInventADot() {
         assertEquals("", RadioBookmarks.pathNote(bookmarked = false, observerNotes = "lot B", mine = false))
         assertEquals("lot B", RadioBookmarks.pathNote(bookmarked = true, observerNotes = "lot B", mine = false))

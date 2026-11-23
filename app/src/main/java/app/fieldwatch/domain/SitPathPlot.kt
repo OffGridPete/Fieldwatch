@@ -53,6 +53,8 @@ object SitPathPlot {
         val headingDeg: Double? = null,
         /** Advertised speed, meters per second. A negative value is stored and not shown. */
         val speedMps: Double? = null,
+        /** Local clock of a declared emergency on this trail. Empty when none was stored. */
+        val emergencyWhen: String = "",
     )
 
     data class Model(
@@ -330,6 +332,10 @@ object SitPathPlot {
         val aircraft: Boolean = false,
         /** Last advertised course, degrees clockwise from north. Null draws a diamond. */
         val headingDeg: Double? = null,
+        /** ARGB. Zero keeps the sit path's white chevrons. */
+        val color: Long = 0L,
+        /** Indexes into [samples] heard while an emergency was declared. */
+        val emergency: List<Int> = emptyList(),
     )
 
     data class Figure(
@@ -1219,6 +1225,7 @@ object SitPathPlot {
                             opAt = d.payloadOpAt,
                             opPhoneLat = d.payloadOpPhoneLat,
                             opPhoneLon = d.payloadOpPhoneLon,
+                            emergencyWhen = AircraftTrail.emergencyWhen(d),
                         )
                     } else {
                         ""
@@ -1226,6 +1233,7 @@ object SitPathPlot {
                     altM = motion.first,
                     headingDeg = motion.second,
                     speedMps = motion.third,
+                    emergencyWhen = if (pin != null) AircraftTrail.emergencyWhen(d) else "",
                 )
             }
         val sorted = if (alertsOnly) {
@@ -1383,6 +1391,37 @@ object SitPathPlot {
     }
 
     /**
+     * Advertised tracks for the radios already chosen for the live map.
+     * Two or more fixes draw chevrons. One fix stays the pin from [liveDots].
+     * A hear-point adds nothing. Color 0 is the white chevron.
+     */
+    fun liveCraft(devices: List<Sighting>): List<FigureTrack> {
+        val tracks = ArrayList<FigureTrack>()
+        for (d in devices) {
+            val fixes = d.payloadTrail.filter { PayloadLocation.validCoord(it.lat, it.lon) }
+            if (fixes.size < 2) continue
+            val motion = AircraftTrail.advertisedMotion(
+                fixes,
+                d.payloadAlt,
+                d.payloadHeading,
+                d.payloadSpeed,
+            )
+            tracks += FigureTrack(
+                name = d.key.take(22),
+                samples = AircraftTrail.samples(fixes),
+                aircraft = true,
+                headingDeg = motion.second,
+                emergency = AircraftTrail.emergencyIndexes(fixes),
+            )
+        }
+        return tracks
+    }
+
+    /** Trail points that keep a bowed advertised track inside the whole-path fit. */
+    fun liveCraftFrame(tracks: List<FigureTrack>): List<GpsSample> =
+        tracks.flatMap { it.samples }
+
+    /**
      * One dot per radio, at its advertised fix or its loudest hear inside [since].
      * Callers pass the radios that belong on the map. No report alert cap.
      */
@@ -1425,6 +1464,7 @@ object SitPathPlot {
                 altM = motion.first,
                 headingDeg = motion.second,
                 speedMps = motion.third,
+                emergencyWhen = if (pin != null) AircraftTrail.emergencyWhen(d) else "",
             )
         }
         return points

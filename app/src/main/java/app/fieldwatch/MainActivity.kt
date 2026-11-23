@@ -12,11 +12,13 @@ import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import app.fieldwatch.alert.Alerter
 import app.fieldwatch.radio.RadioPermissions
+import app.fieldwatch.radio.ScanService
 import app.fieldwatch.ui.FieldwatchRoot
 import app.fieldwatch.ui.FieldwatchViewModel
 import app.fieldwatch.ui.screen.CrashNoteScreen
 import app.fieldwatch.ui.theme.FieldwatchTheme
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 
 class MainActivity : ComponentActivity() {
     private val vm: FieldwatchViewModel by viewModels()
@@ -44,9 +46,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        screen = WeakReference(this)
         val app = application as FieldwatchApp
         app.uiStarted()
-        if (app.pendingCrash == null) app.syncTrackerShade(app.tracker.notice.value)
+        if (app.pendingCrash == null) {
+            app.syncTrackerShade(app.tracker.notice.value)
+            if (RadioPermissions.granted(this)) ScanService.includeLocation(this)
+        }
     }
 
     override fun onStop() {
@@ -65,8 +71,9 @@ class MainActivity : ComponentActivity() {
         if (app.pendingCrash != null) return
         vm.refreshPermissions()
         vm.onAppUpdateResume()
-        if (RadioPermissions.granted(this) && !app.devices.stats.value.scanning) {
-            vm.startScan()
+        if (RadioPermissions.granted(this)) {
+            ScanService.includeLocation(this)
+            if (!app.devices.stats.value.scanning) vm.startScan()
         }
     }
 
@@ -102,7 +109,7 @@ class MainActivity : ComponentActivity() {
     private fun showApp() {
         setContent {
             FieldwatchRoot(vm) {
-                permissionLauncher.launch(RadioPermissions.required())
+                permissionLauncher.launch(RadioPermissions.request())
             }
         }
         if (RadioPermissions.granted(this)) {
@@ -114,8 +121,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        if (screen?.get() === this) screen = null
+        super.onDestroy()
+    }
+
     private fun copyNote(text: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("Fieldwatch crash", text))
+    }
+
+    companion object {
+        private var screen: WeakReference<MainActivity>? = null
+
+        /**
+         * Sends the screen behind the other apps. The task stays, so swiping
+         * Fieldwatch out of Recents is still what stops the scan.
+         * True when the screen is already gone.
+         */
+        fun closeScreen(): Boolean {
+            val activity = screen?.get() ?: return true
+            return activity.moveTaskToBack(true)
+        }
     }
 }

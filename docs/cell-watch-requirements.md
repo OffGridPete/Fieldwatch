@@ -85,11 +85,11 @@ A warning is not repeated for the same episode. There is no confidence ladder in
 
 The warning sentence is one of these.
 
-> This phone camped on a cell it has not used here.
+> This phone connected to a cell it has not used in this location.
 
-> This phone dropped to 2G.
+> This phone switched to a 2G connection in this location.
 
-> This phone dropped to 3G.
+> This phone switched to a 3G connection in this location.
 
 Voice speaks that sentence, and only when a new episode starts. The settings page and the popup use the lines in those sections. New on-screen strings follow the language-pack rules. English stays in the app. All 26 bundled languages get the new lines. Pack text is not passed through `String.format`. Caps stay as they are. `writtenFor` stays the template's version.
 
@@ -99,7 +99,7 @@ The warning uses the same dialog as a GPS warning. One dialog at a time. A secon
 
 The title is the warning sentence.
 
-The body is one short paragraph. A new cell says this phone is camped on a tower it has not used at this place. A drop names 2G or 3G. The next sentence says Fieldwatch cannot tell the cause. The body has no coordinates, and it does not say an attack was detected.
+The body is the same short paragraph on every warning. Fieldwatch cannot tell the cause. This can be ordinary work by the carrier. The body has no coordinates, and it does not say an attack was detected.
 
 Details sits under the body, in the smaller muted style a GPS warning uses for its readings. One line each. A line the phone left empty is left out.
 

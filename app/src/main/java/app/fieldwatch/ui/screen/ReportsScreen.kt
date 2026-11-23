@@ -107,6 +107,7 @@ fun ReportsScreen(
     onSignatureCandidates: () -> Unit,
     onOpenPathRadio: (String) -> Unit = {},
     onOpenPlaceRadio: (String) -> Unit = {},
+    onOpenAircraft: (String) -> Unit = {},
 ) {
     val settings = state.settings
     var confirmClear by remember { mutableStateOf(false) }
@@ -317,6 +318,11 @@ fun ReportsScreen(
                 onClick = { topicName = ReportTopic.PLACES.name },
             )
             ReportTopicRow(
+                title = LanguageText.text("reports.aircraft"),
+                value = LanguageText.text("reports.aircraft.blurb"),
+                onClick = { topicName = ReportTopic.AIRCRAFT.name },
+            )
+            ReportTopicRow(
                 title = LanguageText.text("reports.log.export"),
                 value = LanguageText.text("ui.export.file.current.log"),
                 onClick = { topicName = ReportTopic.LOG.name },
@@ -330,6 +336,10 @@ fun ReportsScreen(
 
             if (topic == ReportTopic.PLACES) {
                 PlaceReportPage(state, vm, onOpenPlaceRadio)
+            }
+
+            if (topic == ReportTopic.AIRCRAFT) {
+                AircraftReportPage(state, vm, onOpenAircraft)
             }
 
             if (topic == ReportTopic.PATH) {
@@ -1222,6 +1232,7 @@ private enum class ReportTopic(val titleKey: String) {
     LOG("reports.log.export"),
     CANDIDATES("reports.candidates"),
     PLACES("ui.seen.more.than.one"),
+    AIRCRAFT("reports.aircraft"),
     ;
 
     fun title(): String = LanguageText.text(titleKey)

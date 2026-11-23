@@ -3,7 +3,7 @@
     "formatVersion": 1,
     "exportedAt": "",
     "appVersion": "stock",
-    "catalogVersion": 114,
+    "catalogVersion": 118,
     "fleets": [
         {
             "id": "fleet-70mai",
@@ -735,6 +735,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-air-lift",
+            "name": "Air Lift",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "WirelessONE-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Air Lift WirelessONE suspension manifold. The Bluetooth name starts with WirelessONE-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-airlink",
@@ -9115,6 +9140,31 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-blueparrott",
+            "name": "BlueParrott",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "BlueParrott*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "BlueParrott headset. The Bluetooth name starts with BlueParrott.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
         },
         {
             "id": "fleet-bluetoad",
@@ -21790,6 +21840,31 @@
             "kind": "SURVEILLANCE"
         },
         {
+            "id": "fleet-danlaw",
+            "name": "Danlaw",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DL-??????????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Danlaw DataLogger. The Bluetooth name is DL- plus ten characters.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-dexcom",
             "name": "Dexcom",
             "enabled": true,
@@ -21894,6 +21969,31 @@
             "attentionNote": "Digital Ally body-worn or in-car (FirstVu / EVO family). IEEE OUI 00:23:BD is Digital Ally, Inc. — camera gear, not a chip vendor. Patrol units may stay on LTE and stay quiet. Pattern match, not that officer. Look with your eyes. Not identity.",
             "builtIn": true,
             "kind": "LAW_ENFORCEMENT"
+        },
+        {
+            "id": "fleet-directed",
+            "name": "Directed",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DEI-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Directed remote start (Viper, Clifford, Python, or Autostart). The Bluetooth name starts with DEI-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-dji",
@@ -22133,6 +22233,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "LOCK"
+        },
+        {
+            "id": "fleet-dreo",
+            "name": "Dreo",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DREO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Dreo fan or heater. The Bluetooth name starts with DREO.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-dult",
@@ -24812,6 +24937,31 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-ez-lynk",
+            "name": "EZ Lynk",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "EZLYNK*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "EZ Lynk vehicle tuner hotspot. The Wi-Fi name starts with EZLYNK. The chip vendor is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-ezviz",
             "name": "EZVIZ",
             "enabled": true,
@@ -25969,6 +26119,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-gn-hearing",
+            "name": "GN Hearing",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 137,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FEFE",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "GN Hearing aid (ReSound). The company id is GN Hearing's. Service FEFE is ReSound. Pattern match, not a person.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
         },
         {
             "id": "fleet-goodyear",
@@ -27194,6 +27377,31 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "Gree air conditioner. The name starts with GR-AC_. Realtek's company id is shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-grundfos",
+            "name": "Grundfos",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ALPHA HWR*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Grundfos pump. The Bluetooth name starts with ALPHA HWR.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -45253,6 +45461,39 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-hughesnet",
+            "name": "HughesNet",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HughesNet*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HNS_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "HughesNet satellite gateway. The Wi-Fi name starts with HughesNet or HNS_.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-humax",
             "name": "HUMAX",
             "enabled": true,
@@ -45798,6 +46039,31 @@
             "kind": "TWO_WAY"
         },
         {
+            "id": "fleet-ifit",
+            "name": "iFIT",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 421,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "NordicTrack, ProForm, or iFIT machine. The company id is Icon Health and Fitness.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
             "id": "fleet-igloohome",
             "name": "igloohome",
             "enabled": true,
@@ -46083,6 +46349,31 @@
             "kind": "HOME"
         },
         {
+            "id": "fleet-itag",
+            "name": "iTAG",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 4,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "iTAG",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Generic key finder. The Bluetooth name is exactly iTAG. A longer name does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "FINDER"
+        },
+        {
             "id": "fleet-jlr",
             "name": "Jaguar Land Rover",
             "enabled": true,
@@ -46338,6 +46629,39 @@
             "kind": "LOCK"
         },
         {
+            "id": "fleet-kia",
+            "name": "Kia",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kia_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kia *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kia in-car hotspot. A Wi-Fi name starts with Kia_. A Bluetooth name starts with Kia followed by a space. Nokia does not match.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-kontakt",
             "name": "Kontakt.io",
             "enabled": true,
@@ -46517,6 +46841,31 @@
             }
         },
         {
+            "id": "fleet-kuna",
+            "name": "Kuna",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Kuna*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Kuna porch-light camera. The Bluetooth name starts with Kuna. Not a roadside pole.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
+        },
+        {
             "id": "fleet-kwikset",
             "name": "Kwikset",
             "enabled": true,
@@ -46548,6 +46897,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "LOCK"
+        },
+        {
+            "id": "fleet-lednetwf",
+            "name": "LEDnetWF",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LEDnetWF*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Zengge LED controller, also called Magic Home. The name starts with LEDnetWF. The Phyplus address is the chip, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-levoit",
@@ -46708,6 +47082,31 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "LG webOS TV. Unnamed LG radios can also hit this row.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-lighthouse",
+            "name": "Lighthouse",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LHB-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SteamVR Lighthouse base station. The Bluetooth name starts with LHB-. Valve's company id is not the rule.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -47025,6 +47424,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
+        },
+        {
+            "id": "fleet-lippert",
+            "name": "Lippert",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LCIRemote*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Lippert OneControl. The Bluetooth name starts with LCIRemote.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-liteon-camera-radio",
@@ -48377,13 +48801,21 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "net_ac_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Midea air conditioner. The company id is Midea's. The advertisement name is often just net, and that word is not the rule.",
+            "notes": "Midea air conditioner. The company id is Midea's. A setup Wi-Fi name that starts with net_ac_ is this row. The advertisement name is often just net, and that word is not the rule.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME"
@@ -48903,13 +49335,21 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "AABL*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck.",
+            "notes": "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck. A Bluetooth name that starts with AABL is a Vehicle Gateway serial. That name is only seen while the gateway advertises it.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
@@ -50682,6 +51122,31 @@
             "kind": "HEALTH"
         },
         {
+            "id": "fleet-oontz",
+            "name": "OontZ",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "OontZ*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "OontZ Bluetooth speaker. The name starts with OontZ. Cube Technologies is the module company id, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-openwrt",
             "name": "OpenWrt",
             "enabled": true,
@@ -50702,6 +51167,55 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "OpenWrt factory SSID on a flashed travel / DIY router that was never renamed.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
+            "id": "fleet-optimum",
+            "name": "Optimum",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MyOptimum*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "MyAltice*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "OptimumWiFi*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "optimumwifi",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Optimum or Altice gateway. The Wi-Fi name starts with MyOptimum, MyAltice, or OptimumWiFi, or the name contains optimumwifi.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
@@ -50993,6 +51507,39 @@
                     }
                 ]
             }
+        },
+        {
+            "id": "fleet-otodata",
+            "name": "Otodata",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 945,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TM5040 *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Otodata propane or fuel tank monitor. The company id is Otodata's, or the Bluetooth name starts with TM5040 followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-oura",
@@ -51925,16 +52472,8 @@
             "colorIndex": 2,
             "rules": [
                 {
-                    "kind": "NAME_CONTAINS",
-                    "text": "PORKCHOP",
-                    "companyId": 0,
-                    "dataPrefixHex": "",
-                    "radio": null,
-                    "enabled": true
-                },
-                {
                     "kind": "NAME_GLOB",
-                    "text": "PORKCHOP*",
+                    "text": "PORKCHOP",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": null,
@@ -52031,6 +52570,64 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "DRONE"
+        },
+        {
+            "id": "fleet-prepwizard",
+            "name": "PrepWizard",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PrepWizard*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "PrepWizard kitchen label printer. The Bluetooth name starts with PrepWizard.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
+        },
+        {
+            "id": "fleet-procon",
+            "name": "Procon",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3027,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ArrowQ*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Procon Arrow-Q dealer or finance vehicle tracker. The company id is Procon's, or the Bluetooth name starts with ArrowQ. Pattern match, not that car.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-pulsar-optics",
@@ -52184,6 +52781,47 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
+        },
+        {
+            "id": "fleet-pura",
+            "name": "Pura",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3032,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Pura-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "PCar-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Pura diffuser. The company id is Pura's, or the Bluetooth name starts with Pura- or PCar-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-pwnagotchi",
@@ -52582,6 +53220,31 @@
             "attentionNote": "RayNeo smart glasses. The name has to start with RayNeo, and the advertisement has to use the TCL company id. A TCL phone without that name does not match. Not proof of recording. A miss is not a clean bill (off, renamed, or paired and quiet). Look with your eyes.",
             "builtIn": true,
             "kind": "GLASSES"
+        },
+        {
+            "id": "fleet-redtiger",
+            "name": "Redtiger",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "REDTIGER-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Redtiger dashcam. The Wi-Fi name starts with REDTIGER-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
         },
         {
             "id": "fleet-rekor",
@@ -54596,6 +55259,39 @@
             "kind": "CAMERA"
         },
         {
+            "id": "fleet-resmed",
+            "name": "ResMed",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 8,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 909,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ResMed *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "ResMed sleep machine. The company id is ResMed's, or the Bluetooth name starts with ResMed followed by a space. Pattern match, not a person.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HEALTH"
+        },
+        {
             "id": "fleet-retail-led-sign",
             "name": "Retail LED sign",
             "enabled": true,
@@ -54774,6 +55470,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA"
+        },
+        {
+            "id": "fleet-rinnai",
+            "name": "Rinnai",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Rinnai *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Rinnai water heater. The Bluetooth name starts with Rinnai followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME"
         },
         {
             "id": "fleet-rivian",
@@ -58916,6 +59637,47 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-sennheiser",
+            "name": "Sennheiser",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1172,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "Sennheiser",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_CONTAINS",
+                    "text": "AMBEO Soundbar",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Sennheiser headphones or an AMBEO soundbar. The company id is Sennheiser's, or the Bluetooth name is Sennheiser or AMBEO Soundbar.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-sensecap",
             "name": "SenseCAP",
             "enabled": true,
@@ -59573,6 +60335,31 @@
             "kind": "HOME"
         },
         {
+            "id": "fleet-sonicwall",
+            "name": "SonicWall",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SonicWall*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SonicWall access point or firewall. The Wi-Fi name starts with SonicWall.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-sonos",
             "name": "Sonos",
             "enabled": true,
@@ -59732,6 +60519,39 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "soundcore headphones.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
+            "id": "fleet-soundstream",
+            "name": "Soundstream",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ST-NIMBUS*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 4102,
+                    "dataPrefixHex": "534F554E445441424C45",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Soundstream Nimbus speaker table. The Bluetooth name starts with ST-NIMBUS, or the manufacturer data starts with SOUNDTABLE.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "AUDIO"
@@ -61126,6 +61946,31 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-toast",
+            "name": "Toast",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*_TOAST",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Toast point-of-sale Wi-Fi. The name ends with _TOAST.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
         },
         {
             "id": "fleet-toyota",
@@ -63396,6 +64241,31 @@
             "kind": "VEHICLE"
         },
         {
+            "id": "fleet-trackunit",
+            "name": "Trackunit",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2159,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Trackunit equipment tracker. The company id is Trackunit's. The generic alert service and the module address are not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
             "id": "fleet-trendnet",
             "name": "TRENDnet",
             "enabled": true,
@@ -63453,6 +64323,39 @@
             "kind": "ISP"
         },
         {
+            "id": "fleet-turtle-beach",
+            "name": "Turtle Beach",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 217,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "No Connect TB *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Turtle Beach headset. The company id is Turtle Beach's, or the Bluetooth name starts with No Connect TB followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO"
+        },
+        {
             "id": "fleet-tuya",
             "name": "Tuya",
             "enabled": true,
@@ -63498,13 +64401,29 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartLife-????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartLife_????",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound.",
+            "notes": "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound. A setup Wi-Fi name is SmartLife- or SmartLife_ plus four characters. That name is only on during pairing.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "HOME",
@@ -63552,6 +64471,31 @@
             }
         },
         {
+            "id": "fleet-ubee",
+            "name": "Ubee",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Ubee*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Ubee cable gateway. The Wi-Fi name starts with Ubee.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP"
+        },
+        {
             "id": "fleet-uconnect",
             "name": "Uconnect",
             "enabled": true,
@@ -63583,6 +64527,39 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-ufo-drone",
+            "name": "UFO drone",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 1,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "WIFI_UFO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "FLY-UFO-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Toy camera drone. The Wi-Fi name starts with WIFI_UFO or FLY-UFO-. It is on while the drone is powered. This phone does not hear the video.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "DRONE"
         },
         {
             "id": "fleet-unifi",
@@ -63638,13 +64615,21 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "UDM Setup*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
             "peerWindowSec": 60,
             "clusterByOui": false,
             "sequentialMac": false,
-            "notes": "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
+            "notes": "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. A setup Wi-Fi name that starts with UDM Setup is a Dream Machine. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP"
@@ -65480,6 +66465,129 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "TWO_WAY"
+        },
+        {
+            "id": "fleet-victron",
+            "name": "Victron",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 737,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartSolar *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SmartShunt *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Cerbo GX *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Victron solar controller, shunt, or GX monitor, common on an RV or a boat. The company id is Victron's, or the Bluetooth name starts with SmartSolar, SmartShunt, or Cerbo GX.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-viofo",
+            "name": "VIOFO",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VIOFO*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "VIOFO dashcam. The Wi-Fi name starts with VIOFO. It is on when the camera Wi-Fi is on.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE"
+        },
+        {
+            "id": "fleet-vivint",
+            "name": "Vivint",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3560,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VIVINT-HUB-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "DBC350_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "HALIBUT2-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Vivint hub or doorbell camera. Residential alarm gear, not a municipal pole. The company id is Vivint's, or the Bluetooth name starts with VIVINT-HUB-, DBC350_, or HALIBUT2-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA"
         },
         {
             "id": "fleet-vizio",

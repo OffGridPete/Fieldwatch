@@ -70,6 +70,12 @@ data class FlockHit(
     val kind: SensorKind = SensorKind.PLATE,
 )
 
+/** The camera that spoke, and the cameras quieted with it. One camera keeps [hit.looking]. */
+data class FlockSpeak(
+    val hit: FlockHit,
+    val cameras: List<FlockCamera>,
+)
+
 /** Which alert sentence to show. Plate readers keep the company name when the file has one. */
 fun sensorNotice(hit: FlockHit): Pair<String, Map<String, String>> = when (hit.kind) {
     SensorKind.SPEED ->
@@ -87,6 +93,89 @@ fun sensorNotice(hit: FlockHit): Pair<String, Map<String, String>> = when (hit.k
         hit.brand.isNotBlank() -> "alert.plate.ahead" to mapOf("brand" to hit.brand)
         hit.looking -> "alert.plate.unknown.looking" to emptyMap()
         else -> "alert.plate.unknown.ahead" to emptyMap()
+    }
+}
+
+/**
+ * One camera uses [sensorNotice], including looking your way.
+ * Several of one kind use the plural. Several kinds share one line that names each kind.
+ */
+fun spokenAlert(hit: FlockHit, cameras: List<FlockCamera>): String {
+    if (cameras.size < 2) return fillNotice(sensorNotice(hit))
+    val counts = LinkedHashMap<SpokenKind, Int>()
+    for (cam in cameras) {
+        val kind = spokenKind(cam)
+        counts[kind] = (counts[kind] ?: 0) + 1
+    }
+    val ordered = counts.entries.sortedWith(compareBy({ it.key.order }, { it.key.brand }))
+    if (ordered.size == 1) {
+        val sample = cameras.first { spokenKind(it) == ordered[0].key }
+        return fillNotice(pluralNotice(sample))
+    }
+    val names = ordered.map { (kind, count) -> spokenName(kind, count) }
+    val list = joinSpoken(names)
+    val key = if (ordered.any { it.key.order == GUN_ORDER }) "alert.group.ahead" else "alert.group.cameras"
+    return LanguageText.text(key, mapOf("list" to list))
+}
+
+private fun fillNotice(notice: Pair<String, Map<String, String>>): String {
+    val (key, values) = notice
+    return if (values.isEmpty()) LanguageText.text(key) else LanguageText.text(key, values)
+}
+
+private data class SpokenKind(val order: Int, val brand: String)
+
+private const val GUN_ORDER = 5
+
+private fun spokenKind(cam: FlockCamera): SpokenKind = when (cam.kind) {
+    SensorKind.PLATE -> when {
+        cam.flock -> SpokenKind(0, "")
+        else -> {
+            val brand = cam.brand.trim().replace("{", "").replace("}", "")
+            if (brand.isEmpty()) SpokenKind(2, "") else SpokenKind(1, brand)
+        }
+    }
+    SensorKind.SPEED -> SpokenKind(3, "")
+    SensorKind.RED -> SpokenKind(4, "")
+    SensorKind.GUNSHOT -> SpokenKind(GUN_ORDER, "")
+    SensorKind.CAMERA -> SpokenKind(6, "")
+}
+
+private fun pluralNotice(cam: FlockCamera): Pair<String, Map<String, String>> = when (cam.kind) {
+    SensorKind.SPEED -> "alert.speed.ahead.many" to emptyMap()
+    SensorKind.RED -> "alert.red.ahead.many" to emptyMap()
+    SensorKind.GUNSHOT -> "alert.gun.ahead.many" to emptyMap()
+    SensorKind.CAMERA -> "alert.camera.ahead.many" to emptyMap()
+    SensorKind.PLATE -> when {
+        cam.flock -> "alert.flock.ahead.many" to emptyMap()
+        else -> {
+            val brand = spokenKind(cam).brand
+            if (brand.isEmpty()) "alert.plate.unknown.ahead.many" to emptyMap()
+            else "alert.plate.ahead.many" to mapOf("brand" to brand)
+        }
+    }
+}
+
+private fun spokenName(kind: SpokenKind, count: Int): String = when (kind.order) {
+    0 -> LanguageText.text("alert.group.flock")
+    1 -> kind.brand
+    2 -> LanguageText.text("alert.group.plate")
+    3 -> LanguageText.text("alert.group.speed")
+    4 -> LanguageText.text("alert.group.red")
+    GUN_ORDER -> LanguageText.text(if (count > 1) "alert.group.gun.many" else "alert.group.gun")
+    else -> LanguageText.text("alert.group.camera")
+}
+
+private fun joinSpoken(names: List<String>): String = when (names.size) {
+    0 -> ""
+    1 -> names[0]
+    2 -> LanguageText.text("alert.group.and", mapOf("a" to names[0], "b" to names[1]))
+    else -> {
+        var list = names[0]
+        for (name in names.subList(1, names.size - 1)) {
+            list = LanguageText.text("alert.group.comma", mapOf("a" to list, "b" to name))
+        }
+        LanguageText.text("alert.group.last", mapOf("a" to list, "b" to names.last()))
     }
 }
 
@@ -112,6 +201,11 @@ object FlockApproach {
     const val AHEAD_M = 500.0
     /** Stay quiet until the phone is this far away, then a return can speak again. */
     const val REARM_M = 1_000.0
+    /**
+     * Other known cameras this close to the one that speaks stay quiet.
+     * Used only while the group-alerts switch is on.
+     */
+    const val GROUP_M = 200.0
     /** Cameras counted along a saved path. Not the live warning. */
     const val PATH_M = 150.0
     const val MIN_SPEED_MPS = 2.0
@@ -177,6 +271,8 @@ object FlockApproach {
 /**
  * One notice per camera. Quiet until this phone has left [FlockApproach.REARM_M]
  * and comes back. Standing still does not rearm a camera that is still close.
+ * [groupM] above 0 also quiets other cameras within that distance of the one that speaks.
+ * The map, the path count, and the sit list are not changed here.
  */
 class FlockLatch {
     private val quiet = HashSet<Long>()
@@ -191,7 +287,8 @@ class FlockLatch {
         courseDeg: Double,
         speedMps: Double?,
         nearby: List<FlockCamera>,
-    ): FlockHit? {
+        groupM: Double = 0.0,
+    ): FlockSpeak? {
         val stay = HashSet<Long>()
         var best: FlockCamera? = null
         var bestLooking = false
@@ -212,8 +309,22 @@ class FlockLatch {
         }
         quiet.retainAll(stay)
         val hit = best ?: return null
+        val grouped = ArrayList<FlockCamera>()
+        grouped.add(hit)
         quiet.add(hit.key)
-        return FlockHit(hit.key, bestLooking, hit.flock, hit.brand, hit.kind)
+        if (groupM > 0.0) {
+            for (cam in nearby) {
+                if (cam.key == hit.key || cam.key in quiet) continue
+                if (Geo.meters(hit.lat, hit.lon, cam.lat, cam.lon) <= groupM) {
+                    quiet.add(cam.key)
+                    grouped.add(cam)
+                }
+            }
+        }
+        return FlockSpeak(
+            FlockHit(hit.key, bestLooking, hit.flock, hit.brand, hit.kind),
+            grouped,
+        )
     }
 }
 

@@ -257,11 +257,12 @@ object DebriefReport {
         swarms: List<SwarmBurst> = emptyList(),
         battery: List<BatteryMark> = emptyList(),
         droneNear: List<DroneNearMark> = emptyList(),
+        quiet: List<QuietMark> = emptyList(),
     ): String = document(
         devices, fleets, settings, operatorPath, now, places, window,
         customNames, observerNotes, bookmarkedKeys, watchedFleetIds, mineKeys,
         floods, gnss, placeRecords, cameras, trusted, cells, savedCameras, swarms, battery,
-        droneNear,
+        droneNear, quiet,
     ).toPlainText()
 
     fun document(
@@ -287,6 +288,7 @@ object DebriefReport {
         swarms: List<SwarmBurst> = emptyList(),
         battery: List<BatteryMark> = emptyList(),
         droneNear: List<DroneNearMark> = emptyList(),
+        quiet: List<QuietMark> = emptyList(),
     ): DebriefDoc {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -550,7 +552,7 @@ object DebriefReport {
             },
             path,
         )
-        val aircraftBody = AircraftTrail.body(pictures)
+        val aircraftBody = AircraftTrail.body(pictures, settings.demoMode)
         var n = 1
         fun next() = (n++).toString()
         val sections = buildList {
@@ -694,6 +696,9 @@ object DebriefReport {
             }
             nearBody(droneNear, windowStart, windowEnd)?.let { body ->
                 add(DebriefSection(next(), LanguageText.text("ui.near.section"), body))
+            }
+            quietBody(quiet, windowStart, windowEnd)?.let { body ->
+                add(DebriefSection(next(), LanguageText.text("report.quiet.section"), body))
             }
             batteryBody(battery, windowStart, windowEnd)?.let { body ->
                 add(DebriefSection(next(), LanguageText.text("ui.battery.label"), body))
@@ -1621,6 +1626,12 @@ object DebriefReport {
         val rows = marks.filter { it.at in start..end }.sortedBy { it.at }
         if (rows.isEmpty()) return null
         return rows.joinToString("\n") { BatteryFloor.debriefLine(it) }
+    }
+
+    private fun quietBody(marks: List<QuietMark>, start: Long, end: Long): String? {
+        val rows = marks.filter { it.at in start..end }.sortedBy { it.at }
+        if (rows.isEmpty()) return null
+        return rows.joinToString("\n") { it.reportLine() }
     }
 
     private fun nearBody(marks: List<DroneNearMark>, start: Long, end: Long): String? {

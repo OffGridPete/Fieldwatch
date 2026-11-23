@@ -705,6 +705,89 @@ class SitPathPlotTest {
     }
 
     @Test
+    fun liveCraftDrawsARemoteIdTrackAndSkipsASingleFix() {
+        val rid = radioAt(
+            "rid",
+            payloadHeading = 45.0,
+            payloadTrail = listOf(
+                PayloadFix(1L, 28.780, -81.370, heading = 10.0),
+                PayloadFix(2L, 0.0, 0.0, emergency = true),
+                PayloadFix(3L, 28.781, -81.370, emergency = true, heading = 180.0),
+                PayloadFix(4L, 28.790, -81.360, heading = 90.0),
+            ),
+        )
+        val one = radioAt(
+            "one",
+            payloadLat = 28.900,
+            payloadLon = -81.500,
+            payloadTrail = listOf(PayloadFix(1L, 28.900, -81.500, heading = 20.0)),
+        )
+        val hear = radioAt(
+            "hear",
+            trail = listOf(GpsSample(1L, 28.780, -81.370, rssi = -40)),
+            payloadAlt = 12.0,
+            payloadHeading = 30.0,
+        )
+        val radios = listOf(rid, one, hear)
+        val craft = SitPathPlot.liveCraft(radios)
+        assertEquals(1, craft.size)
+        val track = craft.single()
+        assertEquals("rid", track.name)
+        assertTrue(track.aircraft)
+        assertFalse(track.secondary)
+        assertEquals(0L, track.color)
+        assertEquals(listOf(1L, 3L, 4L), track.samples.map { it.at })
+        assertEquals(listOf(28.780, 28.781, 28.790), track.samples.map { it.lat })
+        assertEquals(listOf(1), track.emergency)
+        assertEquals(90.0, track.headingDeg!!, 0.0)
+        assertEquals(track.samples, SitPathPlot.liveCraftFrame(craft))
+        val dots = SitPathPlot.liveDots(radios, emptyList())
+        assertTrue(dots.single { it.key == "rid" }.advertised)
+        assertTrue(dots.single { it.key == "one" }.advertised)
+        assertFalse(dots.single { it.key == "hear" }.advertised)
+        assertTrue(SitPathPlot.liveCraft(listOf(one, hear)).isEmpty())
+    }
+
+    @Test
+    fun aLiveRemoteIdBowFitsTheWholePathAndCloseFollowStaysOnThePhone() {
+        val start = GpsSample(1L, 28.7800, -81.3700)
+        val here = GpsSample(2L, 28.7802, -81.3700)
+        val bow = listOf(
+            GpsSample(10L, 28.7900, -81.3700),
+            GpsSample(11L, 28.7950, -81.3600),
+            GpsSample(12L, 28.7805, -81.3700),
+        )
+        val model = SitPathPlot.Model(
+            samples = listOf(start, here),
+            dots = emptyList(),
+            lengthM = 0.0,
+            spanM = 0.0,
+            title = "",
+            live = true,
+            frameSamples = bow,
+            craft = listOf(
+                SitPathPlot.FigureTrack(name = "rid", samples = bow, aircraft = true),
+            ),
+        )
+        val wide = SitPathPlot.layout(model, 400f, 300f)!!
+        val bend = wide.project(28.7950, -81.3600)
+        assertTrue(wide.onPicture(bend.x, bend.y))
+        val close = SitPathPlot.layout(
+            model,
+            400f,
+            300f,
+            followHalfM = MapFrame.CLOSE_HALF_M,
+        )!!
+        val you = close.project(here.lat, here.lon)
+        val cx = (close.plotLeft + close.plotRight) / 2f
+        val cy = (close.plotTop + close.plotBottom) / 2f
+        assertEquals(cx, you.x, 2f)
+        assertEquals(cy, you.y, 2f)
+        val far = close.project(28.7950, -81.3600)
+        assertFalse(close.onPicture(far.x, far.y))
+    }
+
+    @Test
     fun liveDotsUsesTheLouderHear() {
         val dots = SitPathPlot.liveDots(
             listOf(
@@ -773,6 +856,8 @@ class SitPathPlotTest {
         assertNull(heard.altM)
         assertNull(heard.headingDeg)
         assertNull(heard.speedMps)
+        assertEquals("", pin.emergencyWhen)
+        assertEquals("", heard.emergencyWhen)
     }
 
     @Test
@@ -788,7 +873,14 @@ class SitPathPlotTest {
                     payloadSpeed = 5.0,
                     payloadTrail = listOf(
                         PayloadFix(1L, 28.2, -81.2, alt = 40.0, heading = 10.0, speed = 1.0),
-                        PayloadFix(2L, 28.3, -81.3, alt = null, heading = 180.0, speed = null),
+                        PayloadFix(
+                            2L, 28.3, -81.3,
+                            alt = null,
+                            heading = 180.0,
+                            speed = null,
+                            emergency = true,
+                            emergencyText = "Low battery",
+                        ),
                     ),
                 ),
             ),
@@ -800,6 +892,8 @@ class SitPathPlotTest {
         assertEquals(100.0, pin.altM!!, 0.0)
         assertEquals(180.0, pin.headingDeg!!, 0.0)
         assertEquals(5.0, pin.speedMps!!, 0.0)
+        assertEquals(AircraftTrail.emergencyWhen(listOf(PayloadFix(2L, 28.3, -81.3, emergency = true))), pin.emergencyWhen)
+        assertFalse(pin.emergencyWhen.contains("Low battery"))
     }
 
     @Test

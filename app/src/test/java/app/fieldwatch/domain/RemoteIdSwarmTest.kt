@@ -232,6 +232,8 @@ class RemoteIdSwarmTest {
         val upgraded = json.decodeFromString<AppSettings>("""{"alertsEnabled":true}""")
         assertFalse(fresh.remoteIdSwarm)
         assertFalse(upgraded.remoteIdSwarm)
+        assertFalse(fresh.remoteIdEmergency)
+        assertFalse(upgraded.remoteIdEmergency)
         assertEquals(5, fresh.swarmMinIds)
         assertEquals(30, fresh.swarmWindowSec)
         assertEquals(2, fresh.swarmQuietMin)

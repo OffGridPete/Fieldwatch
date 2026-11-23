@@ -396,6 +396,7 @@ class SitTest {
         assertTrue(legacy.floods.isEmpty())
         assertTrue(legacy.swarms.isEmpty())
         assertTrue(legacy.pathCameras.isEmpty())
+        assertTrue(legacy.quiet.isEmpty())
         assertNull(legacy.cameraKept)
         val session = SitSession.start(
             name = "lot",
@@ -911,6 +912,7 @@ class SitTest {
             """{"format":"fieldwatch-sit","formatVersion":1,"summary":{"id":"a","name":"lot","startAt":1000}}""",
         )
         assertTrue(legacy.pathCameras.isEmpty())
+        assertTrue(legacy.quiet.isEmpty())
         assertNull(legacy.cameraKept)
         val session = SitSession.start(
             name = "drive",
@@ -950,6 +952,21 @@ class SitTest {
         val again = resumed.cameraSlice()
         assertEquals(file.cameraKept, again?.anchor)
         assertEquals(listOf(7L), again?.committed?.map { it.key })
+    }
+
+    @Test
+    fun noteQuietStaysOffAClosedSitAndCapsAtForty() {
+        val closed = SitSession(SitSummary(id = "c", name = "done", startAt = 1_000L, endAt = 2_000L))
+        closed.noteQuiet(QuietMark(3_000L, 2_500L, "BLE:AA:BB:CC:DD:EE:01", "bag", -60))
+        assertTrue(closed.snapshot().quiet.isEmpty())
+        val open = SitSession(SitSummary(id = "o", name = "open", startAt = 1_000L))
+        repeat(41) { i ->
+            open.noteQuiet(QuietMark(2_000L + i, 1_500L, "BLE:AA:BB:CC:DD:EE:01", "bag$i", -60))
+        }
+        val kept = open.snapshot().quiet
+        assertEquals(40, kept.size)
+        assertEquals("bag1", kept.first().name)
+        assertEquals("bag40", kept.last().name)
     }
 
     @Test

@@ -28,6 +28,26 @@ class AlerterMineTest {
         assertFalse(shouldRaiseWatch(quiet, other, emptySet()))
     }
 
+    @Test
+    fun muteSkipsThatRadioAndLeavesTheRestOfTheFleet() {
+        val fleet = WatchTarget(id = "w", fleetId = "fleet-porkchop", label = "Porkchop")
+        val muteRow = WatchTarget(
+            id = "m",
+            deviceKey = "WIFI:11:22:33:44:55:66",
+            label = "neighbor",
+            alert = true,
+            mute = true,
+        )
+        val muteKeys = setOf(muteRow.deviceKey!!)
+        val muted = ble("WIFI:11:22:33:44:55:66", setOf("fleet-porkchop"))
+        val other = ble("WIFI:AA:BB:CC:DD:EE:77", setOf("fleet-porkchop"))
+        assertFalse(muteRow.mine)
+        assertFalse(shouldRaiseWatch(fleet, muted, emptySet(), muteKeys))
+        assertFalse(shouldRaiseWatch(muteRow, muted, emptySet(), muteKeys))
+        assertTrue(shouldRaiseWatch(fleet, other, emptySet(), muteKeys))
+        assertTrue(shouldRaiseWatch(fleet, other, emptySet()))
+    }
+
     private fun ble(key: String, fleets: Set<String>) = Sighting(
         key = key,
         kind = RadioKind.BLE,

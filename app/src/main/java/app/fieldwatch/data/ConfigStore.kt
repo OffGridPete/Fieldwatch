@@ -111,6 +111,8 @@ class ConfigStore(context: Context) {
         val rev = cur.settings.disclaimerRev
         val tag = cur.takInstallTag
         val retired = cur.takLegacySelfRetired
+        val logKind = cur.logExportKind
+        val sitKind = cur.sitExportKind
         update {
             val fresh = seed()
             fresh.copy(
@@ -120,6 +122,8 @@ class ConfigStore(context: Context) {
                 ),
                 takInstallTag = TakInstall.clean(tag).ifEmpty { fresh.takInstallTag },
                 takLegacySelfRetired = retired,
+                logExportKind = logKind,
+                sitExportKind = sitKind,
             )
         }
     }
@@ -1273,6 +1277,22 @@ class ConfigStore(context: Context) {
             watchlist = migrated.second
             if (version < CATALOG_V114) version = CATALOG_V114
         }
+        if (version < CATALOG_V115 || catalog115Pending(fleets, catalog)) {
+            fleets = catalog115Migrate(fleets, catalog)
+            if (version < CATALOG_V115) version = CATALOG_V115
+        }
+        if (version < CATALOG_V116) {
+            fleets = catalog116Migrate(fleets, catalog)
+            version = CATALOG_V116
+        }
+        if (version < CATALOG_V117) {
+            fleets = catalog117Migrate(fleets, catalog)
+            version = CATALOG_V117
+        }
+        if (version < CATALOG_V118) {
+            fleets = catalog118Migrate(fleets, catalog)
+            version = CATALOG_V118
+        }
         if (!settings.darkTheme) settings = settings.copy(darkTheme = true)
         if (settings.scanControlsExpanded) settings = settings.copy(scanControlsExpanded = false)
         settings = DroneNear.clamp(RemoteIdSwarm.clamp(settings))
@@ -1320,7 +1340,7 @@ class ConfigStore(context: Context) {
 
     companion object {
         /** Stock catalog generation. Settings footer and the GitHub pack use this. */
-        const val CATALOG_VERSION = 114
+        const val CATALOG_VERSION = 118
         private const val CATALOG_V2 = 2
         private const val CATALOG_V3 = 3
         private const val CATALOG_V4 = 4
@@ -1433,7 +1453,11 @@ class ConfigStore(context: Context) {
         private const val CATALOG_V111 = 111
         private const val CATALOG_V112 = 112
         private const val CATALOG_V113 = 113
-        private const val CATALOG_V114 = CATALOG_VERSION
+        private const val CATALOG_V114 = 114
+        private const val CATALOG_V115 = 115
+        private const val CATALOG_V116 = 116
+        private const val CATALOG_V117 = 117
+        private const val CATALOG_V118 = CATALOG_VERSION
         private val GENERIC_GATT_UUIDS = setOf("180A", "180D", "180F")
         private val POLICY_FLEET_IDS = setOf(
             "fleet-flock-cameras",
@@ -2278,6 +2302,153 @@ internal fun catalog114Migrate(
     }
     val nextWatch = if (addWatch.isEmpty()) renamed else renamed + addWatch
     return refreshed to nextWatch
+}
+
+internal val PORKCHOP_RULES_BEFORE_V115 = listOf(
+    MatchRule(RuleKind.NAME_CONTAINS, text = "PORKCHOP"),
+    MatchRule(RuleKind.NAME_GLOB, text = "PORKCHOP*"),
+    MatchRule(RuleKind.NAME_GLOB, text = "M5PORKCHOP*"),
+    MatchRule(RuleKind.VENDOR_IE_OUI, text = "50:52:4B"),
+)
+
+/**
+ * True when a built-in Porkchop row still has the catalog 114 name rules.
+ * An edited row and a custom copy stay as they are.
+ */
+internal fun catalog115Pending(fleets: List<Fleet>, stock: Map<String, Fleet>): Boolean {
+    val pork = fleets.find { it.builtIn && it.id == "fleet-porkchop" } ?: return false
+    val fresh = stock["fleet-porkchop"] ?: return false
+    return rulesStillPrevious(pork.rules, PORKCHOP_RULES_BEFORE_V115, fresh.rules)
+}
+
+internal val ADDED_IN_V116 = listOf(
+    "fleet-ez-lynk",
+    "fleet-lednetwf",
+    "fleet-oontz",
+    "fleet-trackunit",
+)
+
+/**
+ * Catalog 116 adds LEDnetWF, EZ Lynk, Trackunit, and OontZ when those ids
+ * are missing. A custom row with the same id stays. The rows are not bookmarked.
+ */
+internal fun catalog116Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V116.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+internal val ADDED_IN_V117 = listOf(
+    "fleet-itag",
+    "fleet-ufo-drone",
+    "fleet-viofo",
+)
+
+/**
+ * Catalog 117 adds iTAG, the UFO toy drone, and VIOFO when those ids are
+ * missing. A custom row with the same id stays. The rows are not bookmarked
+ * except the drone, which is watched because it is a drone.
+ */
+internal fun catalog117Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V117.mapNotNull { stock[it] }.filter { it.id !in have }
+    return if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+}
+
+internal const val TUYA_NOTES_BEFORE_V118 =
+    "Tuya plug, light, camera, or sensor. Dense in some apartments. Decoded fields can show whether it is bound."
+
+internal const val UNIFI_NOTES_BEFORE_V118 =
+    "UniFi / Ubiquiti name on Wi-Fi or BLE, including a U6- or UXG model name. Prefer UniFi AP for BSSID hits. Instant cameras stay on UniFi Protect."
+
+internal const val MIDEA_NOTES_BEFORE_V118 =
+    "Midea air conditioner. The company id is Midea's. The advertisement name is often just net, and that word is not the rule."
+
+internal const val MOTIVE_NOTES_BEFORE_V118 =
+    "Motive (KeepTruckin) electronic logging device / fleet Wi-Fi in a truck."
+
+internal val ADDED_IN_V118 = listOf(
+    "fleet-air-lift",
+    "fleet-blueparrott",
+    "fleet-danlaw",
+    "fleet-directed",
+    "fleet-dreo",
+    "fleet-gn-hearing",
+    "fleet-grundfos",
+    "fleet-hughesnet",
+    "fleet-ifit",
+    "fleet-kia",
+    "fleet-kuna",
+    "fleet-lighthouse",
+    "fleet-lippert",
+    "fleet-optimum",
+    "fleet-otodata",
+    "fleet-prepwizard",
+    "fleet-procon",
+    "fleet-pura",
+    "fleet-redtiger",
+    "fleet-resmed",
+    "fleet-rinnai",
+    "fleet-sennheiser",
+    "fleet-sonicwall",
+    "fleet-soundstream",
+    "fleet-toast",
+    "fleet-turtle-beach",
+    "fleet-ubee",
+    "fleet-victron",
+    "fleet-vivint",
+)
+
+/**
+ * Catalog 118 adds the product-name rows when those ids are missing, and
+ * copies the Tuya, UniFi, Midea, and Motive notes only while they still have
+ * the previous sentence. A custom row and an edited note stay. The setup-name
+ * rules on those four rows merge through the missing stock-rule path.
+ */
+internal fun catalog118Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> {
+    val have = fleets.map { it.id }.toSet()
+    val extras = ADDED_IN_V118.mapNotNull { stock[it] }.filter { it.id !in have }
+    val next = if (extras.isEmpty()) fleets else (fleets + extras).sortedBy { it.name.lowercase() }
+    return next.map { fleet ->
+        if (!fleet.builtIn) return@map fleet
+        val previous = when (fleet.id) {
+            "fleet-tuya" -> TUYA_NOTES_BEFORE_V118
+            "fleet-unifi" -> UNIFI_NOTES_BEFORE_V118
+            "fleet-midea" -> MIDEA_NOTES_BEFORE_V118
+            "fleet-motive" -> MOTIVE_NOTES_BEFORE_V118
+            else -> return@map fleet
+        }
+        val fresh = stock[fleet.id] ?: return@map fleet
+        if (fleet.notes != previous) fleet else fleet.copy(notes = fresh.notes)
+    }
+}
+
+/**
+ * Catalog 115 tightens Porkchop to the exact name PORKCHOP. The M5PORKCHOP
+ * prefix and vendor IE 50:52:4B stay. Rules are replaced only while they are
+ * still the previous four, including the form left after the new exact name
+ * was appended. A custom row and an edited rule list stay.
+ */
+internal fun catalog115Migrate(
+    fleets: List<Fleet>,
+    stock: Map<String, Fleet>,
+): List<Fleet> = fleets.map { fleet ->
+    if (!fleet.builtIn || fleet.id != "fleet-porkchop") return@map fleet
+    val fresh = stock[fleet.id] ?: return@map fleet
+    if (rulesStillPrevious(fleet.rules, PORKCHOP_RULES_BEFORE_V115, fresh.rules)) {
+        fleet.copy(rules = fresh.rules)
+    } else {
+        fleet
+    }
 }
 
 private fun rulesStillPrevious(

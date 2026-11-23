@@ -63,6 +63,35 @@ class DebriefPromptTest {
     }
 
     @Test
+    fun onboardPasteIncludesAQuietLineOnlyWhenACueFired() {
+        val now = 15 * 60_000L
+        val mark = QuietMark(
+            at = now - 60_000L,
+            lastHeard = now - 90_000L,
+            key = "BLE:AA:BB:CC:DD:EE:FF",
+            name = "bag tag",
+            rssi = -62,
+        )
+        val text = DebriefPrompt.build(
+            devices = emptyList(),
+            fleets = emptyList(),
+            settings = AppSettings(),
+            now = now,
+            quiet = listOf(mark),
+        )
+        assertTrue(text.contains("Went quiet".uppercase()))
+        assertTrue(text.contains(mark.reportLine()))
+        assertTrue(text.contains("bag tag went quiet"))
+        val empty = DebriefPrompt.build(
+            devices = emptyList(),
+            fleets = emptyList(),
+            settings = AppSettings(),
+            now = now,
+        )
+        assertFalse(empty.contains("Went quiet".uppercase()))
+    }
+
+    @Test
     fun workingCountsLeaveOutFloodAddresses() {
         val now = 15 * 60_000L
         val real = radio("BLE:AC:23:3F:11:22:33", "Checkout beacon", now, kind = RadioKind.BLE)

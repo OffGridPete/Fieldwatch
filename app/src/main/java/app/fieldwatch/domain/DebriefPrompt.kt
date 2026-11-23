@@ -37,6 +37,7 @@ object DebriefPrompt {
         swarms: List<SwarmBurst> = emptyList(),
         battery: List<BatteryMark> = emptyList(),
         droneNear: List<DroneNearMark> = emptyList(),
+        quiet: List<QuietMark> = emptyList(),
     ): String {
         val names = fleets.associate { it.id to it.name }
         val win = window ?: DebriefWindow(now - WINDOW_MS, now)
@@ -82,6 +83,7 @@ object DebriefPrompt {
             swarms = swarms,
             battery = battery,
             droneNear = droneNear,
+            quiet = quiet,
         )
         val iso = utc(windowEnd)
         val start = utc(windowStart)

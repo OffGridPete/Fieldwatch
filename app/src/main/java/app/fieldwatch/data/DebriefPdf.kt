@@ -43,7 +43,10 @@ import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.max
+import kotlin.math.sin
 
 /**
  * Letter-size field debrief. Android [PdfDocument] allows only one open page
@@ -86,6 +89,7 @@ object DebriefPdf {
     private val DOT_ATTENTION by lazy { Color.parseColor("#E53935") }
     private val DOT_BOOKMARK by lazy { Color.parseColor("#0288D1") }
     private val GNSS_INK by lazy { Color.parseColor("#B91C1C") }
+    private val EMERGENCY_INK by lazy { Color.parseColor("#DC2626") }
     private const val MARK_STAY = 1
     private const val MARK_SLATE = 2
     private const val MARK_AMBER = 3
@@ -710,6 +714,7 @@ object DebriefPdf {
         if (track.samples.size == 1) {
             if (!track.aircraft) return
             val only = lay.project(track.samples[0].lat, track.samples[0].lon)
+            if (0 in track.emergency) drawPdfDiamond(canvas, ox(only.x), oy(only.y))
             drawClassMark(canvas, ox(only.x), oy(only.y))
             return
         }
@@ -719,32 +724,28 @@ object DebriefPdf {
             Geo.despikePath(track.samples).let { if (it.size >= 2) it else track.samples }
         }
         val pts = cleaned.map { lay.project(it.lat, it.lon) }
+        val pagePts = pts.map { ox(it.x) to oy(it.y) }
+        if (track.aircraft) {
+            val ink = if (track.secondary) PATH_OTHER else AIRCRAFT_INK
+            drawPdfChevrons(canvas, pagePts, ink)
+            if (track.emergency.isNotEmpty()) drawPdfEmergency(canvas, pagePts, track.emergency)
+        }
         val pth = Path()
-        pth.moveTo(ox(pts[0].x), oy(pts[0].y))
-        for (i in 1 until pts.size) pth.lineTo(ox(pts[i].x), oy(pts[i].y))
+        pth.moveTo(pagePts[0].first, pagePts[0].second)
+        for (i in 1 until pagePts.size) pth.lineTo(pagePts[i].first, pagePts[i].second)
         val tp = Paint().apply {
             color = when {
-                track.aircraft && track.secondary -> PATH_OTHER
-                track.aircraft -> AIRCRAFT_INK
                 track.secondary -> PATH_OTHER
                 else -> PATH_ROUTE
             }
             style = Paint.Style.STROKE
-            strokeWidth = when {
-                track.aircraft -> 1.8f
-                track.secondary -> 1.8f
-                else -> 4.8f
-            }
+            strokeWidth = if (track.secondary) 1.8f else 4.8f
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
             isAntiAlias = true
-            if (track.aircraft) {
-                pathEffect = DashPathEffect(floatArrayOf(2.2f, 3.8f), 0f)
-            } else if (track.secondary) {
-                pathEffect = DashPathEffect(floatArrayOf(7f, 4.5f), 0f)
-            }
+            if (track.secondary) pathEffect = DashPathEffect(floatArrayOf(7f, 4.5f), 0f)
         }
-        canvas.drawPath(pth, tp)
+        if (!track.aircraft) canvas.drawPath(pth, tp)
         if (track.aircraft) {
             val start = Paint().apply {
                 color = Color.WHITE
@@ -810,6 +811,125 @@ object DebriefPdf {
             canvas.drawText(LanguageText.text("ui.start.label"), ox(pts.first().x) + 6f, oy(pts.first().y) - 4f, lab)
             canvas.drawText(LanguageText.text("ui.end.label"), ox(pts.last().x) + 6f, oy(pts.last().y) - 4f, lab)
         }
+    }
+
+    /** Chevrons in the direction of travel. A short run still gets one at the middle. */
+    private fun drawPdfChevrons(canvas: Canvas, pts: List<Pair<Float, Float>>, color: Int) {
+        val length = pdfRunLength(pts)
+        if (length < 8f) return
+        if (length < 18f) {
+            pdfPointAlong(pts, length / 2f)?.let { drawPdfChevron(canvas, it, 3.4f, color) }
+            return
+        }
+        var cursor = 8f
+        while (cursor < length - 6f) {
+            val step = pdfPointAlong(pts, cursor) ?: break
+            drawPdfChevron(canvas, step, 3.6f, color)
+            cursor += 12f
+        }
+    }
+
+    private fun drawPdfEmergency(canvas: Canvas, pts: List<Pair<Float, Float>>, indexes: List<Int>) {
+        var run = ArrayList<Pair<Float, Float>>()
+        var previous = -2
+        fun finish() {
+            if (run.isEmpty()) return
+            if (run.size >= 2) {
+                val paint = Paint().apply {
+                    color = EMERGENCY_INK
+                    style = Paint.Style.STROKE
+                    strokeWidth = 1.6f
+                    strokeCap = Paint.Cap.ROUND
+                    isAntiAlias = true
+                }
+                val path = Path()
+                path.moveTo(run[0].first, run[0].second)
+                for (i in 1 until run.size) path.lineTo(run[i].first, run[i].second)
+                canvas.drawPath(path, paint)
+                drawPdfChevrons(canvas, run, EMERGENCY_INK)
+            }
+            drawPdfDiamond(canvas, run.first().first, run.first().second)
+            run = ArrayList()
+        }
+        for (index in indexes) {
+            if (index !in pts.indices) continue
+            if (index != previous + 1) finish()
+            run += pts[index]
+            previous = index
+        }
+        finish()
+    }
+
+    private fun drawPdfDiamond(canvas: Canvas, x: Float, y: Float) {
+        fun diamond(size: Float) = Path().apply {
+            moveTo(x, y - size)
+            lineTo(x + size, y)
+            lineTo(x, y + size)
+            lineTo(x - size, y)
+            close()
+        }
+        val fill = Paint().apply { color = Color.WHITE; style = Paint.Style.FILL; isAntiAlias = true }
+        val ink = Paint().apply { color = EMERGENCY_INK; style = Paint.Style.FILL; isAntiAlias = true }
+        canvas.drawPath(diamond(4.2f), fill)
+        canvas.drawPath(diamond(2.8f), ink)
+    }
+
+    private fun drawPdfChevron(canvas: Canvas, step: Pair<Pair<Float, Float>, Float>, size: Float, color: Int) {
+        val at = step.first
+        val angle = step.second
+        val ux = cos(angle)
+        val uy = sin(angle)
+        val px = -uy
+        val py = ux
+        val tipX = at.first + ux * size
+        val tipY = at.second + uy * size
+        val leftX = at.first - ux * size * 0.35f + px * size * 0.55f
+        val leftY = at.second - uy * size * 0.35f + py * size * 0.55f
+        val rightX = at.first - ux * size * 0.35f - px * size * 0.55f
+        val rightY = at.second - uy * size * 0.35f - py * size * 0.55f
+        val paint = Paint().apply {
+            this.color = color
+            style = Paint.Style.STROKE
+            strokeWidth = 1.15f
+            strokeCap = Paint.Cap.ROUND
+            isAntiAlias = true
+        }
+        canvas.drawLine(leftX, leftY, tipX, tipY, paint)
+        canvas.drawLine(rightX, rightY, tipX, tipY, paint)
+    }
+
+    private fun pdfRunLength(pts: List<Pair<Float, Float>>): Float {
+        var sum = 0f
+        for (i in 1 until pts.size) sum += hypot(pts[i].first - pts[i - 1].first, pts[i].second - pts[i - 1].second)
+        return sum
+    }
+
+    private fun pdfPointAlong(pts: List<Pair<Float, Float>>, at: Float): Pair<Pair<Float, Float>, Float>? {
+        var left = at
+        for (i in 1 until pts.size) {
+            val dx = pts[i].first - pts[i - 1].first
+            val dy = pts[i].second - pts[i - 1].second
+            val len = hypot(dx, dy)
+            if (len < 0.5f) continue
+            if (left <= len) {
+                val t = left / len
+                return (pts[i - 1].first + dx * t to pts[i - 1].second + dy * t) to atan2(dy, dx)
+            }
+            left -= len
+        }
+        return null
+    }
+
+    private fun drawLegendChevron(canvas: Canvas, cx: Float, cy: Float, color: Int) {
+        val paint = Paint().apply {
+            this.color = color
+            style = Paint.Style.STROKE
+            strokeWidth = 1.3f
+            strokeCap = Paint.Cap.ROUND
+            isAntiAlias = true
+        }
+        canvas.drawLine(cx - 4f, cy - 3f, cx + 2f, cy, paint)
+        canvas.drawLine(cx - 4f, cy + 3f, cx + 2f, cy, paint)
     }
 
     private class LegendSwatch(val label: String, val mark: Int)
@@ -925,18 +1045,8 @@ object DebriefPdf {
                 stroke.pathEffect = DashPathEffect(floatArrayOf(2.4f, 1.8f), 0f)
                 canvas.drawLine(cx - 5f, cy, cx + 5f, cy, stroke)
             }
-            MARK_AMBER -> {
-                stroke.color = AIRCRAFT_INK
-                stroke.strokeWidth = 1.8f
-                stroke.pathEffect = DashPathEffect(floatArrayOf(1.6f, 2.4f), 0f)
-                canvas.drawLine(cx - 6f, cy, cx + 6f, cy, stroke)
-            }
-            MARK_AMBER_DASH -> {
-                stroke.color = PATH_OTHER
-                stroke.strokeWidth = 1.8f
-                stroke.pathEffect = DashPathEffect(floatArrayOf(1.6f, 2.4f), 0f)
-                canvas.drawLine(cx - 6f, cy, cx + 6f, cy, stroke)
-            }
+            MARK_AMBER -> drawLegendChevron(canvas, cx, cy, AIRCRAFT_INK)
+            MARK_AMBER_DASH -> drawLegendChevron(canvas, cx, cy, PATH_OTHER)
             MARK_RED -> {
                 fill.color = DOT_ATTENTION
                 canvas.drawCircle(cx, cy, 2.6f, fill)

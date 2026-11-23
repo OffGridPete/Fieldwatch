@@ -2,6 +2,7 @@ package app.fieldwatch.data
 
 import android.app.ActivityManager
 import android.content.Context
+import app.fieldwatch.domain.Automation
 import app.fieldwatch.domain.BatteryMark
 import app.fieldwatch.domain.DroneNearMark
 import app.fieldwatch.domain.CellMark
@@ -13,6 +14,7 @@ import app.fieldwatch.domain.GpsSample
 import app.fieldwatch.domain.PathCameras
 import app.fieldwatch.domain.OpenLivePath
 import app.fieldwatch.domain.PlaceMemory
+import app.fieldwatch.domain.QuietMark
 import app.fieldwatch.domain.RadioBookmarks
 import app.fieldwatch.domain.Sit
 import app.fieldwatch.domain.SwarmBurst
@@ -93,7 +95,7 @@ class SitStore(
             open = keepOpen?.let {
                 SitSession(
                     it.summary, it.radios, it.operatorPath, it.floods, it.gnss, it.cells,
-                    it.pathCameras, it.cameraKept, it.swarms, it.battery, it.droneNear,
+                    it.pathCameras, it.cameraKept, it.swarms, it.battery, it.droneNear, it.quiet,
                 )
             }
             closed = closedAcc.sortedByDescending { it.startAt }
@@ -158,6 +160,13 @@ class SitStore(
     fun noteBattery(mark: BatteryMark) {
         synchronized(lock) {
             open?.noteBattery(mark)
+        }
+    }
+
+    /** No open sit leaves the file alone. */
+    fun noteQuiet(mark: QuietMark) {
+        synchronized(lock) {
+            open?.noteQuiet(mark)
         }
     }
 
@@ -298,6 +307,12 @@ class SitStore(
 
     fun sitFile(id: String): SitFile? = readFileBlocking(id)
 
+    /** The sit that was stopped most recently. An open sit is not saved yet. */
+    fun newestSavedFile(): SitFile? {
+        val picked = Automation.newestSaved(synchronized(lock) { closed }) ?: return null
+        return sitFile(picked.id)
+    }
+
     fun consumeNotice() {
         synchronized(lock) { publishLocked(notice = null) }
     }
@@ -348,6 +363,7 @@ class SitStore(
                     swarms = snap.swarms,
                     battery = snap.battery,
                     droneNear = snap.droneNear,
+                    quiet = snap.quiet,
                 )
             }
         }
@@ -367,6 +383,7 @@ class SitStore(
             swarms = file.swarms,
             battery = file.battery,
             droneNear = file.droneNear,
+            quiet = file.quiet,
         )
     }
 

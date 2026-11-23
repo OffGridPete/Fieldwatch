@@ -2,6 +2,7 @@ package app.fieldwatch.domain
 
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,6 +11,16 @@ class SpokenNamesTest {
     private val compex = Fleet(id = "fleet-compex", name = "Compex", kind = SignatureClass.LAW_ENFORCEMENT)
     private val axon = Fleet(id = "fleet-axon", name = "Axon", kind = SignatureClass.LAW_ENFORCEMENT)
     private val fire = listOf(SpokenName("sn-1", "fleet-compex", "FDEMS", "Fire Department"))
+
+    @Test
+    fun cardIsOfferedOnlyForWifiWithASignatureAndANetworkName() {
+        val wifi = radio("WIFI:11:22:33:44:55:01", "11:22:33:44:55:01", "FWD", linkedSetOf("fleet-compex"))
+        assertTrue(SpokenNames.offersCard(wifi))
+        assertFalse(SpokenNames.offersCard(wifi.copy(kind = RadioKind.BLE, key = "BLE:11:22:33:44:55:01")))
+        assertFalse(SpokenNames.offersCard(wifi.copy(name = "")))
+        assertFalse(SpokenNames.offersCard(wifi.copy(name = wifi.mac)))
+        assertFalse(SpokenNames.offersCard(wifi.copy(fleetIds = emptySet())))
+    }
 
     @Test
     fun oneNameCoversEveryAddressWithThatSsid() {

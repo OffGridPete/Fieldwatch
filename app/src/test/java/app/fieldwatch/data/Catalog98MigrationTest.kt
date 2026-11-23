@@ -542,7 +542,10 @@ class Catalog112MigrationTest {
         assertTrue(tv.rules.none { it.kind == RuleKind.MANUFACTURER_ID })
         assertEquals("FEA0", added.single { it.id == "fleet-google-cast" }.rules.single().text)
         assertEquals(RadioKind.BLE, added.single { it.id == "fleet-google-cast" }.rules.single().radio)
-        assertEquals(0x06A8, added.single { it.id == "fleet-midea" }.rules.single().companyId)
+        assertEquals(
+            0x06A8,
+            added.single { it.id == "fleet-midea" }.rules.single { it.kind == RuleKind.MANUFACTURER_ID }.companyId,
+        )
         assertEquals(0x05D6, added.single { it.id == "fleet-jlab" }.rules.single().companyId)
 
         val custom = tv.copy(builtIn = false, name = "Mine")
@@ -742,5 +745,179 @@ class Catalog114MigrationTest {
         val (again, againWatches) = catalog114Migrate(kept, stock, watches)
         assertEquals(watches.map { it.fleetId }, againWatches.map { it.fleetId })
         assertEquals("Mine", again.single { it.id == "fleet-steiner-lrf" }.name)
+    }
+}
+
+class Catalog115MigrationTest {
+    @Test
+    fun replacesStockPorkchopRulesAndLeavesAnEditedRow() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 115)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val fresh = stock.getValue("fleet-porkchop")
+        val old = fresh.copy(rules = PORKCHOP_RULES_BEFORE_V115)
+        val appended = PORKCHOP_RULES_BEFORE_V115 + fresh.rules.filter { it !in PORKCHOP_RULES_BEFORE_V115 }
+        val patched = old.copy(rules = appended)
+        val customRule = MatchRule(RuleKind.NAME_CONTAINS, text = "Soup")
+        val edited = old.copy(rules = PORKCHOP_RULES_BEFORE_V115 + customRule)
+        val custom = old.copy(builtIn = false, name = "Mine")
+        val other = stock.getValue("fleet-dji")
+
+        val updated = catalog115Migrate(listOf(old, other), stock)
+        assertEquals(fresh.rules, updated.single { it.id == "fleet-porkchop" }.rules)
+        assertEquals(old.notes, updated.single { it.id == "fleet-porkchop" }.notes)
+        assertEquals(old.attentionNote, updated.single { it.id == "fleet-porkchop" }.attentionNote)
+        assertEquals(listOf("fleet-porkchop", "fleet-dji"), updated.map { it.id })
+
+        val fromPatch = catalog115Migrate(listOf(patched), stock)
+        assertEquals(fresh.rules, fromPatch.single().rules)
+
+        val keptEdit = catalog115Migrate(listOf(edited), stock)
+        assertEquals(PORKCHOP_RULES_BEFORE_V115 + customRule, keptEdit.single().rules)
+
+        val keptCustom = catalog115Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", keptCustom.single { it.id == "fleet-porkchop" }.name)
+        assertEquals(PORKCHOP_RULES_BEFORE_V115, keptCustom.single { it.id == "fleet-porkchop" }.rules)
+        assertEquals(2, keptCustom.size)
+
+        val already = catalog115Migrate(listOf(fresh), stock)
+        assertEquals(fresh.rules, already.single().rules)
+        assertFalse(catalog115Pending(already, stock))
+        assertTrue(catalog115Pending(listOf(old), stock))
+        assertTrue(catalog115Pending(listOf(patched), stock))
+        assertFalse(catalog115Pending(listOf(edited), stock))
+        assertFalse(catalog115Pending(listOf(custom), stock))
+        assertFalse(catalog115Pending(listOf(other), stock))
+    }
+}
+
+class Catalog116MigrationTest {
+    @Test
+    fun addsTheFourRowsWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 116)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog116Migrate(listOf(other), stock)
+        assertEquals(ADDED_IN_V116.size + 1, added.size)
+        ADDED_IN_V116.forEach { id ->
+            val row = added.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertTrue(id, row.matchAny)
+            assertNull(row.decode)
+            assertFalse(id, id in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        }
+        assertEquals(
+            (listOf("DJI") + ADDED_IN_V116.map { stock.getValue(it).name }).sortedBy { it.lowercase() },
+            added.map { it.name },
+        )
+        assertEquals(SignatureClass.HOME, added.single { it.id == "fleet-lednetwf" }.kind)
+        assertEquals(SignatureClass.VEHICLE, added.single { it.id == "fleet-ez-lynk" }.kind)
+        assertEquals(SignatureClass.VEHICLE, added.single { it.id == "fleet-trackunit" }.kind)
+        assertEquals(SignatureClass.AUDIO, added.single { it.id == "fleet-oontz" }.kind)
+
+        val again = catalog116Migrate(added, stock)
+        assertEquals(added.map { it.id }, again.map { it.id })
+        assertEquals(ADDED_IN_V116.size, again.count { it.id in ADDED_IN_V116 })
+
+        val custom = stock.getValue("fleet-lednetwf").copy(builtIn = false, name = "Mine")
+        val kept = catalog116Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-lednetwf" }.name)
+        assertFalse(kept.single { it.id == "fleet-lednetwf" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-lednetwf" })
+        assertEquals(ADDED_IN_V116.size, kept.count { it.id in ADDED_IN_V116 })
+        val keptAgain = catalog116Migrate(kept, stock)
+        assertEquals(kept.map { it.id }, keptAgain.map { it.id })
+        assertEquals("Mine", keptAgain.single { it.id == "fleet-lednetwf" }.name)
+    }
+}
+
+class Catalog117MigrationTest {
+    @Test
+    fun addsTheThreeRowsWhenMissingAndLeavesACustomCopy() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 117)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog117Migrate(listOf(other), stock)
+        assertEquals(ADDED_IN_V117.size + 1, added.size)
+        val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
+        assertFalse("fleet-itag" in watched)
+        assertFalse("fleet-viofo" in watched)
+        assertTrue("fleet-ufo-drone" in watched)
+        ADDED_IN_V117.forEach { id ->
+            val row = added.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertTrue(id, row.matchAny)
+            assertNull(row.decode)
+        }
+        assertEquals(
+            (listOf("DJI") + ADDED_IN_V117.map { stock.getValue(it).name }).sortedBy { it.lowercase() },
+            added.map { it.name },
+        )
+        assertEquals(SignatureClass.FINDER, added.single { it.id == "fleet-itag" }.kind)
+        assertEquals(SignatureClass.DRONE, added.single { it.id == "fleet-ufo-drone" }.kind)
+        assertEquals(SignatureClass.VEHICLE, added.single { it.id == "fleet-viofo" }.kind)
+
+        val again = catalog117Migrate(added, stock)
+        assertEquals(added.map { it.id }, again.map { it.id })
+        assertEquals(ADDED_IN_V117.size, again.count { it.id in ADDED_IN_V117 })
+
+        val custom = stock.getValue("fleet-itag").copy(builtIn = false, name = "Mine")
+        val kept = catalog117Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-itag" }.name)
+        assertFalse(kept.single { it.id == "fleet-itag" }.builtIn)
+        assertEquals(1, kept.count { it.id == "fleet-itag" })
+        assertEquals(ADDED_IN_V117.size, kept.count { it.id in ADDED_IN_V117 })
+        val keptAgain = catalog117Migrate(kept, stock)
+        assertEquals(kept.map { it.id }, keptAgain.map { it.id })
+        assertEquals("Mine", keptAgain.single { it.id == "fleet-itag" }.name)
+    }
+}
+
+class Catalog118MigrationTest {
+    @Test
+    fun copiesSetupNotesOnlyWhenUnedited() {
+        assertTrue(ConfigStore.CATALOG_VERSION >= 118)
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val tuya = stock.getValue("fleet-tuya").copy(notes = TUYA_NOTES_BEFORE_V118)
+        val unifi = stock.getValue("fleet-unifi").copy(notes = UNIFI_NOTES_BEFORE_V118)
+        val midea = stock.getValue("fleet-midea").copy(notes = MIDEA_NOTES_BEFORE_V118)
+        val motive = stock.getValue("fleet-motive").copy(notes = MOTIVE_NOTES_BEFORE_V118)
+        val edited = tuya.copy(notes = "My plug note")
+        val custom = motive.copy(builtIn = false)
+        val updated = catalog118Migrate(listOf(tuya, unifi, midea, motive, edited, custom), stock)
+        assertEquals(
+            stock.getValue("fleet-tuya").notes,
+            updated.single { it.id == "fleet-tuya" && it.notes != "My plug note" }.notes,
+        )
+        assertEquals(stock.getValue("fleet-unifi").notes, updated.single { it.id == "fleet-unifi" }.notes)
+        assertEquals(stock.getValue("fleet-midea").notes, updated.single { it.id == "fleet-midea" }.notes)
+        assertEquals(
+            stock.getValue("fleet-motive").notes,
+            updated.single { it.id == "fleet-motive" && it.builtIn }.notes,
+        )
+        assertEquals("My plug note", updated.single { it.notes == "My plug note" }.notes)
+        assertEquals(MOTIVE_NOTES_BEFORE_V118, updated.single { it.id == "fleet-motive" && !it.builtIn }.notes)
+        val again = catalog118Migrate(updated, stock)
+        assertEquals(updated.map { it.notes }, again.map { it.notes })
+    }
+
+    @Test
+    fun addsProductRowsWhenMissingAndLeavesACustomCopy() {
+        val stock = DefaultCatalog.fleets().associateBy { it.id }
+        val other = stock.getValue("fleet-dji")
+        val added = catalog118Migrate(listOf(other), stock)
+        assertEquals(ADDED_IN_V118.size + 1, added.size)
+        ADDED_IN_V118.forEach { id ->
+            val row = added.single { it.id == id }
+            assertTrue(id, row.builtIn)
+            assertTrue(id, row.attentionNote.isBlank())
+            assertFalse(id, id in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
+        }
+        val custom = stock.getValue("fleet-kuna").copy(builtIn = false, name = "Mine")
+        val kept = catalog118Migrate(listOf(custom, other), stock)
+        assertEquals("Mine", kept.single { it.id == "fleet-kuna" }.name)
+        assertEquals(1, kept.count { it.id == "fleet-kuna" })
+        assertEquals(ADDED_IN_V118.size, kept.count { it.id in ADDED_IN_V118 })
     }
 }

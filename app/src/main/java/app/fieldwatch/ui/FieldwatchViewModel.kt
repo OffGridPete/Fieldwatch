@@ -113,6 +113,7 @@ import app.fieldwatch.domain.LanguageText
 import app.fieldwatch.domain.ListLine
 import app.fieldwatch.domain.MacUtil
 import app.fieldwatch.domain.PairingFlood
+import app.fieldwatch.domain.AircraftHistory
 import app.fieldwatch.domain.PlaceMemory
 import app.fieldwatch.domain.PlaceReport
 import app.fieldwatch.domain.ListSort
@@ -197,6 +198,11 @@ data class ExportUi(
     val followUpMessage: String? = null,
     /** This file needs a newer Fieldwatch. The dialog offers the app-update check. */
     val updateApp: Boolean = false,
+)
+
+data class AircraftMapTiles(
+    val tiles: List<app.fieldwatch.data.PathTiles.Tile> = emptyList(),
+    val zoomIn: Boolean = false,
 )
 
 data class FlockLayerUi(
@@ -284,6 +290,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     private var exportPump: Job? = null
     private val _placeStreets = MutableStateFlow<Map<String, String>>(emptyMap())
     val placeStreetNames: StateFlow<Map<String, String>> = _placeStreets
+    private val _aircraftOpen = MutableStateFlow<String?>(null)
+    val aircraftOpen: StateFlow<String?> = _aircraftOpen
+    private val _aircraftMapTiles = MutableStateFlow<List<AircraftMapTiles>>(emptyList())
+    val aircraftMapTiles: StateFlow<List<AircraftMapTiles>> = _aircraftMapTiles.asStateFlow()
+    @Volatile private var aircraftPathGen = 0
     val export: StateFlow<ExportUi> = _export
     private val _pendingSettingsImport = MutableStateFlow<PendingSettingsImport?>(null)
     val pendingSettingsImport: StateFlow<PendingSettingsImport?> = _pendingSettingsImport
@@ -291,11 +302,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     val language: StateFlow<LanguageUiState> = _language.asStateFlow()
     private val _candidates = MutableStateFlow(CandidatesUi())
     val candidates: StateFlow<CandidatesUi> = _candidates
-    private val _logExportKind = MutableStateFlow(LogExportKind.LOG_CSV)
+    private val _logExportKind = MutableStateFlow(
+        LogExportKind.fromSaved(app.config.config.value.logExportKind, allowSitOnly = false),
+    )
     val logExportKind: StateFlow<LogExportKind> = _logExportKind
     private val _logExportRadios = MutableStateFlow(LogExportRadios.BOTH)
     val logExportRadios: StateFlow<LogExportRadios> = _logExportRadios
-    private val _sitExportKind = MutableStateFlow(LogExportKind.LOG_CSV)
+    private val _sitExportKind = MutableStateFlow(
+        LogExportKind.fromSaved(app.config.config.value.sitExportKind, allowSitOnly = true),
+    )
     val sitExportKind: StateFlow<LogExportKind> = _sitExportKind
     private val _sitExportRadios = MutableStateFlow(LogExportRadios.BOTH)
     val sitExportRadios: StateFlow<LogExportRadios> = _sitExportRadios
@@ -622,10 +637,15 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     val swarmNotice = app.remoteIdSwarm.notice
+    val emergencyNotice = app.remoteIdEmergency.notice
     val droneNearChips = app.droneNear.chips
 
     fun dismissSwarm() {
         app.remoteIdSwarm.dismiss()
+    }
+
+    fun dismissEmergency() {
+        app.remoteIdEmergency.dismiss()
     }
 
     fun swarmMemberLine(uasId: String?): String? = app.remoteIdSwarm.memberLine(uasId)
@@ -637,6 +657,16 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 cfg.copy(settings = cfg.settings.copy(remoteIdSwarm = on))
             }
             app.announceSwarm(app.passRemoteIdSwarm(System.currentTimeMillis()))
+        }
+    }
+
+    /** Off closes the dialog. On does not speak for a declaration already open. */
+    fun setRemoteIdEmergency(on: Boolean) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(settings = cfg.settings.copy(remoteIdEmergency = on))
+            }
+            app.announceEmergency(app.passRemoteIdEmergency())
         }
     }
 
@@ -2082,17 +2112,14 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
 
     fun startSit(name: String) {
         viewModelScope.launch {
-            val heard = app.devices.devices.value.filter { !it.gone }
-            app.sits.start(name, heard, app.config.fleets, app.config.watchlist)
+            app.startNamedSit(name)
             publishSitNotice()
         }
     }
 
     fun endSit() {
         viewModelScope.launch {
-            val closing = app.droneNear.closeOpen(System.currentTimeMillis())
-            app.sits.noteNear(closing)
-            app.sits.end(app.config.fleets)
+            app.endOpenSit()
             publishSitNotice()
         }
     }
@@ -2801,6 +2828,12 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     fun isMine(deviceKey: String): Boolean =
         app.config.watchlist.any { it.deviceKey == deviceKey && it.mine }
 
+    fun isMute(deviceKey: String): Boolean =
+        app.config.watchlist.any { it.deviceKey == deviceKey && it.mute }
+
+    fun isQuiet(deviceKey: String): Boolean =
+        app.config.watchlist.any { it.deviceKey == deviceKey && it.alertOnGone }
+
     /** Place lines for this radio. Empty when Places is off or the address cannot be kept. */
     fun placeLines(device: Sighting, streets: Map<String, String> = emptyMap()): List<String> {
         val settings = app.config.settings
@@ -2819,6 +2852,67 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     /** Fill street names for this radio's places when Online place names is on. */
     fun refreshPlaceStreets(device: Sighting) {
         viewModelScope.launch { streetsForDevice(device) }
+    }
+
+    fun aircraftRows(): StateFlow<List<AircraftHistory.Record>> = app.aircraft.records
+
+    fun showAircraft(id: String) {
+        _aircraftOpen.value = id
+    }
+
+    /** Street names for Remote ID passes. Coordinates stay on the pass when a street is not ready. */
+    fun refreshAircraftStreets() {
+        viewModelScope.launch {
+            val settings = app.config.settings
+            if (!settings.onlineLookup || settings.demoMode) return@launch
+            val points = app.aircraft.records.value.flatMap { record ->
+                record.passes.mapNotNull { pass ->
+                    val lat = pass.lat ?: return@mapNotNull null
+                    val lon = pass.lon ?: return@mapNotNull null
+                    lat to lon
+                }
+            }
+            if (points.isEmpty()) return@launch
+            val missing = points.filter { (lat, lon) -> Geo.cellKey(lat, lon) !in _placeStreets.value }
+            if (missing.isEmpty()) return@launch
+            val found = PlaceLookup.namesAt(app, missing)
+            if (found.isNotEmpty()) _placeStreets.update { it + found }
+        }
+    }
+
+    /** Map pictures for one aircraft. Privacy mode keeps the picture. Tiles wait on Online place names. */
+    fun refreshAircraftPath(record: AircraftHistory.Record) {
+        val gen = ++aircraftPathGen
+        viewModelScope.launch(Dispatchers.Default) {
+            val settings = app.config.settings
+            val pictures = AircraftHistory.pictures(record.passes)
+            if (!settings.onlineLookup || pictures.isEmpty()) {
+                if (gen == aircraftPathGen) _aircraftMapTiles.value = emptyList()
+                return@launch
+            }
+            val loaded = pictures.map { picture ->
+                val samples = picture.model.frameSamples.ifEmpty {
+                    picture.model.craft.flatMap { it.samples }
+                }
+                val batch = runCatching {
+                    PathTiles.load(
+                        app, samples,
+                        onlineLookup = true,
+                        basemap = settings.mapBasemap,
+                        mapKey = keyFor(settings.mapBasemap),
+                        overlays = settings.mapOverlays,
+                    )
+                }.getOrDefault(
+                    PathTiles.Batch(problem = if (settings.mapBasemap.needsKey) MapKeyProblem.FAILED else MapKeyProblem.NONE),
+                )
+                noteMapTiles(settings.mapBasemap, batch.problem)
+                AircraftMapTiles(
+                    tiles = if (batch.zoomIn) emptyList() else batch.tiles,
+                    zoomIn = batch.zoomIn,
+                )
+            }
+            if (gen == aircraftPathGen) _aircraftMapTiles.value = loaded
+        }
     }
 
     /** Place records for Reports. Empty when Places is off, so the page does not list a hidden file. */
@@ -2888,6 +2982,40 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             app.config.update { cfg ->
                 cfg.copy(watchlist = RadioBookmarks.setMineOnRow(cfg.watchlist, id, on))
+            }
+        }
+    }
+
+    fun setRadioMute(device: Sighting, on: Boolean) {
+        viewModelScope.launch {
+            val suggest = RadioBookmarks.suggestLabel(device, device.fleetIds.map { fleetName(it) })
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setMute(cfg.watchlist, device.key, on, suggest))
+            }
+        }
+    }
+
+    fun setNamedRadioMute(id: String, on: Boolean) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setMuteOnRow(cfg.watchlist, id, on))
+            }
+        }
+    }
+
+    fun setRadioQuiet(device: Sighting, on: Boolean) {
+        viewModelScope.launch {
+            val suggest = RadioBookmarks.suggestLabel(device, device.fleetIds.map { fleetName(it) })
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setQuiet(cfg.watchlist, device.key, on, suggest))
+            }
+        }
+    }
+
+    fun setNamedRadioQuiet(id: String, on: Boolean) {
+        viewModelScope.launch {
+            app.config.update { cfg ->
+                cfg.copy(watchlist = RadioBookmarks.setQuietOnRow(cfg.watchlist, id, on))
             }
         }
     }
@@ -3728,8 +3856,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun setLogExportKind(kind: LogExportKind) {
-        if (kind.sitOnly) return
+        if (kind.sitOnly || _logExportKind.value == kind) return
         _logExportKind.value = kind
+        viewModelScope.launch {
+            app.config.update { it.copy(logExportKind = kind.name) }
+        }
     }
 
     fun setLogExportRadios(radios: LogExportRadios) {
@@ -3737,7 +3868,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun setSitExportKind(kind: LogExportKind) {
+        if (_sitExportKind.value == kind) return
         _sitExportKind.value = kind
+        viewModelScope.launch {
+            app.config.update { it.copy(sitExportKind = kind.name) }
+        }
     }
 
     fun setSitExportRadios(radios: LogExportRadios) {
@@ -3999,11 +4134,11 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun exportMime(): String = when (_logExportKind.value) {
+    fun exportMime(kind: LogExportKind = _logExportKind.value): String = when (kind) {
         LogExportKind.LOG_CSV -> app.logs.exportMime(asJsonl = false)
         LogExportKind.LOG_JSONL -> app.logs.exportMime(asJsonl = true)
         LogExportKind.GPX, LogExportKind.KML, LogExportKind.WIGLE ->
-            GeoExport.formatOf(_logExportKind.value)!!.mime
+            GeoExport.formatOf(kind)!!.mime
         LogExportKind.GEOJSON, LogExportKind.ATAK ->
             error(LanguageText.text("ui.format.sit.export"))
     }
@@ -4176,6 +4311,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                 swarms = source?.swarms ?: app.remoteIdSwarm.bursts(),
                 battery = source?.battery.orEmpty(),
                 droneNear = source?.droneNear ?: app.droneNearMarks(),
+                quiet = source?.quiet ?: emptyList(),
             ).withDemoMacs(
                 devices.map { it.mac } + trustedLines.map { it.bssid },
                 settings.demoMode,
@@ -4247,6 +4383,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
                         swarms = source?.swarms ?: app.remoteIdSwarm.bursts(),
                         battery = source?.battery.orEmpty(),
                         droneNear = source?.droneNear ?: app.droneNearMarks(),
+                        quiet = source?.quiet ?: emptyList(),
                     )
                     val masked = MacUtil.redactPrivateText(
                         raw,
@@ -4431,7 +4568,7 @@ class FieldwatchViewModel(application: Application) : AndroidViewModel(applicati
         return SitExport.suggestedName(_sitExportKind.value, sitExportWindow().name, stamp)
     }
 
-    fun sitExportMime(): String = SitExport.mime(_sitExportKind.value)
+    fun sitExportMime(kind: LogExportKind = _sitExportKind.value): String = SitExport.mime(kind)
 
     fun startSitExport() {
         if (_export.value.active) return

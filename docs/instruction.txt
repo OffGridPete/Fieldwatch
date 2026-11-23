@@ -7,11 +7,11 @@ Needs Android 10 or newer (API 29+). Tested on a Galaxy A54; meant for most Andr
 This card
 ---------
   Fieldwatch.apk                 the app (sideload build)
-  Fieldwatch_User_Manual.pdf     user manual v1.2.1 (screenshots: Privacy mode on; Live display shots BLE only)
+  Fieldwatch_User_Manual.pdf     user manual v1.2.2 (screenshots: Privacy mode on; Live display shots BLE only)
   instruction.txt             this file
 
 SHA-256 of Fieldwatch.apk:
-  8a600ad903ee115dd514018158d2504e8f27d7a7fc6760d51f8685094868f56c
+  57d2357f2af636b727a792cb768f4917dc50d185fd1b8e47401683e177d22807
 
 Signing certificate SHA-256 (Off Grid Pete LLC):
   72f0da99823cdcb7a72b075a148a59cc3f01839734270f1ea59d597bd6732609
@@ -88,10 +88,12 @@ Allow all of these (wording varies by Android version):
     Fieldwatch does not create a Bluetooth connection for detection.
 
   Notifications   (Android 13+)
-    Persistent “Fieldwatch scanning” status, and optional watchlist alerts.
+    Asked, and not required to leave this screen. The scanning notification
+    still appears, so the scan can keep running with the screen off.
+    Alert notifications stay off until you allow them.
 
-If you Deny any required item, Fieldwatch stays on the permission screen.
-You can also grant later:
+If you Deny Location, Nearby Wi-Fi, or Bluetooth, Fieldwatch stays on the
+permission screen. Denying Notifications does not. You can also grant later:
   Android Settings → Apps → Fieldwatch → Permissions
 
 
@@ -99,7 +101,8 @@ You can also grant later:
 -------------------------
   1. First launch shows Disclaimer and license. Check “I have read this and I agree,”
      then Continue. Radios do not start until you do.
-  2. Grant the permission screen. Radios do not start until that set is complete.
+  2. Grant the permission screen. Radios do not start until Location, Nearby
+     Wi-Fi, and Bluetooth are allowed. Notifications can be declined.
   3. A notification “Fieldwatch scanning” appears. Leave it. Stop on that
      notification (or swipe Fieldwatch out of Recents) ends collection.
   4. Live should show Wi-Fi access points and BLE advertisers. Header:

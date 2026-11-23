@@ -130,7 +130,7 @@ class FlockCamerasTest {
         val cam = FlockCamera(7L, at.first, at.second, listOf(180))
         val latch = FlockLatch()
         val first = latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam))
-        assertEquals(FlockHit(7L, true), first)
+        assertEquals(FlockHit(7L, true), first?.hit)
         assertNull(latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam)))
         val held = FlockApproach.destination(userLat, userLon, 180.0, 150.0)
         assertNull(latch.consider(held.first, held.second, 180.0, 3.0, listOf(cam)))
@@ -138,7 +138,31 @@ class FlockCamerasTest {
         val gone = FlockApproach.destination(userLat, userLon, 180.0, 1_200.0)
         assertNull(latch.consider(gone.first, gone.second, 180.0, 3.0, listOf(cam)))
         val again = latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam))
-        assertEquals(FlockHit(7L, true), again)
+        assertEquals(FlockHit(7L, true), again?.hit)
+    }
+
+    @Test
+    fun groupQuietsCamerasWithin200mAndLeavesAFartherOne() {
+        val userLat = 39.0
+        val userLon = -104.0
+        val near = FlockApproach.destination(userLat, userLon, 0.0, 80.0)
+        val close = FlockApproach.destination(userLat, userLon, 0.0, 270.0)
+        val farther = FlockApproach.destination(userLat, userLon, 0.0, 330.0)
+        val cameras = listOf(
+            FlockCamera(1L, near.first, near.second, emptyList(), flock = true),
+            FlockCamera(2L, close.first, close.second, emptyList(), kind = SensorKind.SPEED),
+            FlockCamera(3L, farther.first, farther.second, emptyList(), kind = SensorKind.CAMERA),
+        )
+        val grouped = FlockLatch()
+        val first = grouped.consider(userLat, userLon, 0.0, 3.0, cameras, FlockApproach.GROUP_M)!!
+        assertEquals(1L, first.hit.key)
+        assertEquals(listOf(1L, 2L), first.cameras.map { it.key })
+        assertEquals(3L, grouped.consider(userLat, userLon, 0.0, 3.0, cameras, FlockApproach.GROUP_M)!!.hit.key)
+        assertNull(grouped.consider(userLat, userLon, 0.0, 3.0, cameras, FlockApproach.GROUP_M))
+        val each = FlockLatch()
+        assertEquals(1L, each.consider(userLat, userLon, 0.0, 3.0, cameras)!!.hit.key)
+        assertEquals(2L, each.consider(userLat, userLon, 0.0, 3.0, cameras)!!.hit.key)
+        assertEquals(3L, each.consider(userLat, userLon, 0.0, 3.0, cameras)!!.hit.key)
     }
 
     @Test
@@ -148,7 +172,7 @@ class FlockCamerasTest {
         val at = FlockApproach.destination(userLat, userLon, 0.0, 80.0)
         val cam = FlockCamera(4L, at.first, at.second, emptyList())
         val latch = FlockLatch()
-        assertEquals(FlockHit(4L, false), latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam)))
+        assertEquals(FlockHit(4L, false), latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam))?.hit)
         assertNull(latch.consider(userLat, userLon, 0.0, 0.0, listOf(cam)))
         assertNull(latch.consider(userLat, userLon, 0.0, 3.0, listOf(cam)))
     }
@@ -515,6 +539,37 @@ class FlockCamerasTest {
         assertEquals("alert.camera.looking", sensorNotice(FlockHit(1L, true, kind = SensorKind.CAMERA)).first)
         assertEquals("alert.flock.ahead", sensorNotice(FlockHit(1L, false, flock = true)).first)
         assertEquals("Vigilant", sensorNotice(FlockHit(1L, false, brand = "Vigilant")).second["brand"])
+    }
+
+    @Test
+    fun oneCameraKeepsLookingAndAGroupSpeaksOnce() {
+        val flock = FlockCamera(1L, 0.0, 0.0, emptyList(), flock = true)
+        assertEquals(
+            "Known Flock camera looking your way, ahead.",
+            spokenAlert(FlockHit(1L, true, flock = true), listOf(flock)),
+        )
+        assertEquals(
+            "Red light camera ahead, looking your way.",
+            spokenAlert(FlockHit(2L, true, kind = SensorKind.RED), listOf(FlockCamera(2L, 0.0, 0.0, emptyList(), kind = SensorKind.RED))),
+        )
+        val flocks = List(4) { FlockCamera(it.toLong(), 0.0, 0.0, emptyList(), flock = true) }
+        assertEquals("Known Flock cameras ahead.", spokenAlert(FlockHit(0L, true, flock = true), flocks))
+        val reds = List(4) { FlockCamera(10L + it, 0.0, 0.0, emptyList(), kind = SensorKind.RED) }
+        assertEquals("Red light cameras ahead.", spokenAlert(FlockHit(10L, true, kind = SensorKind.RED), reds))
+        val mixed = listOf(flock, FlockCamera(8L, 0.0, 0.0, emptyList(), kind = SensorKind.RED))
+        assertEquals("Flock and red light cameras ahead.", spokenAlert(FlockHit(1L, true, flock = true), mixed))
+        val three = mixed + FlockCamera(9L, 0.0, 0.0, emptyList(), kind = SensorKind.SPEED)
+        assertEquals(
+            "Flock, speed, and red light cameras ahead.",
+            spokenAlert(FlockHit(1L, false, flock = true), three),
+        )
+        val gun = listOf(flock, FlockCamera(11L, 0.0, 0.0, emptyList(), kind = SensorKind.GUNSHOT))
+        assertEquals("Flock and gunshot detector ahead.", spokenAlert(FlockHit(1L, false, flock = true), gun))
+        val vigilant = List(2) { FlockCamera(20L + it, 0.0, 0.0, emptyList(), brand = "Vigilant") }
+        assertEquals(
+            "Known Vigilant cameras ahead.",
+            spokenAlert(FlockHit(20L, false, brand = "Vigilant"), vigilant),
+        )
     }
 
     @Test

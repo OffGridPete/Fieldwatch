@@ -292,7 +292,7 @@ Eighteen characters fits most tab words and the class chips. The longest English
 
 On-screen text uses the phone's font. That font covers Cyrillic, so Bulgarian and Macedonian do not need a font in the APK. The Debrief and Compare PDFs must draw those letters too. A test renders a Cyrillic line in a Debrief PDF and fails if those characters are missing.
 
-The file cap of 352 KiB, the language name cap of 40 characters, and the cap of 2000 keys stay. Those protect the phone from a huge file. They are not the visual rule.
+The file cap of 352 KiB, the language name cap of 40 characters, and the cap of 2400 keys stay. Those protect the phone from a huge file. They are not the visual rule.
 
 The English template may include a `slots` object so an author can see the slot for each key. Import ignores that object. If it disagrees with the app, the compiled slot wins.
 

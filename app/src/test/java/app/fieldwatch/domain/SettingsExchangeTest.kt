@@ -162,6 +162,12 @@ class SettingsExchangeTest {
         )
         assertEquals("in the bag", legacy.observerNotes)
         assertFalse(legacy.mine)
+        assertFalse(legacy.alertOnGone)
+        val quietOn = SettingsExchange.json.decodeFromString(
+            WatchTarget.serializer(),
+            """{"id":"q","deviceKey":"BLE:AA:BB:CC:DD:EE:FF","label":"bag","alertOnGone":true}""",
+        )
+        assertTrue(quietOn.alertOnGone)
         assertFalse(pack.filter.hideMine)
         val oldFilter = SettingsExchange.json.decodeFromString(
             FilterState.serializer(),

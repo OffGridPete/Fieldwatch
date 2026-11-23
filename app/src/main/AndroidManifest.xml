@@ -57,6 +57,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="app.fieldwatch.OPEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <service
@@ -64,6 +68,37 @@
             android:exported="false"
             android:stopWithTask="true"
             android:foregroundServiceType="location|connectedDevice" />
+
+        <service
+            android:name=".AutomationService"
+            android:exported="true"
+            android:foregroundServiceType="location|connectedDevice">
+            <intent-filter>
+                <action android:name="app.fieldwatch.CLOSE" />
+                <action android:name="app.fieldwatch.START_SCAN" />
+                <action android:name="app.fieldwatch.STOP_SCAN" />
+                <action android:name="app.fieldwatch.SCAN_STATUS" />
+                <action android:name="app.fieldwatch.START_SIT" />
+                <action android:name="app.fieldwatch.STOP_SIT" />
+                <action android:name="app.fieldwatch.EXPORT_SIT" />
+                <action android:name="app.fieldwatch.EXPORT_LOG" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".AutomationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="app.fieldwatch.CLOSE" />
+                <action android:name="app.fieldwatch.START_SCAN" />
+                <action android:name="app.fieldwatch.STOP_SCAN" />
+                <action android:name="app.fieldwatch.SCAN_STATUS" />
+                <action android:name="app.fieldwatch.START_SIT" />
+                <action android:name="app.fieldwatch.STOP_SIT" />
+                <action android:name="app.fieldwatch.EXPORT_SIT" />
+                <action android:name="app.fieldwatch.EXPORT_LOG" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

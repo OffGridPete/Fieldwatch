@@ -18,6 +18,7 @@ class OpenDroneIdTest {
         assertEquals(90.0, loc.headingDeg!!, 1e-6)
         assertEquals(10.0, loc.speedMps!!, 1e-6)
         assertEquals(2.0, loc.vspeedMps!!, 1e-6)
+        assertEquals(2, loc.status)
         val west = OpenDroneId.fromFacts(
             RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", bleWrap(locationMsg(dir = 90, ew = true, speed = 40))))),
         )
@@ -31,6 +32,38 @@ class OpenDroneIdTest {
         assertEquals(40.0, loc.lat!!, 1e-6)
         assertEquals(45.0, loc.headingDeg!!, 1e-6)
         assertEquals(2.0, loc.speedMps!!, 1e-6)
+    }
+
+    @Test
+    fun emergencyStatusAndDescriptionAreThisPacketOnly() {
+        val emergency = locationMsg(dir = 90, ew = false, speed = 40, status = OpenDroneId.STATUS_EMERGENCY)
+        val described = selfIdMsg(OpenDroneId.SELF_EMERGENCY, "Low battery")
+        val pack = "0D00" + emergency.toHexUpper() + described.toHexUpper()
+        val heard = PayloadLocation.applySticky(ble(pack), emptyList())
+        assertEquals(OpenDroneId.STATUS_EMERGENCY, heard.payloadStatus)
+        assertEquals("Low battery", heard.payloadEmergencyText)
+        val parsed = OpenDroneId.fromFacts(heard.facts)
+        assertEquals(OpenDroneId.SELF_EMERGENCY, parsed.selfKind)
+        val note = AircraftHistory.hearOf(heard.copy(payloadUasId = "ABC123"), 5_000L)!!
+        assertEquals(true, note.emergency)
+        assertEquals("Low battery", note.emergencyText)
+        assertEquals(true, note.fix!!.emergency)
+
+        val textOnly = PayloadLocation.applySticky(ble(bleWrap(selfIdMsg(0, "Yard loop"))), emptyList())
+        assertNull(textOnly.payloadStatus)
+        assertNull(textOnly.payloadEmergencyText)
+        assertEquals("Yard loop", textOnly.payloadSelfId)
+
+        val next = PayloadLocation.applySticky(
+            heard,
+            emptyList(),
+            HeardFix(facts = RadioFacts(serviceData = listOf(ServiceDataRecord("FFFA", bleWrap(selfIdMsg(0, "Yard")))))),
+        )
+        assertNull(next.payloadStatus)
+        assertNull(next.payloadEmergencyText)
+        assertEquals(40.0, next.payloadLat!!, 1e-6)
+        val quiet = AircraftHistory.hearOf(next.copy(payloadUasId = "ABC123"), 6_000L)!!
+        assertNull(quiet.emergency)
     }
 
     @Test
@@ -294,8 +327,14 @@ class OpenDroneIdTest {
 
     private fun bleWrap(msg: ByteArray) = ("0D00" + msg.toHexUpper())
 
-    private fun locationMsg(dir: Int, ew: Boolean, speed: Int): ByteArray {
-        val flags = 0x20 or (if (ew) 0x02 else 0)
+    private fun selfIdMsg(kind: Int, text: String): ByteArray {
+        val body = ByteArray(23)
+        text.toByteArray(Charsets.US_ASCII).copyInto(body, endIndex = minOf(text.length, body.size))
+        return byteArrayOf(0x32, kind.toByte()) + body
+    }
+
+    private fun locationMsg(dir: Int, ew: Boolean, speed: Int, status: Int = 2): ByteArray {
+        val flags = ((status and 0x0F) shl 4) or (if (ew) 0x02 else 0)
         val lat = le32(400_000_000)
         val lon = le32(-740_000_000)
         val geo = le16(2200)

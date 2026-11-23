@@ -377,6 +377,7 @@ object SitDiff {
                             opAt = r.payloadOpAt,
                             opPhoneLat = r.payloadOpPhoneLat,
                             opPhoneLon = r.payloadOpPhoneLon,
+                            emergencyWhen = AircraftTrail.emergencyWhen(r.payloadTrail),
                         )
                     } else {
                         ""
@@ -384,6 +385,7 @@ object SitDiff {
                     altM = motion.first,
                     headingDeg = motion.second,
                     speedMps = motion.third,
+                    emergencyWhen = if (advertised != null) AircraftTrail.emergencyWhen(r.payloadTrail) else "",
                 )
             }
             .sortedBy { it.label }

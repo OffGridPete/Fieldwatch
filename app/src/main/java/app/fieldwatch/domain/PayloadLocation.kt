@@ -39,6 +39,17 @@ data class PayloadLocation(
     val basicId: Boolean = false,
     /** ASTM Auth. Null when this packet is not an Auth message. */
     val auth: RemoteIdAuth? = null,
+    /**
+     * Location operational status from this message.
+     * Null when this message is not a Location message. 0 is Undeclared.
+     * [OpenDroneId.STATUS_EMERGENCY] is an emergency.
+     */
+    val status: Int? = null,
+    /**
+     * Self-ID description type from this message.
+     * Null when this message is not a Self-ID. [OpenDroneId.SELF_EMERGENCY] is an emergency description.
+     */
+    val selfKind: Int? = null,
 ) {
     fun pin(): Pair<Double, Double>? =
         if (validCoord(lat, lon)) lat!! to lon!! else null
@@ -77,6 +88,8 @@ data class PayloadLocation(
             aircraft = nextAircraft,
             basicId = basicId || p.basicId,
             auth = auth?.onto(p.auth) ?: p.auth,
+            status = status ?: p.status,
+            selfKind = selfKind ?: p.selfKind,
         )
     }
 
@@ -141,6 +154,12 @@ data class PayloadLocation(
                 SignatureFieldDecoder.decodeSighting(device, fleets)
             }
             val fromBytes = OpenDroneId.fromFacts(device.facts)
+            val packet = if (heard == null) fromBytes else OpenDroneId.fromFacts(heard.facts)
+            val emergencyText = if (packet.selfKind == OpenDroneId.SELF_EMERGENCY) {
+                packet.selfId?.trim().orEmpty()
+            } else {
+                null
+            }
             if (decoded.isEmpty() &&
                 fromBytes.lat == null &&
                 fromBytes.opLat == null &&
@@ -153,12 +172,17 @@ data class PayloadLocation(
                 fromBytes.uasId == null &&
                 !fromBytes.basicId &&
                 fromBytes.auth == null &&
+                packet.status == null &&
+                packet.selfKind == null &&
+                emergencyText == null &&
                 device.payloadLat == null &&
                 device.payloadOpLat == null &&
                 device.payloadOpKind == null &&
                 device.payloadOpAlt == null &&
                 device.payloadUasId == null &&
-                device.payloadAuth == null
+                device.payloadAuth == null &&
+                device.payloadStatus == null &&
+                device.payloadEmergencyText == null
             ) {
                 return withReadStamp(device, fleets, heard)
             }
@@ -176,7 +200,9 @@ data class PayloadLocation(
                 next.speedMps == device.payloadSpeed &&
                 next.vspeedMps == device.payloadVspeed &&
                 next.aircraft == device.payloadAircraft &&
-                next.auth == device.payloadAuth
+                next.auth == device.payloadAuth &&
+                packet.status == device.payloadStatus &&
+                emergencyText == device.payloadEmergencyText
             ) {
                 device
             } else {
@@ -195,6 +221,8 @@ data class PayloadLocation(
                     payloadVspeed = next.vspeedMps,
                     payloadAircraft = next.aircraft,
                     payloadAuth = next.auth,
+                    payloadStatus = packet.status,
+                    payloadEmergencyText = emergencyText,
                 )
             }
             return withReadStamp(merged, fleets, heard)

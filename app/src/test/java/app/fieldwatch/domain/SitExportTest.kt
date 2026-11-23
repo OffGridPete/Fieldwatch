@@ -1,5 +1,6 @@
 package app.fieldwatch.domain
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -120,6 +121,19 @@ class SitExportTest {
         assertTrue(csv.contains("'+cmd"))
         assertTrue(csv.contains("\"lot, B\""))
         assertTrue(csv.contains("-122.143000,-122.143000") || csv.contains(",-122.143000,"))
+    }
+
+    @Test
+    fun savedExportFormatFallsBackToCsv() {
+        assertEquals(LogExportKind.LOG_CSV, LogExportKind.fromSaved(null, allowSitOnly = true))
+        assertEquals(LogExportKind.LOG_CSV, LogExportKind.fromSaved("NOPE", allowSitOnly = true))
+        assertEquals(LogExportKind.LOG_JSONL, LogExportKind.fromSaved("LOG_JSONL", allowSitOnly = false))
+        assertEquals(LogExportKind.LOG_CSV, LogExportKind.fromSaved("ATAK", allowSitOnly = false))
+        assertEquals(LogExportKind.ATAK, LogExportKind.fromSaved("ATAK", allowSitOnly = true))
+        assertEquals(LogExportKind.GEOJSON, LogExportKind.fromSaved("GEOJSON", allowSitOnly = true))
+        val loaded = Json.decodeFromString<PersistedConfig>("""{"version":1}""")
+        assertEquals(LogExportKind.LOG_CSV.name, loaded.logExportKind)
+        assertEquals(LogExportKind.LOG_CSV.name, loaded.sitExportKind)
     }
 
     @Test

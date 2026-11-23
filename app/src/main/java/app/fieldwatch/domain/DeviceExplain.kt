@@ -800,6 +800,14 @@ object DeviceExplain {
                     Hint("audio-personal", "TOZO earbuds", matched(raw), 6)
                 n == "irobot" ->
                     Hint("iot", "an iRobot Roomba or Braava", matched(raw), 7)
+                n == "lednetwf" ->
+                    Hint("iot", "a Zengge LED controller", matched(raw), 6)
+                n == "ez lynk" ->
+                    Hint("vehicle", "an EZ Lynk vehicle tuner", matched(raw), 7)
+                n == "trackunit" ->
+                    Hint("vehicle", "a Trackunit equipment tracker", matched(raw), 7)
+                n == "oontz" ->
+                    Hint("audio-personal", "an OontZ speaker", matched(raw), 6)
                 "chipolo" in n || "pebblebee" in n || "moto tag" in n ->
                     Hint("tag", "a finder tag", matched(raw), 7)
                 "airpods" in n ->

@@ -1,6 +1,7 @@
 package app.fieldwatch.ui.screen
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Check
@@ -77,6 +79,8 @@ import app.fieldwatch.domain.SignatureFieldDecoder
 import app.fieldwatch.domain.SmartTag
 import app.fieldwatch.domain.hexSpaced
 import app.fieldwatch.domain.maskedRawBytes
+import app.fieldwatch.domain.AircraftHistory
+import app.fieldwatch.domain.AircraftTrail
 import app.fieldwatch.domain.LanguageText
 import app.fieldwatch.domain.VendorIeLabel
 import app.fieldwatch.domain.label
@@ -109,6 +113,7 @@ fun DeviceDetailScreen(
     spokenNames: List<SpokenName> = emptyList(),
     voiceWhat: AlertVoiceWhat = AlertVoiceWhat.BOTH,
     watchlist: List<WatchTarget> = emptyList(),
+    onOpenAircraft: (String) -> Unit = {},
 ) {
     val fmt = SimpleDateFormat("HH:mm:ss", Locale.US)
     val accent = (device.fleetIds.firstOrNull()
@@ -117,6 +122,7 @@ fun DeviceDetailScreen(
         .nightIf(LocalNightMode.current)
     val facts = device.facts
     val placeStreets by vm.placeStreetNames.collectAsStateWithLifecycle()
+    val aircraftRows by remember { vm.aircraftRows() }.collectAsStateWithLifecycle()
     LaunchedEffect(device.key) { vm.refreshPlaceStreets(device) }
     val familyHint by vm.familyHint.collectAsStateWithLifecycle()
     var catalogRequest by remember(device.key) { mutableStateOf(false) }
@@ -281,6 +287,61 @@ fun DeviceDetailScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
+            val aircraftId = device.payloadUasId?.trim().orEmpty()
+            if (aircraftId.isNotEmpty()) {
+                val aircraft = aircraftRows.firstOrNull { it.id == aircraftId }
+                if (aircraft != null) {
+                    val zone = java.time.ZoneId.systemDefault()
+                    val live = AircraftHistory.live(aircraft, device.lastSeen, System.currentTimeMillis(), zone)
+                    if (live != null) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenAircraft(aircraftId) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 1.dp,
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        if (live.earlier == null) {
+                                            LanguageText.text("device.aircraft.first")
+                                        } else {
+                                            aircraftDaysLine(live.days)
+                                        },
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    if (live.earlier != null) {
+                                        Text(
+                                            LanguageText.text(
+                                                "device.aircraft.before",
+                                                mapOf("when" to aircraftWhen(live.earlier, zone)),
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    Text(
+                                        LanguageText.text("device.aircraft.open"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(
+                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             var notesDraft by remember(device.key) {
                 mutableStateOf(vm.watchObserverNoteFor(device.key).orEmpty())
@@ -322,7 +383,7 @@ fun DeviceDetailScreen(
                     saved = notesIsSaved && lastSavedNotes.isNotBlank(),
                 )
             }
-            if (spokenNetwork != null && device.fleetIds.isNotEmpty()) {
+            if (spokenNetwork != null && SpokenNames.offersCard(device)) {
                 SpokenNameCard(
                     deviceKey = device.key,
                     network = spokenNetwork,
@@ -374,6 +435,93 @@ fun DeviceDetailScreen(
                                             LanguageText.text("ui.marked.yours.no.beep"),
                                         )
                                     }
+                                }
+                            },
+                        )
+                    }
+                }
+                var muteOn by remember(device.key) { mutableStateOf(vm.isMute(device.key)) }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 1.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                LanguageText.text("ui.mute.label"),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                LanguageText.text("ui.mute.note"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        FieldwatchSwitch(
+                            checked = muteOn,
+                            onCheckedChange = { on ->
+                                vm.setRadioMute(device, on)
+                                muteOn = on
+                                if (on && lastSaved.isBlank()) {
+                                    val suggest = RadioBookmarks.suggestLabel(
+                                        device,
+                                        device.fleetIds.map { vm.fleetName(it) },
+                                    )
+                                    lastSaved = suggest
+                                    nameDraft = suggest
+                                }
+                                if (on) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            LanguageText.text("ui.mute.note"),
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+                var quietOn by remember(device.key) { mutableStateOf(vm.isQuiet(device.key)) }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 1.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                LanguageText.text("ui.quiet.gone.label"),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                LanguageText.text("ui.quiet.gone.note"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        FieldwatchSwitch(
+                            checked = quietOn,
+                            onCheckedChange = { on ->
+                                vm.setRadioQuiet(device, on)
+                                quietOn = on
+                                if (on && lastSaved.isBlank()) {
+                                    val suggest = RadioBookmarks.suggestLabel(
+                                        device,
+                                        device.fleetIds.map { vm.fleetName(it) },
+                                    )
+                                    lastSaved = suggest
+                                    nameDraft = suggest
                                 }
                             },
                         )
@@ -738,6 +886,40 @@ fun DeviceDetailScreen(
                     }
                     Geo.liveRange(phoneLat, phoneLon, device.payloadOpLat, device.payloadOpLon, demoMode)?.let { range ->
                         Text(range, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                val motion = AircraftTrail.advertisedMotion(
+                    device.payloadTrail,
+                    device.payloadAlt,
+                    device.payloadHeading,
+                    device.payloadSpeed,
+                )
+                AircraftTrail.motionLines(motion.first, motion.second, motion.third).forEach { line ->
+                    Text(line, style = MaterialTheme.typography.bodyMedium)
+                }
+                val emergencyWhen = AircraftTrail.emergencyWhen(device)
+                if (emergencyWhen.isNotEmpty()) {
+                    Text(
+                        LanguageText.text(
+                            "reports.aircraft.emergency.when",
+                            mapOf("when" to emergencyWhen),
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFDC2626.toInt()),
+                    )
+                    val words = if (demoMode) {
+                        ""
+                    } else {
+                        device.payloadEmergencyText?.trim().orEmpty()
+                            .ifEmpty { AircraftTrail.emergencyWords(device.payloadTrail) }
+                    }
+                    if (words.isNotEmpty()) {
+                        Text(
+                            words,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
                 val fleets = vm.ui.value.fleets

@@ -14,6 +14,10 @@ object OpenDroneId {
     private const val INV_SPEED = 255
     /** ASTM Basic ID id_type. 1 is a CTA-2063 serial. Session and CAA are not. */
     private const val ID_SERIAL = 1
+    /** Location operational status. High nibble of the flags byte. */
+    const val STATUS_EMERGENCY = 3
+    /** Self-ID description type. 1 is an emergency description. */
+    const val SELF_EMERGENCY = 1
 
     fun fromFacts(facts: RadioFacts): PayloadLocation {
         var acc = PayloadLocation()
@@ -154,6 +158,7 @@ object OpenDroneId {
             headingDeg = heading,
             speedMps = speed,
             vspeedMps = vspeed,
+            status = flags shr 4,
         )
     }
 
@@ -169,8 +174,12 @@ object OpenDroneId {
     }
 
     private fun selfId(m: ByteArray): PayloadLocation {
+        val kind = m[1].toInt() and 0xFF
         val text = m.copyOfRange(2, 25).toString(Charsets.US_ASCII).trim('\u0000', ' ')
-        return PayloadLocation(selfId = text.takeIf { it.isNotEmpty() })
+        return PayloadLocation(
+            selfId = text.takeIf { it.isNotEmpty() },
+            selfKind = kind,
+        )
     }
 
     private fun auth(m: ByteArray): PayloadLocation {

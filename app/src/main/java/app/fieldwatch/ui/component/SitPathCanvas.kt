@@ -104,6 +104,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.max
@@ -944,6 +945,17 @@ fun SitPathCanvas(
                                             color = muted,
                                         )
                                     }
+                                if (m.dot.emergencyWhen.isNotEmpty()) {
+                                    Text(
+                                        LanguageText.text(
+                                            "reports.aircraft.emergency.when",
+                                            mapOf("when" to m.dot.emergencyWhen),
+                                        ),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = EmergencyInk,
+                                    )
+                                }
                                 Geo.liveRange(phoneLat, phoneLon, m.dot.lat, m.dot.lon, demoMode)?.let { range ->
                                     Text(
                                         range,
@@ -1469,9 +1481,11 @@ private fun DrawScope.drawCountBadge(center: Offset, count: Int, radius: Float, 
 }
 
 private val PilotInk = Color(0xFF3D4A55)
+private val EmergencyInk = Color(0xFFDC2626.toInt())
 
-private val AircraftDots = PathEffect.dashPathEffect(floatArrayOf(4f, 9f), 0f)
 private val AircraftInk = Color.White
+/** Second sit, light enough to read on the dark map. */
+private val SecondCraftInk = Color(0xFF8EB4F0)
 
 private fun DrawScope.drawAdvertised(
     lay: SitPathPlot.Layout,
@@ -1489,18 +1503,20 @@ private fun DrawScope.drawAdvertised(
         val samples = track.samples
         if (samples.isEmpty()) return@forEach
         val pts = samples.map { lay.project(it.lat, it.lon) }
+        val ink = when {
+            track.color != 0L -> Color(track.color.toInt())
+            track.secondary -> SecondCraftInk
+            else -> AircraftInk
+        }
+        val history = track.color != 0L
         if (pts.size >= 2) {
-            strokeOnMap(
-                SitPathPlot.clipPolyline(pts, left, top, right, bottom),
-                AircraftInk,
-                4.2f,
-                AircraftDots,
-            )
+            val clipped = SitPathPlot.clipPolyline(pts, left, top, right, bottom)
+            drawChevrons(clipped, ink)
             val start = pts.first()
             if (near(start.x, start.y)) {
                 drawCircle(Color.White, radius = 4.6f, center = Offset(start.x, start.y))
                 drawCircle(
-                    AircraftInk,
+                    ink,
                     radius = 4.6f,
                     center = Offset(start.x, start.y),
                     style = Stroke(width = 1.8f),
@@ -1510,13 +1526,24 @@ private fun DrawScope.drawAdvertised(
         val end = pts.last()
         val covered = dots.any { SitPathPlot.sitsOnCraft(it, listOf(track)) }
         if (!covered && near(end.x, end.y)) {
-            drawCircle(Color.White, radius = 4.6f, center = Offset(end.x, end.y))
-            drawCircle(
-                AircraftInk,
-                radius = 4.6f,
-                center = Offset(end.x, end.y),
-                style = Stroke(width = 1.8f),
-            )
+            val angle = if (pts.size >= 2) travelAngle(pts) else null
+            if (angle != null) {
+                drawTravelArrow(Offset(end.x, end.y), angle, ink)
+            } else if (history) {
+                drawCircle(Color.White, radius = 5.2f, center = Offset(end.x, end.y))
+                drawCircle(ink, radius = 3.4f, center = Offset(end.x, end.y))
+            } else {
+                drawCircle(Color.White, radius = 4.6f, center = Offset(end.x, end.y))
+                drawCircle(
+                    ink,
+                    radius = 4.6f,
+                    center = Offset(end.x, end.y),
+                    style = Stroke(width = 1.8f),
+                )
+            }
+        }
+        if (track.emergency.isNotEmpty()) {
+            drawEmergency(pts, track.emergency, left, top, right, bottom, ::near)
         }
     }
     pilots.forEach { pilot ->
@@ -1524,6 +1551,128 @@ private fun DrawScope.drawAdvertised(
         if (!near(pt.x, pt.y)) return@forEach
         drawPilotMark(Offset(pt.x, pt.y), pilotPainter)
     }
+}
+
+private fun DrawScope.drawEmergency(
+    pts: List<SitPathPlot.Pt>,
+    indexes: List<Int>,
+    left: Float,
+    top: Float,
+    right: Float,
+    bottom: Float,
+    near: (Float, Float) -> Boolean,
+) {
+    var run = ArrayList<SitPathPlot.Pt>()
+    var previous = -2
+    fun finish() {
+        if (run.isEmpty()) return
+        if (run.size >= 2) {
+            val clipped = SitPathPlot.clipPolyline(run, left, top, right, bottom)
+            strokeOnMap(clipped, EmergencyInk, 3.2f)
+            drawChevrons(clipped, EmergencyInk)
+        }
+        val start = run.first()
+        if (near(start.x, start.y)) drawEmergencyDiamond(Offset(start.x, start.y))
+        run = ArrayList()
+    }
+    for (index in indexes) {
+        if (index !in pts.indices) continue
+        if (index != previous + 1) finish()
+        run += pts[index]
+        previous = index
+    }
+    finish()
+}
+
+private fun DrawScope.drawEmergencyDiamond(at: Offset) {
+    fun diamond(size: Float) = Path().apply {
+        moveTo(at.x, at.y - size)
+        lineTo(at.x + size, at.y)
+        lineTo(at.x, at.y + size)
+        lineTo(at.x - size, at.y)
+        close()
+    }
+    drawPath(diamond(6.6f), Color.White)
+    drawPath(diamond(4.4f), EmergencyInk)
+}
+
+private fun DrawScope.drawChevrons(runs: List<List<SitPathPlot.Pt>>, ink: Color) {
+    for (run in runs) {
+        val length = runLength(run)
+        if (length < 28f) continue
+        var cursor = 16f
+        while (cursor < length - 14f) {
+            val step = pointAlong(run, cursor) ?: break
+            drawChevron(step.first, step.second, 5.2f, ink)
+            cursor += 18f
+        }
+    }
+}
+
+private fun DrawScope.drawChevron(at: Offset, angle: Float, size: Float, ink: Color) {
+    fun stroke(width: Float, color: Color) {
+        val ux = cos(angle)
+        val uy = sin(angle)
+        val px = -uy
+        val py = ux
+        val tip = Offset(at.x + ux * size, at.y + uy * size)
+        val left = Offset(at.x - ux * size * 0.35f + px * size * 0.55f, at.y - uy * size * 0.35f + py * size * 0.55f)
+        val right = Offset(at.x - ux * size * 0.35f - px * size * 0.55f, at.y - uy * size * 0.35f - py * size * 0.55f)
+        drawLine(color, left, tip, width, cap = StrokeCap.Round)
+        drawLine(color, right, tip, width, cap = StrokeCap.Round)
+    }
+    stroke(3.4f, Color.White)
+    stroke(1.8f, ink)
+}
+
+private fun DrawScope.drawTravelArrow(at: Offset, angle: Float, ink: Color) {
+    fun triangle(size: Float): Path {
+        val ux = cos(angle)
+        val uy = sin(angle)
+        val px = -uy
+        val py = ux
+        return Path().apply {
+            moveTo(at.x + ux * size, at.y + uy * size)
+            lineTo(at.x - ux * size * 0.75f + px * size * 0.62f, at.y - uy * size * 0.75f + py * size * 0.62f)
+            lineTo(at.x - ux * size * 0.75f - px * size * 0.62f, at.y - uy * size * 0.75f - py * size * 0.62f)
+            close()
+        }
+    }
+    drawPath(triangle(9.2f), Color.White)
+    drawPath(triangle(6.4f), ink)
+}
+
+private fun travelAngle(pts: List<SitPathPlot.Pt>): Float? {
+    for (i in pts.lastIndex downTo 1) {
+        val dx = pts[i].x - pts[i - 1].x
+        val dy = pts[i].y - pts[i - 1].y
+        if (hypot(dx, dy) >= 1f) return atan2(dy, dx)
+    }
+    return null
+}
+
+private fun runLength(run: List<SitPathPlot.Pt>): Float {
+    var sum = 0f
+    for (i in 1 until run.size) {
+        sum += hypot(run[i].x - run[i - 1].x, run[i].y - run[i - 1].y)
+    }
+    return sum
+}
+
+private fun pointAlong(run: List<SitPathPlot.Pt>, at: Float): Pair<Offset, Float>? {
+    var left = at
+    for (i in 1 until run.size) {
+        val dx = run[i].x - run[i - 1].x
+        val dy = run[i].y - run[i - 1].y
+        val len = hypot(dx, dy)
+        if (len < 1f) continue
+        if (left <= len) {
+            val t = left / len
+            return Offset(run[i - 1].x + dx * t, run[i - 1].y + dy * t) to atan2(dy, dx)
+        }
+        left -= len
+    }
+    return null
 }
 
 private fun DrawScope.strokeOnMap(

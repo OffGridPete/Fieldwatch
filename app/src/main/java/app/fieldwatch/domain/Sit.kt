@@ -299,6 +299,8 @@ data class SitFile(
     val battery: List<BatteryMark> = emptyList(),
     /** Broadcast-within-range lines. Empty on a file saved before this list. */
     val droneNear: List<DroneNearMark> = emptyList(),
+    /** Quiet cues that fired during this sit. Empty on a file saved before this list. */
+    val quiet: List<QuietMark> = emptyList(),
 )
 
 data class SitUi(
@@ -339,6 +341,7 @@ data class SitDebrief(
     val swarms: List<SwarmBurst> = emptyList(),
     val battery: List<BatteryMark> = emptyList(),
     val droneNear: List<DroneNearMark> = emptyList(),
+    val quiet: List<QuietMark> = emptyList(),
 )
 
 /** Path tail still to fold, and the cameras already frozen on that sit. */
@@ -368,6 +371,7 @@ class SitSession(
     swarms: List<SwarmBurst> = emptyList(),
     battery: List<BatteryMark> = emptyList(),
     droneNear: List<DroneNearMark> = emptyList(),
+    quiet: List<QuietMark> = emptyList(),
 ) {
     var summary: SitSummary = summary
         private set
@@ -389,6 +393,7 @@ class SitSession(
     private val cells = ArrayList<CellMark>(cells.size + 4).apply { addAll(cells) }
     private val battery = ArrayList<BatteryMark>(battery.size + 4).apply { addAll(battery) }
     private val droneNear = ArrayList<DroneNearMark>(droneNear.size + 4).apply { addAll(droneNear) }
+    private val quiet = ArrayList<QuietMark>(quiet.size + 4).apply { addAll(quiet) }
     var dirty: Boolean = false
         private set
     private var pathSnap: List<GpsSample> = emptyList()
@@ -520,6 +525,7 @@ class SitSession(
             swarms = swarms.toList(),
             battery = battery.toList(),
             droneNear = droneNear.toList(),
+            quiet = quiet.toList(),
         )
     }
 
@@ -640,6 +646,18 @@ class SitSession(
             changed = true
         }
         if (changed) dirty = true
+    }
+
+    /** One quiet cue. No open sit leaves the file alone. */
+    fun noteQuiet(mark: QuietMark) {
+        if (!open) return
+        if (mark.at < summary.startAt) return
+        quiet += mark
+        if (quiet.size > 40) {
+            val drop = quiet.size - 40
+            repeat(drop) { quiet.removeAt(0) }
+        }
+        dirty = true
     }
 
     /** One low-battery step. No open sit leaves the file alone. */

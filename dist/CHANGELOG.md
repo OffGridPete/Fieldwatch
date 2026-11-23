@@ -4,6 +4,32 @@ Newest first. This is Fieldwatch (`app.fieldwatch`). Each build below is what Se
 
 Fieldwatch continues the Spectre 1.2.14 field build under a new name, application id, and the MIT License. It does not replace Spectre on a phone.
 
+## 1.2.2 — 23 November 2026
+
+- Notifications are asked on Android 13 and newer, and declining them no longer blocks the app. The scanning notification still shows, so the scan can keep running with the screen off. Alert notifications stay off until you allow them.
+- Catalog 118 adds rows for a product name or that company's own Bluetooth id. Air Lift, BlueParrott, Danlaw, Directed, Dreo, GN Hearing, Grundfos, HughesNet, iFIT, Kia, Kuna, Lighthouse, Lippert, Optimum, Otodata, PrepWizard, Procon, Pura, Redtiger, ResMed, Rinnai, Sennheiser, SonicWall, Soundstream, Toast, Turtle Beach, Ubee, Victron, and Vivint. None of these beep. Eddystone store beacons stay unmatched.
+- Catalog 118 adds four setup and serial names on rows that were already there. Tuya matches a setup Wi-Fi name that is SmartLife- or SmartLife_ plus four characters. That name is only on during pairing. UniFi matches a setup Wi-Fi name that starts with UDM Setup, a Dream Machine. Midea matches a setup Wi-Fi name that starts with net_ac_. The word net is still not Midea. Motive matches a Bluetooth name that starts with AABL, a Vehicle Gateway serial, while that name is advertised. None of these beep.
+- Another app can open the Fieldwatch screen with app.fieldwatch.OPEN sent to MainActivity. app.fieldwatch.CLOSE, sent to AutomationService, sends the screen to the background and leaves the scan running. Swiping Fieldwatch out of Recents still stops the scan.
+- Sit export and Log export each open on the format you used last. The first time is still Log file — CSV. GeoJSON and the ATAK data package stay on Sit export.
+- Another app can start and stop the scan, start and stop a sit, and ask whether a scan is running. It can also write the newest saved sit, or the radio log. The result is status.txt under Android/data/app.fieldwatch/files/automation. Export sit writes that saved sit. An open sit and the last 15 minutes stay out.
+- The line under Scanning on the Settings list shows the scan intensity and Battery protection On or Off.
+- Settings → Drone monitoring can alert when a Remote ID on the live list declares an emergency. The switch is off until you turn it on. Beep, voice, and the silent notification are the same switches as the other warnings on that page. The same UAS ID on Bluetooth and Wi-Fi is one warning. It does not need a GPS fix or a bookmark. A drone marked as yours still alerts. The line is Remote ID, the aircraft name or the UAS ID, declared an emergency.
+- Show map with live path draws a Remote ID track as white chevrons, in the direction of travel. An open ring is the first point. The last position stays the class icon. A declared emergency marks that stretch.
+- A sit path draws a Remote ID track with the same chevrons, open ring, and arrow as the aircraft record. The sit and the report show altitude, speed, and course. A declared emergency notes the time and marks that stretch.
+- A Remote ID emergency is kept with the visit. The card notes when it was declared. That stretch of the path is marked, and a diamond shows where it started.
+- A Remote ID path is drawn with chevrons in the direction of travel. An open ring is the first point heard. An arrow is the last. The visit shows the altitude, speed, and course the aircraft sent.
+- A Remote ID visit shows how long it lasted. The record keeps the path the aircraft sent, and one pilot pin for that visit. Visits in the same area share a map, each in its own color. A visit far from the others has its own map. The pilot pin is drawn when it was within 2 km. Privacy mode keeps the map.
+- Reports lists Remote ID aircraft from the last 14 days. One row is one aircraft. A pass is one visit, and the next pass starts after 20 minutes of quiet. The radio page shows how many days it was heard, and when it was heard before this pass. That line opens the same record.
+- Catalog 117 names three radios. iTAG matches the Bluetooth name iTAG exactly. A longer name does not match. VIOFO matches a Wi-Fi name that starts with VIOFO. A toy camera drone matches a Wi-Fi name that starts with WIFI_UFO or FLY-UFO-. The drone beeps. iTAG and VIOFO do not.
+- Known camera voice can share one alert. Cameras within 200 m of the one that speaks stay quiet. The switch is off until you turn it on. The map still shows each camera.
+- A group of one kind says the plural, such as Known Flock cameras ahead. A group of several kinds names each kind, such as Flock and red light cameras ahead. One camera still says when it is looking your way.
+- Porkchop matches the name PORKCHOP exactly, and a name that starts with M5PORKCHOP. A longer name that only contains those letters does not match. The vendor mark 50:52:4B still matches.
+- Mute on a radio stops the beep, the voice, the notification, and the vibrate for that radio. It stays on the list with the same signature name. It is not marked as yours.
+- Catalog 116 names four radios from a recent sit. LEDnetWF matches a Bluetooth name that starts with LEDnetWF. EZ Lynk matches a Wi-Fi name that starts with EZLYNK. Trackunit matches Trackunit's company id. OontZ matches a Bluetooth name that starts with OontZ. None of these beep.
+- A scan that starts with the screen off stays up. Location is added the next time Fieldwatch is on screen.
+- A named radio can alert when it goes quiet. The switch is off until you turn it on. One pip, a vibrate, and a voice line, after it was heard for 2 minutes. Mute stays quiet. Mine can still use this. Stopping the scan does not raise it.
+- Bundled language files are written for this version.
+
 ## 1.2.1 — 20 November 2026
 
 - Watchlist voice speaks again after the beep. A long watchlist could beep and then drop the sentence, because the beep ended before the sentence was saved. The sentence is kept. A speech engine that has stopped is started again. Voice that was already on stays on.

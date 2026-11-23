@@ -11,7 +11,23 @@ internal object SwarmLines {
             LanguageSlot.BODY,
         ),
         en("ui.swarm.unknown", "No maker named", LanguageSlot.BODY),
-        en("ui.swarm.voice", "Says drone swarm detected, or broadcast within the distance.", LanguageSlot.BODY),
+        en(
+            "ui.swarm.voice",
+            "Says drone swarm detected, broadcast within the distance, or a Remote ID emergency.",
+            LanguageSlot.BODY,
+        ),
+        en("ui.rid.emergency.row", "Remote ID emergency", LanguageSlot.CONTROL),
+        en(
+            "ui.rid.emergency.note",
+            "Alerts when a Remote ID on the live list declares an emergency.",
+            LanguageSlot.BODY,
+        ),
+        en(
+            "ui.rid.emergency.voice",
+            "Remote ID {name} declared an emergency.",
+            LanguageSlot.BODY,
+        ),
+        en("ui.rid.emergency.plain", "Remote ID declared an emergency.", LanguageSlot.BODY),
         en(
             "ui.swarm.part",
             "Part of a drone swarm at {time}",
