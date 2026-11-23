@@ -25,11 +25,18 @@ class AppUpdateTest {
 
     @Test
     fun thePublishedNotesFileIsThisVersion() {
-        val published =
-            "Sorry for the quick patch right after the last release. " +
-                "This fixes a bug that kept voice alerts from playing for some announcement on phones."
+        val published = listOf(
+            "Drone history. See every Remote ID drone your phone heard in the last 14 days, and spot the ones that keep coming back. Each visit is mapped with its path, direction, altitude, speed, and the pilot's spot if it was within 2 km.",
+            "Drone emergency alerts. Get alerted when a nearby drone declares an emergency over Remote ID. Turn it on in Drone monitoring.",
+            "Mute a single radio. Silence one radio without silencing everything else that matches its signature.",
+            "Know when it leaves. A named radio can now alert you when it goes quiet.",
+            "Smarter camera alerts. Cameras within 200 m of each other share one voice alert, like \"Flock and red light cameras ahead.\" You'll still hear when a camera is facing your way.",
+            "Automation support. Other apps can now start or stop a scan or sit and save the newest sit or radio log.",
+            "More devices named. Toy camera drones, iTAG trackers, VIOFO dashcams, the Porkchop Wi-Fi tool, Tuya/SmartLife, UniFi and Midea setup networks, and Motive fleet trackers.",
+            "Small touches. Settings shows your scan intensity and battery protection status, and exports remember your last format.",
+        ).joinToString("\n\n")
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
-        assertEquals(AppUpdateNote(56, "1.2.1", published), AppUpdate.parse(file.readText()))
+        assertEquals(AppUpdateNote(57, "1.2.2", published), AppUpdate.parse(file.readText()))
     }
 
     @Test

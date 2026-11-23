@@ -1,5 +1,5 @@
 {
-  "versionCode": 56,
-  "versionName": "1.2.1",
-  "notes": "Sorry for the quick patch right after the last release. This fixes a bug that kept voice alerts from playing for some announcement on phones."
+  "versionCode": 57,
+  "versionName": "1.2.2",
+  "notes": "Drone history. See every Remote ID drone your phone heard in the last 14 days, and spot the ones that keep coming back. Each visit is mapped with its path, direction, altitude, speed, and the pilot's spot if it was within 2 km.\n\nDrone emergency alerts. Get alerted when a nearby drone declares an emergency over Remote ID. Turn it on in Drone monitoring.\n\nMute a single radio. Silence one radio without silencing everything else that matches its signature.\n\nKnow when it leaves. A named radio can now alert you when it goes quiet.\n\nSmarter camera alerts. Cameras within 200 m of each other share one voice alert, like \"Flock and red light cameras ahead.\" You'll still hear when a camera is facing your way.\n\nAutomation support. Other apps can now start or stop a scan or sit and save the newest sit or radio log.\n\nMore devices named. Toy camera drones, iTAG trackers, VIOFO dashcams, the Porkchop Wi-Fi tool, Tuya/SmartLife, UniFi and Midea setup networks, and Motive fleet trackers.\n\nSmall touches. Settings shows your scan intensity and battery protection status, and exports remember your last format."
 }

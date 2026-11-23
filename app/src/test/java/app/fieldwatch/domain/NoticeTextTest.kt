@@ -11,9 +11,10 @@ class NoticeTextTest {
         val file = listOf(File("dist/app-update.json"), File("../dist/app-update.json")).first { it.isFile }
         val note = AppUpdate.parse(file.readText())!!
         val parts = NoticeText.paragraphs(note.notes)
-        assertEquals(1, parts.size)
+        assertEquals(8, parts.size)
         assertEquals(note.notes, parts.joinToString("\n\n"))
-        assertTrue(parts[0].startsWith("Sorry for the quick patch"))
+        assertTrue(parts[0].startsWith("Drone history"))
+        assertTrue(parts.last().startsWith("Small touches"))
     }
 
     @Test
