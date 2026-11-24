@@ -1390,7 +1390,7 @@ class DefaultCatalogTest {
         assertEquals(SignatureClass.HOME, row.kind)
         assertTrue(row.attentionNote.isBlank())
         assertFalse("fleet-elk-led" in DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId })
-        assertEquals(listOf("ELK-BLEDO*"), row.rules.map { it.text })
+        assertEquals(listOf("ELK-BLEDO*", "ELK-BLEDDM*"), row.rules.map { it.text })
         assertTrue(row.rules.all { it.kind == RuleKind.NAME_GLOB && it.radio == RadioKind.BLE })
         val dob = ble(name = "ELK-BLEDOB").copy(key = "BLE:e1", mac = "AA:BB:CC:14:04:01")
         val dom = ble(name = "ELK-BLEDOM").copy(key = "BLE:e2", mac = "AA:BB:CC:14:04:02")

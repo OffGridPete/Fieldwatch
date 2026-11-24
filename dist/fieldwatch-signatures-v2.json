@@ -1148,6 +1148,14 @@
                     "dataPrefixHex": "",
                     "radio": null,
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Apple Pencil*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -9155,6 +9163,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "95665A00-8704-11E5-960C-0002A5D5C51B",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -10195,6 +10211,14 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "CARLINK_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "smartDongle-????",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "WIFI",
@@ -23770,6 +23794,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ELK-BLEDDM*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -25995,6 +26027,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GLI1057*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -26886,6 +26926,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "GVH6*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -27391,6 +27439,22 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "ALPHA HWR*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Grundfos",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FE5D",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "BLE",
@@ -46312,6 +46376,14 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "IOSiX ELD*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -46945,6 +47017,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Core200*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -47022,6 +47102,30 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "LG S77S*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LG CK*(*)",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LG CL*(*)",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LG SP*(*)",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "BLE",
@@ -49339,6 +49443,14 @@
                 {
                     "kind": "NAME_GLOB",
                     "text": "AABL*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ADBV52*",
                     "companyId": 0,
                     "dataPrefixHex": "",
                     "radio": "BLE",
@@ -59388,6 +59500,14 @@
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Samsung Range*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -64623,6 +64743,14 @@
                     "dataPrefixHex": "",
                     "radio": "WIFI",
                     "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "AP-UBWAPM-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
                 }
             ],
             "minPeers": 0,
@@ -67273,6 +67401,14 @@
                     "kind": "SERVICE_UUID",
                     "text": "FE79",
                     "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 497,
                     "dataPrefixHex": "",
                     "radio": "BLE",
                     "enabled": true
