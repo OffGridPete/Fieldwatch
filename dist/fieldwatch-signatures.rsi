@@ -770,6 +770,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-air-weigh",
+            "name": "Air-Weigh",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2608,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Air-Weigh on-board truck or trailer scale (LoadMaxx or QuickWeigh). The company id is Air-Weigh's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-airlink",
             "name": "AirLink",
             "enabled": true,
@@ -923,6 +949,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-amazfit",
+            "name": "Amazfit",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 343,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Amazfit*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Amazfit or Zepp watch or fitness strap (including Helio Strap). Matches Huami's company id or a Bluetooth name starting with Amazfit.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE",
             "publisher": "fieldwatch"
         },
         {
@@ -9874,6 +9934,40 @@
             "clusterByOui": false,
             "sequentialMac": false,
             "notes": "BYD phone-as-key or vehicle BLE. Pattern match, not a specific model.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-calamp",
+            "name": "CalAmp",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "LMU_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "F3B3DC00-0451-1126-4029-BAB249EA4311",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "CalAmp LMU fleet or vehicle telematics gateway. The Bluetooth name starts with LMU_, or the advertisement carries the LMU service. Pattern match, not that car.",
             "attentionNote": "",
             "builtIn": true,
             "kind": "VEHICLE",
@@ -20788,6 +20882,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-cmt-drivewell",
+            "name": "CMT DriveWell",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "SERVICE_DATA",
+                    "text": "B10D",
+                    "companyId": 0,
+                    "dataPrefixHex": "333E15DD",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Cambridge Mobile Telematics DriveWell windshield tag, used by insurance safe-driving apps. Matches the DriveWell service data header. Pattern match, not that car.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-cobra",
             "name": "Cobra",
             "enabled": true,
@@ -20861,6 +20981,32 @@
             "attentionNote": "Compex Wi-Fi AP. Some US public-safety agencies use these in vehicles. The same IEEE OUIs appear on other Compex radios. Pattern match, not that agency. Look with your eyes.",
             "builtIn": true,
             "kind": "LAW_ENFORCEMENT",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-coros",
+            "name": "COROS",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "COROS *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "COROS GPS sports watch (PACE, APEX, or VERTIX). The Bluetooth name starts with COROS followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "WEARABLE",
             "publisher": "fieldwatch"
         },
         {
@@ -22334,6 +22480,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-dual-iplug",
+            "name": "Dual iPlug",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Dual iPlug*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Dual Electronics car stereo receiver using the iPlug Smart Remote app. The Bluetooth name starts with Dual iPlug.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-dult",
             "name": "DULT tracker",
             "enabled": true,
@@ -22547,6 +22719,32 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "THERMOSTAT",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-ecolab",
+            "name": "Ecolab",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2992,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Ecolab connected commercial pest or hygiene monitor. The company id is Ecolab's. The two-letter Bluetooth name SP is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
             "publisher": "fieldwatch"
         },
         {
@@ -24137,6 +24335,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-eufy-lock",
+            "name": "eufy Smart Lock",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "T8502_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "8C850001-0302-41C5-B46E-CF057C562025",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "eufy Security smart deadbolt (T8502 / E110). Door lock, not a camera. Matches the T8502_ setup name or the eufy lock service.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "LOCK",
             "publisher": "fieldwatch"
         },
         {
@@ -25936,6 +26168,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-ge-appliances",
+            "name": "GE Appliances",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2345,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "GE or Haier SmartHQ appliance, such as a GE or GE Profile window air conditioner. The company id is Qingdao Haier's, and the manufacturer payload carries the ASCII model number.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-genetec",
             "name": "Genetec AutoVu",
             "enabled": true,
@@ -27413,6 +27671,32 @@
                     }
                 ]
             },
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-gozio",
+            "name": "Gozio",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 506,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Gozio Health hospital wayfinding beacon. Placed in corridors and garages for indoor clinic navigation. The company id is Gozio's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "BEACON",
             "publisher": "fieldwatch"
         },
         {
@@ -45584,6 +45868,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-hubspace",
+            "name": "Hubspace",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 722,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Home Depot Hubspace smart light, fan, or plug (Hampton Bay, EcoSmart, or Defiant) built on the Afero radio platform. The company id is Afero's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-huf",
             "name": "Huf",
             "enabled": true,
@@ -46459,6 +46769,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "CAMERA",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-invue",
+            "name": "InVue",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 2737,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "MANUFACTURER_DATA",
+                    "text": "",
+                    "companyId": 45322,
+                    "dataPrefixHex": "64",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "InVue retail display-case or cabinet smart lock (OneKEY / LIVE). Matches InVue's company id or its big-endian lock telemetry frame.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "LOCK",
             "publisher": "fieldwatch"
         },
         {
@@ -49226,6 +49570,40 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-milwaukee",
+            "name": "Milwaukee ONE-KEY",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 357,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FDF5",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Milwaukee ONE-KEY power tool or TICK equipment tag. Matches Milwaukee Electric Tools' company id or ONE-KEY Bluetooth service.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-minew",
             "name": "Minew",
             "enabled": true,
@@ -51830,6 +52208,40 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-oxxo",
+            "name": "OXXO",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "OXXO-Orders",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "OXXO-Appliance",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "OXXO convenience store point-of-sale or store appliance Wi-Fi. Matches the store network names OXXO-Orders and OXXO-Appliance.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "ISP",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-pacific-tpms",
             "name": "Pacific TPMS",
             "enabled": true,
@@ -52708,6 +53120,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "WEARABLE",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-polara",
+            "name": "Polara crosswalk",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "60054001-F97C-C5A3-9941-1C799C307DDF",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "5EE1B93C-3DF6-11E4-9D9F-164230D1DF67",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Polara accessible pedestrian crosswalk button (iNavigator / PedApp). Matches the two Polara crosswalk Bluetooth services. The advertised name is often the corner and crossing direction, such as SWC-NB or NEC-WB, or a P-prefixed serial.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "SIGNAGE",
             "publisher": "fieldwatch"
         },
         {
@@ -59838,6 +60284,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-scenxus",
+            "name": "ScenXus",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "ScenXus-*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Prolitec ScenXus commercial scent diffuser. The Wi-Fi name starts with ScenXus-.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-schlage",
             "name": "Schlage",
             "enabled": true,
@@ -60438,6 +60910,74 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-simplisafe",
+            "name": "SimpliSafe",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1713,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "SimpliSafe home alarm or camera. Residential security gear, not a municipal pole. The company id is SimpliSafe's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "CAMERA",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-skullcandy",
+            "name": "Skullcandy",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 5,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1993,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Skullcandy*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "SKDY *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Skullcandy speaker or earbuds, including Terrain speakers that advertise as SKDY. Matches Skullcandy's company id or a Bluetooth name starting with Skullcandy or SKDY followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "AUDIO",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-skydio",
             "name": "Skydio",
             "enabled": true,
@@ -60511,6 +61051,32 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "HEALTH",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-smart-wave",
+            "name": "Smart Wave",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1997,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Smart Wave Technologies connected commercial rodent trap or facility sensor. The company id is Smart Wave's. The two-letter Bluetooth name BG is not the rule.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
             "publisher": "fieldwatch"
         },
         {
@@ -60937,6 +61503,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-star-micronics",
+            "name": "Star Micronics",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 432,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TSP100*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Star Micronics receipt printer (TSP100IV and similar). The company id is Star Micronics', or the Bluetooth name starts with TSP100.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "HOME",
             "publisher": "fieldwatch"
         },
         {
@@ -64568,6 +65168,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-trackonomy",
+            "name": "Trackonomy",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 3831,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Trackonomy smart logistics tape or parcel beacon. The company id is Trackonomy's.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "BEACON",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-trackunit",
             "name": "Trackunit",
             "enabled": true,
@@ -64649,6 +65275,40 @@
             "attentionNote": "",
             "builtIn": true,
             "kind": "ISP",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-trimble",
+            "name": "Trimble",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 6,
+            "rules": [
+                {
+                    "kind": "MANUFACTURER_ID",
+                    "text": "",
+                    "companyId": 1021,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "Trimble *",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Trimble survey GNSS receiver or total station. The company id is Trimble's, or the Bluetooth name starts with Trimble followed by a space.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "OTHER",
             "publisher": "fieldwatch"
         },
         {
@@ -64799,6 +65459,32 @@
                     }
                 ]
             },
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-type-s-led",
+            "name": "Type S LED",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "TYPE_S_LED_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Type S automotive underglow or exterior LED controller. The Bluetooth name starts with TYPE_S_LED_.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
             "publisher": "fieldwatch"
         },
         {
@@ -66668,6 +67354,40 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-vantrue",
+            "name": "Vantrue",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "*_VANTRUE_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                },
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "VANTRUE_*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "WIFI",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Vantrue dashcam Wi-Fi, such as E1 Lite_VANTRUE_. It is on while the camera Wi-Fi is switched on.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-verizon",
             "name": "Verizon",
             "enabled": true,
@@ -67264,6 +67984,32 @@
             "publisher": "fieldwatch"
         },
         {
+            "id": "fleet-wiliot",
+            "name": "Wiliot",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 3,
+            "rules": [
+                {
+                    "kind": "SERVICE_UUID",
+                    "text": "FCC6",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "Wiliot IoT Pixel supply-chain sensor tag on pallets, crates, or store fixtures. Matches Wiliot's Bluetooth service.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "BEACON",
+            "publisher": "fieldwatch"
+        },
+        {
             "id": "fleet-winegard",
             "name": "Winegard",
             "enabled": true,
@@ -67387,6 +68133,32 @@
             "attentionNote": "Wolfcom body-worn or in-car camera. Name-only when advertised. Patrol units may stay quiet. Pattern match, not that officer. Look with your eyes.",
             "builtIn": true,
             "kind": "LAW_ENFORCEMENT",
+            "publisher": "fieldwatch"
+        },
+        {
+            "id": "fleet-wq-scooter",
+            "name": "WQ-87X scooter",
+            "enabled": true,
+            "matchAny": true,
+            "colorIndex": 7,
+            "rules": [
+                {
+                    "kind": "NAME_GLOB",
+                    "text": "WQ-87X*",
+                    "companyId": 0,
+                    "dataPrefixHex": "",
+                    "radio": "BLE",
+                    "enabled": true
+                }
+            ],
+            "minPeers": 0,
+            "peerWindowSec": 60,
+            "clusterByOui": false,
+            "sequentialMac": false,
+            "notes": "WQ-87X electric scooter dashboard. The Bluetooth name starts with WQ-87X. The Cycling Speed and Cadence service and the Espressif address are shared, so this row uses the name.",
+            "attentionNote": "",
+            "builtIn": true,
+            "kind": "VEHICLE",
             "publisher": "fieldwatch"
         },
         {
