@@ -701,6 +701,7 @@ object DefaultCatalog {
             name("iPhone"),
             name("iPad"),
             name("MacBook"),
+            bleGlob("Apple Pencil*"),
         ),
     )
 
@@ -2294,6 +2295,7 @@ object DefaultCatalog {
             listOf(
                 wifiGlob("CARLINK-??????"),
                 wifiGlob("CARLINK_*"),
+                wifiGlob("smartDongle-????"),
             ),
             listOf("CC:57:63", "68:8F:C9"),
         ),
@@ -2333,6 +2335,7 @@ object DefaultCatalog {
             bleGlob("GV5108*"),
             bleGlob("GVH5*"),
             bleGlob("GVH5075*"),
+            bleGlob("GVH6*"),
         ),
     )
 
@@ -2391,6 +2394,7 @@ object DefaultCatalog {
             wifiGlob("Motive Hotspot*"),
             wifiGlob("KeepTruckin*"),
             bleGlob("AABL*"),
+            bleGlob("ADBV52*"),
         ),
     )
 
@@ -3416,6 +3420,7 @@ object DefaultCatalog {
             glob("U6-*"),
             glob("UXG*"),
             wifiGlob("UDM Setup*"),
+            bleGlob("AP-UBWAPM-*"),
         ),
     )
 
@@ -3821,6 +3826,7 @@ object DefaultCatalog {
             wifiGlob("[cooktop]*"),
             wifiGlob("[refrigerator]*"),
             bleGlob("[oven]*"),
+            bleGlob("Samsung Range*"),
         ),
     )
 
@@ -5257,6 +5263,7 @@ object DefaultCatalog {
         rules = listOf(
             bleGlob("LAP-*"),
             bleGlob("Core300*"),
+            bleGlob("Core200*"),
         ),
     )
 
@@ -5281,7 +5288,10 @@ object DefaultCatalog {
         matchAny = true,
         notes = "ELK RGB light-strip controller. The name starts with ELK-BLEDO. The HID and Battery services are shared, and the manufacturer field is not a Bluetooth company id, so this row uses the name. MELK lamps stay on MELK.",
         builtIn = true,
-        rules = listOf(bleGlob("ELK-BLEDO*")),
+        rules = listOf(
+            bleGlob("ELK-BLEDO*"),
+            bleGlob("ELK-BLEDDM*"),
+        ),
     )
 
     private fun midea() = Fleet(
@@ -5308,7 +5318,10 @@ object DefaultCatalog {
         matchAny = true,
         notes = "Zebra scanner or printer on service FE79.",
         builtIn = true,
-        rules = listOf(bleUuid("FE79")),
+        rules = listOf(
+            bleUuid("FE79"),
+            bleMfg(0x01F1),
+        ),
     )
 
     private fun jlab() = Fleet(
@@ -5733,6 +5746,9 @@ object DefaultCatalog {
             wifiGlob("[LG_Window A/C]*"),
             bleGlob("LG_Speaker*"),
             bleGlob("LG S77S*"),
+            bleGlob("LG CK*(*)"),
+            bleGlob("LG CL*(*)"),
+            bleGlob("LG SP*(*)"),
         ),
     )
 
@@ -5745,7 +5761,10 @@ object DefaultCatalog {
         matchAny = true,
         notes = "Open LED sign. The name starts with GLI1050. The Nordic UART service is shared, so this row uses the name.",
         builtIn = true,
-        rules = listOf(bleGlob("GLI1050*")),
+        rules = listOf(
+            bleGlob("GLI1050*"),
+            bleGlob("GLI1057*"),
+        ),
     )
 
     private fun iosix() = Fleet(
@@ -5757,7 +5776,10 @@ object DefaultCatalog {
         matchAny = true,
         notes = "IOSiX electronic logging device in a truck. The name starts with IOSiX ELD.",
         builtIn = true,
-        rules = listOf(wifiGlob("IOSiX ELD*")),
+        rules = listOf(
+            wifiGlob("IOSiX ELD*"),
+            bleGlob("IOSiX ELD*"),
+        ),
     )
 
     private fun rove() = Fleet(
@@ -5946,7 +5968,10 @@ object DefaultCatalog {
         matchAny = true,
         notes = "BlueParrott headset. The Bluetooth name starts with BlueParrott.",
         builtIn = true,
-        rules = listOf(bleGlob("BlueParrott*")),
+        rules = listOf(
+            bleGlob("BlueParrott*"),
+            bleUuid("95665A00-8704-11E5-960C-0002A5D5C51B"),
+        ),
     )
 
     private fun danlaw() = Fleet(
@@ -6009,7 +6034,11 @@ object DefaultCatalog {
         matchAny = true,
         notes = "Grundfos pump. The Bluetooth name starts with ALPHA HWR.",
         builtIn = true,
-        rules = listOf(bleGlob("ALPHA HWR*")),
+        rules = listOf(
+            bleGlob("ALPHA HWR*"),
+            bleGlob("Grundfos"),
+            bleUuid("FE5D"),
+        ),
     )
 
     private fun hughesNet() = Fleet(
