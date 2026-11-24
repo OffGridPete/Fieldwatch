@@ -439,6 +439,32 @@ object DefaultCatalog {
         ubee(),
         victron(),
         vivint(),
+        polara(),
+        geAppliances(),
+        simplisafe(),
+        dualIplug(),
+        wqScooter(),
+        oxxo(),
+        smartWave(),
+        gozio(),
+        cmtDrivewell(),
+        wiliot(),
+        invue(),
+        hubspace(),
+        calamp(),
+        vantrue(),
+        ecolab(),
+        coros(),
+        scenxus(),
+        skullcandy(),
+        eufyLock(),
+        typeSLed(),
+        airWeigh(),
+        trimble(),
+        starMicronics(),
+        milwaukee(),
+        trackonomy(),
+        amazfit(),
     ).sortedBy { it.name.lowercase() }
 
     private fun flockCameras() = Fleet(
@@ -6317,6 +6343,383 @@ object DefaultCatalog {
             bleGlob("VIVINT-HUB-*"),
             bleGlob("DBC350_*"),
             bleGlob("HALIBUT2-*"),
+        ),
+    )
+
+
+    private fun polara() = Fleet(
+        id = "fleet-polara",
+        name = "Polara crosswalk",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.SIGNAGE,
+        matchAny = true,
+        notes = "Polara accessible pedestrian crosswalk button (iNavigator / PedApp). Matches the two Polara crosswalk Bluetooth services. The advertised name is often the corner and crossing direction, such as SWC-NB or NEC-WB, or a P-prefixed serial.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("60054001-F97C-C5A3-9941-1C799C307DDF"),
+            bleUuid("5EE1B93C-3DF6-11E4-9D9F-164230D1DF67"),
+        ),
+    )
+
+    private fun geAppliances() = Fleet(
+        id = "fleet-ge-appliances",
+        name = "GE Appliances",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "GE or Haier SmartHQ appliance, such as a GE or GE Profile window air conditioner. The company id is Qingdao Haier's, and the manufacturer payload carries the ASCII model number.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0929),
+        ),
+    )
+
+    private fun simplisafe() = Fleet(
+        id = "fleet-simplisafe",
+        name = "SimpliSafe",
+        enabled = true,
+        colorIndex = Hue.CAMERA,
+        kind = SignatureClass.CAMERA,
+        matchAny = true,
+        notes = "SimpliSafe home alarm or camera. Residential security gear, not a municipal pole. The company id is SimpliSafe's.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x06B1),
+        ),
+    )
+
+    private fun dualIplug() = Fleet(
+        id = "fleet-dual-iplug",
+        name = "Dual iPlug",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Dual Electronics car stereo receiver using the iPlug Smart Remote app. The Bluetooth name starts with Dual iPlug.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("Dual iPlug*"),
+        ),
+    )
+
+    private fun wqScooter() = Fleet(
+        id = "fleet-wq-scooter",
+        name = "WQ-87X scooter",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "WQ-87X electric scooter dashboard. The Bluetooth name starts with WQ-87X. The Cycling Speed and Cadence service and the Espressif address are shared, so this row uses the name.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("WQ-87X*"),
+        ),
+    )
+
+    private fun oxxo() = Fleet(
+        id = "fleet-oxxo",
+        name = "OXXO",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.ISP,
+        matchAny = true,
+        notes = "OXXO convenience store point-of-sale or store appliance Wi-Fi. Matches the store network names OXXO-Orders and OXXO-Appliance.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("OXXO-Orders"),
+            wifiGlob("OXXO-Appliance"),
+        ),
+    )
+
+    private fun smartWave() = Fleet(
+        id = "fleet-smart-wave",
+        name = "Smart Wave",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Smart Wave Technologies connected commercial rodent trap or facility sensor. The company id is Smart Wave's. The two-letter Bluetooth name BG is not the rule.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x07CD),
+        ),
+    )
+
+    private fun gozio() = Fleet(
+        id = "fleet-gozio",
+        name = "Gozio",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.BEACON,
+        matchAny = true,
+        notes = "Gozio Health hospital wayfinding beacon. Placed in corridors and garages for indoor clinic navigation. The company id is Gozio's.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x01FA),
+        ),
+    )
+
+    private fun cmtDrivewell() = Fleet(
+        id = "fleet-cmt-drivewell",
+        name = "CMT DriveWell",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Cambridge Mobile Telematics DriveWell windshield tag, used by insurance safe-driving apps. Matches the DriveWell service data header. Pattern match, not that car.",
+        builtIn = true,
+        rules = listOf(
+            svcData("B10D", "333E15DD"),
+        ),
+    )
+
+    private fun wiliot() = Fleet(
+        id = "fleet-wiliot",
+        name = "Wiliot",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.BEACON,
+        matchAny = true,
+        notes = "Wiliot IoT Pixel supply-chain sensor tag on pallets, crates, or store fixtures. Matches Wiliot's Bluetooth service.",
+        builtIn = true,
+        rules = listOf(
+            bleUuid("FCC6"),
+        ),
+    )
+
+    private fun invue() = Fleet(
+        id = "fleet-invue",
+        name = "InVue",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
+        matchAny = true,
+        notes = "InVue retail display-case or cabinet smart lock (OneKEY / LIVE). Matches InVue's company id or its big-endian lock telemetry frame.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0AB1),
+            MatchRule(RuleKind.MANUFACTURER_DATA, companyId = 0xB10A, dataPrefixHex = "64", radio = RadioKind.BLE),
+        ),
+    )
+
+    private fun hubspace() = Fleet(
+        id = "fleet-hubspace",
+        name = "Hubspace",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Home Depot Hubspace smart light, fan, or plug (Hampton Bay, EcoSmart, or Defiant) built on the Afero radio platform. The company id is Afero's.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x02D2),
+        ),
+    )
+
+    private fun calamp() = Fleet(
+        id = "fleet-calamp",
+        name = "CalAmp",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "CalAmp LMU fleet or vehicle telematics gateway. The Bluetooth name starts with LMU_, or the advertisement carries the LMU service. Pattern match, not that car.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("LMU_*"),
+            bleUuid("F3B3DC00-0451-1126-4029-BAB249EA4311"),
+        ),
+    )
+
+    private fun vantrue() = Fleet(
+        id = "fleet-vantrue",
+        name = "Vantrue",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Vantrue dashcam Wi-Fi, such as E1 Lite_VANTRUE_. It is on while the camera Wi-Fi is switched on.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("*_VANTRUE_*"),
+            wifiGlob("VANTRUE_*"),
+        ),
+    )
+
+    private fun ecolab() = Fleet(
+        id = "fleet-ecolab",
+        name = "Ecolab",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Ecolab connected commercial pest or hygiene monitor. The company id is Ecolab's. The two-letter Bluetooth name SP is not the rule.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0BB0),
+        ),
+    )
+
+    private fun coros() = Fleet(
+        id = "fleet-coros",
+        name = "COROS",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "COROS GPS sports watch (PACE, APEX, or VERTIX). The Bluetooth name starts with COROS followed by a space.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("COROS *"),
+        ),
+    )
+
+    private fun scenxus() = Fleet(
+        id = "fleet-scenxus",
+        name = "ScenXus",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Prolitec ScenXus commercial scent diffuser. The Wi-Fi name starts with ScenXus-.",
+        builtIn = true,
+        rules = listOf(
+            wifiGlob("ScenXus-*"),
+        ),
+    )
+
+    private fun skullcandy() = Fleet(
+        id = "fleet-skullcandy",
+        name = "Skullcandy",
+        enabled = true,
+        colorIndex = Hue.AUDIO,
+        kind = SignatureClass.AUDIO,
+        matchAny = true,
+        notes = "Skullcandy speaker or earbuds, including Terrain speakers that advertise as SKDY. Matches Skullcandy's company id or a Bluetooth name starting with Skullcandy or SKDY followed by a space.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x07C9),
+            bleGlob("Skullcandy*"),
+            bleGlob("SKDY *"),
+        ),
+    )
+
+    private fun eufyLock() = Fleet(
+        id = "fleet-eufy-lock",
+        name = "eufy Smart Lock",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.LOCK,
+        matchAny = true,
+        notes = "eufy Security smart deadbolt (T8502 / E110). Door lock, not a camera. Matches the T8502_ setup name or the eufy lock service.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("T8502_*"),
+            bleUuid("8C850001-0302-41C5-B46E-CF057C562025"),
+        ),
+    )
+
+    private fun typeSLed() = Fleet(
+        id = "fleet-type-s-led",
+        name = "Type S LED",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Type S automotive underglow or exterior LED controller. The Bluetooth name starts with TYPE_S_LED_.",
+        builtIn = true,
+        rules = listOf(
+            bleGlob("TYPE_S_LED_*"),
+        ),
+    )
+
+    private fun airWeigh() = Fleet(
+        id = "fleet-air-weigh",
+        name = "Air-Weigh",
+        enabled = true,
+        colorIndex = Hue.VEHICLE,
+        kind = SignatureClass.VEHICLE,
+        matchAny = true,
+        notes = "Air-Weigh on-board truck or trailer scale (LoadMaxx or QuickWeigh). The company id is Air-Weigh's.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0A30),
+        ),
+    )
+
+    private fun trimble() = Fleet(
+        id = "fleet-trimble",
+        name = "Trimble",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.OTHER,
+        matchAny = true,
+        notes = "Trimble survey GNSS receiver or total station. The company id is Trimble's, or the Bluetooth name starts with Trimble followed by a space.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x03FD),
+            bleGlob("Trimble *"),
+        ),
+    )
+
+    private fun starMicronics() = Fleet(
+        id = "fleet-star-micronics",
+        name = "Star Micronics",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Star Micronics receipt printer (TSP100IV and similar). The company id is Star Micronics', or the Bluetooth name starts with TSP100.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x01B0),
+            bleGlob("TSP100*"),
+        ),
+    )
+
+    private fun milwaukee() = Fleet(
+        id = "fleet-milwaukee",
+        name = "Milwaukee ONE-KEY",
+        enabled = true,
+        colorIndex = Hue.HOME_CAM,
+        kind = SignatureClass.HOME,
+        matchAny = true,
+        notes = "Milwaukee ONE-KEY power tool or TICK equipment tag. Matches Milwaukee Electric Tools' company id or ONE-KEY Bluetooth service.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0165),
+            bleUuid("FDF5"),
+        ),
+    )
+
+    private fun trackonomy() = Fleet(
+        id = "fleet-trackonomy",
+        name = "Trackonomy",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.BEACON,
+        matchAny = true,
+        notes = "Trackonomy smart logistics tape or parcel beacon. The company id is Trackonomy's.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0EF7),
+        ),
+    )
+
+    private fun amazfit() = Fleet(
+        id = "fleet-amazfit",
+        name = "Amazfit",
+        enabled = true,
+        colorIndex = Hue.TRACKER,
+        kind = SignatureClass.WEARABLE,
+        matchAny = true,
+        notes = "Amazfit or Zepp watch or fitness strap (including Helio Strap). Matches Huami's company id or a Bluetooth name starting with Amazfit.",
+        builtIn = true,
+        rules = listOf(
+            bleMfg(0x0157),
+            bleGlob("Amazfit*"),
         ),
     )
 

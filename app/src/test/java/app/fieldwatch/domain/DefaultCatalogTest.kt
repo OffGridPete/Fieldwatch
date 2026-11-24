@@ -667,7 +667,7 @@ class DefaultCatalogTest {
         assertTrue(chipolo.rules.any { it.kind == RuleKind.SERVICE_UUID && it.text.equals("FE33", true) })
         assertFalse(chipolo.rules.any { it.text.equals("FE65", true) || it.text.equals("FE34", true) })
         assertTrue(DeviceExplain.uuidGloss("FE33")!!.contains("Chipolo"))
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
 
         val unnamed = ble(name = "", serviceUuids = listOf("FE33"))
             .copy(key = "BLE:c1", mac = "AA:BB:CC:DD:EE:41")
@@ -945,7 +945,7 @@ class DefaultCatalogTest {
             "fleet-irobot",
         )
         assertEquals(added.toSet(), stock.map { it.id }.filter { it in added }.toSet())
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         added.forEach { id ->
             val row = stock.single { it.id == id }
@@ -2057,7 +2057,7 @@ class DefaultCatalogTest {
     fun catalog116AddsLednetwfEzLynkTrackunitAndOontz() {
         val stock = DefaultCatalog.fleets()
         val added = listOf("fleet-lednetwf", "fleet-ez-lynk", "fleet-trackunit", "fleet-oontz")
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
         assertEquals(added.toSet(), stock.map { it.id }.filter { it in added }.toSet())
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         added.forEach { id ->
@@ -2178,7 +2178,7 @@ class DefaultCatalogTest {
     @Test
     fun catalog117AddsItagViofoAndTheUfoDrone() {
         val stock = DefaultCatalog.fleets()
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         val tag = stock.single { it.id == "fleet-itag" }
         val cam = stock.single { it.id == "fleet-viofo" }
@@ -2252,7 +2252,7 @@ class DefaultCatalogTest {
     @Test
     fun catalog118AddsSetupAndSerialNames() {
         val stock = DefaultCatalog.fleets()
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         val tuya = stock.single { it.id == "fleet-tuya" }
         val unifi = stock.single { it.id == "fleet-unifi" }
@@ -2331,7 +2331,7 @@ class DefaultCatalogTest {
     @Test
     fun catalog118AddsProductNames() {
         val stock = DefaultCatalog.fleets()
-        assertEquals(364, stock.size)
+        assertEquals(390, stock.size)
         assertEquals(ADDED_IN_V118.size, 29)
         val watched = DefaultCatalog.defaultWatchlist().mapNotNull { it.fleetId }.toSet()
         ADDED_IN_V118.forEach { id ->
